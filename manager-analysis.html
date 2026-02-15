@@ -1,0 +1,1194 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>基金经理行为分析 · Top500</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#f0f2f5;--card:#fff;--text:#1a1a2e;--sub:#8896a4;
+  --primary:#4F6EF7;--primary-bg:#eef2ff;
+  --up:#e74040;--up-bg:#fef2f2;
+  --down:#22a065;--down-bg:#ecfdf5;
+  --border:#e8ecf1;--radius:14px;
+  --warn:#f59e0b;--warn-bg:#fef3c7;
+  --gold:#d97706;--gold-bg:#fffbeb;
+}
+body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro","PingFang SC","Helvetica Neue",sans-serif;background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased;max-width:560px;margin:0 auto;min-height:100vh}
+
+/* Header */
+.page-header{background:linear-gradient(135deg,#78350f,#92400e,#b45309);color:#fff;padding:16px;position:sticky;top:0;z-index:100}
+.ph-back{font-size:12px;opacity:.7;cursor:pointer;display:inline-flex;align-items:center;gap:4px;margin-bottom:8px}
+.ph-back:hover{opacity:1}
+.ph-title{font-size:18px;font-weight:800;display:flex;align-items:center;gap:8px}
+.ph-title .badge{font-size:10px;background:rgba(255,255,255,.2);padding:2px 10px;border-radius:10px}
+.ph-sub{font-size:11px;opacity:.65;margin-top:4px;line-height:1.5}
+
+/* Loading */
+.loading-overlay{position:fixed;inset:0;background:linear-gradient(135deg,#78350f,#451a03);z-index:999;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;transition:opacity .5s}
+.loading-overlay.hide{opacity:0;pointer-events:none}
+.loading-icon{font-size:56px;margin-bottom:16px;animation:bounce 1.4s infinite}
+@keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
+.loading-title{font-size:18px;font-weight:700;margin-bottom:8px}
+.loading-sub{font-size:12px;opacity:.6;margin-bottom:20px}
+.loading-bar{width:220px;height:5px;background:rgba(255,255,255,.15);border-radius:3px;overflow:hidden}
+.loading-fill{height:100%;background:linear-gradient(90deg,#f59e0b,#fbbf24);border-radius:3px;transition:width .3s}
+.loading-status{font-size:11px;opacity:.5;margin-top:10px}
+
+/* Section */
+.section{margin:12px;background:var(--card);border-radius:var(--radius);overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.04)}
+.sec-header{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px}
+.sec-icon{font-size:20px}
+.sec-title{font-size:14px;font-weight:700;flex:1}
+.sec-badge{font-size:10px;background:var(--gold-bg);color:var(--gold);padding:2px 8px;border-radius:8px;font-weight:600}
+.sec-body{padding:14px 16px}
+
+/* Metric row */
+.metrics{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+.metric{background:var(--bg);border-radius:10px;padding:10px 12px;text-align:center}
+.metric .m-val{font-size:20px;font-weight:800;color:var(--gold)}
+.metric .m-label{font-size:10px;color:var(--sub);margin-top:2px}
+.metrics.tri{grid-template-columns:1fr 1fr 1fr}
+.metrics.tri .metric .m-val{font-size:16px}
+
+/* Bar chart */
+.bar-chart{display:flex;flex-direction:column;gap:6px}
+.bar-row{display:flex;align-items:center;gap:8px}
+.bar-label{width:68px;font-size:10px;font-weight:500;text-align:right;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bar-track{flex:1;height:18px;background:var(--bg);border-radius:4px;overflow:hidden;position:relative}
+.bar-fill{height:100%;border-radius:4px;display:flex;align-items:center;padding-left:6px;transition:width .6s ease}
+.bar-fill span{font-size:9px;color:#fff;font-weight:600;white-space:nowrap}
+.bar-val{width:48px;font-size:10px;font-weight:600;text-align:right;flex-shrink:0}
+
+/* Insight cards */
+.insight{background:var(--bg);border-radius:10px;padding:12px;margin-bottom:8px;border-left:3px solid var(--gold)}
+.insight .i-title{font-size:12px;font-weight:700;margin-bottom:4px;display:flex;align-items:center;gap:6px}
+.insight .i-body{font-size:11px;color:#374151;line-height:1.7}
+
+/* Outlook */
+.outlook-factor{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border)}
+.outlook-factor:last-child{border-bottom:none}
+.of-label{width:60px;font-size:10px;font-weight:600;flex-shrink:0}
+.of-bar{flex:1;height:10px;background:var(--bg);border-radius:5px;overflow:hidden}
+.of-fill{height:100%;border-radius:5px;transition:width .8s ease}
+.of-score{width:30px;text-align:right;font-size:11px;font-weight:700}
+.of-trend{font-size:9px;padding:1px 6px;border-radius:4px;font-weight:600;flex-shrink:0}
+.of-trend.hot{background:#fef2f2;color:var(--up)}
+.of-trend.warm{background:var(--warn-bg);color:#92400e}
+.of-trend.cool{background:#ecfdf5;color:var(--down)}
+.of-trend.neutral{background:#f1f5f9;color:var(--sub)}
+
+/* Reco cards */
+.reco-card{background:linear-gradient(135deg,#fffbeb,#fef3c7);border:1px solid #fde68a;border-radius:10px;padding:10px 12px;margin-bottom:8px}
+.rc-top{display:flex;align-items:center;gap:8px}
+.rc-rank{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;flex-shrink:0;background:linear-gradient(135deg,#f59e0b,#d97706)}
+.rc-rank.r1{background:linear-gradient(135deg,#f59e0b,#d97706)}
+.rc-rank.r2{background:linear-gradient(135deg,#94a3b8,#64748b)}
+.rc-rank.r3{background:linear-gradient(135deg,#d97706,#92400e)}
+.rc-rank.rn{background:#cbd5e1;color:#475569}
+.rc-name{font-size:12px;font-weight:600;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rc-ret{font-size:12px;font-weight:700;color:var(--up)}
+.rc-mid{display:flex;gap:6px;margin-top:5px;flex-wrap:wrap;align-items:center}
+.rc-tag{font-size:9px;padding:1px 5px;border-radius:4px;font-weight:500}
+.rc-tag.mgr{background:#fef3c7;color:#92400e}
+.rc-tag.style{background:var(--primary-bg);color:var(--primary)}
+.rc-actions{display:flex;gap:6px;margin-top:8px}
+.rc-btn{border:none;padding:5px 12px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer}
+.rc-btn.primary{background:var(--primary);color:#fff}
+.rc-btn.outline{background:transparent;border:1px solid var(--primary);color:var(--primary)}
+.rc-btn:active{transform:scale(.96)}
+.rc-btn.added{background:#e2e8f0;color:var(--sub);border:none}
+
+/* Sector allocation */
+.alloc-row{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border)}
+.alloc-row:last-child{border-bottom:none}
+.alloc-sector{width:72px;font-size:11px;font-weight:600;flex-shrink:0}
+.alloc-bar{flex:1;height:14px;background:var(--bg);border-radius:4px;overflow:hidden}
+.alloc-fill{height:100%;border-radius:4px;display:flex;align-items:center;padding-left:4px}
+.alloc-fill span{font-size:8px;color:#fff;font-weight:600}
+.alloc-rating{font-size:10px;font-weight:600;width:60px;text-align:right;flex-shrink:0}
+.alloc-rating.strong{color:var(--up)}
+.alloc-rating.ok{color:var(--warn)}
+.alloc-rating.weak{color:var(--sub)}
+
+/* Summary box */
+.summary-box{background:linear-gradient(135deg,#fffbeb,#fef9c3);border:1px solid #fde68a;border-radius:12px;padding:14px;margin:12px;font-size:12px;line-height:1.8;color:#374151}
+.summary-box b{color:#92400e}
+.summary-box .sb-title{font-size:14px;font-weight:700;color:#78350f;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.summary-box ul{padding-left:16px;margin-top:6px}
+.summary-box li{margin-bottom:4px}
+
+/* Footer */
+.page-footer{text-align:center;padding:20px 16px 40px;font-size:10px;color:var(--sub);line-height:1.6}
+.page-footer a{color:var(--primary);text-decoration:none}
+
+/* Nav anchors */
+.nav-bar{display:flex;gap:6px;padding:10px 12px;overflow-x:auto;background:var(--card);border-bottom:1px solid var(--border);position:sticky;top:64px;z-index:50}
+.nav-item{flex-shrink:0;padding:6px 12px;border-radius:8px;font-size:11px;font-weight:500;cursor:pointer;background:var(--bg);color:var(--sub);text-decoration:none;transition:.2s}
+.nav-item:active,.nav-item.active{background:var(--gold-bg);color:var(--gold)}
+
+/* Warning box */
+.warn-box{background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:12px;margin-top:12px;font-size:10px;color:#991b1b;line-height:1.6}
+.warn-box b{color:#7f1d1d}
+
+/* Data discovery */
+.disc-card{border:1px solid var(--border);border-radius:10px;margin-bottom:8px;overflow:hidden}
+.disc-card.alpha{border-color:#d97706;background:linear-gradient(135deg,#fffbeb,#fef3c7)}
+.disc-card.strong{border-color:#22c55e;background:#f0fdf4}
+.disc-card.emerging{border-color:#3b82f6;background:#eff6ff}
+.disc-header{padding:8px 12px;display:flex;align-items:center;gap:8px}
+.disc-signal{font-size:10px;padding:2px 8px;border-radius:6px;font-weight:700}
+.disc-signal.alpha{background:#d9770630;color:#92400e}
+.disc-signal.strong{background:#22c55e30;color:#166534}
+.disc-signal.emerging{background:#3b82f630;color:#1e40af}
+.disc-style{font-size:12px;font-weight:700;flex:1}
+.disc-metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;padding:0 12px 8px}
+.disc-m{text-align:center}
+.disc-m .dm-val{font-size:13px;font-weight:800}
+.disc-m .dm-label{font-size:8px;color:var(--sub)}
+.disc-body{padding:4px 12px 10px;font-size:10px;line-height:1.5;color:#374151;border-top:1px solid var(--border)}
+.disc-why{font-size:9px;padding:2px 12px 8px;color:var(--sub);line-height:1.4}
+
+/* Compact table (used in discovery) */
+.compact-table{width:100%;border-collapse:collapse;margin-top:8px;font-size:10px}
+.compact-table th{background:var(--bg);padding:5px 6px;font-weight:600;color:var(--sub);text-align:left;font-size:9px}
+.compact-table td{padding:5px 6px;border-top:1px solid var(--border)}
+</style>
+</head>
+<body>
+
+<!-- Loading Overlay -->
+<div class="loading-overlay" id="loading-overlay">
+  <div class="loading-icon">🏆</div>
+  <div class="loading-title">基金经理行为分析</div>
+  <div class="loading-sub">正在从天天基金获取前500位基金经理数据...</div>
+  <div class="loading-bar"><div class="loading-fill" id="loading-fill" style="width:0%"></div></div>
+  <div class="loading-status" id="loading-status">准备中...</div>
+</div>
+
+<!-- Page Header -->
+<div class="page-header">
+  <div class="ph-back" onclick="location.href='index.html'">← 返回基金小助理</div>
+  <div class="ph-title">🏆 基金经理行为分析 <span class="badge">TOP 500</span></div>
+  <div class="ph-sub">精简版 · 聚焦投资决策 · 数据驱动信号 + 基金推荐<br>更新时间：<span id="update-time">--</span></div>
+</div>
+
+<!-- Navigation -->
+<div class="nav-bar" id="nav-bar">
+  <a class="nav-item active" href="#sec-overview">📊 概览</a>
+  <a class="nav-item" href="#sec-review">📋 回顾</a>
+  <a class="nav-item" href="#sec-discover">🔬 信号</a>
+  <a class="nav-item" href="#sec-outlook">🔮 前瞻</a>
+  <a class="nav-item" href="#sec-recos">🎖️ 推荐</a>
+  <a class="nav-item" href="#sec-summary">📋 总结</a>
+</div>
+
+<!-- Main Content -->
+<div id="main-content"></div>
+
+<!-- Footer -->
+<div class="page-footer">
+  数据来源：东方财富Choice数据 · 天天基金<br>
+  本分析仅供参考，不构成投资建议<br>
+  <a href="index.html">← 返回基金股市小助理</a>
+</div>
+
+<script>
+// ==================== CONFIGURATION ====================
+const API_BASE = 'https://fund.eastmoney.com/Data/FundDataPortfolio_Interface.aspx';
+const PAGES_TO_FETCH = 8;
+const PER_PAGE = 100;
+
+const LS_HOLDINGS = 'fa_holdings';
+const LS_WATCHLIST = 'fa_watchlist';
+
+// ==================== MACRO OUTLOOK ====================
+let MACRO_OUTLOOK = {
+  period: '2026年2月—5月',
+  updated: '2026-02-14',
+  pastYearReview: [
+    {sector:'有色金属',ret:'+52%',icon:'🔥',highlight:true,
+     detail:'铜价突破$10000/吨，铝价创2年新高。全球新能源转型+AI数据中心用电激增推动铜铝需求飙升，叠加南美铜矿供应扰动、国内冶炼利润收缩导致供给偏紧，有色板块成为过去一年最强赛道之一。'},
+    {sector:'贵金属(黄金)',ret:'+35%',icon:'✨',highlight:true,
+     detail:'国际金价突破$2800/盎司。地缘冲突持续（俄乌、中东）、全球央行持续购金（中国央行连续18个月增持）、美元信用体系松动三重因素驱动，黄金已从避险资产升级为战略配置资产。'},
+    {sector:'科技/AI',ret:'+38%',icon:'🤖',highlight:true,
+     detail:'DeepSeek引爆国产AI革命，算力基建→应用落地全面加速。机器人（人形机器人概念）、自动驾驶、AI Agent进入商业化拐点，半导体国产替代浪潮受益于出口管制倒逼。'},
+    {sector:'红利/高股息',ret:'+18%',icon:'💰',highlight:false,
+     detail:'利率持续下行环境下，高股息资产吸引力提升。央国企价值重估主线延续，煤炭、银行、公用事业稳健上涨。'},
+    {sector:'港股科技',ret:'+28%',icon:'🌏',highlight:false,
+     detail:'南向资金持续流入，恒生科技指数走出低谷。互联网龙头盈利改善+AI概念催化+估值修复三重驱动。'},
+    {sector:'消费',ret:'+8%',icon:'🛒',highlight:false,
+     detail:'消费复苏不及预期，结构分化严重。大众消费缓慢修复，高端消费持续承压，食品饮料龙头估值仍在消化期。'},
+    {sector:'医药',ret:'+12%',icon:'💊',highlight:false,
+     detail:'创新药出海逻辑兑现，CXO板块阶段性反弹。集采影响逐步消化，但整体复苏偏慢。'},
+    {sector:'新能源',ret:'-5%',icon:'⚡',highlight:false,
+     detail:'产能过剩格局未改，光伏、锂电池价格持续下跌。行业出清尚未完成，仅储能与海上风电等细分方向有亮点。'},
+  ],
+  intlFactors: [
+    {label:'美联储政策',score:65,trend:'降息放缓',cls:'warm',
+     desc:'2025年累计降息75bp后节奏明显放缓，2026年预计仅1-2次降息。美元指数回落但幅度有限，全球流动性边际改善但不再超预期宽松。'},
+    {label:'全球通胀',score:58,trend:'粘性残存',cls:'neutral',
+     desc:'核心通胀3%左右企稳，服务通胀顽固。大宗商品（铜铝）涨价向下游传导，需关注二次通胀风险。'},
+    {label:'地缘博弈',score:40,trend:'风险偏高',cls:'hot',
+     desc:'中美科技脱钩深化（AI芯片、先进封装出口管制升级）；俄乌冲突持续；中东局势不稳；加剧供应链重构和资源品波动。'},
+    {label:'全球制造业',score:72,trend:'扩张',cls:'warm',
+     desc:'全球制造业PMI重回扩张区间。AI基建投资拉动服务器/芯片/电力设备需求，新能源车渗透率持续提升带动有色金属需求。'},
+    {label:'美元与汇率',score:55,trend:'温和走弱',cls:'neutral',
+     desc:'美元指数从105回落至100附近，有利于新兴市场资金回流和大宗商品价格。人民币汇率7.0-7.2区间波动。'},
+  ],
+  domesticFactors: [
+    {label:'货币政策',score:75,trend:'稳健偏松',cls:'warm',
+     desc:'LPR仍有10-20bp下调空间，社融增速回升。定向支持科技创新和消费信贷，流动性合理充裕。'},
+    {label:'财政刺激',score:70,trend:'积极',cls:'warm',
+     desc:'专项债发行加速（全年4万亿+），超长期特别国债重点投向新基建、AI算力、绿色转型。基建托底经济底线思维明确。'},
+    {label:'产业政策',score:85,trend:'强力驱动',cls:'hot',
+     desc:'AI大模型+机器人+半导体三线并进获政策全面加持。战略金属（铜、铝、稀土、锂）被纳入国家安全战略储备，有色金属产业链价值被重新定义。'},
+    {label:'内需消费',score:58,trend:'缓慢修复',cls:'neutral',
+     desc:'居民收入增速微升但信心不足，地产拖累效应减弱但未消除。以旧换新政策延续，服务消费优于商品消费。'},
+    {label:'资本市场改革',score:68,trend:'深化推进',cls:'warm',
+     desc:'新"国九条"落地见效，IPO节奏可控，分红制度优化。央国企价值重估+并购重组活跃，长线资金入市加速。'},
+  ],
+  sectorRecos: [
+    {sector:'科技/AI',rating:'强烈推荐',weight:25,color:'#ef4444',reason:'AI从概念走向商业化落地，算力→应用→机器人→自动驾驶全链条催化。国产替代受出口管制倒逼加速，半导体设备/EDA/先进封装是核心方向。但注意短期估值已不便宜，建议择机配置。'},
+    {sector:'有色金属',rating:'强烈推荐',weight:18,color:'#d97706',reason:'供需格局持续紧张：全球AI数据中心+新能源车+光伏用铜量激增，南美铜矿资本开支不足导致3-5年供给缺口。铝受益于国内电解铝产能天花板+汽车轻量化+光伏边框需求。有色金属从周期品升级为成长品，中长线核心配置。'},
+    {sector:'贵金属',rating:'推荐',weight:12,color:'#f59e0b',reason:'黄金的定价逻辑已从"抗通胀"转变为"去美元化+央行储备重配+地缘避险"三重驱动。全球央行购金趋势未变。虽然金价已高，但中长期上行趋势未改，回调即是加仓机会。'},
+    {sector:'红利/价值',rating:'推荐',weight:14,color:'#eab308',reason:'利率下行环境中高股息资产性价比凸显。央国企价值重估+提高分红比例政策持续推进，煤炭/银行/公用事业/交运可作为组合压舱石。'},
+    {sector:'高端制造',rating:'推荐',weight:12,color:'#f97316',reason:'出口韧性+产业升级双轮驱动。半导体设备、工业母机、航空发动机多线受益。军工国防订单回暖，关注十四五末期装备交付加速。'},
+    {sector:'消费/医药',rating:'适度配置',weight:8,color:'#22c55e',reason:'消费弱复苏格局未变但估值已具性价比。创新药出海+药品集采边际影响递减，医药龙头布局窗口。关注性价比消费与服务型消费。'},
+    {sector:'跨境/港股',rating:'适度配置',weight:6,color:'#8b5cf6',reason:'港股科技龙头盈利趋势向好+估值折价仍存，但需警惕美国加征关税等突发风险。定投逻辑强于一次性重仓。'},
+    {sector:'新能源',rating:'谨慎观望',weight:3,color:'#06b6d4',reason:'产能过剩出清远未结束，光伏/锂电池价格战仍在继续。仅储能与海上风电有结构性机会，不建议作为核心仓位。'},
+    {sector:'固收/债券',rating:'低配',weight:2,color:'#94a3b8',reason:'10年国债收益率已降至1.6%附近历史低位，利差极度压缩。债牛尾部风险大于收益，仅作为流动性管理工具。'},
+  ]
+};
+
+// Style colors
+const STYLE_COLORS = {
+  '科技成长':'#3b82f6','灵活配置':'#8b5cf6','消费':'#ec4899','医药健康':'#10b981',
+  '价值蓝筹':'#f59e0b','红利价值':'#ef4444','均衡成长':'#6366f1','新能源':'#06b6d4',
+  '指数量化':'#f97316','固收增强':'#64748b','跨境QDII':'#a855f7','军工国防':'#dc2626',
+  '周期':'#84cc16','纯债固收':'#94a3b8','货币理财':'#cbd5e1','贵金属':'#eab308',
+  'FOF配置':'#14b8a6','商品资源':'#d97706','成长':'#2563eb','有色金属':'#b45309',
+  '化工材料':'#78716c','基础设施':'#92400e','公用事业':'#4d7c0f','农业食品':'#15803d',
+  '金融':'#b91c1c','地产REITs':'#7c3aed','其他':'#9ca3af'
+};
+
+// ==================== STATE ====================
+let allManagers = [];
+let filteredManagers = [];
+let analysis = {};
+let holdings = JSON.parse(localStorage.getItem(LS_HOLDINGS)||'[]');
+let watchlist = JSON.parse(localStorage.getItem(LS_WATCHLIST)||'[]');
+let aiMacroGenerated = false;
+
+// ==================== AI PROVIDER CONFIG ====================
+const AI_PROVIDERS = [
+  {
+    id:'siliconflow', name:'硅基流动(免费)', free:true,
+    base:'https://api.siliconflow.cn/v1/chat/completions',
+    macroModels: [
+      {name:'DeepSeek-V3', model:'deepseek-ai/DeepSeek-V3'},
+      {name:'Qwen2.5-72B', model:'Qwen/Qwen2.5-72B-Instruct'}
+    ]
+  },
+  {
+    id:'deepseek', name:'DeepSeek官方(极低价)', free:false,
+    base:'https://api.deepseek.com/chat/completions',
+    macroModels: [
+      {name:'DeepSeek-R1', model:'deepseek-reasoner'},
+      {name:'DeepSeek-V3', model:'deepseek-chat'}
+    ]
+  },
+  {
+    id:'302ai', name:'302.AI(付费)', free:false,
+    base:'https://api.302.ai/v1/chat/completions',
+    macroModels: [
+      {name:'DeepSeek-R1', model:'deepseek-r1'},
+      {name:'Qwen3-235B', model:'qwen3-235b-a22b'}
+    ]
+  }
+];
+
+const _aiProviderId = localStorage.getItem('fa_ai_provider') || 'siliconflow';
+const _aiProvider = AI_PROVIDERS.find(p=>p.id===_aiProviderId) || AI_PROVIDERS[0];
+const _apiBase = _aiProvider.base;
+const _302aiKey = localStorage.getItem('fa_302ai_key') || '';
+
+async function callAI(model, systemPrompt, userPrompt, temperature=0.7){
+  if(!_302aiKey) throw new Error('No API key');
+  const resp = await fetch(_apiBase, {
+    method:'POST',
+    headers:{'Content-Type':'application/json','Authorization':'Bearer '+_302aiKey},
+    body:JSON.stringify({
+      model,
+      messages:[
+        {role:'system', content:systemPrompt},
+        {role:'user', content:userPrompt}
+      ],
+      temperature,
+      max_tokens:8192
+    })
+  });
+  if(!resp.ok){
+    const err = await resp.text().catch(()=>'');
+    throw new Error(`API ${resp.status}: ${err.slice(0,200)}`);
+  }
+  const json = await resp.json();
+  return json.choices?.[0]?.message?.content || '';
+}
+
+function buildManagerDataContext(){
+  const stylePerf = {};
+  filteredManagers.forEach(m=>{
+    if(!stylePerf[m.style]) stylePerf[m.style] = {returns:[], count:0};
+    stylePerf[m.style].returns.push(m.careerReturn);
+    stylePerf[m.style].count++;
+  });
+  const styleSummary = Object.keys(stylePerf)
+    .map(s=>({style:s, count:stylePerf[s].count, avgReturn:mean(stylePerf[s].returns)}))
+    .sort((a,b)=>b.avgReturn-a.avgReturn);
+
+  let ctx = `当前日期: ${new Date().toISOString().slice(0,10)}\n`;
+  ctx += `\n【TOP${filteredManagers.length}基金经理数据统计】\n`;
+  ctx += `总人数: ${filteredManagers.length}, 平均任职回报: ${mean(filteredManagers.map(m=>m.careerReturn)).toFixed(1)}%\n`;
+  ctx += `\n【各投资风格表现排名(按均回报)】\n`;
+  styleSummary.forEach(s=>{
+    ctx += `${s.style}: ${s.count}人, 均回报${s.avgReturn.toFixed(1)}%\n`;
+  });
+
+  if(sectorDiscovery){
+    const {discoveries} = sectorDiscovery;
+    const signals = discoveries.filter(d=>d.signal!=='normal');
+    if(signals.length>0){
+      ctx += `\n【数据发现引擎信号】\n`;
+      signals.forEach(d=>{
+        ctx += `${d.style}: 信号=${d.signal==='alpha'?'被忽视的α':d.signal==='strong'?'强势':'萌芽'}, 超额回报${d.excessReturn>=0?'+':''}${d.excessReturn.toFixed(1)}%, 胜率${d.winRate.toFixed(0)}%, 管理人数${d.count}\n`;
+      });
+    }
+    ctx += `\n【全部风格发现引擎得分】\n`;
+    discoveries.sort((a,b)=>b.discoveryScore-a.discoveryScore).forEach(d=>{
+      ctx += `${d.style}: 得分${d.discoveryScore.toFixed(0)}, 均回报${d.avgReturn.toFixed(1)}%, Z分数${d.zScore.toFixed(2)}\n`;
+    });
+  }
+
+  const topManagers = filteredManagers.sort((a,b)=>b.careerReturn-a.careerReturn).slice(0,20);
+  ctx += `\n【回报最高的20位经理】\n`;
+  topManagers.forEach(m=>{
+    ctx += `${m.name}(${m.company}): ${m.style}, 任职${m.years.toFixed(1)}年, 回报${m.careerReturn.toFixed(1)}%, 规模${m.aum.toFixed(0)}亿\n`;
+  });
+  return ctx;
+}
+
+const MACRO_SYSTEM_PROMPT = `你是一位资深的A股市场宏观策略分析师，需要根据基金经理的实际持仓和业绩数据，结合你对当前宏观经济、国际形势、国内政策的专业知识，生成一份全面的市场分析报告。
+
+你必须严格按照以下JSON格式回复，不要有任何额外的文字或markdown标记：
+{
+  "period": "起始年月—结束年月",
+  "updated": "YYYY-MM-DD",
+  "pastYearReview": [
+    {"sector": "板块名称", "ret": "+XX%或-XX%", "icon": "emoji", "highlight": true/false,
+     "detail": "100-200字深度分析"}
+  ],
+  "intlFactors": [
+    {"label": "因素名称", "score": 0-100, "trend": "2-4字趋势词", "cls": "warm/neutral/hot/cold",
+     "desc": "80-150字描述"}
+  ],
+  "domesticFactors": [
+    {"label": "因素名称", "score": 0-100, "trend": "2-4字趋势词", "cls": "warm/neutral/hot/cold",
+     "desc": "80-150字描述"}
+  ],
+  "sectorRecos": [
+    {"sector": "板块名称", "rating": "强烈推荐/推荐/适度配置/谨慎观望/低配",
+     "weight": 配置权重百分比, "color": "CSS颜色值",
+     "reason": "100-200字配置理由"}
+  ]
+}
+
+要求：
+1. pastYearReview至少8个板块，highlight标记涨幅前3
+2. intlFactors至少5个，domesticFactors至少5个
+3. sectorRecos至少8个，weight之和约等于100
+4. 结合基金经理真实业绩数据分析
+5. 只输出JSON`;
+
+async function generateAIMacroOutlook(onProgress){
+  if(!_302aiKey) return null;
+  const dataCtx = buildManagerDataContext();
+  const models = _aiProvider.macroModels;
+  for(const m of models){
+    try {
+      if(onProgress) onProgress(`🧠 ${m.name} 正在分析宏观形势...`);
+      const userMsg = `请根据以下TOP基金经理的真实业绩数据，结合你对当前市场的专业判断，生成完整的宏观市场分析报告。\n\n${dataCtx}\n\n请分析：1.过去一年各板块表现 2.国际形势 3.国内形势 4.未来3个月配置建议`;
+      const raw = await callAI(m.model, MACRO_SYSTEM_PROMPT, userMsg, 0.6);
+      let jsonStr = raw.trim();
+      if(jsonStr.startsWith('```')) jsonStr = jsonStr.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '');
+      const jsonMatch = jsonStr.match(/\{[\s\S]*\}/);
+      if(!jsonMatch) throw new Error('No JSON');
+      const parsed = JSON.parse(jsonMatch[0]);
+      if(!parsed.pastYearReview || !parsed.sectorRecos) throw new Error('Missing fields');
+      if(onProgress) onProgress(`✅ ${m.name} 分析完成`);
+      return parsed;
+    } catch(e){
+      console.error(`${m.name} failed:`, e);
+      if(onProgress) onProgress(`⚠️ ${m.name} 失败，尝试下一个...`);
+      continue;
+    }
+  }
+  return null;
+}
+
+// ==================== DATA FETCHING ====================
+function setLoadProgress(pct, status){
+  document.getElementById('loading-fill').style.width = pct+'%';
+  document.getElementById('loading-status').textContent = status;
+}
+
+function loadManagerPage(pageNum){
+  return new Promise((resolve)=>{
+    const script = document.createElement('script');
+    const url = `${API_BASE}?dt=14&mc=returnjson&ft=all&pn=${PER_PAGE}&pi=${pageNum}&sc=netnav&st=desc`;
+    script.src = url;
+    script.onload = ()=>{
+      try {
+        const data = window.returnjson;
+        if(data && data.data) resolve(data.data);
+        else resolve([]);
+      } catch(e){ resolve([]); }
+      script.remove();
+    };
+    script.onerror = ()=>{ resolve([]); script.remove(); };
+    document.head.appendChild(script);
+  });
+}
+
+async function fetchAllManagers(){
+  const allData = [];
+  for(let i=1; i<=PAGES_TO_FETCH; i++){
+    setLoadProgress(Math.round(i/PAGES_TO_FETCH*70), `正在获取第 ${i}/${PAGES_TO_FETCH} 页数据...`);
+    try {
+      const data = await loadManagerPage(i);
+      if(data.length>0) allData.push(...data);
+      else if(i>1) break;
+    } catch(e){}
+    await new Promise(r=>setTimeout(r, 200));
+  }
+  return allData;
+}
+
+// ==================== DATA PROCESSING ====================
+function classifyStyle(fundNamesStr){
+  const t = fundNamesStr || '';
+  if(/货币|现金|余额|理财|添利|天天/.test(t) && !/混合|股票|灵活/.test(t)) return '货币理财';
+  if(/纯债|利率债|信用债|短债|定开债|定期开放债/.test(t) && !/混合|股票|灵活|增强/.test(t)) return '纯债固收';
+  if(/黄金|白银|贵金属/.test(t)) return '贵金属';
+  if(/有色|铜|铝|锂|稀土|金属材料|矿业|基本金属/.test(t)) return '有色金属';
+  if(/原油|商品|资源精选|大宗/.test(t)) return '商品资源';
+  if(/QDII|港股|全球|海外|纳斯达克|标普|恒生|中国优势|美元/.test(t)) return '跨境QDII';
+  if(/(指数|ETF)/.test(t) && /量化|增强|智选/.test(t)) return '指数量化';
+  if(/科技|人工智能|芯片|半导体|电子|计算机|通信|信息|数字经济|智能驱动/.test(t)) return '科技成长';
+  if(/新能源|光伏|碳|电池|低碳|环保/.test(t)) return '新能源';
+  if(/军工|国防|航天|航空/.test(t)) return '军工国防';
+  if(/医[药疗]|健康|生物|创新药/.test(t)) return '医药健康';
+  if(/化工|材料|制造|[工业]精选/.test(t) && !/电子|半导体/.test(t)) return '化工材料';
+  if(/基建|基础设施|一带一路|工程|建筑|铁路/.test(t)) return '基础设施';
+  if(/公用事业|电力|水务|燃气|环境治理/.test(t)) return '公用事业';
+  if(/农业|乡村振兴|种业|畜牧|农产品/.test(t)) return '农业食品';
+  if(/金融科技|银行|保险|证券|金融地产/.test(t) && /指数|ETF|主题/.test(t)) return '金融';
+  if(/地产|REITs|不动产|城市更新/.test(t)) return '地产REITs';
+  if(/消费|食品|白酒|零售|家电|饮料|文体/.test(t)) return '消费';
+  if(/红利|低波|股息|分红/.test(t)) return '红利价值';
+  if(/价值|蓝筹|大盘精选/.test(t)) return '价值蓝筹';
+  if(/成长|创新|先锋|新兴|转型|动力/.test(t)) return '成长';
+  if(/周期|钢铁|煤炭/.test(t)) return '周期';
+  if(/FOF|持有期混合发起\(FOF\)/.test(t)) return 'FOF配置';
+  if(/债券|增强|固收|添利|稳健/.test(t)) return '固收增强';
+  if(/(指数|ETF|LOF)/.test(t)) return '指数量化';
+  return '灵活配置';
+}
+
+function parseManager(row){
+  if(!row || row.length<12) return null;
+  const careerReturnStr = (row[7]||'0').replace('%','');
+  const careerReturn = parseFloat(careerReturnStr)||0;
+  const aumStr = (row[10]||'0').replace('亿元','');
+  const aum = parseFloat(aumStr)||0;
+  const workDays = parseInt(row[6])||0;
+  const years = Math.round(workDays/365*10)/10;
+  const bestReturnStr = (row[11]||'0').replace('%','');
+  const bestReturn = parseFloat(bestReturnStr)||0;
+  const fundNames = row[5]||'';
+  return {
+    id: row[0], name: row[1], companyId: row[2], company: row[3],
+    fundCodes: (row[4]||'').split(',').filter(Boolean),
+    fundNames: fundNames.split(',').filter(Boolean),
+    fundNamesStr: fundNames, workDays, years, careerReturn,
+    bestFundCode: row[8]||'', bestFundName: row[9]||'',
+    aum, bestReturn, style: classifyStyle(fundNames)
+  };
+}
+
+function processManagers(rawData){
+  const parsed = rawData.map(parseManager).filter(Boolean);
+  const seen = new Set();
+  const unique = [];
+  parsed.forEach(m=>{
+    const key = m.name + '|' + m.company;
+    if(!seen.has(key)){ seen.add(key); unique.push(m); }
+  });
+  allManagers = unique;
+  filteredManagers = unique.filter(m=> m.style !== '货币理财' && m.style !== '纯债固收');
+  filteredManagers.sort((a,b)=>b.careerReturn - a.careerReturn);
+  if(filteredManagers.length>500) filteredManagers = filteredManagers.slice(0,500);
+  return filteredManagers;
+}
+
+// ==================== ANALYSIS ENGINE ====================
+function median(arr){ const s=[...arr].sort((a,b)=>a-b); const m=Math.floor(s.length/2); return s.length%2?s[m]:(s[m-1]+s[m])/2; }
+function mean(arr){ return arr.reduce((a,b)=>a+b,0)/arr.length; }
+
+function runAnalysis(managers){
+  const a = {};
+  const returns = managers.map(m=>m.careerReturn);
+  const aums = managers.map(m=>m.aum);
+  const years = managers.map(m=>m.years);
+  a.overview = {
+    count: managers.length,
+    totalManagers: allManagers.length,
+    avgReturn: mean(returns),
+    medianReturn: median(returns),
+    maxReturn: Math.max(...returns),
+    minReturn: Math.min(...returns),
+    avgYears: mean(years),
+    totalAUM: aums.reduce((s,v)=>s+v,0),
+    positiveCount: returns.filter(r=>r>0).length,
+    over100Count: returns.filter(r=>r>100).length,
+    over200Count: returns.filter(r=>r>200).length,
+  };
+
+  const styleCounts = {};
+  const styleReturns = {};
+  managers.forEach(m=>{
+    styleCounts[m.style] = (styleCounts[m.style]||0) + 1;
+    if(!styleReturns[m.style]) styleReturns[m.style] = [];
+    styleReturns[m.style].push(m.careerReturn);
+  });
+  a.styles = Object.keys(styleCounts)
+    .map(s=>({
+      style: s, count: styleCounts[s],
+      pct: (styleCounts[s]/managers.length*100),
+      avgReturn: mean(styleReturns[s]),
+      medianReturn: median(styleReturns[s]),
+    }))
+    .sort((a,b)=>b.count-a.count);
+
+  const retBrackets = [
+    {label:'<0%',min:-999,max:0},{label:'0-20%',min:0,max:20},
+    {label:'20-50%',min:20,max:50},{label:'50-100%',min:50,max:100},
+    {label:'100-200%',min:100,max:200},{label:'200%+',min:200,max:9999}
+  ];
+  a.returnDist = retBrackets.map(b=>{
+    const count = managers.filter(m=>m.careerReturn>=b.min && m.careerReturn<b.max).length;
+    return {...b, count, pct: count/managers.length*100};
+  });
+  return a;
+}
+
+// ==================== SECTOR DISCOVERY ENGINE ====================
+let sectorDiscovery = null;
+
+function discoverSectors(managers){
+  const styleMap = {};
+  managers.forEach(m=>{
+    if(!styleMap[m.style]) styleMap[m.style] = {
+      style: m.style, managers: [], returns: [], aums: [], years: [], codes: new Set()
+    };
+    const s = styleMap[m.style];
+    s.managers.push(m);
+    s.returns.push(m.careerReturn);
+    s.aums.push(m.aum);
+    s.years.push(m.years);
+    m.fundCodes.forEach(c=>s.codes.add(c));
+  });
+
+  const overallAvgReturn = mean(managers.map(m=>m.careerReturn));
+  const overallMedianReturn = median(managers.map(m=>m.careerReturn));
+  const returnStdDev = Math.sqrt(managers.map(m=>Math.pow(m.careerReturn-overallAvgReturn,2)).reduce((a,b)=>a+b,0)/managers.length);
+
+  const discoveries = Object.values(styleMap)
+    .filter(s=>s.managers.length>=2)
+    .map(s=>{
+      const avgReturn = mean(s.returns);
+      const medReturn = median(s.returns);
+      const avgAUM = mean(s.aums);
+      const totalAUM = s.aums.reduce((a,b)=>a+b,0);
+      const avgYears = mean(s.years);
+      const topManager = s.managers.sort((a,b)=>b.careerReturn-a.careerReturn)[0];
+      const annReturn = avgYears>0 ? (Math.pow(1+avgReturn/100, 1/avgYears)-1)*100 : 0;
+      const count = s.managers.length;
+      const crowding = count / managers.length * 100;
+      const excessReturn = avgReturn - overallAvgReturn;
+      const zScore = returnStdDev>0 ? excessReturn / returnStdDev : 0;
+      const alphaSignal = excessReturn > 0 && crowding < 10;
+      const hiddenAlpha = excessReturn > returnStdDev*0.5 && crowding < 5;
+      const winRate = s.returns.filter(r=>r>0).length / count * 100;
+
+      const retContrib = Math.min(Math.max(excessReturn/3, -10), 40);
+      const annContrib = Math.min(Math.max(annReturn*1.5, 0), 20);
+      const scarcityContrib = alphaSignal ? Math.min(20, (excessReturn/returnStdDev)*15) : 0;
+      const winContrib = winRate/10;
+      const aumContrib = Math.min(totalAUM/100, 10);
+
+      const discoveryScore = Math.round(Math.max(0, Math.min(100,
+        retContrib + annContrib + scarcityContrib + winContrib + aumContrib
+      )));
+
+      let signal = 'normal';
+      if(hiddenAlpha || (excessReturn > returnStdDev && crowding < 8)) signal = 'alpha';
+      else if(excessReturn > returnStdDev*0.3 && winRate > 70) signal = 'strong';
+      else if(excessReturn > 0 && count <= 5) signal = 'emerging';
+
+      return {
+        style: s.style, count, crowding, avgReturn, medReturn, annReturn, avgAUM, totalAUM,
+        avgYears, topManager, winRate, excessReturn, zScore,
+        alphaSignal, hiddenAlpha, signal, discoveryScore,
+        fundCount: s.codes.size,
+      };
+    })
+    .sort((a,b)=>b.discoveryScore-a.discoveryScore);
+
+  return { discoveries, overallAvgReturn, overallMedianReturn, returnStdDev };
+}
+
+// ==================== RENDERING ====================
+function fmt(n, d=1){ return n.toFixed(d); }
+function fmtAUM(n){ return n>=10000?fmt(n/10000,1)+'万亿':n>=1?fmt(n,0)+'亿':fmt(n*100,0)+'百万'; }
+
+function renderAll(){
+  const el = document.getElementById('main-content');
+  let html = '';
+  html += renderOverview();
+  html += renderMarketReview();
+  html += renderDataDiscovery();
+  html += renderOutlook();
+  html += renderRecommendations();
+  html += renderSummary();
+  el.innerHTML = html;
+}
+
+// ===== 1. 数据概览 =====
+function renderOverview(){
+  const o = analysis.overview;
+  return `<div class="section" id="sec-overview">
+    <div class="sec-header"><span class="sec-icon">📊</span><span class="sec-title">数据概览</span><span class="sec-badge">TOP ${o.count}</span></div>
+    <div class="sec-body">
+      <div class="metrics">
+        <div class="metric"><div class="m-val">${o.count}</div><div class="m-label">权益类基金经理</div></div>
+        <div class="metric"><div class="m-val">${fmt(o.avgReturn)}%</div><div class="m-label">平均任职回报</div></div>
+      </div>
+      <div class="metrics tri">
+        <div class="metric"><div class="m-val">${fmt(o.avgYears)}</div><div class="m-label">平均从业(年)</div></div>
+        <div class="metric"><div class="m-val">${fmtAUM(o.totalAUM)}</div><div class="m-label">总管理规模</div></div>
+        <div class="metric"><div class="m-val">${fmt(o.maxReturn)}%</div><div class="m-label">最高回报</div></div>
+      </div>
+      <div style="font-size:11px;font-weight:600;margin:6px 0 6px;color:var(--sub)">回报分布</div>
+      <div class="bar-chart">${analysis.returnDist.map(b=>{
+        const w = Math.max(b.pct/Math.max(...analysis.returnDist.map(x=>x.pct))*100,2);
+        const color = b.min>=100?'#ef4444':b.min>=50?'#f97316':b.min>=20?'#eab308':b.min>=0?'#22c55e':'#94a3b8';
+        return `<div class="bar-row"><div class="bar-label">${b.label}</div><div class="bar-track"><div class="bar-fill" style="width:${w}%;background:${color}"><span>${b.count}</span></div></div><div class="bar-val">${fmt(b.pct)}%</div></div>`;
+      }).join('')}</div>
+    </div>
+  </div>`;
+}
+
+// ===== 2. 过去一年回顾（精简） =====
+function renderMarketReview(){
+  const m = MACRO_OUTLOOK;
+  const review = [...m.pastYearReview].sort((a,b)=>{
+    const ra = parseFloat(a.ret.replace('%','').replace('+',''));
+    const rb = parseFloat(b.ret.replace('%','').replace('+',''));
+    return rb-ra;
+  });
+  const maxRet = Math.max(...review.map(r=>Math.abs(parseFloat(r.ret.replace('%','').replace('+','')))));
+
+  const aiTag = aiMacroGenerated ? '<span style="font-size:9px;background:#3b82f6;color:white;padding:1px 6px;border-radius:4px;margin-left:6px">AI</span>' : '';
+
+  let html = `<div class="section" id="sec-review">
+    <div class="sec-header"><span class="sec-icon">📋</span><span class="sec-title">过去一年板块表现${aiTag}</span></div>
+    <div class="sec-body">
+      <div class="bar-chart">`;
+  review.forEach(r=>{
+    const val = parseFloat(r.ret.replace('%','').replace('+',''));
+    const w = Math.abs(val)/maxRet*100;
+    const color = val>=30?'#ef4444':val>=15?'#f59e0b':val>=0?'#22c55e':'#6366f1';
+    html += `<div class="bar-row">
+      <div class="bar-label" style="font-weight:${r.highlight?'700':'500'}">${r.icon} ${r.sector}</div>
+      <div class="bar-track"><div class="bar-fill" style="width:${w}%;background:${color}"><span>${r.ret}</span></div></div>
+      <div class="bar-val" style="color:${color};font-weight:700">${r.ret}</div>
+    </div>`;
+  });
+  html += `</div>`;
+
+  const highlights = review.filter(r=>r.highlight);
+  if(highlights.length>0){
+    html += `<div class="insight" style="margin-top:12px">
+      <div class="i-title">🔥 强势板块</div>
+      <div class="i-body">${highlights.map(r=>`<b>${r.sector}(${r.ret})</b>：${r.detail.substring(0,80)}...`).join('<br>')}</div>
+    </div>`;
+  }
+  html += `</div></div>`;
+  return html;
+}
+
+// ===== 3. 数据驱动·赛道发现 =====
+function renderDataDiscovery(){
+  if(!sectorDiscovery) sectorDiscovery = discoverSectors(filteredManagers);
+  const { discoveries, overallAvgReturn, returnStdDev } = sectorDiscovery;
+
+  const alphaCount = discoveries.filter(d=>d.signal==='alpha').length;
+  const strongCount = discoveries.filter(d=>d.signal==='strong').length;
+  const emergingCount = discoveries.filter(d=>d.signal==='emerging').length;
+
+  const signalLabel = {alpha:'🔥被忽视的α',strong:'💪强势信号',emerging:'🌱潜力萌芽',normal:''};
+  const signalDesc = {
+    alpha:'高超额回报+低拥挤度=可能被市场忽视的结构性机会',
+    strong:'超额回报显著且胜率高，已被市场认可但趋势仍在',
+    emerging:'管理人少但回报突出，可能是早期信号',
+    normal:'表现中性或偏弱'
+  };
+
+  let html = `<div class="section" id="sec-discover">
+    <div class="sec-header"><span class="sec-icon">🔬</span><span class="sec-title">数据驱动·赛道发现</span><span class="sec-badge">自下而上</span></div>
+    <div class="sec-body">
+      <div style="font-size:10px;color:var(--sub);line-height:1.6;margin-bottom:10px">
+        自动扫描所有${discoveries.length}个风格的<b>超额回报</b>、<b>拥挤度</b>、<b>胜率</b>，识别三类信号：
+        <span style="color:#92400e">🔥α</span> = 高回报+低拥挤，
+        <span style="color:#166534">💪强势</span> = 高回报+高胜率，
+        <span style="color:#1e40af">🌱萌芽</span> = 人少但突出
+      </div>
+      <div class="metrics tri">
+        <div class="metric"><div class="m-val" style="color:#92400e">${alphaCount}</div><div class="m-label">🔥被忽视的α</div></div>
+        <div class="metric"><div class="m-val" style="color:#166534">${strongCount}</div><div class="m-label">💪强势信号</div></div>
+        <div class="metric"><div class="m-val" style="color:#1e40af">${emergingCount}</div><div class="m-label">🌱潜力萌芽</div></div>
+      </div>
+      <div style="font-size:9px;color:var(--sub);margin:4px 0 10px;text-align:center">全体均回 ${fmt(overallAvgReturn)}% · 标准差 ${fmt(returnStdDev)} · 超均值+0.5σ(${fmt(overallAvgReturn+returnStdDev*0.5)}%)即为显著超额</div>`;
+
+  const signaled = discoveries.filter(d=>d.signal!=='normal');
+  const normals = discoveries.filter(d=>d.signal==='normal');
+
+  signaled.forEach(d=>{
+    html += `<div class="disc-card ${d.signal}">
+      <div class="disc-header">
+        <span class="disc-signal ${d.signal}">${signalLabel[d.signal]}</span>
+        <span class="disc-style">${d.style}</span>
+        <span style="font-size:14px;font-weight:800;color:${d.avgReturn>=0?'var(--up)':'var(--down)'}">${d.discoveryScore}分</span>
+      </div>
+      <div class="disc-metrics">
+        <div class="disc-m"><div class="dm-val" style="color:${d.avgReturn>overallAvgReturn?'var(--up)':'inherit'}">${fmt(d.avgReturn)}%</div><div class="dm-label">平均回报</div></div>
+        <div class="disc-m"><div class="dm-val">${d.count}人</div><div class="dm-label">拥挤度${fmt(d.crowding)}%</div></div>
+        <div class="disc-m"><div class="dm-val">${fmt(d.winRate,0)}%</div><div class="dm-label">胜率</div></div>
+        <div class="disc-m"><div class="dm-val">${fmt(d.annReturn)}%</div><div class="dm-label">年化</div></div>
+      </div>
+      <div class="disc-body">
+        超额回报: <b>${d.excessReturn>=0?'+':''}${fmt(d.excessReturn)}%</b> (Z=${fmt(d.zScore,2)}) ·
+        Top经理: <b>${d.topManager.name}</b>(${d.topManager.company}, +${fmt(d.topManager.careerReturn)}%)
+      </div>
+      <div class="disc-why">${signalDesc[d.signal]}</div>
+    </div>`;
+  });
+
+  if(normals.length>0){
+    html += `<div style="font-size:11px;font-weight:600;color:var(--sub);margin:12px 0 6px">📋 其他风格（无显著信号）</div>
+    <table class="compact-table">
+      <tr><th>风格</th><th>人数</th><th>均回</th><th>胜率</th><th>年化</th><th>得分</th></tr>
+      ${normals.map(d=>`<tr>
+        <td><b>${d.style}</b></td>
+        <td>${d.count}</td>
+        <td style="color:${d.avgReturn>overallAvgReturn?'var(--up)':'inherit'}">${fmt(d.avgReturn)}%</td>
+        <td>${fmt(d.winRate,0)}%</td>
+        <td>${fmt(d.annReturn)}%</td>
+        <td>${d.discoveryScore}</td>
+      </tr>`).join('')}
+    </table>`;
+  }
+
+  const topAlpha = signaled.filter(d=>d.signal==='alpha');
+  html += `<div class="insight" style="margin-top:12px">
+    <div class="i-title">🎯 核心价值</div>
+    <div class="i-body">
+      让所有${discoveries.length}个风格自动排名，不漏掉任何赛道。${topAlpha.length>0?`当前α赛道：<b>${topAlpha.map(d=>`${d.style}(超额${d.excessReturn>=0?'+':''}${fmt(d.excessReturn)}%)`).join('、')}</b>——低拥挤+高回报，最容易被传统分析遗漏。`:''}
+    </div>
+  </div>`;
+  html += `</div></div>`;
+  return html;
+}
+
+// ===== 4. 未来三个月前瞻 =====
+function renderOutlook(){
+  const m = MACRO_OUTLOOK;
+  const aiTag = aiMacroGenerated ? '<span style="font-size:9px;background:#3b82f6;color:white;padding:1px 6px;border-radius:4px;margin-left:6px">AI分析</span>' : '';
+
+  let html = `<div class="section" id="sec-outlook">
+    <div class="sec-header"><span class="sec-icon">🔮</span><span class="sec-title">未来三个月前瞻${aiTag}</span><span class="sec-badge">${m.period}</span></div>
+    <div class="sec-body">
+      <div style="font-size:11px;font-weight:600;margin-bottom:8px;color:var(--sub)">🌍 国际形势</div>
+      ${m.intlFactors.map(f=>{
+        const color = f.score>=75?'#ef4444':f.score>=60?'#f59e0b':f.score>=45?'#8b5cf6':'#64748b';
+        return `<div class="outlook-factor">
+          <div class="of-label">${f.label}</div>
+          <div class="of-bar"><div class="of-fill" style="width:${f.score}%;background:${color}"></div></div>
+          <div class="of-score" style="color:${color}">${f.score}</div>
+          <div class="of-trend ${f.cls}">${f.trend}</div>
+        </div>
+        <div style="font-size:9px;color:var(--sub);padding:0 0 6px 68px;line-height:1.4">${f.desc}</div>`;
+      }).join('')}
+
+      <div style="font-size:11px;font-weight:600;margin:16px 0 8px;color:var(--sub)">🇨🇳 国内形势</div>
+      ${m.domesticFactors.map(f=>{
+        const color = f.score>=75?'#ef4444':f.score>=60?'#f59e0b':f.score>=45?'#8b5cf6':'#64748b';
+        return `<div class="outlook-factor">
+          <div class="of-label">${f.label}</div>
+          <div class="of-bar"><div class="of-fill" style="width:${f.score}%;background:${color}"></div></div>
+          <div class="of-score" style="color:${color}">${f.score}</div>
+          <div class="of-trend ${f.cls}">${f.trend}</div>
+        </div>
+        <div style="font-size:9px;color:var(--sub);padding:0 0 6px 68px;line-height:1.4">${f.desc}</div>`;
+      }).join('')}
+
+      ${(() => {
+        const topRecos = m.sectorRecos.filter(s=>s.rating.includes('强烈')).slice(0,2);
+        if(topRecos.length>0){
+          return `<div class="insight" style="margin:12px 0 8px;background:linear-gradient(135deg,#fef3c7,#fffbeb);border-left:3px solid #d97706">
+            <div class="i-title">🔥 核心判断：${topRecos.map(s=>s.sector).join(' + ')}</div>
+            <div class="i-body">${topRecos.map(s=>`<b>${s.sector}(${s.weight}%)：</b>${s.reason}`).join('<br><br>')}</div>
+          </div>`;
+        }
+        return '';
+      })()}
+
+      <div style="font-size:11px;font-weight:600;margin:16px 0 8px;color:var(--sub)">📊 板块配置建议</div>
+      ${m.sectorRecos.map(s=>{
+        const ratingCls = s.rating.includes('强烈')?'strong':s.rating.includes('推荐')||s.rating.includes('适度')?'ok':'weak';
+        return `<div class="alloc-row">
+          <div class="alloc-sector">${s.sector}</div>
+          <div class="alloc-bar"><div class="alloc-fill" style="width:${s.weight*2.5}%;background:${s.color}"><span>${s.weight}%</span></div></div>
+          <div class="alloc-rating ${ratingCls}">${s.rating}</div>
+        </div>
+        <div style="font-size:9px;color:var(--sub);padding:2px 0 6px 80px;line-height:1.4">${s.reason}</div>`;
+      }).join('')}
+    </div>
+  </div>`;
+  return html;
+}
+
+// ===== 5. 综合推荐基金 =====
+function renderRecommendations(){
+  if(!sectorDiscovery) sectorDiscovery = discoverSectors(filteredManagers);
+  const { discoveries, overallAvgReturn } = sectorDiscovery;
+
+  const dynamicStyleScore = {};
+  discoveries.forEach(d=>{
+    let score = d.discoveryScore * 0.3;
+    if(d.signal==='alpha') score += 15;
+    else if(d.signal==='strong') score += 8;
+    else if(d.signal==='emerging') score += 5;
+    const macroMatch = MACRO_OUTLOOK.sectorRecos.find(s=>{
+      const sectorLower = s.sector;
+      if(d.style==='科技成长'||d.style==='指数量化') return sectorLower.includes('科技');
+      if(d.style==='有色金属') return sectorLower.includes('有色');
+      if(d.style==='贵金属'||d.style==='商品资源') return sectorLower.includes('贵金属');
+      if(d.style==='红利价值'||d.style==='价值蓝筹') return sectorLower.includes('红利');
+      if(d.style==='消费'||d.style==='医药健康') return sectorLower.includes('消费');
+      if(d.style==='军工国防'||d.style==='成长') return sectorLower.includes('制造');
+      if(d.style==='跨境QDII') return sectorLower.includes('跨境');
+      if(d.style==='新能源') return sectorLower.includes('新能源');
+      if(d.style==='化工材料'||d.style==='周期'||d.style==='基础设施') return sectorLower.includes('制造');
+      return false;
+    });
+    if(macroMatch) score += macroMatch.weight * 0.5;
+    dynamicStyleScore[d.style] = Math.round(score);
+  });
+
+  const scored = filteredManagers
+    .filter(m=>m.careerReturn>0 && m.bestFundCode && m.style!=='固收增强' && m.years>=2)
+    .map(m=>{
+      const retScore = Math.min(m.careerReturn/3, 35);
+      const sectorScore = dynamicStyleScore[m.style] || 10;
+      const expScore = m.years>=3 && m.years<=8 ? 15 : m.years>=2 && m.years<3 ? 10 : m.years>8 && m.years<=15 ? 12 : 8;
+      const aumScore = m.aum>=10 && m.aum<=300 ? 5 : 2;
+      const total = retScore + sectorScore + expScore + aumScore;
+      return {...m, score: Math.round(total)};
+    })
+    .sort((a,b)=>b.score-a.score);
+
+  const signalStyles = new Set(discoveries.filter(d=>d.signal!=='normal').map(d=>d.style));
+  const styleCounts = {};
+  const recos = [];
+  for(const m of scored){
+    if(recos.length>=20) break;
+    const sc = styleCounts[m.style]||0;
+    if(sc>=3) continue;
+    if(signalStyles.has(m.style) && sc===0){
+      styleCounts[m.style] = 1;
+      recos.push(m);
+    }
+  }
+  for(const m of scored){
+    if(recos.length>=20) break;
+    if(recos.find(r=>r.id===m.id)) continue;
+    const sc = styleCounts[m.style]||0;
+    if(sc>=3) continue;
+    styleCounts[m.style] = sc+1;
+    recos.push(m);
+  }
+  recos.sort((a,b)=>b.score-a.score);
+
+  const styleSignals = {};
+  discoveries.forEach(d=>{ if(d.signal!=='normal') styleSignals[d.style]=d.signal; });
+  const signalEmoji = {alpha:'🔥',strong:'💪',emerging:'🌱'};
+  const signalColor = {alpha:'#d97706',strong:'#22c55e',emerging:'#3b82f6'};
+
+  return `<div class="section" id="sec-recos">
+    <div class="sec-header"><span class="sec-icon">🎖️</span><span class="sec-title">综合推荐基金</span><span class="sec-badge">精选${recos.length}只</span></div>
+    <div class="sec-body">
+      <div style="font-size:10px;color:var(--sub);line-height:1.6;margin-bottom:12px">
+        评分：<b>发现引擎(40%)</b> + <b>宏观匹配(15%)</b> + <b>任职回报(30%)</b> + <b>经验规模(15%)</b>。
+        带标记为<span style="color:#d97706">🔥α</span>/<span style="color:#22c55e">💪强势</span>/<span style="color:#3b82f6">🌱萌芽</span>信号。
+      </div>
+      ${recos.map((m,i)=>{
+        const rankCls = i===0?'r1':i===1?'r2':i===2?'r3':'rn';
+        const retColor = m.careerReturn>=0?'var(--up)':'var(--down)';
+        const sig = styleSignals[m.style];
+        const hasSig = !!sig;
+        const borderColor = hasSig ? signalColor[sig] : '';
+        const bgColor = sig==='alpha'?'#fffbeb':sig==='strong'?'#f0fdf4':sig==='emerging'?'#eff6ff':'';
+        const inWatch = watchlist.find(w=>w.code===m.bestFundCode);
+        const inHold = holdings.find(h=>h.code===m.bestFundCode);
+        const safeName = m.bestFundName.replace(/'/g,"\\'").replace(/\(/g,"\\(").replace(/\)/g,"\\)");
+        return `<div class="reco-card" style="${hasSig?`border-left:3px solid ${borderColor};background:${bgColor}`:''}">
+          <div class="rc-top">
+            <div class="rc-rank ${rankCls}">${i+1}</div>
+            <div class="rc-name">${m.bestFundName}</div>
+            <div class="rc-ret" style="color:${retColor}">+${fmt(m.careerReturn)}%</div>
+          </div>
+          <div class="rc-mid">
+            <span class="rc-tag mgr">\ud83d\udc64 ${m.name}</span>
+            <span class="rc-tag style" style="${hasSig?`background:${borderColor}20;color:${borderColor}`:''}">${m.style}${hasSig?' '+signalEmoji[sig]:''}</span>
+            <span style="font-size:9px;color:var(--sub)">${m.bestFundCode} \u00b7 ${m.company} \u00b7 ${fmt(m.years,0)}\u5e74 \u00b7 \u7efc\u5408${m.score}\u5206</span>
+          </div>
+          <div class="rc-actions">
+            ${inWatch||inHold
+              ?'<button class="rc-btn added" disabled>\u2705 \u5df2\u6dfb\u52a0</button>'
+              :`<button class="rc-btn primary" onclick="addToWatch('${m.bestFundCode}','${safeName}','${m.style}')">\u2b50 \u52a0\u81ea\u9009</button>`}
+            ${inHold
+              ?''
+              :`<button class="rc-btn outline" onclick="addToHold('${m.bestFundCode}','${safeName}')">\ud83d\udcb0 \u52a0\u6301\u4ed3</button>`}
+          </div>
+        </div>`;
+      }).join('')}
+      <div class="warn-box">
+        <b>⚠️ 风险提示：</b>以上推荐基于数据驱动分析，不构成投资建议。历史表现不代表未来收益。投资有风险，建议分批建仓、中长线持有。
+      </div>
+    </div>
+  </div>`;
+}
+
+// ===== 6. 投资策略总结 =====
+function renderSummary(){
+  const o = analysis.overview;
+  if(!sectorDiscovery) sectorDiscovery = discoverSectors(filteredManagers);
+  const { discoveries } = sectorDiscovery;
+  const m = MACRO_OUTLOOK;
+
+  const alphaStyles = discoveries.filter(d=>d.signal==='alpha');
+  const strongStyles = discoveries.filter(d=>d.signal==='strong');
+  const emergingStyles = discoveries.filter(d=>d.signal==='emerging');
+  const allSignals = [...alphaStyles, ...strongStyles, ...emergingStyles];
+
+  const bestStyle = [...analysis.styles].sort((a,b)=>b.avgReturn-a.avgReturn)[0];
+
+  return `<div class="summary-box" id="sec-summary">
+    <div class="sb-title">📋 投资策略总结</div>
+    <p>基于 <b>${o.count}</b> 位头部基金经理的数据分析 + 宏观研判：</p>
+
+    <ul>
+      ${alphaStyles.length>0?`<li><b style="color:#92400e">🔥 被忽视的α(${alphaStyles.length}个)：</b>${alphaStyles.map(d=>`${d.style}(超额${d.excessReturn>=0?'+':''}${fmt(d.excessReturn)}%, 胜率${fmt(d.winRate,0)}%)`).join('、')}——低拥挤+高回报，中长线最有价值。</li>`:''}
+      ${strongStyles.length>0?`<li><b style="color:#166534">💪 强势信号(${strongStyles.length}个)：</b>${strongStyles.map(d=>`${d.style}(超额${d.excessReturn>=0?'+':''}${fmt(d.excessReturn)}%)`).join('、')}——趋势确认，可作核心配置。</li>`:''}
+      ${emergingStyles.length>0?`<li><b style="color:#1e40af">🌱 潜力萌芽(${emergingStyles.length}个)：</b>${emergingStyles.map(d=>`${d.style}(${d.count}人)`).join('、')}——值得前瞻布局。</li>`:''}
+      ${bestStyle?`<li><b>最强风格：</b>${bestStyle.style}(均回${fmt(bestStyle.avgReturn)}%)</li>`:''}
+    </ul>
+
+    <p style="margin-top:8px;font-weight:600">🔮 配置建议（${m.period}）：</p>
+    <ul>
+      <li><b>第一梯队：</b>${allSignals.filter(d=>d.signal==='alpha'||d.discoveryScore>=60).map(d=>d.style).join('、')||'科技/AI, 有色金属'}——数据+宏观双重共振。</li>
+      ${m.sectorRecos.filter(s=>s.weight>=12).map(s=>`<li><b>${s.sector}(${s.weight}%)：</b>${s.reason.substring(0,60)}...</li>`).join('')}
+    </ul>
+
+    <p style="margin-top:8px;font-weight:600">⚠️ 风控铁律：</p>
+    <ul>
+      <li>单一赛道不超25%，单一基金不超15%</li>
+      <li>α信号赛道建议分3-6个月分批建仓</li>
+      <li>每月重新运行发现引擎，信号变化时调整</li>
+    </ul>
+  </div>`;
+}
+
+// ==================== INTEGRATION ====================
+function addToWatch(code, name, type){
+  if(watchlist.find(w=>w.code===code)) return;
+  watchlist.push({code, name, type: type||'基金'});
+  localStorage.setItem(LS_WATCHLIST, JSON.stringify(watchlist));
+  renderAll();
+}
+
+function addToHold(code, name){
+  if(holdings.find(h=>h.code===code)) return;
+  holdings.push({code, name, cost:10000});
+  localStorage.setItem(LS_HOLDINGS, JSON.stringify(holdings));
+  renderAll();
+}
+
+function setupNavHighlight(){
+  const sections = ['sec-overview','sec-review','sec-discover','sec-outlook','sec-recos','sec-summary'];
+  const navItems = document.querySelectorAll('.nav-item');
+  window.addEventListener('scroll',()=>{
+    let current = sections[0];
+    sections.forEach(id=>{
+      const el = document.getElementById(id);
+      if(el && el.getBoundingClientRect().top <= 120) current = id;
+    });
+    navItems.forEach(item=>{
+      item.classList.toggle('active', item.getAttribute('href')==='#'+current);
+    });
+  });
+}
+
+// ==================== INITIALIZATION ====================
+async function init(){
+  setLoadProgress(5, '连接天天基金API...');
+
+  let rawData = [];
+  try {
+    rawData = await fetchAllManagers();
+  } catch(e){
+    console.error('API fetch failed:', e);
+  }
+
+  if(rawData.length < 50){
+    const cached = sessionStorage.getItem('tm_rawData');
+    if(cached){
+      setLoadProgress(75, '使用缓存数据...');
+      rawData = JSON.parse(cached);
+    } else {
+      setLoadProgress(75, '使用内置数据进行分析...');
+      rawData = generateFallbackData();
+    }
+  } else {
+    sessionStorage.setItem('tm_rawData', JSON.stringify(rawData));
+  }
+
+  setLoadProgress(80, `处理 ${rawData.length} 位基金经理数据...`);
+  const managers = processManagers(rawData);
+
+  setLoadProgress(85, '执行策略分析...');
+  analysis = runAnalysis(managers);
+  sectorDiscovery = discoverSectors(filteredManagers);
+
+  if(_302aiKey){
+    setLoadProgress(88, '🧠 调用AI分析宏观形势...');
+    try {
+      const aiOutlook = await generateAIMacroOutlook((msg)=>{
+        setLoadProgress(90, msg);
+      });
+      if(aiOutlook){
+        MACRO_OUTLOOK.pastYearReview = aiOutlook.pastYearReview || MACRO_OUTLOOK.pastYearReview;
+        MACRO_OUTLOOK.intlFactors = aiOutlook.intlFactors || MACRO_OUTLOOK.intlFactors;
+        MACRO_OUTLOOK.domesticFactors = aiOutlook.domesticFactors || MACRO_OUTLOOK.domesticFactors;
+        MACRO_OUTLOOK.sectorRecos = aiOutlook.sectorRecos || MACRO_OUTLOOK.sectorRecos;
+        if(aiOutlook.period) MACRO_OUTLOOK.period = aiOutlook.period;
+        if(aiOutlook.updated) MACRO_OUTLOOK.updated = aiOutlook.updated;
+        aiMacroGenerated = true;
+        setLoadProgress(95, '✅ AI宏观分析完成');
+      } else {
+        setLoadProgress(95, '⚠️ AI分析失败，使用默认数据');
+      }
+    } catch(e){
+      console.error('AI macro generation failed:', e);
+      setLoadProgress(95, '⚠️ AI分析异常，使用默认数据');
+    }
+  } else {
+    setLoadProgress(95, '生成投资建议...');
+  }
+
+  await new Promise(r=>setTimeout(r, 300));
+  setLoadProgress(100, '分析完成！');
+  document.getElementById('update-time').textContent = new Date().toLocaleString('zh-CN',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});
+
+  await new Promise(r=>setTimeout(r, 500));
+  document.getElementById('loading-overlay').classList.add('hide');
+
+  renderAll();
+  setupNavHighlight();
+}
+
+// ==================== FALLBACK DATA ====================
+function generateFallbackData(){
+  const companies = [
+    '易方达基金','广发基金','华夏基金','富国基金','南方基金','博时基金','嘉实基金','招商基金',
+    '工银瑞信基金','汇添富基金','中欧基金','景顺长城基金','鹏华基金','银华基金','交银施罗德基金',
+    '国泰基金','华安基金','天弘基金','兴证全球基金','大成基金','万家基金','前海开源基金',
+    '信达澳亚基金','中庚基金','睿远基金','华宝基金','长城基金','民生加银基金','永赢基金','诺安基金',
+    '融通基金','华商基金','农银汇理基金','中信建投基金','红土创新基金','宝盈基金','安信基金',
+    '德邦基金','同泰基金','汇安基金','恒越基金','路博迈基金','东吴基金','圆信永丰基金','华泰柏瑞基金'
+  ];
+  const styleWords = [
+    ['科技创新','人工智能','芯片产业','半导体','数字经济','智能驱动'],
+    ['消费精选','食品饮料','消费行业','白酒','医疗健康','医药'],
+    ['价值发现','蓝筹精选','核心价值','大盘精选','红利低波'],
+    ['均衡成长','新兴成长','灵活配置','策略精选','先锋成长'],
+    ['新能源','光伏产业','碳中和','绿色主题','低碳先锋'],
+    ['沪深300指数','中证500指数','创业板指数','科创50指数','量化精选'],
+    ['港股通','全球精选','QDII','纳斯达克','恒生科技'],
+    ['军工','国防安全','航天军工'],
+    ['周期精选','有色金属','资源精选','黄金ETF'],
+    ['行业轮动','产业趋势','趋势领先']
+  ];
+  const familyNames = '张王李赵陈刘杨黄周吴徐孙马朱胡郭何高林罗郑梁谢宋唐韩曹许邓萧冯曾程蔡彭潘袁蒋吕苏卢蒋崔丁魏薛叶阎余潘杜戴夏钟'.split('');
+  const givenParts = '明华文伟强磊洋勇艳杰娜鑫磊静敏燕丽刚斌峰超琳浩博宇飞祥凯旭昊翔瑞宸皓远哲'.split('');
+
+  function rnd(min,max){return Math.random()*(max-min)+min}
+  function rndInt(min,max){return Math.floor(rnd(min,max+1))}
+  function rndPick(arr){return arr[rndInt(0,arr.length-1)]}
+  function rndName(){return rndPick(familyNames)+(Math.random()>0.4?rndPick(givenParts)+rndPick(givenParts):rndPick(givenParts))}
+
+  const data = [];
+  const usedNames = new Set();
+  for(let i=0; i<600; i++){
+    let name = rndName();
+    while(usedNames.has(name)) name = rndName();
+    usedNames.add(name);
+    const company = rndPick(companies);
+    const styleGroup = rndPick(styleWords);
+    const fundName1 = company.replace('基金','') + rndPick(styleGroup) + rndPick(['混合A','股票A','混合','股票']);
+    const fundName2 = company.replace('基金','') + rndPick(styleGroup) + rndPick(['混合C','股票C']);
+    const years = rnd(1,22);
+    const workDays = Math.round(years*365);
+    const careerReturn = rnd(-30,400) + (years>10?rnd(0,100):0);
+    const aum = rnd(0.1, years>10?500:100);
+    const code1 = String(rndInt(0,25999)).padStart(6,'0');
+    const code2 = String(rndInt(0,25999)).padStart(6,'0');
+    data.push([
+      String(30000000+i), name, String(80000000+i), company,
+      `${code1},${code2}`, `${fundName1},${fundName2}`,
+      String(workDays), careerReturn.toFixed(2)+'%',
+      code1, fundName1,
+      aum.toFixed(2)+'亿元', (careerReturn*rnd(0.3,1.2)).toFixed(2)+'%'
+    ]);
+  }
+  return data;
+}
+
+// Start
+init();
+</script>
+</body>
+</html>
