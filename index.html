@@ -123,7 +123,24 @@ body { font-family:-apple-system,BlinkMacSystemFont,'SF Pro','PingFang SC','Helv
 .bottom-btn.secondary:hover { background:#eef2ff; }
 
 /* Modal */
-.modal-overlay { display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(15,23,42,0.5); backdrop-filter:blur(4px); -webkit-backdrop-filter:blur(4px); z-index:200; align-items:center; justify-content:center; }
+.modal-overlay { display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(15,23,42,0.5); backdrop-filter:blur(4px); -webkit-backdrop-filter:blur(4px); z-index:400; align-items:center; justify-content:center; }
+.fund-search-box { position:relative; margin-bottom:12px; }
+.fund-search-box input { width:100%; padding:12px 14px 12px 36px; border:1.5px solid var(--border); border-radius:12px; font-size:14px; outline:none; background:var(--gray-bg); transition:border-color .2s,box-shadow .2s; }
+.fund-search-box input:focus { border-color:var(--primary); background:#fff; box-shadow:0 0 0 3px rgba(99,102,241,0.1); }
+.fund-search-box .search-icon { position:absolute; left:12px; top:50%; transform:translateY(-50%); font-size:14px; color:var(--sub); pointer-events:none; }
+.fund-search-results { max-height:260px; overflow-y:auto; border:1px solid var(--border); border-radius:12px; background:var(--card); }
+.fund-search-results:empty { display:none; }
+.fund-result-item { display:flex; align-items:center; padding:10px 14px; cursor:pointer; border-bottom:1px solid var(--border); transition:background .15s; gap:10px; }
+.fund-result-item:last-child { border-bottom:none; }
+.fund-result-item:hover,.fund-result-item:active { background:var(--primary-bg); }
+.fund-result-code { font-size:13px; font-weight:700; color:var(--primary); min-width:60px; font-variant-numeric:tabular-nums; }
+.fund-result-name { font-size:12px; color:var(--text); flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.fund-result-type { font-size:9px; background:var(--gray-bg); color:var(--sub); padding:2px 6px; border-radius:6px; white-space:nowrap; }
+.fund-search-hint { text-align:center; padding:20px 10px; font-size:11px; color:var(--sub); }
+.fund-selected-card { display:flex; align-items:center; gap:10px; padding:12px 14px; background:linear-gradient(135deg,var(--primary-bg),#eef2ff); border:1.5px solid var(--primary); border-radius:12px; margin-bottom:14px; }
+.fund-selected-card .sel-code { font-size:15px; font-weight:700; color:var(--primary); }
+.fund-selected-card .sel-name { font-size:13px; color:var(--text); flex:1; }
+.fund-selected-card .sel-clear { background:none; border:none; font-size:16px; color:var(--sub); cursor:pointer; padding:4px; }
 .modal { background:var(--card); border-radius:20px; margin:16px; padding:24px; max-width:380px; width:100%; max-height:85vh; overflow-y:auto; box-shadow:0 20px 60px rgba(0,0,0,0.15); }
 .modal h3 { font-size:17px; margin-bottom:16px; display:flex; justify-content:space-between; align-items:center; }
 .modal h3 button { background:none; border:none; font-size:18px; cursor:pointer; color:var(--sub); width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; transition:background .2s; }
@@ -437,19 +454,26 @@ body { font-family:-apple-system,BlinkMacSystemFont,'SF Pro','PingFang SC','Helv
 <div class="modal-overlay" id="add-modal" onclick="if(event.target===this)closeAddModal()">
   <div class="modal">
     <h3 id="add-modal-title">添加持仓 <button onclick="closeAddModal()">✕</button></h3>
-    <div class="form-row"><label>基金代码</label><input type="text" id="add-code" placeholder="如 000216" maxlength="6" oninput="autoLookupFund()"></div>
-    <div class="form-row"><label>基金名称 (选填，可自动识别)</label><input type="text" id="add-name" placeholder="输入6位代码后自动识别..."></div>
-    <div id="add-lookup-hint" style="font-size:10px;color:var(--sub);margin:-8px 0 8px;min-height:16px"></div>
-    <div class="form-row" id="add-type-row"><label>类型</label>
-      <select id="add-type"><option value="宽基">宽基</option><option value="AI/科技">AI/科技</option><option value="黄金">黄金</option><option value="红利">红利</option><option value="军工">军工</option><option value="新能源">新能源</option><option value="消费">消费</option><option value="医药">医药</option><option value="半导体">半导体</option><option value="有色金属">有色金属</option><option value="QDII">QDII</option><option value="其他">其他</option></select>
+    <!-- 搜索区 -->
+    <div id="add-search-area">
+      <div class="fund-search-box">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="add-search-input" placeholder="输入基金代码或名称搜索..." oninput="onFundSearchInput()" autocomplete="off">
+      </div>
+      <div class="fund-search-results" id="add-search-results"></div>
+      <div id="add-search-hint" class="fund-search-hint">输入基金代码（如 000216）或关键词（如「黄金」）搜索</div>
     </div>
-    <button class="form-btn" id="add-confirm-btn" onclick="confirmAdd()">确认添加</button>
-    <div style="margin-top:10px;font-size:10px;color:var(--sub)">
-      <b>常用基金速查：</b><br>
-      <span style="cursor:pointer;text-decoration:underline" onclick="quickAdd('000216','华安黄金ETF联接A','黄金')">000216 华安黄金</span> ·
-      <span style="cursor:pointer;text-decoration:underline" onclick="quickAdd('012414','华夏A500ETF联接A','宽基')">012414 华夏A500</span> ·
-      <span style="cursor:pointer;text-decoration:underline" onclick="quickAdd('011852','天弘云计算ETF联接A','AI/科技')">011852 天弘云计算</span> ·
-      <span style="cursor:pointer;text-decoration:underline" onclick="quickAdd('004814','中欧红利优享A','红利')">004814 中欧红利</span>
+    <!-- 已选中区 -->
+    <div id="add-selected-area" style="display:none">
+      <div class="fund-selected-card">
+        <span class="sel-code" id="add-sel-code"></span>
+        <span class="sel-name" id="add-sel-name"></span>
+        <button class="sel-clear" onclick="clearFundSelection()" title="重新选择">✕</button>
+      </div>
+      <div class="form-row" id="add-type-row"><label>类型</label>
+        <select id="add-type"><option value="宽基">宽基</option><option value="AI/科技">AI/科技</option><option value="黄金">黄金</option><option value="红利">红利</option><option value="军工">军工</option><option value="新能源">新能源</option><option value="消费">消费</option><option value="医药">医药</option><option value="半导体">半导体</option><option value="有色金属">有色金属</option><option value="QDII">QDII</option><option value="其他">其他</option></select>
+      </div>
+      <button class="form-btn" onclick="confirmAdd()">确认添加</button>
     </div>
   </div>
 </div>
@@ -1709,53 +1733,145 @@ async function triggerAI(){
   }
 }
 
+let _selectedFund = null; // {code, name}
+let _searchTimer = null;
+
 function openAddModal(mode){
   _addMode = mode;
+  _selectedFund = null;
   document.getElementById('add-modal').style.display = 'flex';
-  document.getElementById('add-modal-title').innerHTML = (mode==='holding'?'添加持仓':'添加自选') + ' <button onclick="closeAddModal()">✕</button>';
-  document.getElementById('add-code').value = '';
-  document.getElementById('add-name').value = '';
-  document.getElementById('add-lookup-hint').textContent = '';
-  document.getElementById('add-code').focus();
+  document.getElementById('add-modal-title').innerHTML = (mode==='holding'?'➕ 添加持仓':'➕ 添加自选') + ' <button onclick="closeAddModal()">✕</button>';
+  document.getElementById('add-search-area').style.display = '';
+  document.getElementById('add-selected-area').style.display = 'none';
+  document.getElementById('add-search-input').value = '';
+  document.getElementById('add-search-results').innerHTML = '';
+  document.getElementById('add-search-hint').style.display = '';
+  setTimeout(()=>document.getElementById('add-search-input').focus(), 100);
 }
 
-let _lookupTimer = null;
-async function autoLookupFund(){
-  const code = document.getElementById('add-code').value.trim();
-  const nameInput = document.getElementById('add-name');
-  const hint = document.getElementById('add-lookup-hint');
-  if(code.length < 6){ hint.textContent = ''; return; }
-  if(code.length > 6) return;
+function closeAddModal(){ document.getElementById('add-modal').style.display='none'; _selectedFund=null; }
 
-  // 先查本地
-  const local = FUND_DB.find(f=>f.code===code) || RECO_FUND_POOL.find(f=>f.code===code);
-  if(local){
-    nameInput.value = local.name;
-    hint.innerHTML = `<span style="color:var(--green)">✅ ${local.name}</span>`;
-    // 自动选择类型
-    autoSelectType(local.type);
+function onFundSearchInput(){
+  const q = (document.getElementById('add-search-input').value||'').trim();
+  const resultsEl = document.getElementById('add-search-results');
+  const hintEl = document.getElementById('add-search-hint');
+
+  if(q.length === 0){
+    resultsEl.innerHTML = '';
+    hintEl.style.display = '';
+    hintEl.textContent = '输入基金代码（如 000216）或关键词（如「黄金」）搜索';
     return;
   }
+  hintEl.style.display = 'none';
 
-  // 在线查询：通过天天基金估值接口
-  hint.innerHTML = '<span style="color:var(--primary)">🔍 正在识别...</span>';
-  clearTimeout(_lookupTimer);
-  _lookupTimer = setTimeout(async ()=>{
-    try {
-      const d = await fetchFundEstimate(code);
-      if(d && d.name){
-        nameInput.value = d.name;
-        hint.innerHTML = `<span style="color:var(--green)">✅ ${d.name}</span>`;
-        // 尝试自动识别类型
-        const typeGuess = guessFundType(d.name);
-        autoSelectType(typeGuess);
-      } else {
-        hint.innerHTML = '<span style="color:var(--red)">❌ 未找到该基金，请检查代码</span>';
+  // 先搜本地
+  const localResults = searchLocalFunds(q);
+  if(localResults.length > 0){
+    renderSearchResults(localResults);
+  }
+
+  // 如果是纯数字且长度>=3，在线搜索
+  clearTimeout(_searchTimer);
+  _searchTimer = setTimeout(async ()=>{
+    if(/^\d{3,6}$/.test(q)){
+      // 6位代码直接查估值接口
+      if(q.length === 6){
+        resultsEl.innerHTML = '<div class="fund-search-hint">🔍 正在查询...</div>';
+        try {
+          const d = await fetchFundEstimate(q);
+          if(d && d.name){
+            // 合并本地+线上结果
+            const merged = dedupeResults([{code:q, name:d.name, source:'online'}], localResults);
+            renderSearchResults(merged);
+          } else if(localResults.length===0){
+            resultsEl.innerHTML = '<div class="fund-search-hint">❌ 未找到匹配的基金</div>';
+          }
+        } catch(e){
+          if(localResults.length===0) resultsEl.innerHTML = '<div class="fund-search-hint">⚠️ 网络查询失败</div>';
+        }
       }
-    } catch(e){
-      hint.innerHTML = '<span style="color:var(--red)">❌ 查询失败，请手动输入名称</span>';
+    } else if(q.length >= 2){
+      // 关键字搜索 — 尝试在线模糊搜索
+      try {
+        const onlineResults = await searchFundsOnline(q);
+        if(onlineResults.length > 0){
+          const merged = dedupeResults(onlineResults, localResults);
+          renderSearchResults(merged);
+        } else if(localResults.length===0){
+          resultsEl.innerHTML = '<div class="fund-search-hint">未找到匹配的基金，试试输入完整6位代码</div>';
+        }
+      } catch(e) { /* keep local results */ }
     }
-  }, 300);
+  }, 400);
+}
+
+function searchLocalFunds(q){
+  const ql = q.toLowerCase();
+  const all = [...FUND_DB, ...RECO_FUND_POOL];
+  const seen = new Set();
+  return all.filter(f=>{
+    if(seen.has(f.code)) return false;
+    seen.add(f.code);
+    return f.code.includes(ql) || (f.name||'').toLowerCase().includes(ql) || (f.type||'').toLowerCase().includes(ql);
+  }).slice(0, 20).map(f=>({code:f.code, name:f.name, type:f.type, source:'local'}));
+}
+
+function searchFundsOnline(keyword){
+  return new Promise((resolve)=>{
+    const cbName = '_fundSearchCb_' + Date.now();
+    const script = document.createElement('script');
+    const timer = setTimeout(()=>{ cleanup(); resolve([]); }, 5000);
+    window[cbName] = function(data){
+      clearTimeout(timer);
+      cleanup();
+      try {
+        const items = (data && data.Datas) ? data.Datas : [];
+        resolve(items.slice(0, 20).map(d=>({
+          code: d.CODE || d.code || '',
+          name: d.NAME || d.name || '',
+          source: 'online'
+        })).filter(d=>d.code && d.code.length===6));
+      } catch(e){ resolve([]); }
+    };
+    script.src = `https://fundsuggest.eastmoney.com/FundSearch/api/FundSearchAPI.ashx?callback=${cbName}&m=1&key=${encodeURIComponent(keyword)}`;
+    script.onerror = ()=>{ clearTimeout(timer); cleanup(); resolve([]); };
+    document.head.appendChild(script);
+    function cleanup(){ try{delete window[cbName]; script.remove();}catch(e){} }
+  });
+}
+
+function dedupeResults(primary, secondary){
+  const codes = new Set(primary.map(f=>f.code));
+  return [...primary, ...secondary.filter(f=>!codes.has(f.code))].slice(0,20);
+}
+
+function renderSearchResults(results){
+  const el = document.getElementById('add-search-results');
+  if(!results || results.length===0){ el.innerHTML=''; return; }
+  el.innerHTML = results.map(f=>{
+    const typeTag = f.type ? `<span class="fund-result-type">${f.type}</span>` : '';
+    return `<div class="fund-result-item" onclick="selectFundResult('${f.code}','${(f.name||'').replace(/'/g,"\\'")}')"><span class="fund-result-code">${f.code}</span><span class="fund-result-name">${f.name||''}</span>${typeTag}</div>`;
+  }).join('');
+}
+
+function selectFundResult(code, name){
+  _selectedFund = {code, name};
+  // 切到已选中状态
+  document.getElementById('add-search-area').style.display = 'none';
+  document.getElementById('add-selected-area').style.display = '';
+  document.getElementById('add-sel-code').textContent = code;
+  document.getElementById('add-sel-name').textContent = name;
+  // 自动选类型
+  const localMatch = FUND_DB.find(f=>f.code===code) || RECO_FUND_POOL.find(f=>f.code===code);
+  const type = localMatch?.type || guessFundType(name);
+  autoSelectType(type);
+}
+
+function clearFundSelection(){
+  _selectedFund = null;
+  document.getElementById('add-search-area').style.display = '';
+  document.getElementById('add-selected-area').style.display = 'none';
+  document.getElementById('add-search-input').focus();
 }
 
 function guessFundType(name){
@@ -1781,15 +1897,12 @@ function autoSelectType(type){
     if(sel.options[i].value===type){ sel.selectedIndex=i; break; }
   }
 }
-function closeAddModal(){ document.getElementById('add-modal').style.display='none'; }
 
 function confirmAdd(){
-  const code = document.getElementById('add-code').value.trim();
-  if(!code || code.length<6){ alert('请输入6位基金代码'); return; }
-
-  const known = FUND_DB.find(f=>f.code===code) || RECO_FUND_POOL.find(f=>f.code===code);
-  const name = document.getElementById('add-name').value.trim() || known?.name || code;
-  const type = document.getElementById('add-type').value || known?.type || '其他';
+  if(!_selectedFund || !_selectedFund.code){ alert('请先搜索并选择一个基金'); return; }
+  const code = _selectedFund.code;
+  const name = _selectedFund.name || code;
+  const type = document.getElementById('add-type').value || '其他';
 
   if(_addMode==='holding'){
     if(holdings.find(h=>h.code===code)){ alert('已存在该持仓'); return; }
@@ -1811,16 +1924,6 @@ function confirmAdd(){
   // 如果管理面板打开，刷新列表
   if(document.getElementById('manage-overlay').style.display==='block'){
     renderManageList();
-  }
-}
-
-function quickAdd(code, name, type){
-  document.getElementById('add-code').value = code;
-  document.getElementById('add-name').value = name;
-  document.getElementById('add-lookup-hint').innerHTML = `<span style="color:var(--green)">✅ ${name}</span>`;
-  const sel = document.getElementById('add-type');
-  for(let i=0;i<sel.options.length;i++){
-    if(sel.options[i].value===type){ sel.selectedIndex=i; break; }
   }
 }
 
