@@ -437,8 +437,9 @@ body { font-family:-apple-system,BlinkMacSystemFont,'SF Pro','PingFang SC','Helv
 <div class="modal-overlay" id="add-modal" onclick="if(event.target===this)closeAddModal()">
   <div class="modal">
     <h3 id="add-modal-title">添加持仓 <button onclick="closeAddModal()">✕</button></h3>
-    <div class="form-row"><label>基金代码</label><input type="text" id="add-code" placeholder="如 000216" maxlength="6"></div>
-    <div class="form-row"><label>基金名称 (选填，可自动识别)</label><input type="text" id="add-name" placeholder="自动识别"></div>
+    <div class="form-row"><label>基金代码</label><input type="text" id="add-code" placeholder="如 000216" maxlength="6" oninput="autoLookupFund()"></div>
+    <div class="form-row"><label>基金名称 (选填，可自动识别)</label><input type="text" id="add-name" placeholder="输入6位代码后自动识别..."></div>
+    <div id="add-lookup-hint" style="font-size:10px;color:var(--sub);margin:-8px 0 8px;min-height:16px"></div>
     <div class="form-row" id="add-type-row"><label>类型</label>
       <select id="add-type"><option value="宽基">宽基</option><option value="AI/科技">AI/科技</option><option value="黄金">黄金</option><option value="红利">红利</option><option value="军工">军工</option><option value="新能源">新能源</option><option value="消费">消费</option><option value="医药">医药</option><option value="半导体">半导体</option><option value="有色金属">有色金属</option><option value="QDII">QDII</option><option value="其他">其他</option></select>
     </div>
@@ -1714,7 +1715,71 @@ function openAddModal(mode){
   document.getElementById('add-modal-title').innerHTML = (mode==='holding'?'添加持仓':'添加自选') + ' <button onclick="closeAddModal()">✕</button>';
   document.getElementById('add-code').value = '';
   document.getElementById('add-name').value = '';
+  document.getElementById('add-lookup-hint').textContent = '';
   document.getElementById('add-code').focus();
+}
+
+let _lookupTimer = null;
+async function autoLookupFund(){
+  const code = document.getElementById('add-code').value.trim();
+  const nameInput = document.getElementById('add-name');
+  const hint = document.getElementById('add-lookup-hint');
+  if(code.length < 6){ hint.textContent = ''; return; }
+  if(code.length > 6) return;
+
+  // 先查本地
+  const local = FUND_DB.find(f=>f.code===code) || RECO_FUND_POOL.find(f=>f.code===code);
+  if(local){
+    nameInput.value = local.name;
+    hint.innerHTML = `<span style="color:var(--green)">✅ ${local.name}</span>`;
+    // 自动选择类型
+    autoSelectType(local.type);
+    return;
+  }
+
+  // 在线查询：通过天天基金估值接口
+  hint.innerHTML = '<span style="color:var(--primary)">🔍 正在识别...</span>';
+  clearTimeout(_lookupTimer);
+  _lookupTimer = setTimeout(async ()=>{
+    try {
+      const d = await fetchFundEstimate(code);
+      if(d && d.name){
+        nameInput.value = d.name;
+        hint.innerHTML = `<span style="color:var(--green)">✅ ${d.name}</span>`;
+        // 尝试自动识别类型
+        const typeGuess = guessFundType(d.name);
+        autoSelectType(typeGuess);
+      } else {
+        hint.innerHTML = '<span style="color:var(--red)">❌ 未找到该基金，请检查代码</span>';
+      }
+    } catch(e){
+      hint.innerHTML = '<span style="color:var(--red)">❌ 查询失败，请手动输入名称</span>';
+    }
+  }, 300);
+}
+
+function guessFundType(name){
+  if(!name) return '其他';
+  const n = name.toLowerCase();
+  if(n.includes('黄金') || n.includes('贵金属')) return '黄金';
+  if(n.includes('半导体') || n.includes('芯片')) return '半导体';
+  if(n.includes('军工') || n.includes('国防')) return '军工';
+  if(n.includes('红利') || n.includes('高股息')) return '红利';
+  if(n.includes('新能源') || n.includes('光伏') || n.includes('电池')) return '新能源';
+  if(n.includes('消费') || n.includes('白酒') || n.includes('食品')) return '消费';
+  if(n.includes('医药') || n.includes('医疗') || n.includes('创新药')) return '医药';
+  if(n.includes('有色') || n.includes('铜') || n.includes('铝')) return '有色金属';
+  if(n.includes('人工智能') || n.includes('ai') || n.includes('云计算') || n.includes('科技') || n.includes('信息')) return 'AI/科技';
+  if(n.includes('纳斯达克') || n.includes('标普') || n.includes('美国') || n.includes('qdii') || n.includes('海外')) return 'QDII';
+  if(n.includes('300') || n.includes('500') || n.includes('沪深') || n.includes('中证') || n.includes('创业板') || n.includes('上证')) return '宽基';
+  return '其他';
+}
+
+function autoSelectType(type){
+  const sel = document.getElementById('add-type');
+  for(let i=0;i<sel.options.length;i++){
+    if(sel.options[i].value===type){ sel.selectedIndex=i; break; }
+  }
 }
 function closeAddModal(){ document.getElementById('add-modal').style.display='none'; }
 
@@ -1752,6 +1817,7 @@ function confirmAdd(){
 function quickAdd(code, name, type){
   document.getElementById('add-code').value = code;
   document.getElementById('add-name').value = name;
+  document.getElementById('add-lookup-hint').innerHTML = `<span style="color:var(--green)">✅ ${name}</span>`;
   const sel = document.getElementById('add-type');
   for(let i=0;i<sel.options.length;i++){
     if(sel.options[i].value===type){ sel.selectedIndex=i; break; }
