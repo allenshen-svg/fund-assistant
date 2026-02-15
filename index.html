@@ -720,16 +720,22 @@ async function fetchSectors(){
   }catch(e){}
 }
 
+let _fundEstimateQueue = Promise.resolve();
 async function fetchFundEstimate(code){
+  // 串行化 JSONP 调用，因为 fundgz API 使用固定回调名 jsonpgz
   return new Promise((resolve, reject)=>{
-    const script = document.createElement('script');
-    script.referrerPolicy = 'no-referrer';
-    const timer = setTimeout(()=>{ done(); reject(new Error('timeout')); }, 5000);
-    function done(){ clearTimeout(timer); try{script.remove();}catch(e){} }
-    window.jsonpgz = function(d){ done(); resolve(d); };
-    script.src = `https://fundgz.1234567.com.cn/js/${code}.js?rt=${Date.now()}`;
-    script.onerror = ()=>{ done(); reject(new Error('error')); };
-    document.head.appendChild(script);
+    _fundEstimateQueue = _fundEstimateQueue.then(()=>{
+      return new Promise((res)=>{
+        const script = document.createElement('script');
+        script.referrerPolicy = 'no-referrer';
+        const timer = setTimeout(()=>{ done(); reject(new Error('timeout')); res(); }, 6000);
+        function done(){ clearTimeout(timer); try{script.remove();}catch(e){} }
+        window.jsonpgz = function(d){ done(); resolve(d); res(); };
+        script.src = `https://fundgz.1234567.com.cn/js/${code}.js?rt=${Date.now()}`;
+        script.onerror = ()=>{ done(); reject(new Error('error')); res(); };
+        document.head.appendChild(script);
+      });
+    });
   });
 }
 
@@ -1774,36 +1780,27 @@ function onFundSearchInput(){
   clearTimeout(_searchTimer);
   _searchTimer = setTimeout(async ()=>{
     if(/^\d{3,6}$/.test(q)){
-      // 6位代码：同时查估值接口和搜索接口
-      if(q.length === 6){
-        if(localResults.length===0) resultsEl.innerHTML = '<div class="fund-search-hint">🔍 正在查询...</div>';
+      // 数字代码：优先用搜索接口（独立回调，不阻塞）
+      if(localResults.length===0) resultsEl.innerHTML = '<div class="fund-search-hint">🔍 正在查询...</div>';
+      try {
         const results = [];
-        // 并行查两个接口
-        const [estResult, suggestResult] = await Promise.allSettled([
-          fetchFundEstimate(q).catch(()=>null),
-          searchFundsOnline(q).catch(()=>[])
-        ]);
-        // 估值接口结果
-        const est = estResult.status==='fulfilled' ? estResult.value : null;
-        if(est && est.name) results.push({code:q, name:est.name, source:'online'});
-        // 搜索接口结果
-        const sug = suggestResult.status==='fulfilled' ? suggestResult.value : [];
-        if(sug.length > 0) results.push(...sug);
-        // 合并去重
-        if(results.length > 0){
-          const merged = dedupeResults(results, localResults);
-          renderSearchResults(merged);
-        } else if(localResults.length===0){
-          resultsEl.innerHTML = '<div class="fund-search-hint">❌ 未找到匹配的基金</div>';
+        // 搜索接口（独立回调名，无冲突）作为主要来源
+        const sugResults = await searchFundsOnline(q);
+        if(sugResults.length > 0) results.push(...sugResults);
+        // 如果搜索接口没返回结果且是完整6位，再尝试估值接口
+        if(results.length === 0 && q.length === 6){
+          try {
+            const d = await fetchFundEstimate(q);
+            if(d && d.name) results.push({code:q, name:d.name, source:'online'});
+          } catch(e){}
         }
-      } else {
-        // 3-5位数字：也尝试搜索接口
-        try {
-          const sugResults = await searchFundsOnline(q);
-          if(sugResults.length > 0){
-            renderSearchResults(dedupeResults(sugResults, localResults));
-          }
-        } catch(e) {}
+        if(results.length > 0){
+          renderSearchResults(dedupeResults(results, localResults));
+        } else if(localResults.length===0){
+          resultsEl.innerHTML = '<div class="fund-search-hint">❌ 未找到匹配的基金，请检查代码</div>';
+        }
+      } catch(e){
+        if(localResults.length===0) resultsEl.innerHTML = '<div class="fund-search-hint">❌ 未找到匹配的基金</div>';
       }
     } else if(q.length >= 2){
       // 关键字搜索 — 尝试在线模糊搜索
