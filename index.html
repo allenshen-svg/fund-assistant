@@ -727,7 +727,7 @@ async function fetchFundEstimate(code){
     const timer = setTimeout(()=>{ done(); reject(new Error('timeout')); }, 5000);
     function done(){ clearTimeout(timer); try{script.remove();}catch(e){} }
     window.jsonpgz = function(d){ done(); resolve(d); };
-    script.src = `http://fundgz.1234567.com.cn/js/${code}.js?rt=${Date.now()}`;
+    script.src = `https://fundgz.1234567.com.cn/js/${code}.js?rt=${Date.now()}`;
     script.onerror = ()=>{ done(); reject(new Error('error')); };
     document.head.appendChild(script);
   });
@@ -1774,21 +1774,36 @@ function onFundSearchInput(){
   clearTimeout(_searchTimer);
   _searchTimer = setTimeout(async ()=>{
     if(/^\d{3,6}$/.test(q)){
-      // 6位代码直接查估值接口
+      // 6位代码：同时查估值接口和搜索接口
       if(q.length === 6){
-        resultsEl.innerHTML = '<div class="fund-search-hint">🔍 正在查询...</div>';
-        try {
-          const d = await fetchFundEstimate(q);
-          if(d && d.name){
-            // 合并本地+线上结果
-            const merged = dedupeResults([{code:q, name:d.name, source:'online'}], localResults);
-            renderSearchResults(merged);
-          } else if(localResults.length===0){
-            resultsEl.innerHTML = '<div class="fund-search-hint">❌ 未找到匹配的基金</div>';
-          }
-        } catch(e){
-          if(localResults.length===0) resultsEl.innerHTML = '<div class="fund-search-hint">⚠️ 网络查询失败</div>';
+        if(localResults.length===0) resultsEl.innerHTML = '<div class="fund-search-hint">🔍 正在查询...</div>';
+        const results = [];
+        // 并行查两个接口
+        const [estResult, suggestResult] = await Promise.allSettled([
+          fetchFundEstimate(q).catch(()=>null),
+          searchFundsOnline(q).catch(()=>[])
+        ]);
+        // 估值接口结果
+        const est = estResult.status==='fulfilled' ? estResult.value : null;
+        if(est && est.name) results.push({code:q, name:est.name, source:'online'});
+        // 搜索接口结果
+        const sug = suggestResult.status==='fulfilled' ? suggestResult.value : [];
+        if(sug.length > 0) results.push(...sug);
+        // 合并去重
+        if(results.length > 0){
+          const merged = dedupeResults(results, localResults);
+          renderSearchResults(merged);
+        } else if(localResults.length===0){
+          resultsEl.innerHTML = '<div class="fund-search-hint">❌ 未找到匹配的基金</div>';
         }
+      } else {
+        // 3-5位数字：也尝试搜索接口
+        try {
+          const sugResults = await searchFundsOnline(q);
+          if(sugResults.length > 0){
+            renderSearchResults(dedupeResults(sugResults, localResults));
+          }
+        } catch(e) {}
       }
     } else if(q.length >= 2){
       // 关键字搜索 — 尝试在线模糊搜索
