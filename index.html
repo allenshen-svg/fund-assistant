@@ -303,6 +303,31 @@ body { font-family:-apple-system,BlinkMacSystemFont,'SF Pro','PingFang SC','Helv
 .sentiment-bar { flex:1; height:10px; border-radius:5px; background:linear-gradient(90deg,var(--green),#fbbf24,var(--red)); position:relative; }
 .sentiment-dot { width:14px; height:14px; border-radius:50%; background:#fff; border:2px solid #1e293b; position:absolute; top:-2px; transition:left .3s; }
 .sentiment-label { font-size:10px; font-weight:700; min-width:40px; }
+/* Global News Aggregation */
+.global-news-card { background:var(--card); border-radius:10px; padding:10px 14px; margin-bottom:8px; box-shadow:var(--shadow); }
+.global-news-sources { display:flex; flex-wrap:wrap; gap:4px; margin-bottom:8px; }
+.global-news-tag { font-size:8px; padding:2px 6px; border-radius:8px; background:var(--bg); color:var(--sub); font-weight:600; }
+.global-news-tag.active { background:#3b82f6; color:#fff; }
+.global-news-item { display:flex; gap:8px; padding:6px 0; border-bottom:1px solid var(--border); align-items:flex-start; }
+.global-news-item:last-child { border-bottom:none; }
+.global-news-src { font-size:8px; color:#3b82f6; font-weight:700; min-width:32px; text-transform:uppercase; }
+.global-news-title { font-size:11px; color:var(--text); line-height:1.4; flex:1; }
+.global-news-title a { color:var(--text); text-decoration:none; }
+.global-news-title a:hover { text-decoration:underline; }
+.global-news-cat { font-size:8px; color:var(--sub); background:var(--bg); padding:1px 5px; border-radius:4px; white-space:nowrap; }
+.global-news-time { font-size:9px; color:var(--sub); min-width:36px; text-align:right; white-space:nowrap; }
+.global-news-summary { background:linear-gradient(135deg,#1e3a5f,#0f172a); color:#e2e8f0; border-radius:10px; padding:12px 14px; margin-bottom:8px; font-size:11px; line-height:1.6; }
+.global-news-summary-title { font-size:11px; font-weight:700; margin-bottom:6px; color:#93c5fd; }
+.global-news-impact { margin-top:8px; padding-top:8px; border-top:1px solid rgba(255,255,255,0.1); }
+.global-news-impact-title { font-size:10px; font-weight:700; color:#fbbf24; margin-bottom:4px; }
+.global-news-impact-item { font-size:10px; line-height:1.5; padding:2px 0; }
+.global-news-sentiment { display:flex; justify-content:center; gap:16px; margin-top:8px; padding-top:8px; border-top:1px solid rgba(255,255,255,0.1); }
+.global-news-sentiment-item { text-align:center; }
+.global-news-sentiment-label { font-size:8px; color:rgba(255,255,255,0.5); }
+.global-news-sentiment-val { font-size:14px; font-weight:700; }
+.global-news-btn { display:block; width:100%; padding:8px; border:1px dashed rgba(59,130,246,0.4); background:transparent; color:#3b82f6; font-size:10px; border-radius:8px; cursor:pointer; text-align:center; margin-top:6px; transition:all .2s; }
+.global-news-btn:hover { background:rgba(59,130,246,0.1); border-color:#3b82f6; }
+.global-news-btn:disabled { opacity:0.5; cursor:not-allowed; }
 /* Real-World Action Guide */
 .action-guide { padding:12px 16px 6px; }
 .action-guide-header { display:flex; justify-content:space-between; align-items:center; cursor:pointer; }
@@ -835,6 +860,9 @@ let macroData = { cpi:null, ppi:null, pmi:null, gdp:null, m2:null }; // 宏观�
 let sectorCapFlow = []; // 板块资金流向
 let newsHeadlines = []; // 财经新闻
 let newsSentiment = { score:50, label:'中性', bullCount:0, bearCount:0 }; // 舆情综合得分0-100
+let globalNews = []; // 国际新闻聚合
+let globalNewsSummary = null; // AI国际新闻摘要 { summary, impact, sentiment }
+let _globalNewsLoading = false;
 let _dataIntelLoaded = false;
 
 // ==================== RL BRAIN STATE ====================
@@ -1129,6 +1157,139 @@ function analyzeNewsSentiment(){
   newsSentiment = { score:clampedScore, label, bullCount, bearCount, total };
 }
 
+// ==================== GLOBAL NEWS AGGREGATION ====================
+// 聚合国际十大新闻源的政治/经济新闻，AI摘要+投资影响分析
+const GLOBAL_NEWS_SOURCES = [
+  { id:'nyt-world', name:'NYT', label:'纽约时报', url:'https://rss.nytimes.com/services/xml/rss/nyt/World.xml' },
+  { id:'nyt-biz', name:'NYT-Biz', label:'纽约时报·商业', url:'https://rss.nytimes.com/services/xml/rss/nyt/Business.xml' },
+  { id:'nyt-pol', name:'NYT-Pol', label:'纽约时报·政治', url:'https://rss.nytimes.com/services/xml/rss/nyt/Politics.xml' },
+  { id:'wsj', name:'WSJ', label:'华尔街日报', url:'https://feeds.a.dj.com/rss/RSSWorldNews.xml' },
+  { id:'bbc-world', name:'BBC', label:'BBC World', url:'https://feeds.bbci.co.uk/news/world/rss.xml' },
+  { id:'bbc-biz', name:'BBC-Biz', label:'BBC Business', url:'https://feeds.bbci.co.uk/news/business/rss.xml' },
+  { id:'guardian', name:'Guardian', label:'卫报', url:'https://www.theguardian.com/world/rss' },
+  { id:'cnbc', name:'CNBC', label:'CNBC', url:'https://search.cnbc.com/rs/search/combinedcms/view.xml?partnerId=wrss01&id=100003114' },
+  { id:'cnn', name:'CNN', label:'CNN', url:'http://rss.cnn.com/rss/edition_world.rss' },
+  { id:'ft', name:'FT', label:'金融时报', url:'https://www.ft.com/rss/home' },
+];
+
+const GLOBAL_NEWS_KEYWORDS = /politic|econom|trade|tariff|sanctions?|central.bank|interest.rate|inflation|gdp|recession|federal.reserve|treasury|fiscal|monetary|geopolitic|war|conflict|election|government|tax|debt|deficit|market|stock|bond|currency|oil|energy|china|ukraine|russia|nato|eu\b|trump|biden|congress|parliament|summit|g7|g20|imf|world.bank|fed\b|ecb|boj|pboc|opec/i;
+
+async function fetchGlobalNews(){
+  _globalNewsLoading = true;
+  const allItems = [];
+  const rss2jsonBase = 'https://api.rss2json.com/v1/api.json?rss_url=';
+
+  // 并行拉取所有RSS源
+  const fetches = GLOBAL_NEWS_SOURCES.map(async src => {
+    try {
+      const resp = await fetch(rss2jsonBase + encodeURIComponent(src.url), { signal: AbortSignal.timeout(10000) });
+      const data = await resp.json();
+      if(data.status === 'ok' && data.items){
+        return data.items.map(item => ({
+          title: (item.title||'').replace(/<[^>]+>/g,'').trim(),
+          description: (item.description||'').replace(/<[^>]+>/g,'').trim().slice(0,200),
+          url: item.link || '',
+          time: item.pubDate || '',
+          source: src.name,
+          sourceLabel: src.label,
+          categories: (item.categories||[]).join(', '),
+        }));
+      }
+    } catch(e) { console.warn(`fetchGlobalNews[${src.id}]:`, e); }
+    return [];
+  });
+
+  const results = await Promise.allSettled(fetches);
+  results.forEach(r => {
+    if(r.status==='fulfilled' && r.value) allItems.push(...r.value);
+  });
+
+  // 过滤: 只保留政治/经济相关新闻
+  const filtered = allItems.filter(item => {
+    const text = `${item.title} ${item.description} ${item.categories}`;
+    return GLOBAL_NEWS_KEYWORDS.test(text);
+  });
+
+  // 按时间排序(最新优先)，去重(标题相似度)
+  filtered.sort((a,b) => new Date(b.time) - new Date(a.time));
+  const seen = new Set();
+  globalNews = [];
+  for(const item of filtered){
+    const key = item.title.toLowerCase().replace(/[^a-z0-9]/g,'').slice(0,40);
+    if(!seen.has(key) && globalNews.length < 30){
+      seen.add(key);
+      // 英文情绪分析
+      const t = `${item.title} ${item.description}`.toLowerCase();
+      const bullEn = ['growth','surge','rally','gain','optimis','boost','strong','recover','rise','soar','boom','expand','record high','upturn','bullish'];
+      const bearEn = ['crash','fall','drop','decline','recession','crisis','war','conflict','sanctions','tariff','inflation','fear','risk','slump','plunge','downturn','bearish','threat','turmoil','collapse','uncertainty'];
+      let bs=0, brs=0;
+      bullEn.forEach(w=>{ if(t.includes(w)) bs++; });
+      bearEn.forEach(w=>{ if(t.includes(w)) brs++; });
+      item.sentiment = bs>brs ? 'bull' : brs>bs ? 'bear' : 'neutral';
+      item.timeFormatted = item.time ? new Date(item.time).toLocaleString('zh-CN',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'}) : '';
+      globalNews.push(item);
+    }
+  }
+
+  _globalNewsLoading = false;
+  console.log(`[GlobalNews] Fetched ${allItems.length} → filtered ${globalNews.length} political/economic items`);
+}
+
+function getGlobalNewsSentiment(){
+  if(!globalNews.length) return { score:50, label:'无数据', bullCount:0, bearCount:0, total:0 };
+  const bullCount = globalNews.filter(n=>n.sentiment==='bull').length;
+  const bearCount = globalNews.filter(n=>n.sentiment==='bear').length;
+  const total = globalNews.length;
+  const raw = 50 + (bullCount - bearCount) / total * 50;
+  const score = Math.max(0, Math.min(100, Math.round(raw)));
+  let label = '中性';
+  if(score >= 70) label = '国际偏乐观';
+  else if(score >= 58) label = '略偏正面';
+  else if(score <= 30) label = '国际偏悲观';
+  else if(score <= 42) label = '略偏负面';
+  return { score, label, bullCount, bearCount, total };
+}
+
+async function summarizeGlobalNewsAI(){
+  if(!globalNews.length) return;
+  if(globalNewsSummary) return; // 已有摘要，不重复请求
+  const headlines = globalNews.slice(0,20).map((n,i)=>`${i+1}. [${n.source}] ${n.title}${n.description?' — '+n.description.slice(0,80):''}`).join('\n');
+  const prompt = `你是一位资深国际政治经济分析师，专注于全球宏观形势对中国资本市场的影响分析。
+
+以下是今日全球主要新闻媒体(华尔街日报、纽约时报、BBC、CNN、CNBC、卫报等)的最新政治经济类新闻标题摘要:
+
+${headlines}
+
+请完成以下任务(用中文回答):
+1. 【国际形势概览】用3-4句话概括当前全球政治经济主要动态
+2. 【关键事件】列出3-5个最重要的国际事件，每个事件一句话描述
+3. 【对A股/中国市场影响】分析这些国际新闻对中国股市、基金市场可能的影响:
+   - 利好因素(如有)
+   - 利空因素(如有)
+   - 受影响的行业/板块
+4. 【投资建议】基于国际形势，给出2-3条具体的基金投资操作建议
+5. 【情绪评分】给出整体国际环境对中国市场的影响评分(0-100，50为中性，>50偏正面)
+
+请严格按以下JSON格式返回(不要包含markdown代码块标记):
+{"overview":"...","keyEvents":["事件1","事件2","事件3"],"impact":{"positive":["..."],"negative":["..."],"sectors":["行业1","行业2"]},"advice":["建议1","建议2"],"score":60}`;
+
+  try {
+    const resp = await callAI(prompt, 'json_object');
+    if(resp){
+      let parsed;
+      try { parsed = JSON.parse(resp); } catch(e) {
+        // 尝试提取JSON
+        const m = resp.match(/\{[\s\S]*\}/);
+        if(m) parsed = JSON.parse(m[0]);
+      }
+      if(parsed){
+        globalNewsSummary = parsed;
+        console.log('[GlobalNews] AI summary generated');
+      }
+    }
+  } catch(e) { console.warn('summarizeGlobalNewsAI:', e); }
+}
+
 function getMacroSummary(){
   // 综合宏观信号: 扩张/收缩/中性
   let signals = [];
@@ -1171,9 +1332,12 @@ async function fetchAllDataIntel(){
     fetchMacroData(),
     fetchSectorCapFlow(),
     fetchNewsHeadlines(),
+    fetchGlobalNews(),
   ]);
   _dataIntelLoaded = true;
   renderDataIntelBrief();
+  // 异步触发国际新闻AI摘要(不阻塞主流程)
+  if(globalNews.length > 0) summarizeGlobalNewsAI().then(()=>{ if(document.getElementById('data-intel-container')?.style.display!=='none') renderDataIntel(); });
 }
 
 // ==================== RL BRAIN: DEEP Q-NETWORK ====================
@@ -2004,11 +2168,32 @@ function buildDataIntelContext(){
     });
   }
 
+  // 国际新闻聚合
+  if(globalNews.length > 0){
+    const gSent = getGlobalNewsSentiment();
+    ctx += '\n■ 🌍 国际新闻聚合(全球十大媒体 · 政治经济):\n';
+    ctx += `  国际舆情指数: ${gSent.score}/100 (${gSent.label}) 正面${gSent.bullCount}条/负面${gSent.bearCount}条/共${gSent.total}条\n`;
+    ctx += '  [重要国际新闻]:\n';
+    globalNews.slice(0,12).forEach(n=>{
+      const tag = n.sentiment==='bull'?'🟢正面':n.sentiment==='bear'?'🔴负面':'⚪中性';
+      ctx += `    [${n.source}] ${tag} ${n.title}\n`;
+    });
+    if(globalNewsSummary){
+      ctx += '  [AI国际形势分析摘要]:\n';
+      if(globalNewsSummary.overview) ctx += `    概览: ${globalNewsSummary.overview}\n`;
+      if(globalNewsSummary.impact?.positive) ctx += `    利好: ${globalNewsSummary.impact.positive.join('; ')}\n`;
+      if(globalNewsSummary.impact?.negative) ctx += `    利空: ${globalNewsSummary.impact.negative.join('; ')}\n`;
+      if(globalNewsSummary.impact?.sectors) ctx += `    受影响板块: ${globalNewsSummary.impact.sectors.join('、')}\n`;
+      if(globalNewsSummary.advice) ctx += `    投资建议: ${globalNewsSummary.advice.join('; ')}\n`;
+      ctx += `    AI评分: ${globalNewsSummary.score||50}/100\n`;
+    }
+  }
+
   // 综合数据信号
   const dataSignal = generateDataSignal();
   ctx += `\n■ 综合数据信号: ${dataSignal.icon} ${dataSignal.label} (评分${dataSignal.score}/100)\n`;
   ctx += `  建议: ${dataSignal.advice}\n`;
-  ctx += '\n⚠️ 请结合以上宏观数据、资金流向和舆情分析，对你的操作建议进行验证和调整。数据驱动决策，减少主观偏差。\n';
+  ctx += '\n⚠️ 请结合以上宏观数据、资金流向、国内舆情以及国际新闻形势分析，对你的操作建议进行验证和调整。数据驱动决策，减少主观偏差。\n';
 
   return ctx;
 }
@@ -4291,14 +4476,61 @@ function renderDataIntel(){
   }
   html += '</div>';
 
-  // 4. 综合数据信号
+  // 4. 🌍 国际新闻聚合
+  html += '<div class="macro-card"><div class="macro-card-title">🌍 国际新闻聚合 <span style="font-size:9px;font-weight:400;color:var(--sub)">全球十大媒体 · 政治经济</span></div>';
+  if(_globalNewsLoading){
+    html += '<div style="text-align:center;padding:12px;font-size:11px;color:var(--sub)"><div class="spinner"></div><div style="margin-top:6px">正在聚合国际新闻...</div></div>';
+  } else if(globalNews.length > 0){
+    // 来源标签
+    const srcCounts = {};
+    globalNews.forEach(n=>{ srcCounts[n.source] = (srcCounts[n.source]||0)+1; });
+    html += '<div class="global-news-sources">';
+    Object.entries(srcCounts).sort((a,b)=>b[1]-a[1]).forEach(([src,cnt])=>{
+      html += `<span class="global-news-tag active">${src} ${cnt}</span>`;
+    });
+    html += '</div>';
+    // 国际新闻情绪
+    const gSent = getGlobalNewsSentiment();
+    const gSentColor = gSent.score>=58 ? '#ef4444' : gSent.score<=42 ? '#22c55e' : '#f59e0b';
+    html += `<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;padding:6px 10px;background:var(--bg);border-radius:8px">`;
+    html += `<span style="font-size:9px;color:var(--sub)">国际舆情</span>`;
+    html += `<div style="flex:1;height:6px;border-radius:3px;background:linear-gradient(90deg,#22c55e,#fbbf24,#ef4444);position:relative"><div style="width:10px;height:10px;border-radius:50%;background:#fff;border:2px solid ${gSentColor};position:absolute;top:-2px;left:calc(${gSent.score}% - 5px);transition:left .3s"></div></div>`;
+    html += `<span style="font-size:11px;font-weight:700;color:${gSentColor}">${gSent.score}</span>`;
+    html += `<span style="font-size:9px;color:var(--sub)">${gSent.label}</span>`;
+    html += `</div>`;
+    // 新闻列表
+    globalNews.slice(0,10).forEach(n=>{
+      const icon = n.sentiment==='bull'?'🟢':n.sentiment==='bear'?'🔴':'⚪';
+      html += `<div class="global-news-item">`;
+      html += `<span class="global-news-src">${n.source}</span>`;
+      html += `<span style="font-size:11px;min-width:14px">${icon}</span>`;
+      html += `<span class="global-news-title"><a href="${n.url}" target="_blank" rel="noopener">${n.title}</a></span>`;
+      html += `<span class="global-news-time">${n.timeFormatted}</span>`;
+      html += `</div>`;
+    });
+    // AI摘要按钮或已有摘要
+    if(globalNewsSummary){
+      html += renderGlobalNewsSummaryHTML();
+    } else {
+      html += `<button class="global-news-btn" onclick="triggerGlobalNewsSummary()" ${_globalNewsLoading?'disabled':''}>🤖 AI分析国际形势 & 投资影响</button>`;
+    }
+  } else {
+    html += '<div style="text-align:center;padding:12px;font-size:11px;color:var(--sub)">暂无国际新闻数据</div>';
+    html += `<button class="global-news-btn" onclick="manualFetchGlobalNews()">🔄 手动加载国际新闻</button>`;
+  }
+  html += '</div>';
+
+  // 5. 综合数据信号
   html += '<div class="macro-card" style="background:linear-gradient(135deg,#0f172a,#1e293b);color:#fff">';
-  html += '<div class="macro-card-title" style="color:rgba(255,255,255,0.9)">🤖 AI数据信号综合 <span style="font-size:9px;font-weight:400;color:rgba(255,255,255,0.5)">多维度融合</span></div>';
+  html += '<div class="macro-card-title" style="color:rgba(255,255,255,0.9)">🤖 AI数据信号综合 <span style="font-size:9px;font-weight:400;color:rgba(255,255,255,0.5)">四维度融合</span></div>';
   const dataSignal = generateDataSignal();
-  html += `<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:6px">`;
-  html += `<div style="text-align:center"><div style="font-size:9px;color:rgba(255,255,255,0.5)">宏观面</div><div style="font-size:13px;font-weight:700;color:${macro.positiveCount>=3?'#ef4444':'#22c55e'}">${macro.overallSignal}</div></div>`;
-  html += `<div style="text-align:center"><div style="font-size:9px;color:rgba(255,255,255,0.5)">资金面</div><div style="font-size:13px;font-weight:700;color:${capFlow.netTotal>=0?'#ef4444':'#22c55e'}">${capFlow.netTotal>=0?'资金流入':'资金流出'}</div></div>`;
-  html += `<div style="text-align:center"><div style="font-size:9px;color:rgba(255,255,255,0.5)">舆情面</div><div style="font-size:13px;font-weight:700;color:${sentColor}">${newsSentiment.label}</div></div>`;
+  const gSentForSignal = getGlobalNewsSentiment();
+  const gSentSignalColor = gSentForSignal.score>=58?'#ef4444':gSentForSignal.score<=42?'#22c55e':'#fbbf24';
+  html += `<div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px;margin-top:6px">`;
+  html += `<div style="text-align:center"><div style="font-size:9px;color:rgba(255,255,255,0.5)">宏观面</div><div style="font-size:12px;font-weight:700;color:${macro.positiveCount>=3?'#ef4444':'#22c55e'}">${macro.overallSignal}</div></div>`;
+  html += `<div style="text-align:center"><div style="font-size:9px;color:rgba(255,255,255,0.5)">资金面</div><div style="font-size:12px;font-weight:700;color:${capFlow.netTotal>=0?'#ef4444':'#22c55e'}">${capFlow.netTotal>=0?'资金流入':'资金流出'}</div></div>`;
+  html += `<div style="text-align:center"><div style="font-size:9px;color:rgba(255,255,255,0.5)">舆情面</div><div style="font-size:12px;font-weight:700;color:${sentColor}">${newsSentiment.label}</div></div>`;
+  html += `<div style="text-align:center"><div style="font-size:9px;color:rgba(255,255,255,0.5)">国际面</div><div style="font-size:12px;font-weight:700;color:${gSentSignalColor}">${globalNews.length>0?gSentForSignal.label:'加载中'}</div></div>`;
   html += '</div>';
   html += `<div style="text-align:center;margin-top:10px;padding-top:8px;border-top:1px solid rgba(255,255,255,0.1)"><div style="font-size:10px;color:rgba(255,255,255,0.5)">综合信号</div><div style="font-size:16px;font-weight:800;margin-top:2px;color:${dataSignal.color}">${dataSignal.icon} ${dataSignal.label}</div><div style="font-size:10px;color:rgba(255,255,255,0.5);margin-top:2px">${dataSignal.advice}</div></div>`;
   html += '</div>';
@@ -4319,6 +4551,13 @@ function generateDataSignal(){
   else if(capFlow.netTotal < 0) score -= 8;
   // 舆情面 ±10
   score += (newsSentiment.score - 50) * 0.2;
+  // 国际舆情面 ±8
+  if(globalNews.length > 0){
+    const gSent = getGlobalNewsSentiment();
+    score += (gSent.score - 50) * 0.16;
+    // AI评分加权
+    if(globalNewsSummary?.score) score += (globalNewsSummary.score - 50) * 0.08;
+  }
   // PMI特殊权重
   if(macroData.pmi?.[0]){
     const pmi = macroData.pmi[0].MAKE_INDEX;
@@ -4327,11 +4566,68 @@ function generateDataSignal(){
   }
 
   score = Math.max(0, Math.min(100, Math.round(score)));
-  if(score >= 70) return { score, label:'积极看多', icon:'🟢', color:'#ef4444', advice:'宏观+资金+舆情三维共振偏多，可适当增配' };
+  if(score >= 70) return { score, label:'积极看多', icon:'🟢', color:'#ef4444', advice:'宏观+资金+舆情+国际四维共振偏多，可适当增配' };
   if(score >= 58) return { score, label:'谨慎偏多', icon:'🟡', color:'#f59e0b', advice:'多数指标偏正面，维持仓位、可低吸' };
   if(score >= 42) return { score, label:'中性观望', icon:'⚪', color:'rgba(255,255,255,0.7)', advice:'信号分歧较大，维持现有配置不宜激进' };
   if(score >= 30) return { score, label:'谨慎偏空', icon:'🟠', color:'#f59e0b', advice:'部分指标走弱，控制仓位、降低风险敞口' };
   return { score, label:'防御为主', icon:'🔴', color:'#22c55e', advice:'多维度信号偏负面，建议降低仓位、增加现金' };
+}
+
+// ==================== GLOBAL NEWS RENDERING HELPERS ====================
+function renderGlobalNewsSummaryHTML(){
+  const s = globalNewsSummary;
+  if(!s) return '';
+  let html = '<div class="global-news-summary">';
+  html += '<div class="global-news-summary-title">🤖 AI国际形势分析</div>';
+  if(s.overview) html += `<div style="margin-bottom:8px">${s.overview}</div>`;
+  if(s.keyEvents && s.keyEvents.length){
+    html += '<div style="margin-bottom:6px"><span style="font-size:10px;font-weight:700;color:#93c5fd">📌 关键事件:</span></div>';
+    s.keyEvents.forEach(e=>{ html += `<div class="global-news-impact-item">• ${e}</div>`; });
+  }
+  if(s.impact){
+    html += '<div class="global-news-impact">';
+    html += '<div class="global-news-impact-title">📊 对中国市场影响分析</div>';
+    if(s.impact.positive && s.impact.positive.length){
+      html += '<div style="margin-bottom:4px"><span style="color:#4ade80;font-size:10px;font-weight:600">✅ 利好因素:</span></div>';
+      s.impact.positive.forEach(p=>{ html += `<div class="global-news-impact-item" style="color:#86efac">  ${p}</div>`; });
+    }
+    if(s.impact.negative && s.impact.negative.length){
+      html += '<div style="margin-bottom:4px;margin-top:4px"><span style="color:#f87171;font-size:10px;font-weight:600">⚠️ 利空因素:</span></div>';
+      s.impact.negative.forEach(p=>{ html += `<div class="global-news-impact-item" style="color:#fca5a5">  ${p}</div>`; });
+    }
+    if(s.impact.sectors && s.impact.sectors.length){
+      html += `<div style="margin-top:4px;font-size:10px"><span style="color:#93c5fd;font-weight:600">🏭 受影响板块: </span><span style="color:#e2e8f0">${s.impact.sectors.join('、')}</span></div>`;
+    }
+    html += '</div>';
+  }
+  if(s.advice && s.advice.length){
+    html += '<div style="margin-top:8px;padding-top:8px;border-top:1px solid rgba(255,255,255,0.1)">';
+    html += '<div style="font-size:10px;font-weight:700;color:#fbbf24;margin-bottom:4px">💡 投资建议</div>';
+    s.advice.forEach(a=>{ html += `<div class="global-news-impact-item" style="color:#fde68a">• ${a}</div>`; });
+    html += '</div>';
+  }
+  // 情绪评分
+  const aiScore = s.score || 50;
+  const aiColor = aiScore>=60 ? '#4ade80' : aiScore<=40 ? '#f87171' : '#fbbf24';
+  html += `<div class="global-news-sentiment"><div class="global-news-sentiment-item"><div class="global-news-sentiment-label">AI评分</div><div class="global-news-sentiment-val" style="color:${aiColor}">${aiScore}</div></div></div>`;
+  html += '</div>';
+  return html;
+}
+
+async function triggerGlobalNewsSummary(){
+  const btn = event?.target;
+  if(btn){ btn.disabled=true; btn.textContent='🤖 AI分析中...'; }
+  await summarizeGlobalNewsAI();
+  renderDataIntel();
+}
+
+async function manualFetchGlobalNews(){
+  const btn = event?.target;
+  if(btn){ btn.disabled=true; btn.textContent='⏳ 加载中...'; }
+  await fetchGlobalNews();
+  renderDataIntel();
+  // 自动触发AI分析
+  if(globalNews.length > 0) triggerGlobalNewsSummary();
 }
 
 // ==================== RL BRAIN RENDERING ====================
