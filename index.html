@@ -2860,15 +2860,12 @@ function renderSimBrief(){
   }
   const totalValue = getSimTotalValue();
   const cumProfit = totalValue - SIM_INITIAL_CAPITAL;
-  const brief = document.getElementById('sim-brief');
-  if(brief){
-    let liveCount = 0;
-    simPortfolio.positions.forEach(p => { if(getFundData(p.code)?._live) liveCount++; });
-    const total = simPortfolio.positions.length;
-    const liveTag = liveCount===total ? '🟢' : liveCount>0 ? '🟡' : '🔴';
-    const color = cumProfit >= 0 ? 'var(--red)' : 'var(--green)';
-    brief.innerHTML = `<span style="color:${color}">${cumProfit>=0?'+':''}${cumProfit.toFixed(0)}元</span> <span style="font-size:9px">${liveTag}${liveCount}/${total}</span>`;
-  }
+  let liveCount = 0;
+  simPortfolio.positions.forEach(p => { if(getFundData(p.code)?._live) liveCount++; });
+  const total = simPortfolio.positions.length;
+  const liveTag = liveCount===total ? '🟢' : liveCount>0 ? '🟡' : '🔴';
+  const color = cumProfit >= 0 ? 'var(--red)' : 'var(--green)';
+  brief.innerHTML = `<span style="color:${color}">${cumProfit>=0?'+':''}${cumProfit.toFixed(0)}元</span> <span style="font-size:9px">${liveTag}${liveCount}/${total}</span>`;
 }
 
 function renderSimPortfolio(){
