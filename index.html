@@ -505,17 +505,6 @@ body { font-family:-apple-system,BlinkMacSystemFont,'SF Pro','PingFang SC','Helv
   </div>
 </div>
 
-<!-- Portfolio Section -->
-<div class="pf-section">
-  <div class="section-title">💼 波段组合 <span style="font-size:10px;color:var(--sub);font-weight:400">实时趋势 · 波段信号</span></div>
-  <div class="pf-tabs">
-    <div class="pf-tab active" onclick="switchPfTab('core')" id="pf-tab-core">🛡️ 核心仓<span class="pf-tab-ratio">建议60%</span></div>
-    <div class="pf-tab" onclick="switchPfTab('satellite')" id="pf-tab-sat">🚀 卫星仓<span class="pf-tab-ratio">建议40%</span></div>
-  </div>
-  <div class="pf-group active" id="pf-group-core"></div>
-  <div class="pf-group" id="pf-group-satellite"></div>
-</div>
-
 <!-- Data Intelligence Dashboard -->
 <div class="data-intel">
   <div class="section-title data-intel-header" onclick="toggleDataIntel()">
@@ -564,6 +553,29 @@ body { font-family:-apple-system,BlinkMacSystemFont,'SF Pro','PingFang SC','Helv
   <div id="sim-container"></div>
 </div>
 
+<!-- Real-World Action Guide -->
+<div class="action-guide">
+  <div class="section-title action-guide-header" onclick="toggleActionGuide()">
+    <span>🎯 实盘行动指南 <span style="font-size:10px;color:var(--sub);font-weight:400">三引擎共识 · 实操建议</span></span>
+    <div class="action-guide-header-right">
+      <span id="action-guide-brief" class="action-guide-brief" style="color:var(--sub)">等待分析</span>
+      <span class="action-guide-toggle" id="action-guide-toggle">▼</span>
+    </div>
+  </div>
+  <div id="action-guide-container" class="action-guide-container"></div>
+</div>
+
+<!-- Portfolio Section -->
+<div class="pf-section">
+  <div class="section-title">💼 波段组合 <span style="font-size:10px;color:var(--sub);font-weight:400">实时趋势 · 波段信号</span></div>
+  <div class="pf-tabs">
+    <div class="pf-tab active" onclick="switchPfTab('core')" id="pf-tab-core">🛡️ 核心仓<span class="pf-tab-ratio">建议60%</span></div>
+    <div class="pf-tab" onclick="switchPfTab('satellite')" id="pf-tab-sat">🚀 卫星仓<span class="pf-tab-ratio">建议40%</span></div>
+  </div>
+  <div class="pf-group active" id="pf-group-core"></div>
+  <div class="pf-group" id="pf-group-satellite"></div>
+</div>
+
 <!-- AI Button -->
 <div class="ai-btn-wrap">
   <button class="ai-btn" id="ai-btn" onclick="triggerAI()">
@@ -585,18 +597,6 @@ body { font-family:-apple-system,BlinkMacSystemFont,'SF Pro','PingFang SC','Helv
     <span class="review-toggle" onclick="toggleReviewHistory()">📋 查看历史复盘记录</span>
   </div>
   <div id="review-history" style="display:none"></div>
-</div>
-
-<!-- Real-World Action Guide -->
-<div class="action-guide">
-  <div class="section-title action-guide-header" onclick="toggleActionGuide()">
-    <span>🎯 实盘行动指南 <span style="font-size:10px;color:var(--sub);font-weight:400">三引擎共识 · 实操建议</span></span>
-    <div class="action-guide-header-right">
-      <span id="action-guide-brief" class="action-guide-brief" style="color:var(--sub)">等待分析</span>
-      <span class="action-guide-toggle" id="action-guide-toggle">▼</span>
-    </div>
-  </div>
-  <div id="action-guide-container" class="action-guide-container"></div>
 </div>
 
 <!-- Action Signals -->
