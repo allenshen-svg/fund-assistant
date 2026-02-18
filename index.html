@@ -4103,7 +4103,7 @@ function renderRLBrain(){
   html+=`<b>奖励:</b> 资产增值(+) · 亏损(-) · 过度交易惩罚(-) · 回撤惩罚(-) · <b style="color:#f59e0b">在线学习反馈</b><br>`;
   html+=`<b>超参:</b> γ=0.99 · ε衰减=0.998 · batch=32 · 记忆库=10K · 目标网络更新=200步<br>`;
   html+=`<b>训练:</b> 基于全部持仓/自选基金历史NAV(近1年)训练 · 每轮遍历所有基金<br>`;
-  html+=`<b>闭环:</b> <span style="color:#22d3ee">回测特征注入 → 三引擎投票 → 模拟盘在线学习 → RL信号更新</span>`;`;
+  html+=`<b>闭环:</b> <span style="color:#22d3ee">回测特征注入 → 三引擎投票 → 模拟盘在线学习 → RL信号更新</span>`;
   html+=`</div></div>`;
 
   container.innerHTML=html;
