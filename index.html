@@ -275,6 +275,35 @@ body { font-family:-apple-system,BlinkMacSystemFont,'SF Pro','PingFang SC','Helv
 .sim-chart-val { font-size:9px; font-weight:600; min-width:42px; text-align:right; font-variant-numeric:tabular-nums; }
 
 /* Manage Panel */
+/* Data Intelligence Dashboard */
+.data-intel { padding:10px 16px 4px; }
+.data-intel-header { display:flex; justify-content:space-between; align-items:center; cursor:pointer; }
+.data-intel-header-right { display:flex; align-items:center; gap:8px; }
+.data-intel-toggle { font-size:12px; color:var(--sub); transition:transform .2s; }
+.data-intel-brief { font-size:11px; font-weight:600; }
+.data-intel-container { margin-top:8px; }
+.macro-card { background:var(--card); border-radius:10px; padding:10px 14px; margin-bottom:8px; box-shadow:var(--shadow); }
+.macro-card-title { font-size:11px; font-weight:700; margin-bottom:6px; display:flex; align-items:center; gap:4px; }
+.macro-grid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:6px; }
+.macro-item { text-align:center; background:var(--bg); border-radius:6px; padding:6px 4px; }
+.macro-label { font-size:8px; color:var(--sub); display:block; letter-spacing:0.3px; }
+.macro-val { font-size:12px; font-weight:700; margin-top:1px; font-variant-numeric:tabular-nums; }
+.macro-val.positive { color:var(--red); }
+.macro-val.negative { color:var(--green); }
+.macro-val.neutral { color:var(--sub); }
+.news-card { background:var(--card); border-radius:10px; padding:10px 14px; margin-bottom:8px; box-shadow:var(--shadow); }
+.news-item { display:flex; gap:6px; padding:5px 0; border-bottom:1px solid var(--border); align-items:flex-start; }
+.news-item:last-child { border-bottom:none; }
+.news-sentiment { font-size:12px; min-width:18px; text-align:center; }
+.news-text { font-size:11px; color:var(--text); line-height:1.4; flex:1; }
+.news-time { font-size:9px; color:var(--sub); min-width:36px; text-align:right; white-space:nowrap; }
+.cap-flow-bar { height:8px; border-radius:4px; overflow:hidden; background:var(--bg); margin-top:2px; }
+.cap-flow-fill { height:100%; border-radius:4px; }
+.sentiment-meter { display:flex; align-items:center; gap:8px; padding:8px 0; }
+.sentiment-bar { flex:1; height:10px; border-radius:5px; background:linear-gradient(90deg,var(--green),#fbbf24,var(--red)); position:relative; }
+.sentiment-dot { width:14px; height:14px; border-radius:50%; background:#fff; border:2px solid #1e293b; position:absolute; top:-2px; transition:left .3s; }
+.sentiment-label { font-size:10px; font-weight:700; min-width:40px; }
+/* Manage Panel */
 .manage-overlay { display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(15,23,42,0.5); backdrop-filter:blur(4px); -webkit-backdrop-filter:blur(4px); z-index:300; }
 .manage-panel { position:absolute; bottom:0; left:50%; transform:translateX(-50%); width:100%; max-width:500px; background:var(--bg); border-radius:20px 20px 0 0; max-height:88vh; display:flex; flex-direction:column; animation:slideUp .3s ease; }
 @keyframes slideUp { from{transform:translateX(-50%) translateY(100%)} to{transform:translateX(-50%) translateY(0)} }
@@ -369,6 +398,18 @@ body { font-family:-apple-system,BlinkMacSystemFont,'SF Pro','PingFang SC','Helv
   </div>
   <div class="pf-group active" id="pf-group-core"></div>
   <div class="pf-group" id="pf-group-satellite"></div>
+</div>
+
+<!-- Data Intelligence Dashboard -->
+<div class="data-intel">
+  <div class="section-title data-intel-header" onclick="toggleDataIntel()">
+    <span>📡 数据情报中心 <span style="font-size:10px;color:var(--sub);font-weight:400">宏观·资金·舆情</span></span>
+    <div class="data-intel-header-right">
+      <span id="data-intel-brief" class="data-intel-brief" style="color:var(--sub)">加载中...</span>
+      <span class="data-intel-toggle" id="data-intel-toggle">▶</span>
+    </div>
+  </div>
+  <div id="data-intel-container" class="data-intel-container" style="display:none"></div>
 </div>
 
 <!-- Simulation Portfolio -->
@@ -637,6 +678,13 @@ const SIM_INITIAL_CAPITAL = 500000;
 const SIM_TARGET_MONTHLY = 10000;
 const SIM_FEE_RATE = 0.0015;
 
+// ==================== DATA INTELLIGENCE STATE ====================
+let macroData = { cpi:null, ppi:null, pmi:null, gdp:null, m2:null }; // 宏观经济数据
+let sectorCapFlow = []; // 板块资金流向
+let newsHeadlines = []; // 财经新闻
+let newsSentiment = { score:50, label:'中性', bullCount:0, bearCount:0 }; // 舆情综合得分0-100
+let _dataIntelLoaded = false;
+
 function saveHoldings(){ localStorage.setItem('fa_holdings', JSON.stringify(holdings)); }
 function saveWatchlist(){ localStorage.setItem('fa_watchlist', JSON.stringify(watchlist)); }
 function saveKey(k){ _aiKey=k; localStorage.setItem('fa_302ai_key', k); }
@@ -801,6 +849,156 @@ async function fetchAllFunds(){
       }catch(e){}
     }));
   }
+}
+
+// ==================== DATA INTELLIGENCE: MACRO + NEWS + SENTIMENT ====================
+const MACRO_TOKEN = '894050c76af8597a853f5b408b759f5d';
+const MACRO_BASE = 'https://datacenter.eastmoney.com/api/data/v1/get';
+
+async function fetchMacroData(){
+  const apis = [
+    { key:'cpi', report:'RPT_ECONOMY_CPI', cols:'REPORT_DATE,TIME,NATIONAL_SAME,NATIONAL_SEQUENTIAL', sort:'REPORT_DATE', size:3 },
+    { key:'ppi', report:'RPT_ECONOMY_PPI', cols:'REPORT_DATE,TIME,BASE_SAME,BASE_ACCUMULATE', sort:'REPORT_DATE', size:3 },
+    { key:'pmi', report:'RPT_ECONOMY_PMI', cols:'REPORT_DATE,TIME,MAKE_INDEX,NMAKE_INDEX', sort:'REPORT_DATE', size:3 },
+    { key:'gdp', report:'RPT_ECONOMY_GDP', cols:'REPORT_DATE,TIME,SUM_SAME,SECOND_SAME,THIRD_SAME', sort:'REPORT_DATE', size:2 },
+    { key:'m2', report:'RPT_ECONOMY_CURRENCY_SUPPLY', cols:'REPORT_DATE,TIME,BASIC_CURRENCY,BASIC_CURRENCY_SAME,FREE_CASH_SAME', sort:'REPORT_DATE', size:3 },
+  ];
+  await Promise.allSettled(apis.map(async api=>{
+    try{
+      const url = `${MACRO_BASE}?reportName=${api.report}&columns=${api.cols}&pageSize=${api.size}&sortColumns=${api.sort}&sortTypes=-1&token=${MACRO_TOKEN}`;
+      const resp = await fetch(url);
+      const json = await resp.json();
+      if(json?.success && json?.result?.data){
+        macroData[api.key] = json.result.data;
+      }
+    }catch(e){ console.warn('fetchMacro '+api.key+':', e); }
+  }));
+}
+
+async function fetchSectorCapFlow(){
+  try{
+    // 板块主力资金流向 top10
+    const data = await jsonpFetch('https://push2.eastmoney.com/api/qt/clist/get?pn=1&pz=10&po=1&np=1&fltt=2&invt=2&fid=f62&fs=m:90+t:2&fields=f12,f14,f62,f184,f66,f69,f72,f75');
+    if(data?.data?.diff){
+      sectorCapFlow = data.data.diff.map(d=>({
+        name: d.f14,
+        mainNet: d.f62,           // 主力净流入(元)
+        mainNetPct: d.f184,       // 主力净流入占比%
+        superBig: d.f66,          // 超大单净流入
+        big: d.f69,               // 大单净流入
+        mid: d.f72,               // 中单净流入
+        small: d.f75,             // 小单净流入
+      })).filter(d=>d.mainNet && d.mainNet!=='-');
+    }
+  }catch(e){ console.warn('fetchSectorCapFlow:', e); }
+}
+
+async function fetchNewsHeadlines(){
+  try{
+    // 新浪财经滚动新闻
+    const data = await jsonpFetch('https://feed.mix.sina.com.cn/api/roll/get?pageid=153&lid=2516&k=&num=15&page=1');
+    if(data?.result?.data){
+      newsHeadlines = data.result.data.map(d=>({
+        title: d.title || '',
+        time: d.ctime ? new Date(d.ctime*1000).toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'}) : '',
+        url: d.url || '',
+        category: d.category || '',
+      })).filter(n=>n.title);
+      analyzeNewsSentiment();
+    }
+  }catch(e){
+    console.warn('fetchNews:', e);
+    // 备用: 尝试直接fetch
+    try{
+      const resp = await fetch('https://feed.mix.sina.com.cn/api/roll/get?pageid=153&lid=2516&num=15&page=1');
+      const data = await resp.json();
+      if(data?.result?.data){
+        newsHeadlines = data.result.data.map(d=>({
+          title: d.title || '',
+          time: d.ctime ? new Date(d.ctime*1000).toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'}) : '',
+          url: d.url || '',
+        })).filter(n=>n.title);
+        analyzeNewsSentiment();
+      }
+    }catch(e2){}
+  }
+}
+
+function analyzeNewsSentiment(){
+  // NLP情绪分析: 基于关键词的财经新闻情绪判断
+  const bullWords = ['上涨','大涨','涨停','飙升','新高','突破','利好','增长','回升','回暖','反弹','复苏','超预期','乐观','加速','放量','强势','牛市','提振','扩张','积极','好转','走高','攀升','上扬','暴涨','拉升','创新高'];
+  const bearWords = ['下跌','大跌','跌停','暴跌','崩','利空','下滑','萎缩','低迷','悲观','收紧','缩量','弱势','熊市','恶化','衰退','下行','走低','创新低','破位','杀跌','重挫','暴雷','爆仓','风险','危机','制裁','加息','通胀','紧缩'];
+
+  let bullCount = 0, bearCount = 0;
+  newsHeadlines.forEach(n=>{
+    const t = n.title;
+    let bull = 0, bear = 0;
+    bullWords.forEach(w=>{ if(t.includes(w)) bull++; });
+    bearWords.forEach(w=>{ if(t.includes(w)) bear++; });
+    if(bull > bear) { bullCount++; n.sentiment = 'bull'; }
+    else if(bear > bull) { bearCount++; n.sentiment = 'bear'; }
+    else { n.sentiment = 'neutral'; }
+  });
+
+  const total = newsHeadlines.length || 1;
+  const score = Math.round(50 + (bullCount - bearCount) / total * 50);
+  const clampedScore = Math.max(0, Math.min(100, score));
+  let label = '中性';
+  if(clampedScore >= 70) label = '偏乐观';
+  else if(clampedScore >= 80) label = '很乐观';
+  else if(clampedScore <= 30) label = '偏悲观';
+  else if(clampedScore <= 20) label = '很悲观';
+  else if(clampedScore >= 55) label = '略偏多';
+  else if(clampedScore <= 45) label = '略偏空';
+
+  newsSentiment = { score:clampedScore, label, bullCount, bearCount, total };
+}
+
+function getMacroSummary(){
+  // 综合宏观信号: 扩张/收缩/中性
+  let signals = [];
+  if(macroData.pmi?.[0]){
+    const pmi = macroData.pmi[0].MAKE_INDEX;
+    signals.push({ name:'PMI', value:pmi, signal: pmi>=50?'扩张':'收缩', positive:pmi>=50 });
+  }
+  if(macroData.cpi?.[0]){
+    const cpi = macroData.cpi[0].NATIONAL_SAME;
+    signals.push({ name:'CPI', value:cpi+'%', signal: cpi>3?'通胀压力':cpi<0?'通缩风险':'温和', positive:cpi>=0&&cpi<=3 });
+  }
+  if(macroData.ppi?.[0]){
+    const ppi = macroData.ppi[0].BASE_SAME;
+    signals.push({ name:'PPI', value:ppi+'%', signal: ppi>0?'工业品涨价':'工业品降价', positive:ppi>-1 });
+  }
+  if(macroData.m2?.[0]){
+    const m2 = macroData.m2[0].BASIC_CURRENCY_SAME;
+    signals.push({ name:'M2增速', value:m2+'%', signal: m2>10?'流动性宽松':m2<8?'流动性偏紧':'适中', positive:m2>=8 });
+  }
+  if(macroData.gdp?.[0]){
+    const gdp = macroData.gdp[0].SUM_SAME;
+    signals.push({ name:'GDP', value:gdp+'%', signal: gdp>=5?'稳健增长':gdp>=4?'增速放缓':'增速偏低', positive:gdp>=5 });
+  }
+  const positiveCount = signals.filter(s=>s.positive).length;
+  const overallSignal = positiveCount >= 4 ? '宏观偏暖' : positiveCount >= 2 ? '宏观中性' : '宏观偏冷';
+  return { signals, overallSignal, positiveCount };
+}
+
+function getCapFlowSummary(){
+  if(!sectorCapFlow.length) return { topInflow:[], topOutflow:[], netTotal:0 };
+  const sorted = [...sectorCapFlow].sort((a,b)=>(b.mainNet||0)-(a.mainNet||0));
+  const topInflow = sorted.filter(s=>s.mainNet>0).slice(0,5);
+  const topOutflow = sorted.filter(s=>s.mainNet<0).slice(-5).reverse();
+  const netTotal = sectorCapFlow.reduce((s,d)=>s+(d.mainNet||0),0);
+  return { topInflow, topOutflow, netTotal };
+}
+
+async function fetchAllDataIntel(){
+  await Promise.allSettled([
+    fetchMacroData(),
+    fetchSectorCapFlow(),
+    fetchNewsHeadlines(),
+  ]);
+  _dataIntelLoaded = true;
+  renderDataIntelBrief();
 }
 
 // ==================== HISTORICAL DATA & TREND ANALYSIS ====================
@@ -1120,10 +1318,82 @@ function buildContext(){
   const reviewCtx = buildReviewContext();
   if(reviewCtx) ctx += reviewCtx;
 
+  // 注入数据情报：宏观经济 + 资金流向 + 新闻舆情
+  if(_dataIntelLoaded){
+    ctx += buildDataIntelContext();
+  }
+
   return ctx;
 }
 
-const SYSTEM_PROMPT = `你是一位擅长波段操作和趋势跟踪的基金投资顾问。用户的核心目标是：3个月内实现稳健增长，跑赢沪深300指数。
+function buildDataIntelContext(){
+  let ctx = '\n【📡 数据情报中心 — 多维度分析】\n';
+
+  // 宏观经济
+  const macro = getMacroSummary();
+  ctx += '\n■ 宏观经济指标:\n';
+  macro.signals.forEach(s=>{
+    ctx += `  ${s.name}: ${s.value} (${s.signal}) ${s.positive?'✅':'⚠️'}\n`;
+  });
+  ctx += `  综合宏观信号: ${macro.overallSignal} (${macro.positiveCount}/5项正面)\n`;
+  // PMI趋势
+  if(macroData.pmi && macroData.pmi.length>=2){
+    ctx += `  PMI趋势: ${macroData.pmi.map(d=>d.TIME?.replace('份','')+':'+d.MAKE_INDEX).join(' → ')}\n`;
+  }
+  // CPI趋势
+  if(macroData.cpi && macroData.cpi.length>=2){
+    ctx += `  CPI趋势: ${macroData.cpi.map(d=>d.TIME?.replace('份','')+':'+d.NATIONAL_SAME+'%').join(' → ')}\n`;
+  }
+
+  // 板块资金流向
+  const capFlow = getCapFlowSummary();
+  if(sectorCapFlow.length>0){
+    ctx += '\n■ 板块主力资金流向(今日):\n';
+    ctx += `  全市场主力净流入: ${(capFlow.netTotal/1e8).toFixed(1)}亿\n`;
+    capFlow.topInflow.slice(0,5).forEach(s=>{
+      ctx += `  🟢 ${s.name}: +${(s.mainNet/1e8).toFixed(1)}亿\n`;
+    });
+    capFlow.topOutflow.slice(0,3).forEach(s=>{
+      ctx += `  🔴 ${s.name}: ${(s.mainNet/1e8).toFixed(1)}亿\n`;
+    });
+    // 匹配用户持仓的板块资金流
+    const holdTypes = new Set([...holdings.map(h=>h.type||''), ...watchlist.map(w=>w.type||'')]);
+    const relevantFlows = sectorCapFlow.filter(s=> [...holdTypes].some(t=>s.name.includes(t)||t.includes(s.name)));
+    if(relevantFlows.length>0){
+      ctx += '  [与用户持仓相关板块资金流]:\n';
+      relevantFlows.forEach(s=>{ ctx += `    ${s.name}: ${(s.mainNet/1e8).toFixed(1)}亿(主力净占比${s.mainNetPct}%)\n`; });
+    }
+  }
+
+  // 新闻舆情
+  ctx += '\n■ 财经新闻舆情分析(NLP):\n';
+  ctx += `  舆情指数: ${newsSentiment.score}/100 (${newsSentiment.label})\n`;
+  ctx += `  利好新闻: ${newsSentiment.bullCount}条 | 利空新闻: ${newsSentiment.bearCount}条\n`;
+  if(newsHeadlines.length>0){
+    ctx += '  [重要财经新闻]:\n';
+    newsHeadlines.slice(0,8).forEach(n=>{
+      const tag = n.sentiment==='bull'?'🟢利好':n.sentiment==='bear'?'🔴利空':'⚪中性';
+      ctx += `    ${tag} ${n.title}\n`;
+    });
+  }
+
+  // 综合数据信号
+  const dataSignal = generateDataSignal();
+  ctx += `\n■ 综合数据信号: ${dataSignal.icon} ${dataSignal.label} (评分${dataSignal.score}/100)\n`;
+  ctx += `  建议: ${dataSignal.advice}\n`;
+  ctx += '\n⚠️ 请结合以上宏观数据、资金流向和舆情分析，对你的操作建议进行验证和调整。数据驱动决策，减少主观偏差。\n';
+
+  return ctx;
+}
+
+
+const SYSTEM_PROMPT = `你是一位擅长波段操作和趋势跟踪的基金投资顾问，拥有丰富的量化分析和多因子模型经验。用户的核心目标是：3个月内实现稳健增长，跑赢沪深300指数。
+
+■ 你的数据源（按重要度排序）：
+1. 市场数据：基金历史净值(NAV)趋势分析、相关指数(沪深300/上证/创业板)行情、ETF实时价格
+2. 宏观经济数据：PMI(制造业景气度)、CPI/PPI(通胀)、GDP增速、M2货币供应(流动性)
+3. 另类数据：板块主力资金流向(超大单/大单/中单/小单)、财经新闻NLP情绪分析(利好/利空识别)、社交舆情热度指数
+4. 历史复盘：过往AI预测vs实际涨跌对比、准确率统计、错误教训
 
 ■ 核心投资逻辑（你必须遵守）：
 1. 趋势为王：先判断每个板块/基金的中期趋势（3个月维度）是上升、震荡还是下降
@@ -1187,10 +1457,10 @@ const SYSTEM_PROMPT = `你是一位擅长波段操作和趋势跟踪的基金投
 10. 只输出JSON，不要有其他任何文字`;
 
 const ROLE_DESCS = {
-  engine1: '你特别擅长技术分析和趋势跟踪。请重点分析：①每个基金所属板块的中期趋势（过去1-3个月走势方向）②当前处于趋势中的什么位置（回调低点？上升中途？高位？）③短期回调是否是上升趋势中的买入机会。关键判断：如果一个板块过去3个月整体上行、今日大跌，你应该视为波段低吸机会而非减仓信号。',
-  engine2: '你特别擅长宏观经济和政策面分析。请重点分析：①当前宏观政策环境对各行业板块的中期影响 ②有色金属、AI科技、军工等周期性/主题性板块的政策驱动力 ③哪些板块有持续的政策催化（如新基建、国产替代、碳中和、矿产资源）。注意区分政策利好（趋势支撑、逢跌买入）和政策利空（趋势逆转、应减仓）。',
-  engine3: '你特别擅长深度基本面和行业研究。请重点分析：①各行业的景气度周期位置（上行初期？繁荣期？衰退期？）②盈利趋势是否支撑中期上涨 ③估值是否合理。对于景气上行期的行业，短期波动不改长期趋势——大跌是买入机会。波段操作关注行业景气拐点而非日内涨跌。',
-  engine4: '你特别擅长全球视角和资金流向分析。请重点分析：①全球大宗商品走势对有色金属、黄金等的影响 ②外资流向和行业偏好 ③地缘政治风险下的避险配置 ④哪些板块在全球视角下仍有上行空间。注意：全球铜铝等金属价格趋势如果向上，国内有色金属基金的回调就是配置机会。'
+  engine1: '你特别擅长技术分析、量化因子和趋势跟踪。请重点分析：①每个基金所属板块的中期趋势（过去1-3个月走势方向+均线系统）②当前处于趋势中的什么位置（回调低点？上升中途？高位？）③短期回调是否是上升趋势中的买入机会。请特别关注数据情报中的「板块主力资金流向」和「历史NAV趋势数据」。如果资金持续流入+中期趋势向上+短期回调，这是强买入信号。',
+  engine2: '你特别擅长宏观经济和政策面分析。请重点关注数据情报中的「宏观经济指标」：①PMI是否在荣枯线上方（制造业景气度直接影响周期股）②CPI/PPI走势（通胀环境利好有色金属/资源类）③M2增速（流动性是否宽松，宽松环境利好成长股）④GDP增速趋势。结合宏观数据判断各行业板块的中期政策驱动力。',
+  engine3: '你特别擅长深度基本面和行业研究。请重点分析：①各行业的景气度周期位置（结合PMI、PPI数据验证）②板块主力资金单流向是否确认行业景气（大资金持续流入=机构认同）③盈利趋势是否支撑中期上涨。对于景气上行期+资金流入的行业，短期波动不改长期趋势——大跌是买入机会。',
+  engine4: '你特别擅长全球视角、资金流向和舆情分析。请重点关注：①数据情报中的「财经新闻舆情」（NLP情绪指数偏多还是偏空？）②板块资金流向中的大单超大单方向（代表机构态度）③全球大宗商品走势+地缘风险 ④新闻中提到的风险点和催化剂。结合舆情综合信号给出风险调整后的仓位建议。'
 };
 
 async function runAIAnalysis(onProgress){
@@ -2704,56 +2974,87 @@ function simAutoTrade(){
   const strategy = simPortfolio.strategy;
   let tradesExecuted = 0;
 
-  // 1. 止盈止损检查
+  // 数据情报信号系数: 根据宏观+资金+舆情调节交易激进度
+  const dataSignal = _dataIntelLoaded ? generateDataSignal() : { score:50 };
+  const dsScore = dataSignal.score; // 0-100, 50=中性
+  // buyMult: 1.0(中性), 0.5(熊市)~1.5(牛市)
+  const buyMult = 0.5 + dsScore / 100;
+  // sellMult: 反向, 熊市卖更多
+  const sellMult = 1.5 - dsScore / 100;
+  // 信心门槛调节: 牛市降低买入门槛，熊市提高
+  const confAdj = Math.round((50 - dsScore) * 0.15); // ±7.5
+
+  // 1. 止盈止损检查（数据信号影响止损幅度）
+  const dynStopLoss = strategy.stopLoss + (dsScore < 40 ? 1 : dsScore > 60 ? -1 : 0);
+  const dynTakeProfit = strategy.takeProfit + (dsScore > 65 ? 3 : dsScore < 35 ? -2 : 0);
+
   [...simPortfolio.positions].forEach(pos => {
     const fd = getFundData(pos.code);
-    if(!fd?._live && !fd?._histFallback) return; // 只用真实数据做交易决策
+    if(!fd?._live && !fd?._histFallback) return;
     const nav = getSimNav(pos.code) || pos.avgCost;
     const pnlPct = (nav - pos.avgCost) / pos.avgCost * 100;
-    if(pnlPct <= strategy.stopLoss && pos.group === 'satellite'){
-      simTrade(pos.code, 'sell', 0.7, `⛔止损: 亏${pnlPct.toFixed(1)}%超止损线${strategy.stopLoss}%`);
+    if(pnlPct <= dynStopLoss && pos.group === 'satellite'){
+      const sellPct = Math.min(0.9, 0.7 * sellMult);
+      simTrade(pos.code, 'sell', sellPct, `⛔止损: 亏${pnlPct.toFixed(1)}%超线${dynStopLoss}% [数据信号${dsScore}]`);
       tradesExecuted++;
     }
-    if(pnlPct >= strategy.takeProfit && pos.group === 'satellite'){
-      simTrade(pos.code, 'sell', 0.4, `✅止盈: 赚${pnlPct.toFixed(1)}%达止盈线${strategy.takeProfit}%`);
+    if(pnlPct >= dynTakeProfit && pos.group === 'satellite'){
+      const sellPct = Math.min(0.6, 0.4 * sellMult);
+      simTrade(pos.code, 'sell', sellPct, `✅止盈: 赚${pnlPct.toFixed(1)}%达${dynTakeProfit}% [数据信号${dsScore}]`);
       tradesExecuted++;
     }
   });
 
-  // 2. AI信号交易
+  // 2. AI信号交易（融合数据情报）
+  const buyConfThreshold = Math.max(50, 65 + confAdj);
+  const sellConfThreshold = Math.max(45, 60 + confAdj);
+
   simPortfolio.positions.forEach(pos => {
     const sig = _analysisResult.signals[pos.code];
     if(!sig) return;
     const fd = getFundData(pos.code);
-    if(!fd?._live) return; // AI交易只用实时数据
+    if(!fd?._live) return;
     const todayPct = fd?.gszzl || 0;
 
-    if(sig.action==='buy' && sig.confidence>=65 && todayPct<=strategy.dipBuyThreshold){
+    // 检查该板块的资金流向
+    const posType = pos.type || '';
+    const sectorFlow = sectorCapFlow.find(s => posType && (s.name.includes(posType) || posType.includes(s.name)));
+    const sectorBullish = sectorFlow && sectorFlow.mainNet > 0;
+    const sectorBearish = sectorFlow && sectorFlow.mainNet < -1e8;
+
+    if(sig.action==='buy' && sig.confidence>=buyConfThreshold && todayPct<=strategy.dipBuyThreshold){
       const posValue = pos.shares * (getSimNav(pos.code) || pos.avgCost);
       const totalValue = getSimTotalValue();
       if(posValue / totalValue < strategy.maxSinglePos){
-        const addAmt = Math.min(Math.round(totalValue * 0.03), Math.round(simPortfolio.cash * 0.3));
+        let addPct = 0.03 * buyMult;
+        if(sectorBullish) addPct *= 1.3; // 板块有资金流入，加大买入
+        const addAmt = Math.min(Math.round(totalValue * addPct), Math.round(simPortfolio.cash * 0.3));
         if(addAmt >= 1000){
-          simTrade(pos.code, 'buy', addAmt, `AI加仓(${sig.confidence}%信心)+跌${todayPct.toFixed(1)}%低吸`);
+          const reason = `AI加仓(${sig.confidence}%)+跌${todayPct.toFixed(1)}%低吸 [数据${dsScore}${sectorBullish?' 板块资金流入':''}]`;
+          simTrade(pos.code, 'buy', addAmt, reason);
           tradesExecuted++;
         }
       }
     }
 
-    if(sig.action==='sell' && sig.confidence>=60 && todayPct>=strategy.surgeSellThreshold && pos.group==='satellite'){
-      simTrade(pos.code, 'sell', 0.3, `AI减仓(${sig.confidence}%)+涨${todayPct.toFixed(1)}%止盈`);
+    if(sig.action==='sell' && sig.confidence>=sellConfThreshold && todayPct>=strategy.surgeSellThreshold && pos.group==='satellite'){
+      let sellPct = 0.3 * sellMult;
+      if(sectorBearish) sellPct = Math.min(0.5, sellPct * 1.3); // 板块资金流出，加大卖出
+      simTrade(pos.code, 'sell', sellPct, `AI减仓(${sig.confidence}%)+涨${todayPct.toFixed(1)}% [数据${dsScore}${sectorBearish?' 板块资金流出':''}]`);
       tradesExecuted++;
     }
   });
 
-  // 3. AI新推荐品种
-  if(_analysisResult.picks && simPortfolio.cash > 20000){
+  // 3. AI新推荐品种（融合数据信号）
+  if(_analysisResult.picks && simPortfolio.cash > 20000 && dsScore >= 40){
+    const minEndorsements = dsScore >= 60 ? 1 : 2; // 数据偏多时降低门槛
     _analysisResult.picks.forEach(pick => {
       if(simPortfolio.positions.find(p => p.code === pick.code)) return;
-      if(pick.endorsements >= 2){
-        const amount = Math.min(Math.round(simPortfolio.cash * 0.15), 25000);
+      if(pick.endorsements >= minEndorsements){
+        const basePct = dsScore >= 60 ? 0.18 : 0.12;
+        const amount = Math.min(Math.round(simPortfolio.cash * basePct), 25000);
         if(amount >= 5000){
-          simTrade(pick.code, 'buy', amount, `AI推荐(${pick.endorsements}引擎): ${(pick.reason||'').slice(0,40)}`);
+          simTrade(pick.code, 'buy', amount, `AI推荐(${pick.endorsements}引擎) [数据信号${dsScore}]: ${(pick.reason||'').slice(0,30)}`);
           tradesExecuted++;
         }
       }
@@ -2836,6 +3137,141 @@ function learnFromPerformance(){
     if(simPortfolio.learningLog.length > 30) simPortfolio.learningLog = simPortfolio.learningLog.slice(-30);
   }
   saveSimPortfolio();
+}
+
+// ==================== DATA INTELLIGENCE RENDERING ====================
+function toggleDataIntel(){
+  const container = document.getElementById('data-intel-container');
+  const icon = document.getElementById('data-intel-toggle');
+  if(container.style.display === 'none'){
+    container.style.display = '';
+    icon.textContent = '▼';
+    renderDataIntel();
+  } else {
+    container.style.display = 'none';
+    icon.textContent = '▶';
+  }
+}
+
+function renderDataIntelBrief(){
+  const el = document.getElementById('data-intel-brief');
+  if(!el) return;
+  if(!_dataIntelLoaded){ el.innerHTML = '<span style="color:var(--sub)">加载中...</span>'; return; }
+  const macro = getMacroSummary();
+  const sentColor = newsSentiment.score>=55 ? 'var(--red)' : newsSentiment.score<=45 ? 'var(--green)' : 'var(--sub)';
+  el.innerHTML = `<span style="color:${macro.positiveCount>=3?'var(--red)':'var(--green)'}">${macro.overallSignal}</span> · <span style="color:${sentColor}">舆情${newsSentiment.label}</span>`;
+}
+
+function renderDataIntel(){
+  const container = document.getElementById('data-intel-container');
+  if(!container) return;
+  if(!_dataIntelLoaded){
+    container.innerHTML = '<div style="text-align:center;padding:20px;font-size:11px;color:var(--sub)"><div class="spinner"></div><div style="margin-top:8px">数据加载中...</div></div>';
+    return;
+  }
+  let html = '';
+
+  // 1. 宏观经济面板
+  const macro = getMacroSummary();
+  html += '<div class="macro-card"><div class="macro-card-title">📊 宏观经济指标 <span style="font-size:9px;font-weight:400;color:var(--sub)">东方财富数据中心</span></div>';
+  html += '<div class="macro-grid">';
+  macro.signals.forEach(s=>{
+    const cls = s.positive ? 'positive' : 'negative';
+    html += `<div class="macro-item"><span class="macro-label">${s.name}</span><span class="macro-val ${cls}">${s.value}</span><span class="macro-label">${s.signal}</span></div>`;
+  });
+  html += '</div>';
+  // 趋势对比（如果有多期数据）
+  if(macroData.pmi && macroData.pmi.length>=2){
+    const curr = macroData.pmi[0].MAKE_INDEX;
+    const prev = macroData.pmi[1].MAKE_INDEX;
+    const trend = curr>prev ? '📈环比改善' : curr<prev ? '📉环比走弱' : '➡️持平';
+    html += `<div style="font-size:9px;color:var(--sub);margin-top:6px;text-align:center">制造业PMI趋势: ${macroData.pmi[1].TIME?.replace('份','')}: ${prev} → ${macroData.pmi[0].TIME?.replace('份','')}: ${curr} ${trend}</div>`;
+  }
+  html += '</div>';
+
+  // 2. 板块资金流向
+  const capFlow = getCapFlowSummary();
+  if(sectorCapFlow.length > 0){
+    html += '<div class="macro-card"><div class="macro-card-title">💰 板块主力资金流向 <span style="font-size:9px;font-weight:400;color:var(--sub)">今日实时</span></div>';
+    const maxAbs = Math.max(...sectorCapFlow.map(s=>Math.abs(s.mainNet||0)), 1);
+    // Net total
+    const netBillion = capFlow.netTotal / 1e8;
+    const netColor = netBillion >= 0 ? 'var(--red)' : 'var(--green)';
+    html += `<div style="text-align:center;margin-bottom:8px;font-size:11px">全市场主力净流入: <span style="color:${netColor};font-weight:700">${netBillion>=0?'+':''}${netBillion.toFixed(1)}亿</span></div>`;
+    // Top inflow
+    capFlow.topInflow.slice(0,4).forEach(s=>{
+      const val = (s.mainNet/1e8).toFixed(1);
+      const w = Math.min(100, Math.abs(s.mainNet)/maxAbs*100);
+      html += `<div style="display:flex;align-items:center;gap:6px;padding:3px 0;font-size:10px"><span style="min-width:56px;font-weight:600">${s.name}</span><div class="cap-flow-bar" style="flex:1"><div class="cap-flow-fill" style="width:${w}%;background:var(--red)"></div></div><span style="min-width:46px;text-align:right;color:var(--red);font-weight:600">+${val}亿</span></div>`;
+    });
+    // Top outflow
+    capFlow.topOutflow.slice(0,3).forEach(s=>{
+      const val = (s.mainNet/1e8).toFixed(1);
+      const w = Math.min(100, Math.abs(s.mainNet)/maxAbs*100);
+      html += `<div style="display:flex;align-items:center;gap:6px;padding:3px 0;font-size:10px"><span style="min-width:56px;font-weight:600">${s.name}</span><div class="cap-flow-bar" style="flex:1"><div class="cap-flow-fill" style="width:${w}%;background:var(--green)"></div></div><span style="min-width:46px;text-align:right;color:var(--green);font-weight:600">${val}亿</span></div>`;
+    });
+    html += '</div>';
+  }
+
+  // 3. 舆情/新闻情绪
+  html += '<div class="macro-card"><div class="macro-card-title">📰 财经舆情分析 <span style="font-size:9px;font-weight:400;color:var(--sub)">NLP情绪识别 · 新浪财经</span></div>';
+  // Sentiment meter
+  const sentColor = newsSentiment.score>=60 ? 'var(--red)' : newsSentiment.score<=40 ? 'var(--green)' : '#f59e0b';
+  html += `<div class="sentiment-meter"><span style="font-size:9px;color:var(--green)">悲观</span><div class="sentiment-bar"><div class="sentiment-dot" style="left:calc(${newsSentiment.score}% - 7px);border-color:${sentColor}"></div></div><span style="font-size:9px;color:var(--red)">乐观</span></div>`;
+  html += `<div style="text-align:center;font-size:11px;margin-bottom:8px">情绪指数: <span style="color:${sentColor};font-weight:700">${newsSentiment.score}</span>/100 · <span style="font-weight:600">${newsSentiment.label}</span> <span style="font-size:9px;color:var(--sub)">(利好${newsSentiment.bullCount}条 / 利空${newsSentiment.bearCount}条 / 共${newsSentiment.total}条)</span></div>`;
+  // News headlines
+  if(newsHeadlines.length > 0){
+    const displayNews = newsHeadlines.slice(0, 8);
+    displayNews.forEach(n=>{
+      const icon = n.sentiment==='bull' ? '🟢' : n.sentiment==='bear' ? '🔴' : '⚪';
+      html += `<div class="news-item"><span class="news-sentiment">${icon}</span><span class="news-text">${n.title}</span><span class="news-time">${n.time}</span></div>`;
+    });
+  } else {
+    html += '<div style="text-align:center;padding:10px;font-size:11px;color:var(--sub)">暂无新闻数据</div>';
+  }
+  html += '</div>';
+
+  // 4. 综合数据信号
+  html += '<div class="macro-card" style="background:linear-gradient(135deg,#0f172a,#1e293b);color:#fff">';
+  html += '<div class="macro-card-title" style="color:rgba(255,255,255,0.9)">🤖 AI数据信号综合 <span style="font-size:9px;font-weight:400;color:rgba(255,255,255,0.5)">多维度融合</span></div>';
+  const dataSignal = generateDataSignal();
+  html += `<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:6px">`;
+  html += `<div style="text-align:center"><div style="font-size:9px;color:rgba(255,255,255,0.5)">宏观面</div><div style="font-size:13px;font-weight:700;color:${macro.positiveCount>=3?'#ef4444':'#22c55e'}">${macro.overallSignal}</div></div>`;
+  html += `<div style="text-align:center"><div style="font-size:9px;color:rgba(255,255,255,0.5)">资金面</div><div style="font-size:13px;font-weight:700;color:${capFlow.netTotal>=0?'#ef4444':'#22c55e'}">${capFlow.netTotal>=0?'资金流入':'资金流出'}</div></div>`;
+  html += `<div style="text-align:center"><div style="font-size:9px;color:rgba(255,255,255,0.5)">舆情面</div><div style="font-size:13px;font-weight:700;color:${sentColor}">${newsSentiment.label}</div></div>`;
+  html += '</div>';
+  html += `<div style="text-align:center;margin-top:10px;padding-top:8px;border-top:1px solid rgba(255,255,255,0.1)"><div style="font-size:10px;color:rgba(255,255,255,0.5)">综合信号</div><div style="font-size:16px;font-weight:800;margin-top:2px;color:${dataSignal.color}">${dataSignal.icon} ${dataSignal.label}</div><div style="font-size:10px;color:rgba(255,255,255,0.5);margin-top:2px">${dataSignal.advice}</div></div>`;
+  html += '</div>';
+
+  container.innerHTML = html;
+}
+
+function generateDataSignal(){
+  let score = 50; // 50=中性
+  // 宏观面 ±15
+  const macro = getMacroSummary();
+  score += (macro.positiveCount - 2.5) * 6;
+  // 资金面 ±15
+  const capFlow = getCapFlowSummary();
+  if(capFlow.netTotal > 5e9) score += 15;
+  else if(capFlow.netTotal > 0) score += 8;
+  else if(capFlow.netTotal < -5e9) score -= 15;
+  else if(capFlow.netTotal < 0) score -= 8;
+  // 舆情面 ±10
+  score += (newsSentiment.score - 50) * 0.2;
+  // PMI特殊权重
+  if(macroData.pmi?.[0]){
+    const pmi = macroData.pmi[0].MAKE_INDEX;
+    if(pmi >= 51) score += 5;
+    else if(pmi < 49) score -= 5;
+  }
+
+  score = Math.max(0, Math.min(100, Math.round(score)));
+  if(score >= 70) return { score, label:'积极看多', icon:'🟢', color:'#ef4444', advice:'宏观+资金+舆情三维共振偏多，可适当增配' };
+  if(score >= 58) return { score, label:'谨慎偏多', icon:'🟡', color:'#f59e0b', advice:'多数指标偏正面，维持仓位、可低吸' };
+  if(score >= 42) return { score, label:'中性观望', icon:'⚪', color:'rgba(255,255,255,0.7)', advice:'信号分歧较大，维持现有配置不宜激进' };
+  if(score >= 30) return { score, label:'谨慎偏空', icon:'🟠', color:'#f59e0b', advice:'部分指标走弱，控制仓位、降低风险敞口' };
+  return { score, label:'防御为主', icon:'🔴', color:'#22c55e', advice:'多维度信号偏负面，建议降低仓位、增加现金' };
 }
 
 function toggleSimDetail(){
@@ -3095,10 +3531,15 @@ function syncSimFromHoldings(){
 async function loadData(){
   await Promise.all([fetchIndices(), fetchSectors(), fetchAllFunds()]);
   renderAll();
-  // 异步加载历史数据（不阻塞主渲染）
+  // 异步加载历史数据和数据情报（不阻塞主渲染）
   fetchAllHistory().then(()=>{
     console.log('历史趋势数据加载完成:', Object.keys(fundHistoryData).length, '只基金');
   }).catch(e=>console.warn('历史数据加载失败:', e));
+  // 数据情报中心：宏观+资金+舆情
+  fetchAllDataIntel().then(()=>{
+    console.log('数据情报加载完成: 宏观/资金/舆情');
+    renderDataIntelBrief();
+  }).catch(e=>console.warn('数据情报加载失败:', e));
 }
 
 function startTimers(){
@@ -3117,6 +3558,14 @@ function startTimers(){
       if(document.getElementById('sim-container')?.style.display !== 'none'){
         renderSimPortfolio();
       }
+      // 刷新数据情报（资金流和新闻每30s更新）
+      fetchSectorCapFlow().catch(()=>{});
+      fetchNewsHeadlines().then(()=>{
+        renderDataIntelBrief();
+        if(document.getElementById('data-intel-container')?.style.display !== 'none'){
+          renderDataIntel();
+        }
+      }).catch(()=>{});
     }
   }, 30000);
 }
