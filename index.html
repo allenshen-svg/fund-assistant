@@ -1239,12 +1239,16 @@ let _gnTranslating = false;
 async function translateGlobalNews(){
   if(!globalNews.length || _gnTranslating) return;
   if(globalNews[0].titleCN) return;
-  if(!_aiKey){ console.warn('[GlobalNews] 无API Key，跳过翻译'); return; }
+  // 实时读取key，因为页面初始化时可能还没设置
+  const key = _aiKey || localStorage.getItem('fa_302ai_key') || '';
+  if(!key){ console.warn('[GlobalNews] 无API Key，跳过翻译'); return; }
   _gnTranslating = true;
   const titles = globalNews.slice(0,30).map((n,i)=>`${i+1}. ${n.title}`).join('\n');
   const model = AI_ENGINES[0]?.model || 'deepseek-ai/DeepSeek-V3';
   try {
     console.log('[GlobalNews] 开始翻译', globalNews.length, '条新闻, model=', model, 'apiBase=', _apiBase);
+    // 确保_aiKey有值
+    if(!_aiKey) _aiKey = localStorage.getItem('fa_302ai_key') || '';
     const resp = await callAI(model, '你是专业的新闻翻译员，请将英文新闻标题逐条翻译为简洁准确的中文，每条一行，保持编号。', `请将以下英文新闻标题逐条翻译为中文，保持编号格式(如 1. xxx)，每条一行，只输出翻译，不加解释：\n\n${titles}`, 0.3);
     console.log('[GlobalNews] 翻译API返回:', resp?.slice(0,200));
     if(resp){
@@ -1282,7 +1286,10 @@ function getGlobalNewsSentiment(){
 
 async function summarizeGlobalNewsAI(){
   if(!globalNews.length) return;
-  if(globalNewsSummary) return; // 已有摘要，不重复请求
+  if(globalNewsSummary) return;
+  // 实时读取key
+  if(!_aiKey) _aiKey = localStorage.getItem('fa_302ai_key') || '';
+  if(!_aiKey){ console.warn('[GlobalNews] 无API Key，跳过AI摘要'); return; }
   const headlines = globalNews.slice(0,20).map((n,i)=>`${i+1}. [${n.source}] ${n.title}${n.description?' — '+n.description.slice(0,80):''}`).join('\n');
   const prompt = `你是一位资深国际政治经济分析师，专注于全球宏观形势对中国资本市场的影响分析。
 
@@ -4432,6 +4439,10 @@ function toggleDataIntel(){
     container.style.display = '';
     icon.textContent = '▼';
     renderDataIntel();
+    // 如果国际新闻未翻译，尝试触发翻译
+    if(globalNews.length > 0 && !globalNews[0].titleCN){
+      translateGlobalNews();
+    }
   } else {
     container.style.display = 'none';
     icon.textContent = '▶';
@@ -4663,6 +4674,8 @@ function renderGlobalNewsSummaryHTML(){
 }
 
 async function triggerTranslate(){
+  // 实时读取key
+  if(!_aiKey) _aiKey = localStorage.getItem('fa_302ai_key') || '';
   if(!_aiKey){ alert('请先在底部设置中配置API Key'); return; }
   if(!globalNews.length){ alert('暂无国际新闻数据，请等待加载'); return; }
   const btn = event?.target;
@@ -4674,6 +4687,8 @@ async function triggerTranslate(){
 }
 
 async function triggerGlobalNewsSummary(){
+  // 实时读取key
+  if(!_aiKey) _aiKey = localStorage.getItem('fa_302ai_key') || '';
   if(!_aiKey){ alert('请先在底部设置中配置API Key'); return; }
   if(!globalNews.length){ alert('暂无国际新闻数据，请等待加载'); return; }
   const btn = event?.target;
