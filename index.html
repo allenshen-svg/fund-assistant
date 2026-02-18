@@ -655,12 +655,31 @@ function sign(n){ return n>=0?'+':''; }
 function fmt(n){ return (typeof n==='number')?n.toFixed(2):'--'; }
 function seededRand(seed){ let x=Math.sin(seed)*10000; return x-Math.floor(x); }
 
+// A股节假日休市日历(YYYY-MM-DD)
+const CN_HOLIDAYS_2025 = ['2025-01-01','2025-01-28','2025-01-29','2025-01-30','2025-01-31','2025-02-03','2025-02-04','2025-04-04','2025-05-01','2025-05-02','2025-05-05','2025-06-02','2025-10-01','2025-10-02','2025-10-03','2025-10-06','2025-10-07','2025-10-08'];
+const CN_HOLIDAYS_2026 = ['2026-01-01','2026-01-02','2026-02-16','2026-02-17','2026-02-18','2026-02-19','2026-02-20','2026-02-23','2026-02-24','2026-04-06','2026-05-01','2026-05-04','2026-05-05','2026-06-01','2026-10-01','2026-10-02','2026-10-05','2026-10-06','2026-10-07','2026-10-08'];
+const CN_HOLIDAYS = new Set([...CN_HOLIDAYS_2025, ...CN_HOLIDAYS_2026]);
+// 部分周末调休补班日
+const CN_WORKDAYS = new Set(['2025-01-26','2025-02-08','2025-04-27','2025-09-28','2025-10-11','2026-02-14','2026-02-28','2026-10-10']);
+
+function isTradingDay(dateStr){
+  if(!dateStr) dateStr = todayStr();
+  if(CN_HOLIDAYS.has(dateStr)) return false;
+  if(CN_WORKDAYS.has(dateStr)) return true;
+  const d = new Date(dateStr); const day = d.getDay();
+  return day!==0 && day!==6;
+}
+
 function getMarketStatus(){
   const now = new Date();
   const day = now.getDay();
   const h = now.getHours(), m = now.getMinutes();
   const t = h*60+m;
-  if(day===0||day===6) return {status:'closed', text:'周末休市', countdown:null};
+  const today = todayStr();
+  // 节假日
+  if(CN_HOLIDAYS.has(today)) return {status:'closed', text:'节假日休市', countdown:null, isHoliday:true};
+  // 周末(非补班)
+  if((day===0||day===6) && !CN_WORKDAYS.has(today)) return {status:'closed', text:'周末休市', countdown:null};
   if(t<570) return {status:'pre', text:'未开盘', countdown:null};
   if(t>=570&&t<690) return {status:'open', text:'交易中·上午', countdown:900-t};
   if(t>=690&&t<780) return {status:'break', text:'午间休市', countdown:900-t};
@@ -2449,44 +2468,48 @@ function saveSimPortfolio(){ localStorage.setItem('fa_sim_portfolio', JSON.strin
 
 function initSimPortfolio(){
   if(simPortfolio && simPortfolio.positions && simPortfolio.positions.length > 0) return;
+  // 需要有真实持仓才能初始化
+  if(holdings.length === 0){
+    simPortfolio = null;
+    return;
+  }
+  buildSimFromHoldings();
+}
+
+function buildSimFromHoldings(){
   const today = todayStr();
   simPortfolio = {
     cash: 0, totalCapital: SIM_INITIAL_CAPITAL,
     positions: [], history: [], dailySnapshots: [],
     strategy: {
       coreRatio: 0.6, satRatio: 0.4,
-      maxSinglePos: 0.15,
+      maxSinglePos: 0.25,
       stopLoss: -8, takeProfit: 20,
       dipBuyThreshold: -1.5, surgeSellThreshold: 3,
       rebalanceDays: 15,
     },
     created: today, targetMonthlyReturn: SIM_TARGET_MONTHLY,
+    syncSource: 'holdings', // 标记来源
     learningLog: [],
   };
 
-  const allocations = [
-    {code:'012414',name:'华夏中证A500ETF联接A',type:'宽基',pct:20,group:'core'},
-    {code:'007339',name:'易方达沪深300ETF联接C',type:'宽基',pct:15,group:'core'},
-    {code:'000216',name:'华安黄金ETF联接A',type:'黄金',pct:15,group:'core'},
-    {code:'012643',name:'天弘红利低波动C',type:'红利',pct:10,group:'core'},
-    {code:'014832',name:'天弘中证有色金属ETF联接C',type:'有色金属',pct:10,group:'satellite'},
-    {code:'015047',name:'广发人工智能ETF联接C',type:'AI/科技',pct:8,group:'satellite'},
-    {code:'001156',name:'申万菱信中证半导体指数A',type:'半导体',pct:8,group:'satellite'},
-    {code:'257070',name:'国泰中证军工ETF联接A',type:'军工',pct:7,group:'satellite'},
-    {code:'013308',name:'易方达中证全指证券公司C',type:'金融',pct:7,group:'satellite'},
-  ];
-
+  // 根据用户持仓等权分配资金
+  const n = holdings.length;
+  const perFundPct = Math.floor(90 / n); // 90%分配，10%留现金
   let usedCash = 0;
   let hasRealData = false;
-  allocations.forEach(a => {
-    const amount = Math.round(SIM_INITIAL_CAPITAL * a.pct / 100);
+  const CORE_TYPES = new Set(['宽基','黄金','红利','债券']);
+
+  holdings.forEach((h, i) => {
+    // 最后一只基金把剩余90%全给
+    const pct = (i === n-1) ? (90 - perFundPct * (n-1)) : perFundPct;
+    const amount = Math.round(SIM_INITIAL_CAPITAL * pct / 100);
     const fee = Math.round(amount * SIM_FEE_RATE);
     const netAmount = amount - fee;
-    const fd = getFundData(a.code);
-    // 优先用真实数据，如果没有live就用历史净值
+    const fd = getFundData(h.code);
     let nav;
     if(fd?._live){
-      nav = fd.dwjz || fd.gsz; // 用确认净值
+      nav = fd.dwjz || fd.gsz;
       hasRealData = true;
     } else if(fd?._histFallback){
       nav = fd.dwjz;
@@ -2495,15 +2518,16 @@ function initSimPortfolio(){
       nav = fd?.dwjz || 1.0;
     }
     const shares = Math.floor(netAmount / nav * 100) / 100;
+    const group = CORE_TYPES.has(h.type) ? 'core' : 'satellite';
     simPortfolio.positions.push({
-      code:a.code, name:a.name, type:a.type, group:a.group,
-      shares, avgCost:nav, buyDate:today, targetPct:a.pct, investedAmount:amount,
+      code:h.code, name:h.name||fundName(h.code)||h.code, type:h.type||'其他', group,
+      shares, avgCost:nav, buyDate:today, targetPct:pct, investedAmount:amount,
       initNavSource: fd?._live ? 'live' : fd?._histFallback ? 'history' : 'fallback',
     });
     simPortfolio.history.push({
-      date:today, action:'buy', code:a.code, name:a.name,
+      date:today, action:'buy', code:h.code, name:h.name||h.code,
       amount, shares, nav, fee,
-      reason:`初始建仓·${a.group==='core'?'核心仓':'卫星仓'} ${a.pct}%配比${fd?._live?'(实时净值)':fd?._histFallback?'(历史净值)':'(待校准)'}`
+      reason:`从持仓同步·${group==='core'?'核心':'卫星'} ${pct}%配比${fd?._live?' (实时)':fd?._histFallback?' (历史)':' (待校准)'}`
     });
     usedCash += amount;
   });
@@ -2536,6 +2560,8 @@ function getSimTotalValue(){
 function updateSimDaily(){
   if(!simPortfolio || !simPortfolio.positions) return;
   const today = todayStr();
+  // 只在交易日更新快照
+  if(!isTradingDay(today)) return;
 
   // 检查是否有真实数据可用（至少有一个position有live数据）
   let liveCount = 0;
@@ -2649,6 +2675,10 @@ function simTrade(code, action, amountOrPct, reason){
 
 function simAutoTrade(){
   if(!simPortfolio || !_analysisResult) return 0;
+  // 只在交易日交易时段执行
+  const ms = getMarketStatus();
+  if(ms.status!=='open' && ms.status!=='break' && ms.status!=='closed') return 0;
+  if(!isTradingDay()) return 0;
   const strategy = simPortfolio.strategy;
   let tradesExecuted = 0;
 
@@ -2800,7 +2830,12 @@ function toggleSimDetail(){
 }
 
 function renderSimBrief(){
-  if(!simPortfolio) return;
+  const brief = document.getElementById('sim-brief');
+  if(!brief) return;
+  if(!simPortfolio || !simPortfolio.positions || simPortfolio.positions.length===0){
+    brief.innerHTML = holdings.length>0 ? '<span style="color:var(--sub)">待建仓</span>' : '<span style="color:var(--sub)">需持仓</span>';
+    return;
+  }
   const totalValue = getSimTotalValue();
   const cumProfit = totalValue - SIM_INITIAL_CAPITAL;
   const brief = document.getElementById('sim-brief');
@@ -2816,8 +2851,11 @@ function renderSimBrief(){
 
 function renderSimPortfolio(){
   const container = document.getElementById('sim-container');
-  if(!simPortfolio || !simPortfolio.positions){
-    container.innerHTML = '<div class="empty"><div class="empty-icon">📊</div>模拟盘初始化中...</div>';
+  if(!simPortfolio || !simPortfolio.positions || simPortfolio.positions.length===0){
+    const msg = holdings.length===0
+      ? '请先添加持仓基金<br><span style="font-size:11px;color:var(--sub)">模拟盘将基于您的持仓自动建仓</span>'
+      : '<span>持仓已就绪，点击建仓开始模拟</span><br><button class="form-btn" style="width:auto;padding:8px 20px;margin-top:10px;font-size:12px" onclick="syncSimFromHoldings()">🚀 从持仓开始建仓</button>';
+    container.innerHTML = `<div class="empty"><div class="empty-icon">📊</div>${msg}</div>`;
     return;
   }
 
@@ -2890,9 +2928,10 @@ function renderSimPortfolio(){
   </div>`;
 
   // 持仓明细
+  const syncLabel = simPortfolio.syncSource==='holdings' ? ' · 来自持仓' : '';
   html += `<div style="font-size:11px;font-weight:600;margin:10px 0 6px;display:flex;justify-content:space-between">
     <span>📋 模拟持仓 (${simPortfolio.positions.length}只)</span>
-    <span style="font-weight:400;color:var(--sub);font-size:10px">建仓: ${simPortfolio.created}</span>
+    <span style="font-weight:400;color:var(--sub);font-size:10px">建仓: ${simPortfolio.created}${syncLabel}</span>
   </div>`;
 
   // 数据质量统计
@@ -2997,8 +3036,14 @@ function renderSimPortfolio(){
     html += `</div>`;
   }
 
-  html += `<div style="text-align:center;margin-top:14px">
-    <span style="font-size:10px;color:var(--sub);cursor:pointer;text-decoration:underline" onclick="resetSimPortfolio()">🔄 重置模拟盘(50万重新建仓)</span>
+  // 交易日/休市状态
+  const msSim = getMarketStatus();
+  const tradingTag = isTradingDay() ? (msSim.status==='open'?'🟢 交易中':'⏸ '+msSim.text) : '🔴 今日休市';
+  html += `<div style="text-align:center;margin:10px 0 4px;font-size:10px;color:var(--sub)">${tradingTag}${msSim.isHoliday?' (节假日)':''}</div>`;
+
+  html += `<div style="text-align:center;margin-top:8px;display:flex;gap:10px;justify-content:center">
+    <span style="font-size:10px;color:var(--primary);cursor:pointer;text-decoration:underline" onclick="syncSimFromHoldings()">🔄 同步持仓重建</span>
+    <span style="font-size:10px;color:var(--sub);cursor:pointer;text-decoration:underline" onclick="resetSimPortfolio()">↩ 重置模拟盘</span>
   </div>`;
 
   container.innerHTML = html;
@@ -3006,12 +3051,25 @@ function renderSimPortfolio(){
 }
 
 function resetSimPortfolio(){
-  if(!confirm('确认重置模拟盘？将清除所有模拟交易记录，以50万重新建仓。')) return;
+  if(holdings.length === 0){ alert('请先添加持仓基金，模拟盘将基于您的持仓建仓'); return; }
+  if(!confirm(`确认重置模拟盘？\n\n将以50万资金，按您当前${holdings.length}只持仓等权建仓。`)) return;
   localStorage.removeItem('fa_sim_portfolio');
   simPortfolio = null;
-  initSimPortfolio();
+  buildSimFromHoldings();
   updateSimDaily();
   renderSimPortfolio();
+  renderSimBrief();
+}
+
+function syncSimFromHoldings(){
+  if(holdings.length === 0){ alert('请先添加持仓基金'); return; }
+  if(!confirm(`同步持仓到模拟盘？\n\n将重置模拟盘，以50万资金按您当前${holdings.length}只持仓重新建仓。\n⚠️ 所有模拟交易记录将被清除。`)) return;
+  localStorage.removeItem('fa_sim_portfolio');
+  simPortfolio = null;
+  buildSimFromHoldings();
+  updateSimDaily();
+  renderSimPortfolio();
+  renderSimBrief();
 }
 
 // ==================== INITIALIZATION ====================
