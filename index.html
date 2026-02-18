@@ -1243,8 +1243,9 @@ async function translateGlobalNews(){
   // 已有翻译则跳过
   if(globalNews[0].titleCN) return;
   const titles = globalNews.slice(0,30).map((n,i)=>`${i+1}. ${n.title}`).join('\n');
+  const model = AI_ENGINES[0]?.model || 'deepseek-ai/DeepSeek-V3';
   try {
-    const resp = await callAI(`将以下英文新闻标题逐条翻译为简洁的中文，保持编号格式，每条一行，只输出翻译结果，不要加任何解释：\n\n${titles}`);
+    const resp = await callAI(model, '你是专业的新闻翻译员，擅长将英文新闻标题翻译为简洁准确的中文。', `将以下英文新闻标题逐条翻译为简洁的中文，保持编号格式，每条一行，只输出翻译结果，不要加任何解释：\n\n${titles}`, 0.3);
     if(resp){
       const lines = resp.trim().split('\n').filter(l=>l.trim());
       lines.forEach(line=>{
@@ -1299,8 +1300,9 @@ ${headlines}
 请严格按以下JSON格式返回(不要包含markdown代码块标记):
 {"overview":"...","keyEvents":["事件1","事件2","事件3"],"impact":{"positive":["..."],"negative":["..."],"sectors":["行业1","行业2"]},"advice":["建议1","建议2"],"score":60}`;
 
+  const model = AI_ENGINES[0]?.model || 'deepseek-ai/DeepSeek-V3';
   try {
-    const resp = await callAI(prompt, 'json_object');
+    const resp = await callAI(model, '你是一位资深国际政治经济分析师，专注于全球宏观形势对中国资本市场的影响分析。请严格按JSON格式返回。', prompt, 0.5);
     if(resp){
       let parsed;
       try { parsed = JSON.parse(resp); } catch(e) {
