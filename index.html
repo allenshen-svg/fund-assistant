@@ -739,24 +739,42 @@ async function fetchSectors(){
   }catch(e){}
 }
 
-let _fundEstimateQueue = Promise.resolve();
+// fundgz API 固定回调名 jsonpgz，但响应包含 fundcode 字段，用于匹配
+const _fundEstimateWaiters = {}; // code -> {resolve, reject, timer, cleanup}
 async function fetchFundEstimate(code){
-  // 串行化 JSONP 调用，因为 fundgz API 使用固定回调名 jsonpgz
   return new Promise((resolve, reject)=>{
-    _fundEstimateQueue = _fundEstimateQueue.then(()=>{
-      return new Promise((res)=>{
-        const script = document.createElement('script');
-        script.referrerPolicy = 'no-referrer';
-        const timer = setTimeout(()=>{ done(); reject(new Error('timeout')); res(); }, 6000);
-        function done(){ clearTimeout(timer); try{script.remove();}catch(e){} }
-        window.jsonpgz = function(d){ done(); resolve(d); res(); };
-        script.src = `https://fundgz.1234567.com.cn/js/${code}.js?rt=${Date.now()}`;
-        script.onerror = ()=>{ done(); reject(new Error('error')); res(); };
-        document.head.appendChild(script);
-      });
-    });
+    // 如果已有该代码的请求，先清理
+    if(_fundEstimateWaiters[code]){
+      clearTimeout(_fundEstimateWaiters[code].timer);
+      _fundEstimateWaiters[code].reject(new Error('replaced'));
+      delete _fundEstimateWaiters[code];
+    }
+    const script = document.createElement('script');
+    script.referrerPolicy = 'no-referrer';
+    const timer = setTimeout(()=>{
+      cleanup();
+      reject(new Error('timeout'));
+    }, 8000);
+    function cleanup(){
+      clearTimeout(timer);
+      delete _fundEstimateWaiters[code];
+      try{ script.remove(); }catch(e){}
+    }
+    _fundEstimateWaiters[code] = { resolve, reject, timer, cleanup };
+    script.src = `https://fundgz.1234567.com.cn/js/${code}.js?rt=${Date.now()}`;
+    script.onerror = ()=>{ cleanup(); reject(new Error('error')); };
+    document.head.appendChild(script);
   });
 }
+// 全局回调：通过 fundcode 分发给对应的 waiter
+window.jsonpgz = function(d){
+  const code = d && d.fundcode;
+  if(code && _fundEstimateWaiters[code]){
+    const w = _fundEstimateWaiters[code];
+    w.cleanup();
+    w.resolve(d);
+  }
+};
 
 function getAllPortfolioCodes(){
   const pCodes = [];
@@ -772,12 +790,16 @@ function getAllPortfolioCodes(){
 async function fetchAllFunds(){
   const pCodes = getAllPortfolioCodes();
   const codes = [...new Set([...holdings.map(h=>h.code), ...watchlist.map(w=>w.code), ...pCodes])];
-  for(const code of codes){
-    try{
-      const d = await fetchFundEstimate(code);
-      if(d?.gsz) liveFundData[code] = { gsz:parseFloat(d.gsz), dwjz:parseFloat(d.dwjz), gszzl:parseFloat(d.gszzl), name:d.name||'', gztime:d.gztime||'' };
-    }catch(e){}
-    await new Promise(r=>setTimeout(r,120));
+  // 并行请求（每个代码通过 fundcode 字段分发，不冲突）
+  // 分批：每批5个，避免浏览器并发限制
+  for(let i=0; i<codes.length; i+=5){
+    const batch = codes.slice(i, i+5);
+    await Promise.allSettled(batch.map(async code=>{
+      try{
+        const d = await fetchFundEstimate(code);
+        if(d?.gsz) liveFundData[code] = { gsz:parseFloat(d.gsz), dwjz:parseFloat(d.dwjz), gszzl:parseFloat(d.gszzl), name:d.name||'', gztime:d.gztime||'' };
+      }catch(e){}
+    }));
   }
 }
 
