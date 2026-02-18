@@ -303,6 +303,43 @@ body { font-family:-apple-system,BlinkMacSystemFont,'SF Pro','PingFang SC','Helv
 .sentiment-bar { flex:1; height:10px; border-radius:5px; background:linear-gradient(90deg,var(--green),#fbbf24,var(--red)); position:relative; }
 .sentiment-dot { width:14px; height:14px; border-radius:50%; background:#fff; border:2px solid #1e293b; position:absolute; top:-2px; transition:left .3s; }
 .sentiment-label { font-size:10px; font-weight:700; min-width:40px; }
+/* RL Brain Dashboard */
+.rl-brain { padding:10px 16px 4px; }
+.rl-brain-header { display:flex; justify-content:space-between; align-items:center; cursor:pointer; }
+.rl-brain-header-right { display:flex; align-items:center; gap:8px; }
+.rl-brain-toggle { font-size:12px; color:var(--sub); transition:transform .2s; }
+.rl-brain-brief { font-size:11px; font-weight:600; }
+.rl-brain-container { margin-top:8px; }
+.rl-card { background:var(--card); border-radius:10px; padding:10px 14px; margin-bottom:8px; box-shadow:var(--shadow); }
+.rl-card-title { font-size:11px; font-weight:700; margin-bottom:6px; display:flex; align-items:center; gap:4px; }
+.rl-status { display:flex; align-items:center; gap:6px; margin-bottom:8px; }
+.rl-status-dot { width:8px; height:8px; border-radius:50%; }
+.rl-status-dot.active { background:#22c55e; animation:rlPulse 1.5s infinite; }
+.rl-status-dot.idle { background:var(--sub); }
+.rl-status-dot.training { background:#eab308; animation:rlPulse 0.5s infinite; }
+.rl-status-text { font-size:10px; color:var(--sub); }
+.rl-progress { width:100%; height:6px; background:var(--bg); border-radius:3px; overflow:hidden; margin:6px 0; }
+.rl-progress-fill { height:100%; border-radius:3px; background:linear-gradient(90deg,#3b82f6,#8b5cf6); transition:width .3s; }
+.rl-metrics { display:grid; grid-template-columns:1fr 1fr 1fr; gap:6px; }
+.rl-metric { text-align:center; background:var(--bg); border-radius:6px; padding:6px 4px; }
+.rl-metric-label { font-size:8px; color:var(--sub); display:block; letter-spacing:0.3px; }
+.rl-metric-val { font-size:12px; font-weight:700; margin-top:1px; font-variant-numeric:tabular-nums; }
+.rl-chart { height:60px; background:var(--bg); border-radius:6px; margin-top:6px; position:relative; overflow:hidden; }
+.rl-train-btn { width:100%; padding:8px; border:none; border-radius:8px; font-size:12px; font-weight:600; cursor:pointer; transition:all .2s; margin-top:6px; }
+.rl-train-btn.start { background:linear-gradient(135deg,#3b82f6,#8b5cf6); color:white; }
+.rl-train-btn.stop { background:#ef4444; color:white; }
+.rl-train-btn:disabled { opacity:0.5; cursor:not-allowed; }
+.rl-signal-row { display:flex; align-items:center; gap:8px; padding:4px 0; border-bottom:1px solid var(--border); }
+.rl-signal-row:last-child { border-bottom:none; }
+.rl-signal-name { font-size:11px; flex:1; }
+.rl-signal-action { font-size:10px; font-weight:700; padding:2px 8px; border-radius:4px; }
+.rl-signal-action.buy { background:rgba(239,68,68,0.1); color:var(--red); }
+.rl-signal-action.sell { background:rgba(34,197,94,0.1); color:var(--green); }
+.rl-signal-action.hold { background:rgba(148,163,184,0.1); color:var(--sub); }
+.rl-signal-conf { font-size:10px; color:var(--sub); min-width:32px; text-align:right; }
+.rl-qbar { display:flex; gap:2px; flex:1; }
+.rl-qbar-seg { height:6px; border-radius:2px; min-width:2px; }
+@keyframes rlPulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
 /* Manage Panel */
 .manage-overlay { display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(15,23,42,0.5); backdrop-filter:blur(4px); -webkit-backdrop-filter:blur(4px); z-index:300; }
 .manage-panel { position:absolute; bottom:0; left:50%; transform:translateX(-50%); width:100%; max-width:500px; background:var(--bg); border-radius:20px 20px 0 0; max-height:88vh; display:flex; flex-direction:column; animation:slideUp .3s ease; }
@@ -410,6 +447,18 @@ body { font-family:-apple-system,BlinkMacSystemFont,'SF Pro','PingFang SC','Helv
     </div>
   </div>
   <div id="data-intel-container" class="data-intel-container" style="display:none"></div>
+</div>
+
+<!-- RL Brain Dashboard -->
+<div class="rl-brain">
+  <div class="section-title rl-brain-header" onclick="toggleRLBrain()">
+    <span>🧠 RL强化学习大脑 <span style="font-size:10px;color:var(--sub);font-weight:400">DQN · Double Q · Adam</span></span>
+    <div class="rl-brain-header-right">
+      <span id="rl-brain-brief" class="rl-brain-brief" style="color:var(--sub)">未训练</span>
+      <span class="rl-brain-toggle" id="rl-brain-toggle">▶</span>
+    </div>
+  </div>
+  <div id="rl-brain-container" class="rl-brain-container" style="display:none"></div>
 </div>
 
 <!-- Simulation Portfolio -->
@@ -684,6 +733,17 @@ let sectorCapFlow = []; // 板块资金流向
 let newsHeadlines = []; // 财经新闻
 let newsSentiment = { score:50, label:'中性', bullCount:0, bearCount:0 }; // 舆情综合得分0-100
 let _dataIntelLoaded = false;
+
+// ==================== RL BRAIN STATE ====================
+let rlAgent = null;
+let rlTrainer = null;
+let _rlModelLoaded = false;
+let _rlTraining = false;
+let _rlSignals = {}; // { code: { action, actionName, confidence, qValues } }
+const RL_STATE_SIZE = 15;
+const RL_ACTION_SIZE = 3; // 0=hold, 1=buy, 2=sell
+const RL_ACTION_NAMES = ['持有','买入','卖出'];
+const RL_STORAGE_KEY = 'fa_rl_brain';
 
 function saveHoldings(){ localStorage.setItem('fa_holdings', JSON.stringify(holdings)); }
 function saveWatchlist(){ localStorage.setItem('fa_watchlist', JSON.stringify(watchlist)); }
@@ -999,6 +1059,432 @@ async function fetchAllDataIntel(){
   ]);
   _dataIntelLoaded = true;
   renderDataIntelBrief();
+}
+
+// ==================== RL BRAIN: DEEP Q-NETWORK ====================
+// 纯JavaScript实现的强化学习交易大脑，无外部依赖
+// 算法: Double DQN + Experience Replay + Target Network + Adam Optimizer
+// 状态空间: 15维 (动量×4 + 波动率×2 + RSI + MACD + MA + 回撤 + 持仓 + PnL + 宏观 + 舆情 + 资金)
+// 动作空间: 3 (持有/买入/卖出)
+// 奖励设计: 资产增值(+) · 亏损(-) · 回撤惩罚(-) · 过度交易(-)
+
+// --- Math Utilities ---
+function rlRand(scale){
+  const u1=Math.random(),u2=Math.random();
+  return Math.sqrt(-2*Math.log(u1||1e-10))*Math.cos(2*Math.PI*u2)*scale;
+}
+function rlClip(v,lo,hi){return Math.max(lo,Math.min(hi,v));}
+function rlArgmax(arr){let m=0;for(let i=1;i<arr.length;i++)if(arr[i]>arr[m])m=i;return m;}
+function rlSoftmax(arr){
+  const mx=Math.max(...arr);
+  const ex=arr.map(v=>Math.exp(v-mx));
+  const s=ex.reduce((a,b)=>a+b,0);
+  return ex.map(v=>v/s);
+}
+
+// --- Neural Network (Adam Optimizer, He Init, Huber Loss) ---
+class RLNetwork{
+  constructor(sizes){
+    this.sizes=sizes;
+    this.nL=sizes.length-1;
+    this.W=[];this.b=[];
+    this.mW=[];this.vW=[];this.mb=[];this.vb=[];
+    this.t=0;
+    for(let i=0;i<this.nL;i++){
+      const inS=sizes[i],outS=sizes[i+1];
+      const scale=Math.sqrt(2.0/inS);
+      const w=new Float32Array(outS*inS);
+      for(let k=0;k<w.length;k++)w[k]=rlRand(scale);
+      this.W.push(w);
+      this.b.push(new Float32Array(outS));
+      this.mW.push(new Float32Array(outS*inS));
+      this.vW.push(new Float32Array(outS*inS));
+      this.mb.push(new Float32Array(outS));
+      this.vb.push(new Float32Array(outS));
+    }
+  }
+  forward(input){
+    let a=Float32Array.from(input);
+    this._c=[{a}];
+    for(let i=0;i<this.nL;i++){
+      const inS=this.sizes[i],outS=this.sizes[i+1];
+      const z=new Float32Array(outS);
+      for(let r=0;r<outS;r++){
+        let s=this.b[i][r];
+        const off=r*inS;
+        for(let c=0;c<inS;c++)s+=this.W[i][off+c]*a[c];
+        z[r]=s;
+      }
+      if(i<this.nL-1){
+        a=new Float32Array(outS);
+        for(let r=0;r<outS;r++)a[r]=z[r]>0?z[r]:0; // ReLU
+      } else {
+        a=z; // linear output
+      }
+      this._c.push({z,a});
+    }
+    return a;
+  }
+  trainStep(input,target,lr){
+    const out=this.forward(input);
+    const n=out.length;
+    let loss=0;
+    let dA=new Float32Array(n);
+    for(let i=0;i<n;i++){
+      const d=out[i]-target[i];
+      if(Math.abs(d)<1){loss+=0.5*d*d;dA[i]=d;} // Huber loss
+      else{loss+=Math.abs(d)-0.5;dA[i]=d>0?1:-1;}
+    }
+    this.t++;
+    const b1=0.9,b2=0.999,eps=1e-8;
+    for(let l=this.nL-1;l>=0;l--){
+      const inS=this.sizes[l],outS=this.sizes[l+1];
+      const aIn=this._c[l].a;
+      // ReLU gradient for hidden layers
+      if(l<this.nL-1){
+        const z=this._c[l+1].z;
+        for(let i=0;i<outS;i++)if(z[i]<=0)dA[i]=0;
+      }
+      // Weight gradients + Adam update
+      for(let i=0;i<outS;i++){
+        const off=i*inS;
+        for(let j=0;j<inS;j++){
+          const g=dA[i]*aIn[j];
+          const k=off+j;
+          this.mW[l][k]=b1*this.mW[l][k]+(1-b1)*g;
+          this.vW[l][k]=b2*this.vW[l][k]+(1-b2)*g*g;
+          const mh=this.mW[l][k]/(1-Math.pow(b1,this.t));
+          const vh=this.vW[l][k]/(1-Math.pow(b2,this.t));
+          this.W[l][k]-=lr*mh/(Math.sqrt(vh)+eps);
+        }
+        // Bias Adam
+        this.mb[l][i]=b1*this.mb[l][i]+(1-b1)*dA[i];
+        this.vb[l][i]=b2*this.vb[l][i]+(1-b2)*dA[i]*dA[i];
+        const mbh=this.mb[l][i]/(1-Math.pow(b1,this.t));
+        const vbh=this.vb[l][i]/(1-Math.pow(b2,this.t));
+        this.b[l][i]-=lr*mbh/(Math.sqrt(vbh)+eps);
+      }
+      // Propagate gradient
+      if(l>0){
+        const dAPrev=new Float32Array(inS);
+        for(let j=0;j<inS;j++){
+          let s=0;
+          for(let i=0;i<outS;i++)s+=this.W[l][i*inS+j]*dA[i];
+          dAPrev[j]=s;
+        }
+        dA=dAPrev;
+      }
+    }
+    return loss;
+  }
+  clone(){
+    const net=new RLNetwork(this.sizes);
+    for(let i=0;i<this.nL;i++){
+      net.W[i]=new Float32Array(this.W[i]);
+      net.b[i]=new Float32Array(this.b[i]);
+    }
+    return net;
+  }
+  toJSON(){
+    return{sizes:this.sizes,W:this.W.map(w=>Array.from(w)),b:this.b.map(b=>Array.from(b)),t:this.t};
+  }
+  static fromJSON(d){
+    const net=new RLNetwork(d.sizes);
+    for(let i=0;i<net.nL;i++){
+      net.W[i]=Float32Array.from(d.W[i]);
+      net.b[i]=Float32Array.from(d.b[i]);
+    }
+    net.t=d.t||0;
+    return net;
+  }
+}
+
+// --- DQN Agent (Double DQN) ---
+class DQNAgent{
+  constructor(stateSize,actionSize){
+    this.stateSize=stateSize;
+    this.actionSize=actionSize;
+    this.qNet=new RLNetwork([stateSize,64,32,actionSize]);
+    this.targetNet=this.qNet.clone();
+    this.memory=[];
+    this.maxMemory=10000;
+    this.batchSize=32;
+    this.gamma=0.99;
+    this.epsilon=1.0;
+    this.epsilonMin=0.02;
+    this.epsilonDecay=0.998;
+    this.lr=0.001;
+    this.targetUpdateFreq=200;
+    this.trainSteps=0;
+    this.totalReward=0;
+  }
+  act(state,explore=true){
+    if(explore&&Math.random()<this.epsilon)return Math.floor(Math.random()*this.actionSize);
+    return rlArgmax(this.qNet.forward(state));
+  }
+  getQValues(state){return this.qNet.forward(state);}
+  remember(s,a,r,s2,done){
+    if(this.memory.length>=this.maxMemory)this.memory.shift();
+    this.memory.push({s,a,r,s2,done});
+  }
+  replay(){
+    if(this.memory.length<this.batchSize*2)return 0;
+    let totalLoss=0;
+    for(let i=0;i<this.batchSize;i++){
+      const exp=this.memory[Math.floor(Math.random()*this.memory.length)];
+      const q=this.qNet.forward(exp.s);
+      const target=Float32Array.from(q);
+      if(exp.done){
+        target[exp.a]=exp.r;
+      }else{
+        // Double DQN: online selects action, target evaluates
+        const bestA=rlArgmax(this.qNet.forward(exp.s2));
+        const nextQ=this.targetNet.forward(exp.s2);
+        target[exp.a]=exp.r+this.gamma*nextQ[bestA];
+      }
+      totalLoss+=this.qNet.trainStep(exp.s,target,this.lr);
+    }
+    this.trainSteps++;
+    if(this.trainSteps%this.targetUpdateFreq===0)this.targetNet=this.qNet.clone();
+    if(this.epsilon>this.epsilonMin)this.epsilon*=this.epsilonDecay;
+    return totalLoss/this.batchSize;
+  }
+  toJSON(){
+    return{qNet:this.qNet.toJSON(),epsilon:this.epsilon,trainSteps:this.trainSteps,totalReward:this.totalReward};
+  }
+  static fromJSON(d){
+    const a=new DQNAgent(d.qNet.sizes[0],d.qNet.sizes[d.qNet.sizes.length-1]);
+    a.qNet=RLNetwork.fromJSON(d.qNet);
+    a.targetNet=a.qNet.clone();
+    a.epsilon=d.epsilon||0.02;
+    a.trainSteps=d.trainSteps||0;
+    a.totalReward=d.totalReward||0;
+    return a;
+  }
+}
+
+// --- Market Environment (Gym-style) ---
+class MarketEnv{
+  constructor(navArray){
+    this.navs=navArray; // [{date,nav},...] sorted by date
+    this.lookback=20;
+    this.fee=0.0015;
+  }
+  reset(){
+    this.idx=this.lookback;
+    this.pos=0; // 0=cash,1=long
+    this.entryPrice=0;
+    this.portfolio=1.0;
+    this.peakPf=1.0;
+    this.trades=0;
+    return this._state();
+  }
+  _state(){
+    const p=[];
+    for(let i=this.idx-this.lookback;i<=this.idx;i++)p.push(this.navs[i].nav);
+    const cur=p[p.length-1];
+    const n=p.length;
+    const rets=[];
+    for(let i=1;i<n;i++)rets.push((p[i]-p[i-1])/p[i-1]);
+    const ret1=rets[rets.length-1]||0;
+    const sum=(a,k)=>{const sl=a.slice(-k);return sl.reduce((s,v)=>s+v,0);};
+    const std=(a)=>{if(a.length<2)return 0;const m=a.reduce((s,v)=>s+v,0)/a.length;return Math.sqrt(a.reduce((s,v)=>s+(v-m)**2,0)/a.length);};
+    const rsiCalc=(a)=>{let g=0,l=0;a.forEach(r=>{if(r>0)g+=r;else l+=Math.abs(r);});if(!l)return 100;if(!g)return 0;return 100-100/(1+g/l);};
+    const ema=(arr,period)=>{const k=2/(period+1);let e=arr[0];for(let i=1;i<arr.length;i++)e=arr[i]*k+e*(1-k);return e;};
+    const ma=(arr,k)=>arr.slice(-k).reduce((s,v)=>s+v,0)/Math.min(arr.length,k);
+    const rsi=rsiCalc(rets.slice(-14));
+    const ema12=ema(p,12),ema26=ema(p,26);
+    const macd=(ema12-ema26)/cur;
+    const ma20=ma(p,20);
+    const maPos=(cur-ma20)/ma20;
+    const maxP=Math.max(...p.slice(-20));
+    const dd=(cur-maxP)/maxP;
+    const pnl=this.pos===1?(cur-this.entryPrice)/this.entryPrice:0;
+    return Float32Array.from([
+      rlClip(ret1*100,-5,5),
+      rlClip(sum(rets,5)*100,-15,15),
+      rlClip(sum(rets,10)*100,-25,25),
+      rlClip(sum(rets,20)*100,-40,40),
+      rlClip(std(rets.slice(-5))*100,0,10),
+      rlClip(std(rets.slice(-20))*100,0,10),
+      (rsi-50)/50,
+      rlClip(macd*100,-5,5),
+      rlClip(maPos*10,-3,3),
+      rlClip(dd*10,-5,0),
+      this.pos,
+      rlClip(pnl*10,-5,5),
+      0,0,0 // macro/sentiment/capflow filled at inference
+    ]);
+  }
+  step(action){
+    const prev=this.navs[this.idx].nav;
+    this.idx++;
+    const done=this.idx>=this.navs.length-1;
+    const cur=this.navs[this.idx].nav;
+    const dr=(cur-prev)/prev;
+    let reward=0;
+    if(action===1&&this.pos===0){
+      this.pos=1;this.entryPrice=cur;
+      this.portfolio*=(1-this.fee);this.trades++;
+      reward=-0.001;
+    }else if(action===2&&this.pos===1){
+      const pnl=(cur-this.entryPrice)/this.entryPrice;
+      this.portfolio*=(1+pnl)*(1-this.fee);
+      this.pos=0;this.entryPrice=0;this.trades++;
+      reward=pnl*10;
+    }else if(action===1&&this.pos===1){
+      reward=dr*5; // already long, hold
+    }else if(action===2&&this.pos===0){
+      reward=-dr*2; // no position, can't sell
+    }else if(this.pos===1){
+      reward=dr*5; // holding
+    }else{
+      reward=dr<0?Math.abs(dr)*2:-dr*1; // cash
+    }
+    this.peakPf=Math.max(this.peakPf,this.portfolio);
+    const mdd=(this.portfolio-this.peakPf)/this.peakPf;
+    if(mdd<-0.05)reward-=0.05;
+    if(mdd<-0.10)reward-=0.1;
+    const tradeRate=this.trades/(this.idx-this.lookback+1);
+    if(tradeRate>0.3)reward-=0.02;
+    return{state:this._state(),reward,done};
+  }
+}
+
+// --- RL Training Pipeline ---
+class RLTrainer{
+  constructor(){
+    this.agent=null;
+    this.isTraining=false;
+    this.episode=0;
+    this.maxEpisodes=50;
+    this.metrics={rewards:[],losses:[],portfolios:[],winRate:0,avgReturn:0,sharpe:0,bestReturn:-Infinity,totalTrades:0};
+    this._data=[];
+  }
+  prepare(){
+    this._data=[];
+    for(const code of Object.keys(fundHistoryData)){
+      const hd=fundHistoryData[code];
+      if(!hd||!hd.navs||hd.navs.length<60)continue;
+      const navArr=hd.navs.map(n=>({date:n[0],nav:parseFloat(n[1])})).filter(n=>!isNaN(n.nav)&&n.nav>0);
+      if(navArr.length>=60)this._data.push({code,navs:navArr});
+    }
+    this.agent=new DQNAgent(RL_STATE_SIZE,RL_ACTION_SIZE);
+    this.metrics={rewards:[],losses:[],portfolios:[],winRate:0,avgReturn:0,sharpe:0,bestReturn:-Infinity,totalTrades:0};
+    this.episode=0;
+    return this._data.length;
+  }
+  async train(onProgress){
+    if(!this._data.length)return;
+    this.isTraining=true;
+    for(let ep=0;ep<this.maxEpisodes&&this.isTraining;ep++){
+      this.episode=ep;
+      let epR=0,epL=0,epSteps=0,epPfs=[],epTrades=0;
+      const shuffled=[...this._data].sort(()=>Math.random()-0.5);
+      for(const{navs}of shuffled){
+        const env=new MarketEnv(navs);
+        let state=env.reset(),done=false;
+        while(!done){
+          const action=this.agent.act(state,true);
+          const r=env.step(action);
+          this.agent.remember(state,action,r.reward,r.state,r.done);
+          state=r.state;done=r.done;
+          epR+=r.reward;epSteps++;
+          if(epSteps%4===0&&this.agent.memory.length>=this.agent.batchSize*2){
+            epL+=this.agent.replay();
+          }
+        }
+        epPfs.push(env.portfolio);
+        epTrades+=env.trades;
+      }
+      const avgPf=epPfs.reduce((s,v)=>s+v,0)/epPfs.length;
+      const avgRet=(avgPf-1)*100;
+      const wr=epPfs.filter(p=>p>1).length/epPfs.length*100;
+      this.metrics.rewards.push(epR/Math.max(1,epSteps));
+      this.metrics.losses.push(epL/Math.max(1,Math.floor(epSteps/4)));
+      this.metrics.portfolios.push(avgRet);
+      this.metrics.winRate=wr;
+      this.metrics.avgReturn=avgRet;
+      this.metrics.totalTrades=epTrades;
+      if(avgRet>this.metrics.bestReturn)this.metrics.bestReturn=avgRet;
+      const rc=this.metrics.portfolios.slice(-10);
+      if(rc.length>=3){
+        const mu=rc.reduce((s,v)=>s+v,0)/rc.length;
+        const sd=Math.sqrt(rc.reduce((s,v)=>s+(v-mu)**2,0)/rc.length);
+        this.metrics.sharpe=sd>0?mu/sd:0;
+      }
+      if(onProgress)onProgress(ep+1,this.maxEpisodes,this.metrics);
+      if(ep%2===0)await new Promise(r=>setTimeout(r,0));
+    }
+    this.isTraining=false;
+    this.agent.totalReward=this.metrics.rewards.reduce((s,v)=>s+v,0);
+    this.saveModel();
+    return this.metrics;
+  }
+  stop(){this.isTraining=false;}
+  generateSignals(){
+    if(!this.agent)return{};
+    const signals={};
+    const codes=[...holdings.map(h=>h.code),...watchlist.map(w=>w.code)];
+    for(const code of codes){
+      const hd=fundHistoryData[code];
+      if(!hd||!hd.navs||hd.navs.length<25)continue;
+      const navArr=hd.navs.map(n=>({date:n[0],nav:parseFloat(n[1])})).filter(n=>!isNaN(n.nav)&&n.nav>0);
+      if(navArr.length<25)continue;
+      const env=new MarketEnv(navArr);
+      env.idx=navArr.length-1;
+      const simPos=simPortfolio?.positions?.find(p=>p.code===code);
+      env.pos=simPos?1:0;
+      if(simPos)env.entryPrice=simPos.avgCost;
+      const state=env._state();
+      // Inject live macro/sentiment/capital signals
+      if(_dataIntelLoaded){
+        const ds=generateDataSignal();
+        state[12]=rlClip((ds.score-50)/25,-2,2);
+        state[13]=rlClip((newsSentiment.score-50)/25,-2,2);
+        const cn=sectorCapFlow.reduce((s,d)=>s+(d.mainNet||0),0);
+        state[14]=rlClip(cn/1e10,-2,2);
+      }
+      const q=this.agent.getQValues(state);
+      const action=rlArgmax(q);
+      const probs=rlSoftmax(Array.from(q));
+      signals[code]={
+        action,
+        actionName:RL_ACTION_NAMES[action],
+        confidence:Math.round(probs[action]*100),
+        qValues:Array.from(q),
+        probabilities:probs
+      };
+    }
+    _rlSignals=signals;
+    return signals;
+  }
+  saveModel(){
+    if(!this.agent)return;
+    try{
+      localStorage.setItem(RL_STORAGE_KEY,JSON.stringify({
+        agent:this.agent.toJSON(),
+        metrics:this.metrics,
+        episode:this.episode,
+        timestamp:Date.now()
+      }));
+      _rlModelLoaded=true;
+      console.log('RL模型已保存, 训练步数:',this.agent.trainSteps);
+    }catch(e){console.warn('RL模型保存失败:',e);}
+  }
+  loadModel(){
+    try{
+      const raw=localStorage.getItem(RL_STORAGE_KEY);
+      if(!raw)return false;
+      const d=JSON.parse(raw);
+      this.agent=DQNAgent.fromJSON(d.agent);
+      this.metrics=d.metrics||this.metrics;
+      this.episode=d.episode||0;
+      _rlModelLoaded=true;
+      console.log('RL模型已加载, 训练步数:',this.agent.trainSteps);
+      return true;
+    }catch(e){console.warn('RL模型加载失败:',e);return false;}
+  }
 }
 
 // ==================== HISTORICAL DATA & TREND ANALYSIS ====================
@@ -1323,6 +1809,11 @@ function buildContext(){
     ctx += buildDataIntelContext();
   }
 
+  // 注入RL强化学习信号
+  if(_rlModelLoaded){
+    ctx += buildRLContext();
+  }
+
   return ctx;
 }
 
@@ -1394,6 +1885,7 @@ const SYSTEM_PROMPT = `你是一位擅长波段操作和趋势跟踪的基金投
 2. 宏观经济数据：PMI(制造业景气度)、CPI/PPI(通胀)、GDP增速、M2货币供应(流动性)
 3. 另类数据：板块主力资金流向(超大单/大单/中单/小单)、财经新闻NLP情绪分析(利好/利空识别)、社交舆情热度指数
 4. 历史复盘：过往AI预测vs实际涨跌对比、准确率统计、错误教训
+5. RL强化学习信号：基于Double DQN训练的策略网络，直接输出买入/卖出/持有决策及Q值置信度，是独立于规则的量化信号
 
 ■ 核心投资逻辑（你必须遵守）：
 1. 趋势为王：先判断每个板块/基金的中期趋势（3个月维度）是上升、震荡还是下降
@@ -3022,25 +3514,39 @@ function simAutoTrade(){
     const sectorBullish = sectorFlow && sectorFlow.mainNet > 0;
     const sectorBearish = sectorFlow && sectorFlow.mainNet < -1e8;
 
-    if(sig.action==='buy' && sig.confidence>=buyConfThreshold && todayPct<=strategy.dipBuyThreshold){
+    // RL强化学习信号融合
+    const rlSig = _rlSignals[pos.code];
+    let rlBoost = 0;
+    if(rlSig){
+      if(sig.action==='buy' && rlSig.action===1) rlBoost = 10; // AI+RL均看多
+      else if(sig.action==='sell' && rlSig.action===2) rlBoost = 10; // AI+RL均看空
+      else if(sig.action==='buy' && rlSig.action===2) rlBoost = -15; // AI看多RL看空
+      else if(sig.action==='sell' && rlSig.action===1) rlBoost = -15; // AI看空RL看多
+    }
+    const effConf = sig.confidence + rlBoost;
+    const rlTag = rlSig ? ` RL:${rlSig.actionName}${rlSig.confidence}%` : '';
+
+    if(sig.action==='buy' && effConf>=buyConfThreshold && todayPct<=strategy.dipBuyThreshold){
       const posValue = pos.shares * (getSimNav(pos.code) || pos.avgCost);
       const totalValue = getSimTotalValue();
       if(posValue / totalValue < strategy.maxSinglePos){
         let addPct = 0.03 * buyMult;
-        if(sectorBullish) addPct *= 1.3; // 板块有资金流入，加大买入
+        if(sectorBullish) addPct *= 1.3;
+        if(rlSig?.action===1 && rlSig.confidence>50) addPct *= 1.2; // RL也看多,加大买入
         const addAmt = Math.min(Math.round(totalValue * addPct), Math.round(simPortfolio.cash * 0.3));
         if(addAmt >= 1000){
-          const reason = `AI加仓(${sig.confidence}%)+跌${todayPct.toFixed(1)}%低吸 [数据${dsScore}${sectorBullish?' 板块资金流入':''}]`;
+          const reason = `AI加仓(${sig.confidence}%)+跌${todayPct.toFixed(1)}%低吸 [数据${dsScore}${sectorBullish?' 板块资金流入':''}${rlTag}]`;
           simTrade(pos.code, 'buy', addAmt, reason);
           tradesExecuted++;
         }
       }
     }
 
-    if(sig.action==='sell' && sig.confidence>=sellConfThreshold && todayPct>=strategy.surgeSellThreshold && pos.group==='satellite'){
+    if(sig.action==='sell' && effConf>=sellConfThreshold && todayPct>=strategy.surgeSellThreshold && pos.group==='satellite'){
       let sellPct = 0.3 * sellMult;
-      if(sectorBearish) sellPct = Math.min(0.5, sellPct * 1.3); // 板块资金流出，加大卖出
-      simTrade(pos.code, 'sell', sellPct, `AI减仓(${sig.confidence}%)+涨${todayPct.toFixed(1)}% [数据${dsScore}${sectorBearish?' 板块资金流出':''}]`);
+      if(sectorBearish) sellPct = Math.min(0.5, sellPct * 1.3);
+      if(rlSig?.action===2 && rlSig.confidence>50) sellPct = Math.min(0.6, sellPct * 1.2); // RL也看空,加大卖出
+      simTrade(pos.code, 'sell', sellPct, `AI减仓(${sig.confidence}%)+涨${todayPct.toFixed(1)}% [数据${dsScore}${sectorBearish?' 板块资金流出':''}${rlTag}]`);
       tradesExecuted++;
     }
   });
@@ -3272,6 +3778,186 @@ function generateDataSignal(){
   if(score >= 42) return { score, label:'中性观望', icon:'⚪', color:'rgba(255,255,255,0.7)', advice:'信号分歧较大，维持现有配置不宜激进' };
   if(score >= 30) return { score, label:'谨慎偏空', icon:'🟠', color:'#f59e0b', advice:'部分指标走弱，控制仓位、降低风险敞口' };
   return { score, label:'防御为主', icon:'🔴', color:'#22c55e', advice:'多维度信号偏负面，建议降低仓位、增加现金' };
+}
+
+// ==================== RL BRAIN RENDERING ====================
+function toggleRLBrain(){
+  const c=document.getElementById('rl-brain-container');
+  const i=document.getElementById('rl-brain-toggle');
+  if(c.style.display==='none'){c.style.display='block';i.textContent='▼';renderRLBrain();}
+  else{c.style.display='none';i.textContent='▶';}
+}
+
+function renderRLBrief(){
+  const el=document.getElementById('rl-brain-brief');
+  if(!el)return;
+  if(_rlTraining){
+    el.style.color='#eab308';
+    el.textContent=`训练中 E${(rlTrainer?.episode||0)+1}/${rlTrainer?.maxEpisodes||50}`;
+    return;
+  }
+  if(!_rlModelLoaded||!rlTrainer?.agent){
+    el.style.color='var(--sub)';el.textContent='未训练';return;
+  }
+  const sigs=Object.values(_rlSignals);
+  if(!sigs.length){el.style.color='var(--sub)';el.textContent=`已训练·E${rlTrainer.episode+1}`;return;}
+  const buys=sigs.filter(s=>s.action===1).length;
+  const sells=sigs.filter(s=>s.action===2).length;
+  const holds=sigs.filter(s=>s.action===0).length;
+  let txt='🧠 ';
+  if(buys>0)txt+=`买${buys} `;
+  if(sells>0)txt+=`卖${sells} `;
+  if(holds>0)txt+=`持${holds}`;
+  const avgConf=Math.round(sigs.reduce((s,v)=>s+v.confidence,0)/sigs.length);
+  el.style.color=buys>sells?'var(--red)':sells>buys?'var(--green)':'var(--sub)';
+  el.textContent=txt.trim()+` (${avgConf}%)`;
+}
+
+function renderRLBrain(){
+  const container=document.getElementById('rl-brain-container');
+  if(!container||container.style.display==='none')return;
+  const hasModel=_rlModelLoaded&&rlTrainer?.agent;
+  const m=rlTrainer?.metrics||{};
+  const sClass=_rlTraining?'training':hasModel?'active':'idle';
+  const sTxt=_rlTraining?
+    `训练中 Episode ${(rlTrainer.episode||0)+1}/${rlTrainer.maxEpisodes}`:
+    hasModel?`已就绪 · ${rlTrainer.agent.trainSteps}步训练 · ε=${rlTrainer.agent.epsilon.toFixed(3)}`:'模型未训练';
+
+  let html='';
+  // Status + Metrics card
+  html+=`<div class="rl-card"><div class="rl-card-title">🧠 DQN强化学习引擎</div>`;
+  html+=`<div class="rl-status"><span class="rl-status-dot ${sClass}"></span><span class="rl-status-text">${sTxt}</span></div>`;
+  if(_rlTraining&&rlTrainer){
+    const pct=Math.round((rlTrainer.episode+1)/rlTrainer.maxEpisodes*100);
+    html+=`<div class="rl-progress"><div class="rl-progress-fill" style="width:${pct}%"></div></div>`;
+  }
+  if(hasModel){
+    html+=`<div class="rl-metrics">`;
+    html+=`<div class="rl-metric"><span class="rl-metric-label">平均收益</span><span class="rl-metric-val" style="color:${(m.avgReturn||0)>=0?'var(--red)':'var(--green)'}">${(m.avgReturn||0).toFixed(1)}%</span></div>`;
+    html+=`<div class="rl-metric"><span class="rl-metric-label">胜率</span><span class="rl-metric-val">${(m.winRate||0).toFixed(0)}%</span></div>`;
+    html+=`<div class="rl-metric"><span class="rl-metric-label">Sharpe</span><span class="rl-metric-val">${(m.sharpe||0).toFixed(2)}</span></div>`;
+    html+=`<div class="rl-metric"><span class="rl-metric-label">最佳回报</span><span class="rl-metric-val" style="color:var(--red)">${(m.bestReturn||0).toFixed(1)}%</span></div>`;
+    html+=`<div class="rl-metric"><span class="rl-metric-label">训练轮次</span><span class="rl-metric-val">${(rlTrainer.episode||0)+1}</span></div>`;
+    html+=`<div class="rl-metric"><span class="rl-metric-label">探索率ε</span><span class="rl-metric-val">${rlTrainer.agent.epsilon.toFixed(3)}</span></div>`;
+    html+=`</div>`;
+    if(m.portfolios&&m.portfolios.length>1)html+=renderRLChart(m.portfolios,'收益率%');
+  }
+  // Train button
+  if(_rlTraining){
+    html+=`<button class="rl-train-btn stop" onclick="stopRLTraining()">⏹ 停止训练</button>`;
+  }else{
+    const dc=Object.keys(fundHistoryData).length;
+    html+=`<button class="rl-train-btn start" onclick="startRLTraining()" ${dc<1?'disabled title="需要先加载历史数据"':''}>`;
+    html+=hasModel?'🔄 重新训练 (Double DQN)':'🚀 开始训练 (Double DQN)';
+    html+=`</button>`;
+  }
+  html+=`</div>`;
+
+  // RL Signals card
+  if(hasModel&&Object.keys(_rlSignals).length>0){
+    html+=`<div class="rl-card"><div class="rl-card-title">📊 RL决策信号 <span style="font-size:9px;color:var(--sub);font-weight:400">Q值驱动</span></div>`;
+    for(const code of Object.keys(_rlSignals)){
+      const sig=_rlSignals[code];
+      const name=fundName(code);
+      const ac=sig.action===1?'buy':sig.action===2?'sell':'hold';
+      // Q-value bar visualization
+      const qAbs=sig.qValues.map(v=>Math.abs(v));
+      const qMax=Math.max(...qAbs,0.01);
+      html+=`<div class="rl-signal-row">`;
+      html+=`<span class="rl-signal-name">${name}</span>`;
+      html+=`<div class="rl-qbar">`;
+      html+=`<div class="rl-qbar-seg" style="width:${qAbs[0]/qMax*30}px;background:var(--sub);opacity:0.5" title="Q(持有)=${sig.qValues[0].toFixed(2)}"></div>`;
+      html+=`<div class="rl-qbar-seg" style="width:${qAbs[1]/qMax*30}px;background:var(--red);opacity:0.6" title="Q(买入)=${sig.qValues[1].toFixed(2)}"></div>`;
+      html+=`<div class="rl-qbar-seg" style="width:${qAbs[2]/qMax*30}px;background:var(--green);opacity:0.6" title="Q(卖出)=${sig.qValues[2].toFixed(2)}"></div>`;
+      html+=`</div>`;
+      html+=`<span class="rl-signal-action ${ac}">${sig.actionName}</span>`;
+      html+=`<span class="rl-signal-conf">${sig.confidence}%</span>`;
+      html+=`</div>`;
+    }
+    html+=`</div>`;
+  }
+
+  // Architecture info
+  html+=`<div class="rl-card"><div class="rl-card-title">⚙️ 模型架构</div>`;
+  html+=`<div style="font-size:10px;color:var(--sub);line-height:1.6">`;
+  html+=`<b>算法:</b> Double DQN + Experience Replay + Adam Optimizer<br>`;
+  html+=`<b>网络:</b> [${RL_STATE_SIZE}] → 64(ReLU) → 32(ReLU) → [${RL_ACTION_SIZE}]<br>`;
+  html+=`<b>状态:</b> 动量(1/5/10/20日) · 波动率(5/20日) · RSI · MACD · MA偏离 · 回撤 · 持仓 · PnL · 宏观 · 舆情 · 资金<br>`;
+  html+=`<b>动作:</b> 持有(0) / 买入(1) / 卖出(2)<br>`;
+  html+=`<b>奖励:</b> 资产增值(+) · 亏损(-) · 过度交易惩罚(-) · 回撤惩罚(-)<br>`;
+  html+=`<b>超参:</b> γ=0.99 · ε衰减=0.998 · batch=32 · 记忆库=10K · 目标网络更新=200步<br>`;
+  html+=`<b>训练:</b> 基于全部持仓/自选基金历史NAV(近1年)训练 · 每轮遍历所有基金`;
+  html+=`</div></div>`;
+
+  container.innerHTML=html;
+}
+
+function renderRLChart(data,label){
+  if(!data||data.length<2)return'';
+  const max=Math.max(...data),min=Math.min(...data);
+  const range=max-min||1;
+  const h=50,w=100;
+  const pts=data.map((v,i)=>{
+    const x=(i/(data.length-1))*w;
+    const y=h-((v-min)/range)*h;
+    return`${x.toFixed(1)},${y.toFixed(1)}`;
+  }).join(' ');
+  let s=`<div class="rl-chart"><svg viewBox="0 0 ${w} ${h+4}" preserveAspectRatio="none" style="width:100%;height:100%">`;
+  s+=`<defs><linearGradient id="rlGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#8b5cf6" stop-opacity="0.3"/><stop offset="100%" stop-color="#8b5cf6" stop-opacity="0.02"/></linearGradient></defs>`;
+  s+=`<polygon points="0,${h+2} ${pts} ${w},${h+2}" fill="url(#rlGrad)"/>`;
+  s+=`<polyline points="${pts}" fill="none" stroke="#8b5cf6" stroke-width="1.5"/>`;
+  // Zero line
+  const zeroY=h-((-min)/range)*h;
+  if(zeroY>0&&zeroY<h)s+=`<line x1="0" y1="${zeroY.toFixed(1)}" x2="${w}" y2="${zeroY.toFixed(1)}" stroke="rgba(255,255,255,0.15)" stroke-dasharray="2,2"/>`;
+  s+=`</svg>`;
+  s+=`<div style="position:absolute;bottom:2px;left:4px;font-size:8px;color:var(--sub)">${label}: ${data[data.length-1].toFixed(1)}</div>`;
+  s+=`<div style="position:absolute;bottom:2px;right:4px;font-size:8px;color:var(--sub)">E${data.length}</div>`;
+  s+=`</div>`;
+  return s;
+}
+
+async function startRLTraining(){
+  if(_rlTraining)return;
+  if(!rlTrainer)rlTrainer=new RLTrainer();
+  const count=rlTrainer.prepare();
+  if(count===0){
+    alert('没有足够的历史数据进行训练。请先添加持仓基金并等待历史数据加载。\n\n当前已加载历史数据: '+Object.keys(fundHistoryData).length+' 只基金');
+    return;
+  }
+  _rlTraining=true;
+  renderRLBrain();renderRLBrief();
+  console.log(`RL训练开始: ${count}只基金历史数据, ${rlTrainer.maxEpisodes}轮训练`);
+
+  await rlTrainer.train((ep,total,metrics)=>{
+    renderRLBrain();renderRLBrief();
+  });
+
+  _rlTraining=false;_rlModelLoaded=true;
+  rlTrainer.generateSignals();
+  renderRLBrain();renderRLBrief();
+  console.log('RL训练完成:',rlTrainer.metrics);
+}
+
+function stopRLTraining(){
+  if(rlTrainer)rlTrainer.stop();
+  _rlTraining=false;
+  renderRLBrain();renderRLBrief();
+}
+
+// Build RL context for AI prompt
+function buildRLContext(){
+  if(!_rlModelLoaded||!rlTrainer?.agent||!Object.keys(_rlSignals).length)return'';
+  let ctx='\n【🧠 RL强化学习信号 (DQN)】\n';
+  ctx+=`模型: Double DQN · 已训练${rlTrainer.episode+1}轮 · ${rlTrainer.agent.trainSteps}步\n`;
+  ctx+=`指标: 胜率${(rlTrainer.metrics.winRate||0).toFixed(0)}% · 平均收益${(rlTrainer.metrics.avgReturn||0).toFixed(1)}% · Sharpe${(rlTrainer.metrics.sharpe||0).toFixed(2)}\n`;
+  ctx+='个股RL决策:\n';
+  for(const[code,sig]of Object.entries(_rlSignals)){
+    const name=fundName(code);
+    const qStr=sig.qValues.map(v=>v.toFixed(2)).join('/');
+    ctx+=`  ${name}(${code}): ${sig.actionName}(置信${sig.confidence}%) Q[持/买/卖]=[${qStr}]\n`;
+  }
+  ctx+='⚠️ RL信号基于历史NAV训练的DQN策略网络，是量化辅助参考。请结合AI分析和数据情报综合判断。\n';
+  return ctx;
 }
 
 function toggleSimDetail(){
@@ -3534,6 +4220,8 @@ async function loadData(){
   // 异步加载历史数据和数据情报（不阻塞主渲染）
   fetchAllHistory().then(()=>{
     console.log('历史趋势数据加载完成:', Object.keys(fundHistoryData).length, '只基金');
+    // 历史数据加载完成后，初始化RL大脑
+    initRLBrain();
   }).catch(e=>console.warn('历史数据加载失败:', e));
   // 数据情报中心：宏观+资金+舆情
   fetchAllDataIntel().then(()=>{
@@ -3584,11 +4272,29 @@ function startTimers(){
   generateDailyReview();
   renderReview();
 
+  // 初始化RL训练器（尝试加载已保存模型）
+  rlTrainer = new RLTrainer();
+  if(rlTrainer.loadModel()){
+    renderRLBrief();
+  }
+
   // Auto-trigger AI if we have holdings/watchlist and API key
   if(_aiKey && (holdings.length>0 || watchlist.length>0)){
     triggerAI();
   }
 })();
+
+// RL Brain initialization (called after history data loads)
+function initRLBrain(){
+  if(!rlTrainer)rlTrainer=new RLTrainer();
+  if(_rlModelLoaded && rlTrainer.agent){
+    // Model already loaded, generate fresh signals
+    rlTrainer.generateSignals();
+    renderRLBrief();
+    if(document.getElementById('rl-brain-container')?.style.display!=='none')renderRLBrain();
+    console.log('RL信号已更新:', Object.keys(_rlSignals).length, '只基金');
+  }
+}
 </script>
 </body>
 </html>
