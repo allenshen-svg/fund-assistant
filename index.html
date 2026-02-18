@@ -1244,8 +1244,9 @@ async function translateGlobalNews(){
   const titles = globalNews.slice(0,30).map((n,i)=>`${i+1}. ${n.title}`).join('\n');
   const model = AI_ENGINES[0]?.model || 'deepseek-ai/DeepSeek-V3';
   try {
-    console.log('[GlobalNews] 开始翻译', globalNews.length, '条新闻...');
-    const resp = await callAI(model, '你是专业的新闻翻译员，擅长将英文新闻标题翻译为简洁准确的中文。', `将以下英文新闻标题逐条翻译为简洁的中文，保持编号格式，每条一行，只输出翻译结果，不要加任何解释：\n\n${titles}`, 0.3);
+    console.log('[GlobalNews] 开始翻译', globalNews.length, '条新闻, model=', model, 'apiBase=', _apiBase);
+    const resp = await callAI(model, '你是专业的新闻翻译员，请将英文新闻标题逐条翻译为简洁准确的中文，每条一行，保持编号。', `请将以下英文新闻标题逐条翻译为中文，保持编号格式(如 1. xxx)，每条一行，只输出翻译，不加解释：\n\n${titles}`, 0.3);
+    console.log('[GlobalNews] 翻译API返回:', resp?.slice(0,200));
     if(resp){
       const lines = resp.trim().split('\n').filter(l=>l.trim());
       let matched = 0;
@@ -1304,13 +1305,17 @@ ${headlines}
 
   const model = AI_ENGINES[0]?.model || 'deepseek-ai/DeepSeek-V3';
   try {
-    const resp = await callAI(model, '你是一位资深国际政治经济分析师，专注于全球宏观形势对中国资本市场的影响分析。请严格按JSON格式返回。', prompt, 0.5);
+    console.log('[GlobalNews] 开始AI摘要, model=', model);
+    const resp = await callAI(model, '你是一位资深国际政治经济分析师。请严格按JSON格式返回分析结果，不要包含markdown代码块。', prompt, 0.5);
+    console.log('[GlobalNews] AI摘要返回:', resp?.slice(0,300));
     if(resp){
       let parsed;
-      try { parsed = JSON.parse(resp); } catch(e) {
+      // 清理markdown代码块标记
+      let cleaned = resp.replace(/```json\s*/gi,'').replace(/```\s*/g,'').trim();
+      try { parsed = JSON.parse(cleaned); } catch(e) {
         // 尝试提取JSON
-        const m = resp.match(/\{[\s\S]*\}/);
-        if(m) parsed = JSON.parse(m[0]);
+        const m = cleaned.match(/\{[\s\S]*\}/);
+        if(m) try{ parsed = JSON.parse(m[0]); }catch(e2){}
       }
       if(parsed){
         globalNewsSummary = parsed;
@@ -4658,9 +4663,10 @@ function renderGlobalNewsSummaryHTML(){
 }
 
 async function triggerTranslate(){
+  if(!_aiKey){ alert('请先在底部设置中配置API Key'); return; }
+  if(!globalNews.length){ alert('暂无国际新闻数据，请等待加载'); return; }
   const btn = event?.target;
   if(btn){ btn.disabled=true; btn.textContent='🌐 翻译中...'; }
-  // 重置翻译状态以强制重新翻译
   globalNews.forEach(n=> delete n.titleCN);
   _gnTranslating = false;
   await translateGlobalNews();
@@ -4668,8 +4674,11 @@ async function triggerTranslate(){
 }
 
 async function triggerGlobalNewsSummary(){
+  if(!_aiKey){ alert('请先在底部设置中配置API Key'); return; }
+  if(!globalNews.length){ alert('暂无国际新闻数据，请等待加载'); return; }
   const btn = event?.target;
   if(btn){ btn.disabled=true; btn.textContent='🤖 AI分析中...'; }
+  globalNewsSummary = null; // 重置以允许重新生成
   await summarizeGlobalNewsAI();
   renderDataIntel();
 }
