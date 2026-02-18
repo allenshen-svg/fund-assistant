@@ -303,6 +303,57 @@ body { font-family:-apple-system,BlinkMacSystemFont,'SF Pro','PingFang SC','Helv
 .sentiment-bar { flex:1; height:10px; border-radius:5px; background:linear-gradient(90deg,var(--green),#fbbf24,var(--red)); position:relative; }
 .sentiment-dot { width:14px; height:14px; border-radius:50%; background:#fff; border:2px solid #1e293b; position:absolute; top:-2px; transition:left .3s; }
 .sentiment-label { font-size:10px; font-weight:700; min-width:40px; }
+/* Real-World Action Guide */
+.action-guide { padding:12px 16px 6px; }
+.action-guide-header { display:flex; justify-content:space-between; align-items:center; cursor:pointer; }
+.action-guide-header-right { display:flex; align-items:center; gap:8px; }
+.action-guide-toggle { font-size:12px; color:var(--sub); transition:transform .2s; }
+.action-guide-brief { font-size:11px; font-weight:600; }
+.action-guide-container { margin-top:8px; }
+.ag-overview { background:linear-gradient(135deg,#1a1a2e,#16213e); color:#fff; border-radius:var(--radius); padding:14px 16px; margin-bottom:10px; box-shadow:0 2px 12px rgba(22,33,62,0.25); }
+.ag-score-row { display:flex; align-items:center; gap:14px; margin-bottom:10px; }
+.ag-big-score { font-size:36px; font-weight:900; font-variant-numeric:tabular-nums; line-height:1; }
+.ag-score-meta { flex:1; }
+.ag-score-label { font-size:13px; font-weight:700; }
+.ag-score-desc { font-size:10px; color:rgba(255,255,255,0.55); margin-top:2px; }
+.ag-engines { display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-bottom:10px; }
+.ag-engine { background:rgba(255,255,255,0.06); border-radius:8px; padding:8px 6px; text-align:center; border:1px solid rgba(255,255,255,0.08); }
+.ag-engine-icon { font-size:16px; }
+.ag-engine-name { font-size:8px; color:rgba(255,255,255,0.45); letter-spacing:0.3px; margin:2px 0; }
+.ag-engine-vote { font-size:11px; font-weight:700; }
+.ag-engine-conf { font-size:8px; color:rgba(255,255,255,0.4); margin-top:1px; }
+.ag-advice-bar { background:rgba(255,255,255,0.08); border-radius:8px; padding:8px 12px; font-size:11px; line-height:1.5; }
+.ag-advice-bar b { color:#fbbf24; }
+.ag-fund-card { background:var(--card); border-radius:10px; padding:12px 14px; margin-bottom:8px; box-shadow:var(--shadow); border-left:3px solid var(--border); transition:border-color .2s; }
+.ag-fund-card.action-buy { border-left-color:var(--red); }
+.ag-fund-card.action-sell { border-left-color:var(--green); }
+.ag-fund-card.action-hold { border-left-color:var(--primary); }
+.ag-fund-top { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:6px; }
+.ag-fund-name { font-size:13px; font-weight:700; }
+.ag-fund-code { font-size:10px; color:var(--sub); }
+.ag-fund-action { font-size:12px; font-weight:700; padding:2px 10px; border-radius:6px; }
+.ag-fund-action.buy { background:var(--red-bg); color:var(--red); }
+.ag-fund-action.sell { background:var(--green-bg); color:var(--green); }
+.ag-fund-action.hold { background:var(--primary-bg); color:var(--primary); }
+.ag-vote-strip { display:flex; gap:3px; margin-bottom:6px; }
+.ag-vote-chip { font-size:8px; padding:1px 6px; border-radius:4px; font-weight:600; letter-spacing:0.2px; }
+.ag-vote-chip.bullish { background:#fef2f2; color:#ef4444; }
+.ag-vote-chip.bearish { background:#ecfdf5; color:#16a34a; }
+.ag-vote-chip.neutral { background:#f8fafc; color:#94a3b8; }
+.ag-reason { font-size:11px; color:#475569; line-height:1.5; margin-bottom:6px; }
+.ag-metrics { display:flex; gap:4px; flex-wrap:wrap; }
+.ag-metric { font-size:9px; padding:2px 6px; border-radius:4px; background:var(--bg); color:var(--sub); }
+.ag-metric b { color:var(--text); font-weight:600; }
+.ag-position-bar { margin-top:8px; }
+.ag-pos-label { font-size:9px; color:var(--sub); display:flex; justify-content:space-between; margin-bottom:3px; }
+.ag-pos-track { height:6px; background:var(--bg); border-radius:3px; overflow:hidden; }
+.ag-pos-fill { height:100%; border-radius:3px; transition:width .3s; }
+.ag-summary { background:var(--card); border-radius:10px; padding:12px 14px; box-shadow:var(--shadow); border:1px dashed var(--border); }
+.ag-summary-title { font-size:11px; font-weight:700; margin-bottom:6px; }
+.ag-summary-text { font-size:11px; color:#475569; line-height:1.6; }
+.ag-summary-text b { color:var(--text); }
+.ag-disclaimer { font-size:9px; color:var(--sub); text-align:center; padding:6px 0; line-height:1.4; }
+
 /* RL Brain Dashboard */
 .rl-brain { padding:10px 16px 4px; }
 .rl-brain-header { display:flex; justify-content:space-between; align-items:center; cursor:pointer; }
@@ -534,6 +585,18 @@ body { font-family:-apple-system,BlinkMacSystemFont,'SF Pro','PingFang SC','Helv
     <span class="review-toggle" onclick="toggleReviewHistory()">📋 查看历史复盘记录</span>
   </div>
   <div id="review-history" style="display:none"></div>
+</div>
+
+<!-- Real-World Action Guide -->
+<div class="action-guide">
+  <div class="section-title action-guide-header" onclick="toggleActionGuide()">
+    <span>🎯 实盘行动指南 <span style="font-size:10px;color:var(--sub);font-weight:400">三引擎共识 · 实操建议</span></span>
+    <div class="action-guide-header-right">
+      <span id="action-guide-brief" class="action-guide-brief" style="color:var(--sub)">等待分析</span>
+      <span class="action-guide-toggle" id="action-guide-toggle">▼</span>
+    </div>
+  </div>
+  <div id="action-guide-container" class="action-guide-container"></div>
 </div>
 
 <!-- Action Signals -->
@@ -2214,6 +2277,7 @@ function renderAll(){
   renderStats();
   renderPortfolio();
   renderSimBrief();
+  renderActionGuide();
   renderSignals();
   renderWatchlist();
   renderRecos();
@@ -2399,6 +2463,279 @@ function renderStats(){
   } else {
     benchToday.textContent = '添加持仓查看对比';
   }
+}
+
+// ==================== REAL-WORLD ACTION GUIDE ====================
+// 三引擎闭环：AI信号 + RL决策 + 回测验证 → 实盘操作建议
+function toggleActionGuide(){
+  const container = document.getElementById('action-guide-container');
+  const icon = document.getElementById('action-guide-toggle');
+  if(container.style.display === 'none'){
+    container.style.display = '';
+    icon.textContent = '▼';
+    renderActionGuide();
+  } else {
+    container.style.display = 'none';
+    icon.textContent = '▶';
+  }
+}
+
+function getTriEngineVote(code){
+  // === 引擎1: AI信号 ===
+  const aiSig = _analysisResult?.signals?.[code];
+  let aiVote = 0, aiConf = 0, aiReason = '';
+  if(aiSig){
+    aiVote = aiSig.action === 'buy' ? 1 : aiSig.action === 'sell' ? -1 : 0;
+    aiConf = aiSig.confidence || 0;
+    aiReason = aiSig.reason || '';
+  }
+  // === 引擎2: RL信号 ===
+  const rlSig = _rlSignals[code];
+  let rlVote = 0, rlConf = 0;
+  if(rlSig){
+    rlVote = rlSig.action === 1 ? 1 : rlSig.action === 2 ? -1 : 0;
+    rlConf = rlSig.confidence || 0;
+  }
+  // === 引擎3: 回测信号 ===
+  const btR = btResults[code];
+  let btVote = 0, btConf = 0;
+  if(btR){
+    const rsi = btR.lastRSI || 50;
+    const sharpe = btR.sharpe || 0;
+    if(rsi < 40 && sharpe > 0){ btVote = 1; btConf = 70; }
+    else if(rsi < 50 && sharpe > 0.5){ btVote = 1; btConf = 60; }
+    else if(rsi > 75){ btVote = -1; btConf = 75; }
+    else if(rsi > 65 && sharpe < 0){ btVote = -1; btConf = 65; }
+    else { btVote = 0; btConf = 40; }
+  }
+  // === 加权投票 ===
+  const aiW = Math.min(aiConf, 95) / 100;
+  const rlW = Math.min(rlConf, 95) / 100;
+  const btW = Math.min(Math.abs(btR?.sharpe||0)/2, 0.8);
+  const totalW = aiW + rlW + btW || 1;
+  const score = (aiVote * aiW + rlVote * rlW + btVote * btW) / totalW;
+
+  const votes = [aiVote, rlVote, btVote].filter(v => v !== 0);
+  const buyVotes = votes.filter(v => v > 0).length;
+  const sellVotes = votes.filter(v => v < 0).length;
+  let consensusMult = 1.0;
+  if(Math.max(buyVotes, sellVotes) >= 3) consensusMult = 1.4;
+  else if(Math.max(buyVotes, sellVotes) >= 2 && votes.length >= 2) consensusMult = 1.15;
+  else if(buyVotes > 0 && sellVotes > 0) consensusMult = 0.4;
+
+  // 综合决策
+  let action = 'hold', actionLabel = '🔵 持有观望';
+  const effConf = aiConf * consensusMult;
+  if(score > 0.2 && effConf >= 55){ action = 'buy'; actionLabel = '🟢 建议加仓'; }
+  else if(score < -0.2 && effConf >= 50){ action = 'sell'; actionLabel = '🔴 建议减仓'; }
+  else if(score > 0.1){ actionLabel = '🔵 偏多持有'; }
+  else if(score < -0.1){ actionLabel = '🔵 偏空持有'; }
+
+  // Kelly建议仓位
+  const kelly = btR?.finalKelly || 0.05;
+  const adjKelly = Math.min(kelly * consensusMult, 0.25);
+
+  return {
+    action, actionLabel, score, consensusMult,
+    buyVotes, sellVotes,
+    ai: { vote: aiVote, conf: aiConf, reason: aiReason, label: aiVote>0?'买入':aiVote<0?'卖出':'持有' },
+    rl: { vote: rlVote, conf: rlConf, label: rlSig?.actionName||'--' },
+    bt: { vote: btVote, conf: btConf, sharpe: btR?.sharpe||0, rsi: btR?.lastRSI||50, maxDD: btR?.maxDD||0, winRate: btR?.winRate||0, kelly: adjKelly },
+    effConf: Math.round(effConf),
+  };
+}
+
+function renderActionGuide(){
+  const container = document.getElementById('action-guide-container');
+  const brief = document.getElementById('action-guide-brief');
+  if(!container) return;
+
+  if(holdings.length === 0){
+    container.innerHTML = '<div class="empty" style="padding:20px"><div class="empty-icon">🎯</div>添加持仓后，这里会显示三引擎闭环的实盘操作建议</div>';
+    if(brief) brief.textContent = '无持仓';
+    return;
+  }
+
+  // 为每个持仓计算三引擎投票
+  const plans = [];
+  let totalBuy = 0, totalSell = 0, totalHold = 0;
+  holdings.forEach(h => {
+    const vote = getTriEngineVote(h.code);
+    const fd = getFundData(h.code);
+    const td = fundHistoryData[h.code]?.trend;
+    plans.push({ code: h.code, fd, td, vote });
+    if(vote.action === 'buy') totalBuy++;
+    else if(vote.action === 'sell') totalSell++;
+    else totalHold++;
+  });
+
+  // 整体组合评分 (0-100)
+  const avgScore = plans.reduce((s,p) => s + p.vote.score, 0) / plans.length;
+  const overallScore = Math.round(Math.max(0, Math.min(100, 50 + avgScore * 50)));
+  const ds = _dataIntelLoaded ? generateDataSignal() : null;
+
+  // 整体建议
+  let overallAdvice = '', overallColor = '#94a3b8', overallLabel = '中性观望';
+  if(overallScore >= 70){ overallLabel = '积极加仓'; overallColor = '#ef4444'; overallAdvice = '三引擎多数看多，市场环境偏积极。建议按Kelly仓位逐步加仓看多品种，控制单笔不超组合5%。'; }
+  else if(overallScore >= 58){ overallLabel = '偏多持有'; overallColor = '#f59e0b'; overallAdvice = '信号偏正面，维持现有仓位为主。可在回调时对高共识品种小幅低吸，控制节奏。'; }
+  else if(overallScore >= 42){ overallLabel = '中性观望'; overallColor = '#94a3b8'; overallAdvice = '信号分歧较大或数据不足。建议持有不动，等待引擎信号趋于一致后再行动。'; }
+  else if(overallScore >= 30){ overallLabel = '偏空谨慎'; overallColor = '#f59e0b'; overallAdvice = '部分引擎看空。建议先减仓高风险卫星仓品种，保留核心仓。新资金暂不入场。'; }
+  else { overallLabel = '防御减仓'; overallColor = '#22c55e'; overallAdvice = '多引擎看空。建议主动减仓卫星仓，增加现金比例，等待市场企稳信号。'; }
+  if(ds) overallAdvice += ` [宏观环境: ${ds.label}(${ds.score})]`;
+
+  // 引擎总投票汇总
+  const engAI = plans.filter(p => p.vote.ai.vote > 0).length;
+  const engRL = plans.filter(p => p.vote.rl.vote > 0).length;
+  const engBT = plans.filter(p => p.vote.bt.vote > 0).length;
+  const engAISell = plans.filter(p => p.vote.ai.vote < 0).length;
+  const engRLSell = plans.filter(p => p.vote.rl.vote < 0).length;
+  const engBTSell = plans.filter(p => p.vote.bt.vote < 0).length;
+
+  // Brief
+  if(brief){
+    const hasAnalysis = _analysisResult || _rlModelLoaded || btSummary;
+    if(!hasAnalysis){
+      brief.innerHTML = '<span style="color:var(--sub)">点击AI分析</span>';
+    } else {
+      const briefColor = overallScore >= 58 ? 'var(--red)' : overallScore <= 42 ? 'var(--green)' : 'var(--sub)';
+      brief.innerHTML = `<span style="color:${briefColor}">${overallLabel} ${overallScore}</span>`;
+    }
+  }
+
+  let html = '';
+
+  // 1. 整体概览卡
+  html += `<div class="ag-overview">`;
+  html += `<div class="ag-score-row">`;
+  html += `<div class="ag-big-score" style="color:${overallColor}">${overallScore}</div>`;
+  html += `<div class="ag-score-meta"><div class="ag-score-label" style="color:${overallColor}">${overallLabel}</div>`;
+  html += `<div class="ag-score-desc">综合评分：AI信号×回测验证×RL决策×宏观数据</div></div></div>`;
+
+  // 三引擎投票概览
+  html += `<div class="ag-engines">`;
+  html += `<div class="ag-engine"><div class="ag-engine-icon">🤖</div><div class="ag-engine-name">AI分析</div>`;
+  html += `<div class="ag-engine-vote" style="color:${engAI>engAISell?'#f87171':engAISell>engAI?'#4ade80':'rgba(255,255,255,0.5)'}">${engAI}买 ${engAISell}卖</div>`;
+  html += `<div class="ag-engine-conf">${_analysisResult ? _analysisResult.engineCount+'引擎' : '未分析'}</div></div>`;
+
+  html += `<div class="ag-engine"><div class="ag-engine-icon">🧠</div><div class="ag-engine-name">RL大脑</div>`;
+  html += `<div class="ag-engine-vote" style="color:${engRL>engRLSell?'#f87171':engRLSell>engRL?'#4ade80':'rgba(255,255,255,0.5)'}">${engRL}买 ${engRLSell}卖</div>`;
+  html += `<div class="ag-engine-conf">${_rlModelLoaded ? 'E'+(rlTrainer?.episode||0)+1 : '未训练'}</div></div>`;
+
+  html += `<div class="ag-engine"><div class="ag-engine-icon">📈</div><div class="ag-engine-name">回测引擎</div>`;
+  html += `<div class="ag-engine-vote" style="color:${engBT>engBTSell?'#f87171':engBTSell>engBT?'#4ade80':'rgba(255,255,255,0.5)'}">${engBT}买 ${engBTSell}卖</div>`;
+  html += `<div class="ag-engine-conf">${btSummary ? 'Sharpe '+btSummary.avgSharpe.toFixed(1) : '未回测'}</div></div>`;
+  html += `</div>`;
+
+  // 整体建议
+  html += `<div class="ag-advice-bar"><b>📌 今日操作建议：</b>${overallAdvice}</div>`;
+  html += `</div>`;
+
+  // 2. 逐只基金操作卡片
+  // 排序：卖出优先(风控优先)，然后买入，最后持有
+  const order = {sell: 0, buy: 1, hold: 2};
+  plans.sort((a,b) => (order[a.vote.action]||2) - (order[b.vote.action]||2));
+
+  plans.forEach(p => {
+    const { code, fd, td, vote } = p;
+    const todayPct = fd?.gszzl || 0;
+    const pctColor = todayPct >= 0 ? 'var(--red)' : 'var(--green)';
+
+    html += `<div class="ag-fund-card action-${vote.action}">`;
+    html += `<div class="ag-fund-top">`;
+    html += `<div><div class="ag-fund-name">${fundName(code)}</div><div class="ag-fund-code">${code} · ${fundType(code)} · 今日 <span style="color:${pctColor}">${todayPct>=0?'+':''}${fmt(todayPct)}%</span></div></div>`;
+    html += `<span class="ag-fund-action ${vote.action}">${vote.actionLabel}</span>`;
+    html += `</div>`;
+
+    // 三引擎投票条
+    html += `<div class="ag-vote-strip">`;
+    const mkChip = (name, v, conf) => {
+      const cls = v > 0 ? 'bullish' : v < 0 ? 'bearish' : 'neutral';
+      const txt = v > 0 ? '买' : v < 0 ? '卖' : '持';
+      return `<span class="ag-vote-chip ${cls}">${name}:${txt}${conf>0?' '+conf+'%':''}</span>`;
+    };
+    html += mkChip('AI', vote.ai.vote, vote.ai.conf);
+    html += mkChip('RL', vote.rl.vote, vote.rl.conf);
+    html += mkChip('BT', vote.bt.vote, vote.bt.conf);
+    // 共识标签
+    if(vote.buyVotes >= 2 && vote.sellVotes === 0) html += `<span class="ag-vote-chip bullish">✓共识看多×${vote.consensusMult.toFixed(1)}</span>`;
+    else if(vote.sellVotes >= 2 && vote.buyVotes === 0) html += `<span class="ag-vote-chip bearish">✓共识看空×${vote.consensusMult.toFixed(1)}</span>`;
+    else if(vote.buyVotes > 0 && vote.sellVotes > 0) html += `<span class="ag-vote-chip neutral">⚠分歧×${vote.consensusMult.toFixed(1)}</span>`;
+    html += `</div>`;
+
+    // 操作理由
+    let reason = '';
+    if(vote.action === 'buy'){
+      reason = `共识看多(${vote.buyVotes}/3票)`;
+      if(vote.ai.conf > 0) reason += `，AI置信${vote.ai.conf}%`;
+      if(vote.bt.sharpe > 0) reason += `，回测Sharpe ${vote.bt.sharpe.toFixed(1)}表现优`;
+      if(td?.swingAdvice?.includes('买入')) reason += `，波段信号支撑`;
+      reason += `。建议用总仓位的${(vote.bt.kelly*100).toFixed(0)}%(Kelly)分批加仓`;
+    } else if(vote.action === 'sell'){
+      reason = `共识偏空(${vote.sellVotes}/3票)`;
+      if(vote.bt.rsi > 70) reason += `，RSI=${vote.bt.rsi.toFixed(0)}超买区`;
+      if(vote.bt.sharpe < 0) reason += `，回测Sharpe ${vote.bt.sharpe.toFixed(1)}不佳`;
+      if(vote.bt.maxDD < -0.15) reason += `，最大回撤${(vote.bt.maxDD*100).toFixed(0)}%较高`;
+      reason += `。建议先减30-50%仓位落袋`;
+    } else {
+      reason = '信号未达共识阈值，维持现有仓位观望';
+      if(vote.ai.conf > 0 && vote.ai.reason) reason += `。AI参考：${vote.ai.reason.slice(0,50)}`;
+    }
+    html += `<div class="ag-reason">${reason}</div>`;
+
+    // 核心指标
+    html += `<div class="ag-metrics">`;
+    html += `<span class="ag-metric">共识 <b>${vote.effConf}%</b></span>`;
+    html += `<span class="ag-metric">Sharpe <b style="color:${vote.bt.sharpe>0?'var(--red)':'var(--green)'}">${vote.bt.sharpe.toFixed(2)}</b></span>`;
+    html += `<span class="ag-metric">RSI <b>${vote.bt.rsi.toFixed(0)}</b></span>`;
+    html += `<span class="ag-metric">Kelly <b>${(vote.bt.kelly*100).toFixed(0)}%</b></span>`;
+    html += `<span class="ag-metric">胜率 <b>${(vote.bt.winRate*100).toFixed(0)}%</b></span>`;
+    if(td) html += `<span class="ag-metric">60日 <b style="color:${td.chg60d>=0?'var(--red)':'var(--green)'}">${td.chg60d>0?'+':''}${td.chg60d}%</b></span>`;
+    html += `</div>`;
+
+    // Kelly仓位条
+    const kellyPct = Math.round(vote.bt.kelly * 100);
+    html += `<div class="ag-position-bar">`;
+    html += `<div class="ag-pos-label"><span>建议仓位 (半Kelly)</span><span>${Math.round(kellyPct/2)}%~${kellyPct}%</span></div>`;
+    const barColor = vote.action === 'buy' ? 'var(--red)' : vote.action === 'sell' ? 'var(--green)' : 'var(--primary)';
+    html += `<div class="ag-pos-track"><div class="ag-pos-fill" style="width:${Math.min(kellyPct, 100)}%;background:${barColor}"></div></div>`;
+    html += `</div>`;
+
+    html += `</div>`; // end ag-fund-card
+  });
+
+  // 3. 执行摘要 & 对比模拟盘
+  html += `<div class="ag-summary">`;
+  html += `<div class="ag-summary-title">📊 执行摘要</div>`;
+  html += `<div class="ag-summary-text">`;
+  html += `今日建议：<b style="color:var(--red)">${totalBuy}只加仓</b> · <b style="color:var(--green)">${totalSell}只减仓</b> · <b>${totalHold}只持有</b><br>`;
+
+  // 与模拟盘今日操作对比
+  if(simPortfolio?.history){
+    const today = todayStr();
+    const todayTrades = simPortfolio.history.filter(h => h.date === today);
+    if(todayTrades.length > 0){
+      html += `<b>模拟盘今日操作：</b>${todayTrades.length}笔 — `;
+      todayTrades.slice(0,3).forEach(t => {
+        html += `${t.action==='buy'?'🟢买':'🔴卖'}${fundName(t.code).slice(0,4)} `;
+      });
+      if(todayTrades.length > 3) html += `…等${todayTrades.length}笔`;
+      html += '<br>';
+    }
+    const totalVal = getSimTotalValue();
+    const cumR = (totalVal - SIM_INITIAL_CAPITAL) / SIM_INITIAL_CAPITAL * 100;
+    html += `模拟盘累计收益: <b style="color:${cumR>=0?'var(--red)':'var(--green)'}">${cumR>=0?'+':''}${cumR.toFixed(2)}%</b> — 可参考模拟盘验证三引擎信号可靠性<br>`;
+  }
+
+  html += `<br><b>⚠️ 操作原则：</b><br>`;
+  html += `① 分批执行：单次操作不超总仓位5%，分2-3次完成<br>`;
+  html += `② 核心仓优先：核心仓(宽基/债基)保持60%底仓，卫星仓灵活调整<br>`;
+  html += `③ 信号分歧时不动：引擎投票<2票一致时，观望为主<br>`;
+  html += `④ 止损优先：任何品种亏损超5%立即减仓，不等信号`;
+  html += `</div></div>`;
+
+  html += `<div class="ag-disclaimer">⚠️ 以上建议基于AI/RL/回测三引擎量化分析，仅供参考，不构成投资建议。投资有风险，决策需谨慎。</div>`;
+
+  container.innerHTML = html;
 }
 
 function renderSignals(){
@@ -2602,6 +2939,7 @@ async function triggerAI(){
     const simTrades = simAutoTrade();
     updateSimDaily();
     renderMarketSummary();
+    renderActionGuide();
     renderSignals();
     renderWatchlist();
     renderRecos();
