@@ -1233,6 +1233,32 @@ async function fetchGlobalNews(){
 
   _globalNewsLoading = false;
   console.log(`[GlobalNews] Fetched ${allItems.length} → filtered ${globalNews.length} political/economic items`);
+
+  // 自动翻译标题
+  if(globalNews.length > 0) translateGlobalNews();
+}
+
+async function translateGlobalNews(){
+  if(!globalNews.length) return;
+  // 已有翻译则跳过
+  if(globalNews[0].titleCN) return;
+  const titles = globalNews.slice(0,30).map((n,i)=>`${i+1}. ${n.title}`).join('\n');
+  try {
+    const resp = await callAI(`将以下英文新闻标题逐条翻译为简洁的中文，保持编号格式，每条一行，只输出翻译结果，不要加任何解释：\n\n${titles}`);
+    if(resp){
+      const lines = resp.trim().split('\n').filter(l=>l.trim());
+      lines.forEach(line=>{
+        const m = line.match(/^(\d+)\.\s*(.+)/);
+        if(m){
+          const idx = parseInt(m[1]) - 1;
+          if(idx>=0 && idx<globalNews.length) globalNews[idx].titleCN = m[2].trim();
+        }
+      });
+      console.log(`[GlobalNews] Translated ${lines.length} titles to CN`);
+      // 刷新UI
+      if(document.getElementById('data-intel-container')?.style.display!=='none') renderDataIntel();
+    }
+  } catch(e){ console.warn('translateGlobalNews:', e); }
 }
 
 function getGlobalNewsSentiment(){
@@ -1337,7 +1363,11 @@ async function fetchAllDataIntel(){
   _dataIntelLoaded = true;
   renderDataIntelBrief();
   // 异步触发国际新闻AI摘要(不阻塞主流程)
-  if(globalNews.length > 0) summarizeGlobalNewsAI().then(()=>{ if(document.getElementById('data-intel-container')?.style.display!=='none') renderDataIntel(); });
+  if(globalNews.length > 0){
+    // 并行触发翻译和AI摘要(不阻塞主流程)
+    translateGlobalNews();
+    summarizeGlobalNewsAI().then(()=>{ if(document.getElementById('data-intel-container')?.style.display!=='none') renderDataIntel(); });
+  }
 }
 
 // ==================== RL BRAIN: DEEP Q-NETWORK ====================
@@ -2176,7 +2206,7 @@ function buildDataIntelContext(){
     ctx += '  [重要国际新闻]:\n';
     globalNews.slice(0,12).forEach(n=>{
       const tag = n.sentiment==='bull'?'🟢正面':n.sentiment==='bear'?'🔴负面':'⚪中性';
-      ctx += `    [${n.source}] ${tag} ${n.title}\n`;
+      ctx += `    [${n.source}] ${tag} ${n.titleCN||n.title}\n`;
     });
     if(globalNewsSummary){
       ctx += '  [AI国际形势分析摘要]:\n';
@@ -4504,7 +4534,8 @@ function renderDataIntel(){
       html += `<div class="global-news-item">`;
       html += `<span class="global-news-src">${n.source}</span>`;
       html += `<span style="font-size:11px;min-width:14px">${icon}</span>`;
-      html += `<span class="global-news-title"><a href="${n.url}" target="_blank" rel="noopener">${n.title}</a></span>`;
+      const displayTitle = n.titleCN || n.title;
+      html += `<span class="global-news-title"><a href="${n.url}" target="_blank" rel="noopener">${displayTitle}</a>${n.titleCN?'<div style="font-size:9px;color:var(--sub);margin-top:1px">'+n.title+'</div>':''}</span>`;
       html += `<span class="global-news-time">${n.timeFormatted}</span>`;
       html += `</div>`;
     });
