@@ -340,6 +340,34 @@ body { font-family:-apple-system,BlinkMacSystemFont,'SF Pro','PingFang SC','Helv
 .rl-qbar { display:flex; gap:2px; flex:1; }
 .rl-qbar-seg { height:6px; border-radius:2px; min-width:2px; }
 @keyframes rlPulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+/* Backtest Dashboard */
+.bt-section { padding:10px 16px 4px; }
+.bt-header { display:flex; justify-content:space-between; align-items:center; cursor:pointer; }
+.bt-header-right { display:flex; align-items:center; gap:8px; }
+.bt-toggle { font-size:12px; color:var(--sub); transition:transform .2s; }
+.bt-brief { font-size:11px; font-weight:600; }
+.bt-container { margin-top:8px; }
+.bt-card { background:var(--card); border-radius:10px; padding:10px 14px; margin-bottom:8px; box-shadow:var(--shadow); }
+.bt-card-title { font-size:11px; font-weight:700; margin-bottom:6px; display:flex; align-items:center; gap:4px; }
+.bt-metrics { display:grid; grid-template-columns:1fr 1fr 1fr; gap:6px; }
+.bt-metric { text-align:center; background:var(--bg); border-radius:6px; padding:6px 4px; }
+.bt-metric-label { font-size:8px; color:var(--sub); display:block; letter-spacing:0.3px; }
+.bt-metric-val { font-size:12px; font-weight:700; margin-top:1px; font-variant-numeric:tabular-nums; }
+.bt-chart { height:80px; background:var(--bg); border-radius:6px; margin-top:6px; position:relative; overflow:hidden; }
+.bt-trade-row { display:flex; align-items:center; gap:6px; padding:4px 0; border-bottom:1px solid var(--border); font-size:10px; }
+.bt-trade-row:last-child { border-bottom:none; }
+.bt-run-btn { width:100%; padding:8px; border:none; border-radius:8px; font-size:12px; font-weight:600; cursor:pointer; transition:all .2s; margin-top:6px; background:linear-gradient(135deg,#f59e0b,#ef4444); color:white; }
+.bt-run-btn:disabled { opacity:0.5; cursor:not-allowed; }
+.bt-kelly-bar { display:flex; height:16px; border-radius:4px; overflow:hidden; background:var(--bg); margin-top:4px; }
+.bt-kelly-seg { height:100%; display:flex; align-items:center; justify-content:center; font-size:8px; font-weight:700; color:white; transition:width .3s; }
+.bt-dd-chart { height:50px; background:var(--bg); border-radius:6px; margin-top:6px; position:relative; overflow:hidden; }
+.bt-fund-row { display:flex; align-items:center; gap:6px; padding:5px 0; border-bottom:1px solid var(--border); }
+.bt-fund-row:last-child { border-bottom:none; }
+.bt-fund-name { font-size:11px; flex:1; }
+.bt-fund-ret { font-size:11px; font-weight:700; min-width:50px; text-align:right; }
+.bt-fund-sharpe { font-size:10px; color:var(--sub); min-width:40px; text-align:right; }
+.bt-fund-mdd { font-size:10px; min-width:45px; text-align:right; }
+.bt-fund-kelly { font-size:10px; font-weight:600; min-width:35px; text-align:right; }
 /* Manage Panel */
 .manage-overlay { display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(15,23,42,0.5); backdrop-filter:blur(4px); -webkit-backdrop-filter:blur(4px); z-index:300; }
 .manage-panel { position:absolute; bottom:0; left:50%; transform:translateX(-50%); width:100%; max-width:500px; background:var(--bg); border-radius:20px 20px 0 0; max-height:88vh; display:flex; flex-direction:column; animation:slideUp .3s ease; }
@@ -459,6 +487,18 @@ body { font-family:-apple-system,BlinkMacSystemFont,'SF Pro','PingFang SC','Helv
     </div>
   </div>
   <div id="rl-brain-container" class="rl-brain-container" style="display:none"></div>
+</div>
+
+<!-- Backtest Dashboard -->
+<div class="bt-section">
+  <div class="section-title bt-header" onclick="toggleBacktest()">
+    <span>📈 回测引擎 <span style="font-size:10px;color:var(--sub);font-weight:400">RSI策略 · Kelly仓位 · Sharpe</span></span>
+    <div class="bt-header-right">
+      <span id="bt-brief" class="bt-brief" style="color:var(--sub)">未回测</span>
+      <span class="bt-toggle" id="bt-toggle">▶</span>
+    </div>
+  </div>
+  <div id="bt-container" class="bt-container" style="display:none"></div>
 </div>
 
 <!-- Simulation Portfolio -->
@@ -744,6 +784,18 @@ const RL_STATE_SIZE = 15;
 const RL_ACTION_SIZE = 3; // 0=hold, 1=buy, 2=sell
 const RL_ACTION_NAMES = ['持有','买入','卖出'];
 const RL_STORAGE_KEY = 'fa_rl_brain';
+
+// ==================== BACKTEST STATE ====================
+let btResults = {}; // { code: { totalReturn, sharpe, maxDD, kellyFraction, winRate, trades, equity, drawdown } }
+let btSummary = null;
+let _btRunning = false;
+const BT_STORAGE_KEY = 'fa_backtest';
+const BT_FEE = 0.0015; // 单边手续费
+const BT_RSI_PERIOD = 14;
+const BT_RSI_BUY = 70; // RSI<70时允许买入
+const BT_RSI_SELL = 75; // RSI>75考虑卖出
+const BT_MOMENTUM_BUY = 0.01; // 预测涨幅>1%买入
+const BT_RISK_FREE = 0.025; // 年化无风险利率
 
 function saveHoldings(){ localStorage.setItem('fa_holdings', JSON.stringify(holdings)); }
 function saveWatchlist(){ localStorage.setItem('fa_watchlist', JSON.stringify(watchlist)); }
@@ -1814,6 +1866,11 @@ function buildContext(){
     ctx += buildRLContext();
   }
 
+  // 注入回测结果
+  if(btSummary){
+    ctx += buildBTContext();
+  }
+
   return ctx;
 }
 
@@ -1886,6 +1943,7 @@ const SYSTEM_PROMPT = `你是一位擅长波段操作和趋势跟踪的基金投
 3. 另类数据：板块主力资金流向(超大单/大单/中单/小单)、财经新闻NLP情绪分析(利好/利空识别)、社交舆情热度指数
 4. 历史复盘：过往AI预测vs实际涨跌对比、准确率统计、错误教训
 5. RL强化学习信号：基于Double DQN训练的策略网络，直接输出买入/卖出/持有决策及Q值置信度，是独立于规则的量化信号
+6. 策略回测(Backtesting)：基于历史NAV的RSI策略回测结果，包括Sharpe Ratio、最大回撤(Max Drawdown)、胜率、凯利仓位(Kelly Criterion)。回测Sharpe<0的品种需特别谨慎
 
 ■ 核心投资逻辑（你必须遵守）：
 1. 趋势为王：先判断每个板块/基金的中期趋势（3个月维度）是上升、震荡还是下降
@@ -3530,12 +3588,18 @@ function simAutoTrade(){
       const posValue = pos.shares * (getSimNav(pos.code) || pos.avgCost);
       const totalValue = getSimTotalValue();
       if(posValue / totalValue < strategy.maxSinglePos){
-        let addPct = 0.03 * buyMult;
+        // Kelly仓位控制: 用回测Kelly分数限制加仓比例
+        const btR = btResults[pos.code];
+        const kellyLimit = btR?.finalKelly || 0.05;
+        let addPct = Math.min(0.03 * buyMult, kellyLimit);
         if(sectorBullish) addPct *= 1.3;
-        if(rlSig?.action===1 && rlSig.confidence>50) addPct *= 1.2; // RL也看多,加大买入
+        if(rlSig?.action===1 && rlSig.confidence>50) addPct *= 1.2;
+        // 回测Sharpe过滤: Sharpe<0不加仓
+        if(btR && btR.sharpe < 0) addPct = 0;
         const addAmt = Math.min(Math.round(totalValue * addPct), Math.round(simPortfolio.cash * 0.3));
         if(addAmt >= 1000){
-          const reason = `AI加仓(${sig.confidence}%)+跌${todayPct.toFixed(1)}%低吸 [数据${dsScore}${sectorBullish?' 板块资金流入':''}${rlTag}]`;
+          const kellyTag = btR ? ` K:${(kellyLimit*100).toFixed(0)}%` : '';
+          const reason = `AI加仓(${sig.confidence}%)+跌${todayPct.toFixed(1)}%低吸 [数据${dsScore}${sectorBullish?' 板块资金流入':''}${rlTag}${kellyTag}]`;
           simTrade(pos.code, 'buy', addAmt, reason);
           tradesExecuted++;
         }
@@ -3551,16 +3615,22 @@ function simAutoTrade(){
     }
   });
 
-  // 3. AI新推荐品种（融合数据信号）
+  // 3. AI新推荐品种（融合数据信号+回测过滤）
   if(_analysisResult.picks && simPortfolio.cash > 20000 && dsScore >= 40){
-    const minEndorsements = dsScore >= 60 ? 1 : 2; // 数据偏多时降低门槛
+    const minEndorsements = dsScore >= 60 ? 1 : 2;
     _analysisResult.picks.forEach(pick => {
       if(simPortfolio.positions.find(p => p.code === pick.code)) return;
+      // 回测过滤: 如果回测Sharpe<0且收益为负，跳过
+      const pickBT = btResults[pick.code];
+      if(pickBT && pickBT.sharpe < 0 && pickBT.totalReturn < 0) return;
       if(pick.endorsements >= minEndorsements){
-        const basePct = dsScore >= 60 ? 0.18 : 0.12;
+        // Kelly仓位: 用回测Kelly计算建仓比例
+        const pickKelly = pickBT?.finalKelly || 0.1;
+        const basePct = Math.min(dsScore >= 60 ? 0.18 : 0.12, pickKelly * 1.5);
         const amount = Math.min(Math.round(simPortfolio.cash * basePct), 25000);
         if(amount >= 5000){
-          simTrade(pick.code, 'buy', amount, `AI推荐(${pick.endorsements}引擎) [数据信号${dsScore}]: ${(pick.reason||'').slice(0,30)}`);
+          const kTag = pickBT ? ` Sharpe:${pickBT.sharpe.toFixed(1)} Kelly:${(pickKelly*100).toFixed(0)}%` : '';
+          simTrade(pick.code, 'buy', amount, `AI推荐(${pick.endorsements}引擎) [数据信号${dsScore}${kTag}]: ${(pick.reason||'').slice(0,30)}`);
           tradesExecuted++;
         }
       }
@@ -4222,6 +4292,11 @@ async function loadData(){
     console.log('历史趋势数据加载完成:', Object.keys(fundHistoryData).length, '只基金');
     // 历史数据加载完成后，初始化RL大脑
     initRLBrain();
+    // 自动运行回测（如果没有缓存结果）
+    if(!btSummary && Object.keys(fundHistoryData).length > 0){
+      console.log('自动启动回测...');
+      setTimeout(()=>runBacktest(), 500);
+    }
   }).catch(e=>console.warn('历史数据加载失败:', e));
   // 数据情报中心：宏观+资金+舆情
   fetchAllDataIntel().then(()=>{
@@ -4278,6 +4353,9 @@ function startTimers(){
     renderRLBrief();
   }
 
+  // 加载回测缓存
+  loadBTResults();
+
   // Auto-trigger AI if we have holdings/watchlist and API key
   if(_aiKey && (holdings.length>0 || watchlist.length>0)){
     triggerAI();
@@ -4288,12 +4366,581 @@ function startTimers(){
 function initRLBrain(){
   if(!rlTrainer)rlTrainer=new RLTrainer();
   if(_rlModelLoaded && rlTrainer.agent){
-    // Model already loaded, generate fresh signals
     rlTrainer.generateSignals();
     renderRLBrief();
     if(document.getElementById('rl-brain-container')?.style.display!=='none')renderRLBrain();
     console.log('RL信号已更新:', Object.keys(_rlSignals).length, '只基金');
   }
+}
+
+// ==================== BACKTEST ENGINE ====================
+// 纯JS实现: RSI策略过滤 + Kelly仓位管理 + 完整回测指标
+// 策略: 预测涨幅>1% + RSI<70 → 买入; RSI>75 → 卖出
+// 仓位: Kelly f* = (bp-q)/b
+
+function btCalcRSI(prices, period){
+  const rsi = new Array(prices.length).fill(50);
+  if(prices.length < period + 1) return rsi;
+  let avgGain = 0, avgLoss = 0;
+  for(let i = 1; i <= period; i++){
+    const d = prices[i] - prices[i-1];
+    if(d > 0) avgGain += d; else avgLoss += Math.abs(d);
+  }
+  avgGain /= period; avgLoss /= period;
+  rsi[period] = avgLoss === 0 ? 100 : 100 - 100/(1 + avgGain/avgLoss);
+  for(let i = period + 1; i < prices.length; i++){
+    const d = prices[i] - prices[i-1];
+    avgGain = (avgGain * (period-1) + (d > 0 ? d : 0)) / period;
+    avgLoss = (avgLoss * (period-1) + (d < 0 ? Math.abs(d) : 0)) / period;
+    rsi[i] = avgLoss === 0 ? 100 : 100 - 100/(1 + avgGain/avgLoss);
+  }
+  return rsi;
+}
+
+function btCalcMA(prices, period){
+  const ma = [];
+  for(let i = 0; i < prices.length; i++){
+    if(i < period - 1){ ma.push(prices[i]); continue; }
+    let s = 0; for(let j = i - period + 1; j <= i; j++) s += prices[j];
+    ma.push(s / period);
+  }
+  return ma;
+}
+
+function btCalcMACD(prices){
+  // EMA12, EMA26, MACD signal
+  const ema = (arr, k) => {
+    const mult = 2/(k+1); const r = [arr[0]];
+    for(let i=1;i<arr.length;i++) r.push(arr[i]*mult+r[i-1]*(1-mult));
+    return r;
+  };
+  const e12 = ema(prices, 12), e26 = ema(prices, 26);
+  const dif = e12.map((v,i) => v - e26[i]);
+  const dea = ema(dif, 9);
+  return { dif, dea, hist: dif.map((v,i) => 2*(v-dea[i])) };
+}
+
+function btCalcVolatility(prices, period){
+  const vol = [];
+  for(let i = 0; i < prices.length; i++){
+    if(i < period){ vol.push(0); continue; }
+    const rets = [];
+    for(let j = i-period+1; j <= i; j++) rets.push((prices[j]-prices[j-1])/prices[j-1]);
+    const mu = rets.reduce((s,v)=>s+v,0)/rets.length;
+    const variance = rets.reduce((s,v)=>s+(v-mu)**2,0)/rets.length;
+    vol.push(Math.sqrt(variance));
+  }
+  return vol;
+}
+
+// 凯利公式: f* = (b*p - q) / b
+function kellyFraction(winRate, avgWin, avgLoss){
+  if(avgLoss === 0 || winRate <= 0) return 0;
+  const b = Math.abs(avgWin / avgLoss); // 赔率 = 平均盈利/平均亏损
+  const p = winRate;
+  const q = 1 - p;
+  let f = (b * p - q) / b;
+  f = Math.max(0, Math.min(0.25, f)); // 限制最大仓位25% (半Kelly)
+  return f;
+}
+
+// 单只基金回测
+function backtestFund(navArray, code){
+  if(!navArray || navArray.length < 60) return null;
+  const prices = navArray.map(n => typeof n.nav === 'number' ? n.nav : parseFloat(n.nav || n[1]));
+  const dates = navArray.map(n => n.date || n[0]);
+  const n = prices.length;
+
+  // 技术指标
+  const rsi = btCalcRSI(prices, BT_RSI_PERIOD);
+  const ma5 = btCalcMA(prices, 5);
+  const ma20 = btCalcMA(prices, 20);
+  const macd = btCalcMACD(prices);
+  const vol20 = btCalcVolatility(prices, 20);
+
+  // 回测状态
+  let cash = 100000;
+  const initialCash = cash;
+  let shares = 0;
+  let entryPrice = 0;
+  let position = 0; // 0~1 仓位比例
+  const trades = [];
+  const equity = []; // 净值曲线
+  const drawdown = []; // 回撤曲线
+  let peak = initialCash;
+  let wins = 0, losses = 0;
+  let totalWinAmt = 0, totalLossAmt = 0;
+  let _currentKelly = 0;
+
+  // 滚动统计(用于Kelly)
+  const recentTrades = []; // 最近N次交易的盈亏率
+
+  const startIdx = Math.max(26, BT_RSI_PERIOD + 1); // 确保指标已计算
+
+  for(let i = startIdx; i < n; i++){
+    const price = prices[i];
+    const totalValue = cash + shares * price;
+    equity.push({ date: dates[i], value: totalValue / initialCash });
+    peak = Math.max(peak, totalValue);
+    drawdown.push({ date: dates[i], dd: (totalValue - peak) / peak });
+
+    // 预测明日涨幅(简化: 用动量+MACD+MA趋势估算)
+    const ret5d = i >= 5 ? (prices[i] - prices[i-5])/prices[i-5] : 0;
+    const macdHist = macd.hist[i];
+    const maTrend = (ma5[i] - ma20[i]) / ma20[i];
+    const predictedReturn = ret5d * 0.3 + macdHist / price * 50 + maTrend * 2;
+
+    // 计算滚动Kelly
+    if(recentTrades.length >= 5){
+      const wt = recentTrades.filter(r => r > 0);
+      const lt = recentTrades.filter(r => r <= 0);
+      const wr = wt.length / recentTrades.length;
+      const aw = wt.length > 0 ? wt.reduce((s,v)=>s+v,0)/wt.length : 0.01;
+      const al = lt.length > 0 ? Math.abs(lt.reduce((s,v)=>s+v,0)/lt.length) : 0.01;
+      _currentKelly = kellyFraction(wr, aw, al);
+    } else {
+      _currentKelly = 0.05; // 默认5%仓位
+    }
+
+    // === 策略信号 ===
+    // 买入: 预测涨幅>1% + RSI<70 + MA5>MA20(趋势向上)
+    if(predictedReturn > BT_MOMENTUM_BUY && rsi[i] < BT_RSI_BUY && ma5[i] > ma20[i] && position < 0.9){
+      const targetPos = Math.min(position + _currentKelly, 0.95); // Kelly控制加仓量
+      const addPos = targetPos - position;
+      if(addPos > 0.02){
+        const buyAmt = Math.round(totalValue * addPos);
+        const fee = Math.round(buyAmt * BT_FEE);
+        const buyShares = (buyAmt - fee) / price;
+        if(cash >= buyAmt){
+          cash -= buyAmt;
+          shares += buyShares;
+          if(position === 0) entryPrice = price;
+          else entryPrice = (entryPrice * position + price * addPos) / (position + addPos);
+          position = targetPos;
+          trades.push({
+            date: dates[i], action: 'buy', price, shares: buyShares, amount: buyAmt,
+            rsi: rsi[i], kelly: _currentKelly, predicted: predictedReturn, fee
+          });
+        }
+      }
+    }
+
+    // 卖出: RSI>75 或 趋势反转(MA5<MA20且持仓) 或 止损(-5%)
+    const pnlPct = position > 0 ? (price - entryPrice) / entryPrice : 0;
+    const shouldSell = (rsi[i] > BT_RSI_SELL && position > 0.2)
+      || (ma5[i] < ma20[i] && position > 0.3 && macdHist < 0)
+      || (pnlPct < -0.05 && position > 0); // 止损
+
+    if(shouldSell && position > 0){
+      let sellRatio = 0.5; // 默认卖50%
+      if(rsi[i] > 80) sellRatio = 0.8; // RSI超买卖80%
+      if(pnlPct < -0.05) sellRatio = 1.0; // 止损全卖
+      if(ma5[i] < ma20[i] && macdHist < -0.001) sellRatio = Math.max(sellRatio, 0.7);
+
+      const sellShares = Math.floor(shares * sellRatio * 100) / 100;
+      const sellAmt = Math.round(sellShares * price);
+      const fee = Math.round(sellAmt * BT_FEE);
+      cash += sellAmt - fee;
+      shares -= sellShares;
+      position = shares * price / (cash + shares * price);
+
+      const tradeReturn = (price - entryPrice) / entryPrice;
+      recentTrades.push(tradeReturn);
+      if(recentTrades.length > 20) recentTrades.shift();
+      if(tradeReturn > 0){ wins++; totalWinAmt += tradeReturn; }
+      else{ losses++; totalLossAmt += Math.abs(tradeReturn); }
+
+      trades.push({
+        date: dates[i], action: 'sell', price, shares: sellShares, amount: sellAmt,
+        rsi: rsi[i], pnl: (tradeReturn*100).toFixed(2)+'%', reason:
+          pnlPct<-0.05?'止损':rsi[i]>80?'RSI超买':ma5[i]<ma20[i]?'趋势反转':'获利了结', fee
+      });
+
+      if(shares < 0.01){ shares = 0; position = 0; entryPrice = 0; }
+    }
+  }
+
+  // 最终评估
+  const finalValue = cash + shares * prices[n-1];
+  const totalReturn = (finalValue - initialCash) / initialCash;
+  const tradingDays = equity.length;
+  const annualFactor = 250;
+
+  // 年化收益
+  const years = tradingDays / annualFactor;
+  const annualReturn = years > 0 ? Math.pow(1 + totalReturn, 1/years) - 1 : totalReturn;
+
+  // 日收益率序列
+  const dailyReturns = [];
+  for(let i = 1; i < equity.length; i++){
+    dailyReturns.push(equity[i].value / equity[i-1].value - 1);
+  }
+  const avgDaily = dailyReturns.length > 0 ? dailyReturns.reduce((s,v)=>s+v,0)/dailyReturns.length : 0;
+  const stdDaily = dailyReturns.length > 1 ? Math.sqrt(dailyReturns.reduce((s,v)=>s+(v-avgDaily)**2,0)/(dailyReturns.length-1)) : 1;
+
+  // Sharpe Ratio (年化)
+  const dailyRF = BT_RISK_FREE / annualFactor;
+  const sharpe = stdDaily > 0 ? (avgDaily - dailyRF) / stdDaily * Math.sqrt(annualFactor) : 0;
+
+  // Max Drawdown
+  const maxDD = drawdown.length > 0 ? Math.min(...drawdown.map(d=>d.dd)) : 0;
+
+  // Calmar Ratio
+  const calmar = maxDD !== 0 ? annualReturn / Math.abs(maxDD) : 0;
+
+  // Sortino Ratio (下行标准差)
+  const downReturns = dailyReturns.filter(r => r < 0);
+  const downDev = downReturns.length > 0 ? Math.sqrt(downReturns.reduce((s,v)=>s+v*v,0)/downReturns.length) : stdDaily;
+  const sortino = downDev > 0 ? (avgDaily - dailyRF) / downDev * Math.sqrt(annualFactor) : 0;
+
+  // Win Rate & Kelly (整体)
+  const totalTrades = wins + losses;
+  const winRate = totalTrades > 0 ? wins / totalTrades : 0;
+  const avgWin = wins > 0 ? totalWinAmt / wins : 0;
+  const avgLoss = losses > 0 ? totalLossAmt / losses : 0.01;
+  const finalKelly = kellyFraction(winRate, avgWin, avgLoss);
+
+  // Buy & Hold对比
+  const bhReturn = (prices[n-1] - prices[startIdx]) / prices[startIdx];
+
+  return {
+    code, totalReturn, annualReturn, sharpe, sortino, calmar,
+    maxDD, winRate, wins, losses, totalTrades,
+    avgWin, avgLoss, finalKelly,
+    bhReturn, // Buy & Hold
+    equity, drawdown, trades,
+    tradingDays, years,
+    finalValue, initialCash,
+    lastRSI: rsi[n-1],
+    currentKelly: _currentKelly
+  };
+}
+
+// 全部基金回测
+async function runBacktest(){
+  if(_btRunning) return;
+  _btRunning = true;
+  btResults = {};
+
+  const codes = [...new Set([...holdings.map(h=>h.code), ...watchlist.map(w=>w.code)])];
+  if(codes.length === 0){
+    alert('请先添加持仓或自选基金');
+    _btRunning = false;
+    return;
+  }
+
+  renderBTBrief();
+  renderBacktest();
+
+  let completed = 0;
+  const allEquity = [];
+
+  for(const code of codes){
+    const hd = fundHistoryData[code];
+    if(!hd || !hd.navs || hd.navs.length < 60) continue;
+
+    const navArr = hd.navs.map(n => typeof n === 'object' && n.nav !== undefined ?
+      n : { date: n[0], nav: parseFloat(n[1]) }
+    ).filter(n => !isNaN(n.nav) && n.nav > 0);
+
+    const result = backtestFund(navArr, code);
+    if(result){
+      btResults[code] = result;
+      allEquity.push(result);
+      completed++;
+    }
+
+    // 不阻塞UI
+    if(completed % 2 === 0) await new Promise(r => setTimeout(r, 0));
+  }
+
+  // 组合回测汇总
+  if(Object.keys(btResults).length > 0){
+    const results = Object.values(btResults);
+    const avgReturn = results.reduce((s,r)=>s+r.totalReturn,0)/results.length;
+    const avgSharpe = results.reduce((s,r)=>s+r.sharpe,0)/results.length;
+    const worstDD = Math.min(...results.map(r=>r.maxDD));
+    const avgWinRate = results.reduce((s,r)=>s+r.winRate,0)/results.length;
+    const avgKelly = results.reduce((s,r)=>s+r.finalKelly,0)/results.length;
+    const avgBH = results.reduce((s,r)=>s+r.bhReturn,0)/results.length;
+    const totalTrades = results.reduce((s,r)=>s+r.totalTrades,0);
+    const bestFund = results.reduce((a,b)=>a.sharpe>b.sharpe?a:b);
+    const worstFund = results.reduce((a,b)=>a.sharpe<b.sharpe?a:b);
+
+    btSummary = {
+      avgReturn, avgSharpe, worstDD, avgWinRate, avgKelly, avgBH,
+      totalTrades, fundCount: results.length,
+      bestFund: bestFund.code, worstFund: worstFund.code,
+      excessReturn: avgReturn - avgBH, // 超额收益
+      timestamp: Date.now()
+    };
+
+    // 保存到localStorage
+    try{
+      localStorage.setItem(BT_STORAGE_KEY, JSON.stringify({
+        results: Object.fromEntries(Object.entries(btResults).map(([k,v])=>
+          [k, { code:v.code, totalReturn:v.totalReturn, annualReturn:v.annualReturn, sharpe:v.sharpe, sortino:v.sortino, calmar:v.calmar, maxDD:v.maxDD, winRate:v.winRate, wins:v.wins, losses:v.losses, totalTrades:v.totalTrades, avgWin:v.avgWin, avgLoss:v.avgLoss, finalKelly:v.finalKelly, bhReturn:v.bhReturn, lastRSI:v.lastRSI, currentKelly:v.currentKelly, tradingDays:v.tradingDays }]
+        )),
+        summary: btSummary
+      }));
+    }catch(e){ console.warn('回测结果保存失败:', e); }
+  }
+
+  _btRunning = false;
+  renderBTBrief();
+  renderBacktest();
+  console.log('回测完成:', Object.keys(btResults).length, '只基金', btSummary);
+}
+
+// ==================== BACKTEST RENDERING ====================
+
+function toggleBacktest(){
+  const c = document.getElementById('bt-container');
+  const icon = document.getElementById('bt-toggle');
+  if(c.style.display === 'none'){
+    c.style.display = 'block'; icon.textContent = '▼';
+    renderBacktest();
+  } else {
+    c.style.display = 'none'; icon.textContent = '▶';
+  }
+}
+
+function renderBTBrief(){
+  const el = document.getElementById('bt-brief');
+  if(!el) return;
+  if(_btRunning){
+    el.style.color = '#eab308';
+    el.textContent = `回测中...${Object.keys(btResults).length}只`;
+    return;
+  }
+  if(!btSummary){
+    el.style.color = 'var(--sub)'; el.textContent = '未回测'; return;
+  }
+  const ret = (btSummary.avgReturn*100).toFixed(1);
+  const sh = btSummary.avgSharpe.toFixed(2);
+  el.style.color = btSummary.avgReturn >= 0 ? 'var(--red)' : 'var(--green)';
+  el.textContent = `收益${ret}% · Sharpe ${sh}`;
+}
+
+function renderBacktest(){
+  const container = document.getElementById('bt-container');
+  if(!container || container.style.display === 'none') return;
+
+  const hasResults = btSummary && Object.keys(btResults).length > 0;
+  let html = '';
+
+  // Run Button + Status
+  html += `<div class="bt-card"><div class="bt-card-title">📊 策略回测引擎</div>`;
+  html += `<div style="font-size:10px;color:var(--sub);margin-bottom:6px">`;
+  html += `策略: 预测涨幅>1% + RSI<${BT_RSI_BUY} → 买入 | RSI>${BT_RSI_SELL}或趋势反转 → 卖出<br>`;
+  html += `仓位: Kelly f*=(bp-q)/b · 单次最大25%(半Kelly) · 总仓位≤95%`;
+  html += `</div>`;
+  if(_btRunning){
+    html += `<button class="bt-run-btn" disabled>⏳ 回测中... (${Object.keys(btResults).length}只)</button>`;
+  } else {
+    const dc = Object.keys(fundHistoryData).length;
+    html += `<button class="bt-run-btn" onclick="runBacktest()" ${dc<1?'disabled title="需要先加载历史数据"':''}>`;
+    html += hasResults ? '🔄 重新回测 (RSI+Kelly)' : '🚀 开始回测 (RSI+Kelly)';
+    html += `</button>`;
+  }
+  html += `</div>`;
+
+  if(!hasResults){
+    container.innerHTML = html;
+    return;
+  }
+
+  const s = btSummary;
+  const results = Object.values(btResults);
+
+  // Summary Metrics
+  html += `<div class="bt-card"><div class="bt-card-title">📈 组合回测概览 <span style="font-size:9px;color:var(--sub);font-weight:400">${s.fundCount}只基金</span></div>`;
+  html += `<div class="bt-metrics">`;
+  html += btMetricHTML('平均收益', (s.avgReturn*100).toFixed(1)+'%', s.avgReturn>=0?'var(--red)':'var(--green)');
+  html += btMetricHTML('Sharpe', s.avgSharpe.toFixed(2), s.avgSharpe>=1?'var(--red)':s.avgSharpe>=0?'#f59e0b':'var(--green)');
+  html += btMetricHTML('最大回撤', (s.worstDD*100).toFixed(1)+'%', 'var(--green)');
+  html += btMetricHTML('胜率', (s.avgWinRate*100).toFixed(0)+'%', s.avgWinRate>=0.5?'var(--red)':'var(--sub)');
+  html += btMetricHTML('Kelly仓位', (s.avgKelly*100).toFixed(1)+'%', '#8b5cf6');
+  html += btMetricHTML('超额收益', (s.excessReturn>0?'+':'')+(s.excessReturn*100).toFixed(1)+'%', s.excessReturn>=0?'var(--red)':'var(--green)');
+  html += `</div>`;
+
+  // Kelly仓位可视化
+  const kellyPct = Math.round(s.avgKelly * 100);
+  const cashPct = 100 - kellyPct;
+  html += `<div style="font-size:9px;color:var(--sub);margin-top:8px">凯利建议仓位</div>`;
+  html += `<div class="bt-kelly-bar">`;
+  html += `<div class="bt-kelly-seg" style="width:${kellyPct}%;background:linear-gradient(90deg,#3b82f6,#8b5cf6)">${kellyPct}%仓</div>`;
+  html += `<div class="bt-kelly-seg" style="width:${cashPct}%;background:rgba(148,163,184,0.2);color:var(--sub)">${cashPct}%现金</div>`;
+  html += `</div>`;
+  html += `</div>`;
+
+  // Equity Chart (组合平均净值曲线)
+  const bestResult = btResults[s.bestFund];
+  if(bestResult && bestResult.equity.length > 2){
+    html += `<div class="bt-card"><div class="bt-card-title">📉 净值 & 回撤曲线 <span style="font-size:9px;color:var(--sub);font-weight:400">${fundName(s.bestFund)}(最优Sharpe)</span></div>`;
+    html += renderBTChart(bestResult.equity, bestResult.bhReturn);
+    html += `<div style="margin-top:4px">`;
+    html += renderBTDDChart(bestResult.drawdown);
+    html += `</div></div>`;
+  }
+
+  // Per-fund results
+  html += `<div class="bt-card"><div class="bt-card-title">📋 各基金回测详情</div>`;
+  html += `<div style="display:flex;gap:4px;padding:3px 0;border-bottom:1px solid var(--border);margin-bottom:4px">`;
+  html += `<span style="font-size:9px;color:var(--sub);flex:1">基金</span>`;
+  html += `<span style="font-size:9px;color:var(--sub);min-width:50px;text-align:right">收益率</span>`;
+  html += `<span style="font-size:9px;color:var(--sub);min-width:40px;text-align:right">Sharpe</span>`;
+  html += `<span style="font-size:9px;color:var(--sub);min-width:45px;text-align:right">最大回撤</span>`;
+  html += `<span style="font-size:9px;color:var(--sub);min-width:35px;text-align:right">Kelly</span>`;
+  html += `</div>`;
+  const sorted = results.sort((a,b) => b.sharpe - a.sharpe);
+  sorted.forEach(r => {
+    const retColor = r.totalReturn >= 0 ? 'var(--red)' : 'var(--green)';
+    const shColor = r.sharpe >= 1 ? 'var(--red)' : r.sharpe >= 0 ? '#f59e0b' : 'var(--green)';
+    html += `<div class="bt-fund-row">`;
+    html += `<span class="bt-fund-name">${fundName(r.code)}</span>`;
+    html += `<span class="bt-fund-ret" style="color:${retColor}">${(r.totalReturn*100).toFixed(1)}%</span>`;
+    html += `<span class="bt-fund-sharpe" style="color:${shColor}">${r.sharpe.toFixed(2)}</span>`;
+    html += `<span class="bt-fund-mdd" style="color:var(--green)">${(r.maxDD*100).toFixed(1)}%</span>`;
+    html += `<span class="bt-fund-kelly" style="color:#8b5cf6">${(r.finalKelly*100).toFixed(0)}%</span>`;
+    html += `</div>`;
+  });
+  html += `</div>`;
+
+  // Trading history (最近10笔)
+  const allTrades = [];
+  results.forEach(r => {
+    r.trades.slice(-5).forEach(t => allTrades.push({...t, code: r.code}));
+  });
+  allTrades.sort((a,b) => b.date.localeCompare(a.date));
+
+  if(allTrades.length > 0){
+    html += `<div class="bt-card"><div class="bt-card-title">📝 最近交易记录 <span style="font-size:9px;color:var(--sub);font-weight:400">${s.totalTrades}笔总交易</span></div>`;
+    allTrades.slice(0, 10).forEach(t => {
+      const ac = t.action === 'buy' ? '🟢买' : '🔴卖';
+      const extra = t.action === 'sell' ? ` ${t.pnl} ${t.reason||''}` : ` RSI:${t.rsi?.toFixed(0)} Kelly:${(t.kelly*100)?.toFixed(0)}%`;
+      html += `<div class="bt-trade-row">`;
+      html += `<span style="min-width:60px">${t.date?.slice(5)}</span>`;
+      html += `<span style="min-width:24px">${ac}</span>`;
+      html += `<span style="flex:1">${fundName(t.code)}</span>`;
+      html += `<span style="color:var(--sub);text-align:right">${extra}</span>`;
+      html += `</div>`;
+    });
+    html += `</div>`;
+  }
+
+  // Architecture
+  html += `<div class="bt-card"><div class="bt-card-title">⚙️ 回测参数</div>`;
+  html += `<div style="font-size:10px;color:var(--sub);line-height:1.6">`;
+  html += `<b>数据:</b> 基金历史NAV(近1年~250交易日)<br>`;
+  html += `<b>买入条件:</b> 预测涨幅>1% + RSI(14)<${BT_RSI_BUY} + MA5>MA20<br>`;
+  html += `<b>卖出条件:</b> RSI>${BT_RSI_SELL} / 趋势反转(MA5<MA20+MACD<0) / 止损(-5%)<br>`;
+  html += `<b>仓位管理:</b> Kelly f*=(b·p-q)/b · 半Kelly(max 25%) · 滚动20次交易统计<br>`;
+  html += `<b>手续费:</b> ${(BT_FEE*100).toFixed(2)}% 单边<br>`;
+  html += `<b>风控:</b> 总仓位≤95% · 止损-5% · RSI超买减仓<br>`;
+  html += `<b>指标:</b> Sharpe=(R-Rf)/σ·√250 · Sortino(下行波动) · Calmar(年化/最大回撤) · Kelly`;
+  html += `</div></div>`;
+
+  container.innerHTML = html;
+}
+
+function btMetricHTML(label, val, color){
+  return `<div class="bt-metric"><span class="bt-metric-label">${label}</span><span class="bt-metric-val" style="color:${color||'var(--text)'}">${val}</span></div>`;
+}
+
+function renderBTChart(equity, bhReturn){
+  if(!equity || equity.length < 2) return '';
+  const vals = equity.map(e => e.value);
+  const max = Math.max(...vals), min = Math.min(...vals);
+  const range = max - min || 0.01;
+  const h = 70, w = 100;
+
+  let strategyPts = '', bhPts = '';
+  const step = Math.max(1, Math.floor(vals.length / 200));
+  for(let i = 0; i < vals.length; i += step){
+    const x = (i / (vals.length-1)) * w;
+    const y = h - ((vals[i] - min) / range) * h;
+    strategyPts += `${x.toFixed(1)},${y.toFixed(1)} `;
+    // Buy & Hold line
+    const bhVal = 1 + (vals[i] - 1) * 0; // 简化: 线性
+    const bhV = 1 + (bhReturn * i / (vals.length-1));
+    const bhY = h - ((bhV - min) / range) * h;
+    bhPts += `${x.toFixed(1)},${bhY.toFixed(1)} `;
+  }
+
+  let s = `<div class="bt-chart"><svg viewBox="0 0 ${w} ${h+4}" preserveAspectRatio="none" style="width:100%;height:100%">`;
+  // BH line
+  s += `<polyline points="${bhPts.trim()}" fill="none" stroke="rgba(148,163,184,0.4)" stroke-width="1" stroke-dasharray="2,2"/>`;
+  // Strategy line
+  s += `<defs><linearGradient id="btGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#f59e0b" stop-opacity="0.25"/><stop offset="100%" stop-color="#f59e0b" stop-opacity="0.02"/></linearGradient></defs>`;
+  s += `<polygon points="0,${h+2} ${strategyPts.trim()} ${w},${h+2}" fill="url(#btGrad)"/>`;
+  s += `<polyline points="${strategyPts.trim()}" fill="none" stroke="#f59e0b" stroke-width="1.5"/>`;
+  // 1.0 line
+  const oneY = h - ((1 - min) / range) * h;
+  if(oneY > 0 && oneY < h) s += `<line x1="0" y1="${oneY.toFixed(1)}" x2="${w}" y2="${oneY.toFixed(1)}" stroke="rgba(255,255,255,0.15)" stroke-dasharray="2,2"/>`;
+  s += `</svg>`;
+  s += `<div style="position:absolute;top:2px;left:4px;font-size:8px;color:#f59e0b">●策略 ${(vals[vals.length-1]*100-100).toFixed(1)}%</div>`;
+  s += `<div style="position:absolute;top:2px;right:4px;font-size:8px;color:var(--sub)">●B&H ${(bhReturn*100).toFixed(1)}%</div>`;
+  s += `</div>`;
+  return s;
+}
+
+function renderBTDDChart(drawdown){
+  if(!drawdown || drawdown.length < 2) return '';
+  const vals = drawdown.map(d => d.dd);
+  const minDD = Math.min(...vals);
+  const range = Math.abs(minDD) || 0.01;
+  const h = 40, w = 100;
+
+  let pts = '';
+  const step = Math.max(1, Math.floor(vals.length / 200));
+  for(let i = 0; i < vals.length; i += step){
+    const x = (i / (vals.length-1)) * w;
+    const y = (Math.abs(vals[i]) / range) * h;
+    pts += `${x.toFixed(1)},${y.toFixed(1)} `;
+  }
+
+  let s = `<div class="bt-dd-chart"><svg viewBox="0 0 ${w} ${h+2}" preserveAspectRatio="none" style="width:100%;height:100%">`;
+  s += `<defs><linearGradient id="ddGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#ef4444" stop-opacity="0.02"/><stop offset="100%" stop-color="#ef4444" stop-opacity="0.3"/></linearGradient></defs>`;
+  s += `<polygon points="0,0 ${pts.trim()} ${w},0" fill="url(#ddGrad)"/>`;
+  s += `<polyline points="${pts.trim()}" fill="none" stroke="#ef4444" stroke-width="1"/>`;
+  s += `</svg>`;
+  s += `<div style="position:absolute;bottom:2px;left:4px;font-size:8px;color:#ef4444">回撤 ${(minDD*100).toFixed(1)}%</div>`;
+  s += `</div>`;
+  return s;
+}
+
+// Build backtest context for AI prompt
+function buildBTContext(){
+  if(!btSummary || Object.keys(btResults).length === 0) return '';
+  let ctx = '\n【📈 策略回测结果 (RSI+Kelly)】\n';
+  ctx += `策略: 预测涨幅>1%且RSI<${BT_RSI_BUY}买入 | RSI>${BT_RSI_SELL}或趋势反转卖出 | Kelly仓位管理\n`;
+  ctx += `组合: 平均收益${(btSummary.avgReturn*100).toFixed(1)}% · Sharpe ${btSummary.avgSharpe.toFixed(2)} · 最大回撤${(btSummary.worstDD*100).toFixed(1)}% · 胜率${(btSummary.avgWinRate*100).toFixed(0)}%\n`;
+  ctx += `超额收益(vs Buy&Hold): ${(btSummary.excessReturn*100).toFixed(1)}%\n`;
+  ctx += `Kelly建议平均仓位: ${(btSummary.avgKelly*100).toFixed(1)}%\n`;
+  ctx += '各基金回测:\n';
+  Object.values(btResults).sort((a,b)=>b.sharpe-a.sharpe).forEach(r => {
+    ctx += `  ${fundName(r.code)}(${r.code}): 收益${(r.totalReturn*100).toFixed(1)}% · Sharpe ${r.sharpe.toFixed(2)} · 回撤${(r.maxDD*100).toFixed(1)}% · 胜率${(r.winRate*100).toFixed(0)}% · Kelly仓位${(r.finalKelly*100).toFixed(0)}% · 当前RSI ${r.lastRSI?.toFixed(0)}\n`;
+  });
+  ctx += '⚠️ 请参考回测结果验证你的操作建议。高Sharpe+低回撤的基金可加大配置，回测表现差的需谨慎。Kelly仓位用于控制风险。\n';
+  return ctx;
+}
+
+// Load saved backtest results
+function loadBTResults(){
+  try{
+    const raw = localStorage.getItem(BT_STORAGE_KEY);
+    if(!raw) return;
+    const d = JSON.parse(raw);
+    if(d.summary) btSummary = d.summary;
+    if(d.results){
+      for(const[k,v]of Object.entries(d.results)){
+        btResults[k] = v; // partial results (no equity/trades/drawdown arrays)
+      }
+    }
+    renderBTBrief();
+    console.log('回测结果已加载:', Object.keys(btResults).length, '只基金');
+  }catch(e){ console.warn('回测结果加载失败:', e); }
 }
 </script>
 </body>
