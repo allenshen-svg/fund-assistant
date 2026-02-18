@@ -3622,6 +3622,18 @@ function saveSettings(){
   saveKey(key);
   closeSettings();
   alert(`已保存！当前: ${_aiProvider.name}`);
+  // 保存key后自动执行待定操作
+  if(_pendingGlobalAction === 'translate'){
+    _pendingGlobalAction = null;
+    triggerTranslate();
+  } else if(_pendingGlobalAction === 'summary'){
+    _pendingGlobalAction = null;
+    triggerGlobalNewsSummary();
+  }
+  // 如果国际新闻已加载但未翻译，自动触发
+  if(globalNews.length > 0 && !globalNews[0]?.titleCN){
+    translateGlobalNews();
+  }
 }
 function toggleKeyVis(){
   const inp = document.getElementById('input-key');
@@ -4673,10 +4685,10 @@ function renderGlobalNewsSummaryHTML(){
   return html;
 }
 
+let _pendingGlobalAction = null; // 'translate' | 'summary' | null
 async function triggerTranslate(){
-  // 实时读取key
   if(!_aiKey) _aiKey = localStorage.getItem('fa_302ai_key') || '';
-  if(!_aiKey){ alert('请先在底部设置中配置API Key'); return; }
+  if(!_aiKey){ _pendingGlobalAction='translate'; openSettings(); return; }
   if(!globalNews.length){ alert('暂无国际新闻数据，请等待加载'); return; }
   const btn = event?.target;
   if(btn){ btn.disabled=true; btn.textContent='🌐 翻译中...'; }
@@ -4687,9 +4699,8 @@ async function triggerTranslate(){
 }
 
 async function triggerGlobalNewsSummary(){
-  // 实时读取key
   if(!_aiKey) _aiKey = localStorage.getItem('fa_302ai_key') || '';
-  if(!_aiKey){ alert('请先在底部设置中配置API Key'); return; }
+  if(!_aiKey){ _pendingGlobalAction='summary'; openSettings(); return; }
   if(!globalNews.length){ alert('暂无国际新闻数据，请等待加载'); return; }
   const btn = event?.target;
   if(btn){ btn.disabled=true; btn.textContent='🤖 AI分析中...'; }
