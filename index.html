@@ -1233,33 +1233,35 @@ async function fetchGlobalNews(){
 
   _globalNewsLoading = false;
   console.log(`[GlobalNews] Fetched ${allItems.length} → filtered ${globalNews.length} political/economic items`);
-
-  // 自动翻译标题
-  if(globalNews.length > 0) translateGlobalNews();
 }
 
+let _gnTranslating = false;
 async function translateGlobalNews(){
-  if(!globalNews.length) return;
-  // 已有翻译则跳过
+  if(!globalNews.length || _gnTranslating) return;
   if(globalNews[0].titleCN) return;
+  if(!_aiKey){ console.warn('[GlobalNews] 无API Key，跳过翻译'); return; }
+  _gnTranslating = true;
   const titles = globalNews.slice(0,30).map((n,i)=>`${i+1}. ${n.title}`).join('\n');
   const model = AI_ENGINES[0]?.model || 'deepseek-ai/DeepSeek-V3';
   try {
+    console.log('[GlobalNews] 开始翻译', globalNews.length, '条新闻...');
     const resp = await callAI(model, '你是专业的新闻翻译员，擅长将英文新闻标题翻译为简洁准确的中文。', `将以下英文新闻标题逐条翻译为简洁的中文，保持编号格式，每条一行，只输出翻译结果，不要加任何解释：\n\n${titles}`, 0.3);
     if(resp){
       const lines = resp.trim().split('\n').filter(l=>l.trim());
+      let matched = 0;
       lines.forEach(line=>{
-        const m = line.match(/^(\d+)\.\s*(.+)/);
+        const m = line.match(/^(\d+)[\.\.\uff0e、]\s*(.+)/);
         if(m){
           const idx = parseInt(m[1]) - 1;
-          if(idx>=0 && idx<globalNews.length) globalNews[idx].titleCN = m[2].trim();
+          if(idx>=0 && idx<globalNews.length){ globalNews[idx].titleCN = m[2].trim(); matched++; }
         }
       });
-      console.log(`[GlobalNews] Translated ${lines.length} titles to CN`);
-      // 刷新UI
-      if(document.getElementById('data-intel-container')?.style.display!=='none') renderDataIntel();
+      console.log(`[GlobalNews] 翻译完成: ${matched}/${globalNews.length} 条`);
     }
-  } catch(e){ console.warn('translateGlobalNews:', e); }
+  } catch(e){ console.warn('[GlobalNews] 翻译失败:', e.message||e); }
+  _gnTranslating = false;
+  // 无论面板是否可见，都标记已翻译，下次打开时自然显示中文
+  try{ renderDataIntel(); }catch(e){}
 }
 
 function getGlobalNewsSentiment(){
@@ -1366,9 +1368,10 @@ async function fetchAllDataIntel(){
   renderDataIntelBrief();
   // 异步触发国际新闻AI摘要(不阻塞主流程)
   if(globalNews.length > 0){
-    // 并行触发翻译和AI摘要(不阻塞主流程)
-    translateGlobalNews();
-    summarizeGlobalNewsAI().then(()=>{ if(document.getElementById('data-intel-container')?.style.display!=='none') renderDataIntel(); });
+    // 先翻译，再触发AI摘要
+    translateGlobalNews().then(()=>{
+      summarizeGlobalNewsAI().then(()=>{ try{ renderDataIntel(); }catch(e){} });
+    });
   }
 }
 
@@ -4541,12 +4544,19 @@ function renderDataIntel(){
       html += `<span class="global-news-time">${n.timeFormatted}</span>`;
       html += `</div>`;
     });
-    // AI摘要按钮或已有摘要
+    // 翻译+AI摘要按钮
+    const hasTranslation = globalNews.some(n=>n.titleCN);
+    let btns = '<div style="display:flex;gap:6px;margin-top:6px">';
+    if(!hasTranslation){
+      btns += `<button class="global-news-btn" style="flex:1;margin:0" onclick="triggerTranslate()">🌐 翻译为中文</button>`;
+    }
     if(globalNewsSummary){
       html += renderGlobalNewsSummaryHTML();
     } else {
-      html += `<button class="global-news-btn" onclick="triggerGlobalNewsSummary()" ${_globalNewsLoading?'disabled':''}>🤖 AI分析国际形势 & 投资影响</button>`;
+      btns += `<button class="global-news-btn" style="flex:1;margin:0" onclick="triggerGlobalNewsSummary()" ${_globalNewsLoading?'disabled':''}>🤖 AI分析国际形势</button>`;
     }
+    btns += '</div>';
+    html += btns;
   } else {
     html += '<div style="text-align:center;padding:12px;font-size:11px;color:var(--sub)">暂无国际新闻数据</div>';
     html += `<button class="global-news-btn" onclick="manualFetchGlobalNews()">🔄 手动加载国际新闻</button>`;
@@ -4645,6 +4655,16 @@ function renderGlobalNewsSummaryHTML(){
   html += `<div class="global-news-sentiment"><div class="global-news-sentiment-item"><div class="global-news-sentiment-label">AI评分</div><div class="global-news-sentiment-val" style="color:${aiColor}">${aiScore}</div></div></div>`;
   html += '</div>';
   return html;
+}
+
+async function triggerTranslate(){
+  const btn = event?.target;
+  if(btn){ btn.disabled=true; btn.textContent='🌐 翻译中...'; }
+  // 重置翻译状态以强制重新翻译
+  globalNews.forEach(n=> delete n.titleCN);
+  _gnTranslating = false;
+  await translateGlobalNews();
+  renderDataIntel();
 }
 
 async function triggerGlobalNewsSummary(){
