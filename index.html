@@ -780,7 +780,7 @@ let rlTrainer = null;
 let _rlModelLoaded = false;
 let _rlTraining = false;
 let _rlSignals = {}; // { code: { action, actionName, confidence, qValues } }
-const RL_STATE_SIZE = 15;
+const RL_STATE_SIZE = 18; // 15→18: +backtestSharpe +backtestKelly +backtestRSI
 const RL_ACTION_SIZE = 3; // 0=hold, 1=buy, 2=sell
 const RL_ACTION_NAMES = ['持有','买入','卖出'];
 const RL_STORAGE_KEY = 'fa_rl_brain';
@@ -1317,8 +1317,9 @@ class DQNAgent{
 
 // --- Market Environment (Gym-style) ---
 class MarketEnv{
-  constructor(navArray){
+  constructor(navArray, code){
     this.navs=navArray; // [{date,nav},...] sorted by date
+    this._code=code||''; // fund code for backtest data lookup
     this.lookback=20;
     this.fee=0.0015;
   }
@@ -1352,6 +1353,11 @@ class MarketEnv{
     const maxP=Math.max(...p.slice(-20));
     const dd=(cur-maxP)/maxP;
     const pnl=this.pos===1?(cur-this.entryPrice)/this.entryPrice:0;
+    // 从回测结果注入历史策略特征
+    const btR = typeof btResults!=='undefined' ? btResults[this._code] : null;
+    const btSharpe = btR ? btR.sharpe : 0;
+    const btKelly = btR ? btR.finalKelly : 0.05;
+    const btRSI = btR?.lastRSI || 50;
     return Float32Array.from([
       rlClip(ret1*100,-5,5),
       rlClip(sum(rets,5)*100,-15,15),
@@ -1365,7 +1371,10 @@ class MarketEnv{
       rlClip(dd*10,-5,0),
       this.pos,
       rlClip(pnl*10,-5,5),
-      0,0,0 // macro/sentiment/capflow filled at inference
+      0,0,0, // macro/sentiment/capflow filled at inference
+      rlClip(btSharpe,-2,3),       // [15] 回测Sharpe
+      rlClip(btKelly*10,-1,3),     // [16] 回测Kelly仓位
+      (btRSI-50)/50                // [17] 回测当前RSI
     ]);
   }
   step(action){
@@ -1433,8 +1442,8 @@ class RLTrainer{
       this.episode=ep;
       let epR=0,epL=0,epSteps=0,epPfs=[],epTrades=0;
       const shuffled=[...this._data].sort(()=>Math.random()-0.5);
-      for(const{navs}of shuffled){
-        const env=new MarketEnv(navs);
+      for(const{code,navs}of shuffled){
+        const env=new MarketEnv(navs,code);
         let state=env.reset(),done=false;
         while(!done){
           const action=this.agent.act(state,true);
@@ -1483,7 +1492,7 @@ class RLTrainer{
       if(!hd||!hd.navs||hd.navs.length<25)continue;
       const navArr=hd.navs.map(n=>({date:n[0],nav:parseFloat(n[1])})).filter(n=>!isNaN(n.nav)&&n.nav>0);
       if(navArr.length<25)continue;
-      const env=new MarketEnv(navArr);
+      const env=new MarketEnv(navArr,code);
       env.idx=navArr.length-1;
       const simPos=simPortfolio?.positions?.find(p=>p.code===code);
       env.pos=simPos?1:0;
@@ -1529,6 +1538,13 @@ class RLTrainer{
       const raw=localStorage.getItem(RL_STORAGE_KEY);
       if(!raw)return false;
       const d=JSON.parse(raw);
+      // 检查模型维度是否匹配(15→18迁移兼容)
+      const savedSize = d.agent?.qNet?.sizes?.[0] || 0;
+      if(savedSize !== RL_STATE_SIZE){
+        console.warn(`RL模型维度不匹配(保存:${savedSize} 当前:${RL_STATE_SIZE})，需重新训练`);
+        localStorage.removeItem(RL_STORAGE_KEY);
+        return false;
+      }
       this.agent=DQNAgent.fromJSON(d.agent);
       this.metrics=d.metrics||this.metrics;
       this.episode=d.episode||0;
@@ -1942,8 +1958,9 @@ const SYSTEM_PROMPT = `你是一位擅长波段操作和趋势跟踪的基金投
 2. 宏观经济数据：PMI(制造业景气度)、CPI/PPI(通胀)、GDP增速、M2货币供应(流动性)
 3. 另类数据：板块主力资金流向(超大单/大单/中单/小单)、财经新闻NLP情绪分析(利好/利空识别)、社交舆情热度指数
 4. 历史复盘：过往AI预测vs实际涨跌对比、准确率统计、错误教训
-5. RL强化学习信号：基于Double DQN训练的策略网络，直接输出买入/卖出/持有决策及Q值置信度，是独立于规则的量化信号
-6. 策略回测(Backtesting)：基于历史NAV的RSI策略回测结果，包括Sharpe Ratio、最大回撤(Max Drawdown)、胜率、凯利仓位(Kelly Criterion)。回测Sharpe<0的品种需特别谨慎
+5. RL强化学习信号：基于Double DQN(18维状态空间含回测特征)训练的策略网络，直接输出买入/卖出/持有决策及Q值置信度，支持在线学习反馈
+6. 策略回测(Backtesting)：基于历史NAV的RSI策略回测结果，融合RL信号作为辅助条件，包括Sharpe Ratio、最大回撤、胜率、凯利仓位。回测Sharpe<0的品种需特别谨慎
+7. 三引擎投票共识：AI/RL/回测三系统加权投票决策，全票一致时加大仓位（×1.4），有分歧时缩减仓位（×0.4）
 
 ■ 核心投资逻辑（你必须遵守）：
 1. 趋势为王：先判断每个板块/基金的中期趋势（3个月维度）是上升、震荡还是下降
@@ -3555,7 +3572,7 @@ function simAutoTrade(){
     }
   });
 
-  // 2. AI信号交易（融合数据情报）
+  // 2. 三引擎投票共识交易系统（AI + RL + Backtest）
   const buyConfThreshold = Math.max(50, 65 + confAdj);
   const sellConfThreshold = Math.max(45, 60 + confAdj);
 
@@ -3572,34 +3589,74 @@ function simAutoTrade(){
     const sectorBullish = sectorFlow && sectorFlow.mainNet > 0;
     const sectorBearish = sectorFlow && sectorFlow.mainNet < -1e8;
 
-    // RL强化学习信号融合
+    // === 三引擎投票共识 ===
     const rlSig = _rlSignals[pos.code];
-    let rlBoost = 0;
+    const btR = btResults[pos.code];
+
+    // 引擎1: AI信号投票
+    const aiVote = sig.action === 'buy' ? 1 : sig.action === 'sell' ? -1 : 0;
+    const aiWeight = Math.min(sig.confidence, 95) / 100; // 0~0.95
+
+    // 引擎2: RL信号投票
+    let rlVote = 0, rlWeight = 0;
     if(rlSig){
-      if(sig.action==='buy' && rlSig.action===1) rlBoost = 10; // AI+RL均看多
-      else if(sig.action==='sell' && rlSig.action===2) rlBoost = 10; // AI+RL均看空
-      else if(sig.action==='buy' && rlSig.action===2) rlBoost = -15; // AI看多RL看空
-      else if(sig.action==='sell' && rlSig.action===1) rlBoost = -15; // AI看空RL看多
+      rlVote = rlSig.action === 1 ? 1 : rlSig.action === 2 ? -1 : 0;
+      rlWeight = Math.min(rlSig.confidence, 95) / 100;
     }
-    const effConf = sig.confidence + rlBoost;
+
+    // 引擎3: 回测信号投票(基于当前RSI+Sharpe+趋势)
+    let btVote = 0, btWeight = 0;
+    if(btR){
+      const rsiVal = btR.lastRSI || 50;
+      const sharpeVal = btR.sharpe || 0;
+      // RSI<40+Sharpe>0 → 买入信号; RSI>70+任何 → 卖出信号
+      if(rsiVal < 40 && sharpeVal > 0) btVote = 1;
+      else if(rsiVal < 50 && sharpeVal > 0.5) btVote = 1;
+      else if(rsiVal > 75) btVote = -1;
+      else if(rsiVal > 65 && sharpeVal < 0) btVote = -1;
+      btWeight = Math.min(Math.abs(sharpeVal) / 2, 0.8); // Sharpe越高权重越大
+      if(btR.winRate > 0.5) btWeight = Math.min(btWeight + 0.1, 0.9);
+    }
+
+    // 加权投票: 得分 ∈ [-1, 1]
+    const totalWeight = aiWeight + rlWeight + btWeight || 1;
+    const consensusScore = (aiVote * aiWeight + rlVote * rlWeight + btVote * btWeight) / totalWeight;
+
+    // 统计一致性: 多少引擎同方向
+    const votes = [aiVote, rlVote, btVote].filter(v => v !== 0);
+    const buyVotes = votes.filter(v => v > 0).length;
+    const sellVotes = votes.filter(v => v < 0).length;
+    const consensus = Math.max(buyVotes, sellVotes); // 最大同向票数
+    const unanimousBuy = buyVotes >= 2 && sellVotes === 0; // 至少2票看多无反对
+    const unanimousSell = sellVotes >= 2 && buyVotes === 0; // 至少2票看空无反对
+
+    // 共识乘数: 全票一致→1.3倍，2票→1.0倍，分歧→0.5倍
+    let consensusMult = 1.0;
+    if(consensus >= 3) consensusMult = 1.4; // 三引擎全票
+    else if(consensus >= 2 && votes.length >= 2) consensusMult = 1.15; // 多数票
+    else if(buyVotes > 0 && sellVotes > 0) consensusMult = 0.4; // 有分歧,大幅缩量
+
+    // 有效置信度 = AI置信度 × 共识乘数
+    const effConf = sig.confidence * consensusMult;
     const rlTag = rlSig ? ` RL:${rlSig.actionName}${rlSig.confidence}%` : '';
+    const btTag = btR ? ` BT:${btR.sharpe>0?'▲':'▼'}${btR.sharpe.toFixed(1)}` : '';
+    const voteTag = ` 投票[${buyVotes}买/${sellVotes}卖]×${consensusMult.toFixed(1)}`;
 
     if(sig.action==='buy' && effConf>=buyConfThreshold && todayPct<=strategy.dipBuyThreshold){
       const posValue = pos.shares * (getSimNav(pos.code) || pos.avgCost);
       const totalValue = getSimTotalValue();
       if(posValue / totalValue < strategy.maxSinglePos){
-        // Kelly仓位控制: 用回测Kelly分数限制加仓比例
-        const btR = btResults[pos.code];
+        // Kelly仓位控制: 用回测Kelly分数限制加仓比例 × 共识系数
         const kellyLimit = btR?.finalKelly || 0.05;
-        let addPct = Math.min(0.03 * buyMult, kellyLimit);
+        let addPct = Math.min(0.03 * buyMult * consensusMult, kellyLimit);
         if(sectorBullish) addPct *= 1.3;
-        if(rlSig?.action===1 && rlSig.confidence>50) addPct *= 1.2;
+        if(unanimousBuy) addPct *= 1.2; // 全票看多加码
         // 回测Sharpe过滤: Sharpe<0不加仓
         if(btR && btR.sharpe < 0) addPct = 0;
         const addAmt = Math.min(Math.round(totalValue * addPct), Math.round(simPortfolio.cash * 0.3));
         if(addAmt >= 1000){
           const kellyTag = btR ? ` K:${(kellyLimit*100).toFixed(0)}%` : '';
-          const reason = `AI加仓(${sig.confidence}%)+跌${todayPct.toFixed(1)}%低吸 [数据${dsScore}${sectorBullish?' 板块资金流入':''}${rlTag}${kellyTag}]`;
+          const reason = `AI加仓(${sig.confidence}%)+跌${todayPct.toFixed(1)}%低吸 [${voteTag} 数据${dsScore}${sectorBullish?' 板块流入':''}${rlTag}${btTag}${kellyTag}]`;
           simTrade(pos.code, 'buy', addAmt, reason);
           tradesExecuted++;
         }
@@ -3607,15 +3664,16 @@ function simAutoTrade(){
     }
 
     if(sig.action==='sell' && effConf>=sellConfThreshold && todayPct>=strategy.surgeSellThreshold && pos.group==='satellite'){
-      let sellPct = 0.3 * sellMult;
+      let sellPct = 0.3 * sellMult * consensusMult;
       if(sectorBearish) sellPct = Math.min(0.5, sellPct * 1.3);
-      if(rlSig?.action===2 && rlSig.confidence>50) sellPct = Math.min(0.6, sellPct * 1.2); // RL也看空,加大卖出
-      simTrade(pos.code, 'sell', sellPct, `AI减仓(${sig.confidence}%)+涨${todayPct.toFixed(1)}% [数据${dsScore}${sectorBearish?' 板块资金流出':''}${rlTag}]`);
+      if(unanimousSell) sellPct = Math.min(0.7, sellPct * 1.3); // 全票看空加大卖出
+      sellPct = Math.max(0.1, Math.min(0.8, sellPct));
+      simTrade(pos.code, 'sell', sellPct, `AI减仓(${sig.confidence}%)+涨${todayPct.toFixed(1)}% [${voteTag} 数据${dsScore}${sectorBearish?' 板块流出':''}${rlTag}${btTag}]`);
       tradesExecuted++;
     }
   });
 
-  // 3. AI新推荐品种（融合数据信号+回测过滤）
+  // 3. AI新推荐品种（三引擎共识过滤）
   if(_analysisResult.picks && simPortfolio.cash > 20000 && dsScore >= 40){
     const minEndorsements = dsScore >= 60 ? 1 : 2;
     _analysisResult.picks.forEach(pick => {
@@ -3623,14 +3681,28 @@ function simAutoTrade(){
       // 回测过滤: 如果回测Sharpe<0且收益为负，跳过
       const pickBT = btResults[pick.code];
       if(pickBT && pickBT.sharpe < 0 && pickBT.totalReturn < 0) return;
+      // RL过滤: 如果RL强烈看空(卖出且>60%置信)，跳过
+      const pickRL = _rlSignals[pick.code];
+      if(pickRL && pickRL.action === 2 && pickRL.confidence > 60) return;
+      // 三引擎新品种投票
+      const pickAiVote = 1; // AI推荐=看多
+      const pickRlVote = pickRL ? (pickRL.action===1 ? 1 : pickRL.action===2 ? -1 : 0) : 0;
+      const pickBtVote = (pickBT && pickBT.sharpe > 0 && pickBT.lastRSI < 60) ? 1 :
+                         (pickBT && pickBT.sharpe < 0) ? -1 : 0;
+      const pickBuyVotes = [pickAiVote, pickRlVote, pickBtVote].filter(v=>v>0).length;
+      const pickSellVotes = [pickAiVote, pickRlVote, pickBtVote].filter(v=>v<0).length;
+      const pickConsensusMult = pickBuyVotes >= 3 ? 1.4 : pickBuyVotes >= 2 ? 1.1 :
+                                pickSellVotes > 0 ? 0.5 : 0.8;
+
       if(pick.endorsements >= minEndorsements){
-        // Kelly仓位: 用回测Kelly计算建仓比例
+        // Kelly仓位: 用回测Kelly × 共识系数
         const pickKelly = pickBT?.finalKelly || 0.1;
-        const basePct = Math.min(dsScore >= 60 ? 0.18 : 0.12, pickKelly * 1.5);
+        const basePct = Math.min(dsScore >= 60 ? 0.18 : 0.12, pickKelly * 1.5) * pickConsensusMult;
         const amount = Math.min(Math.round(simPortfolio.cash * basePct), 25000);
         if(amount >= 5000){
           const kTag = pickBT ? ` Sharpe:${pickBT.sharpe.toFixed(1)} Kelly:${(pickKelly*100).toFixed(0)}%` : '';
-          simTrade(pick.code, 'buy', amount, `AI推荐(${pick.endorsements}引擎) [数据信号${dsScore}${kTag}]: ${(pick.reason||'').slice(0,30)}`);
+          const rlTag2 = pickRL ? ` RL:${pickRL.action===1?'买':pickRL.action===2?'卖':'持'}${pickRL.confidence}%` : '';
+          simTrade(pick.code, 'buy', amount, `AI推荐(${pick.endorsements}引擎) [投票${pickBuyVotes}买×${pickConsensusMult.toFixed(1)} 数据${dsScore}${kTag}${rlTag2}]: ${(pick.reason||'').slice(0,30)}`);
           tradesExecuted++;
         }
       }
@@ -3639,8 +3711,82 @@ function simAutoTrade(){
 
   // 4. 策略学习
   learnFromPerformance();
+  // 5. RL在线学习反馈：用模拟盘交易结果进行增量训练
+  if(tradesExecuted > 0) rlOnlineLearning();
   saveSimPortfolio();
   return tradesExecuted;
+}
+
+// ==================== RL在线学习 (Online Learning from Sim Trades) ====================
+function rlOnlineLearning(){
+  if(!_rlModelLoaded || !rlTrainer?.agent || !simPortfolio?.history) return;
+  const today = todayStr();
+  const todayTrades = simPortfolio.history.filter(h => h.date === today);
+  if(!todayTrades.length) return;
+
+  let onlineReplayCount = 0;
+  for(const trade of todayTrades){
+    const code = trade.code;
+    const hd = fundHistoryData[code];
+    if(!hd?.navs || hd.navs.length < 25) continue;
+    const navArr = hd.navs.map(n=>({date:n[0],nav:parseFloat(n[1])})).filter(n=>!isNaN(n.nav)&&n.nav>0);
+    if(navArr.length < 25) continue;
+
+    // 构建当前状态
+    const env = new MarketEnv(navArr, code);
+    env.idx = navArr.length - 1;
+    const simPos = simPortfolio.positions.find(p => p.code === code);
+    env.pos = simPos ? 1 : 0;
+    if(simPos) env.entryPrice = simPos.avgCost;
+    const state = env._state();
+    // 注入宏观/舆情/资金流
+    if(_dataIntelLoaded){
+      const ds = generateDataSignal();
+      state[12] = rlClip((ds.score-50)/25, -2, 2);
+      state[13] = rlClip((newsSentiment.score-50)/25, -2, 2);
+      const cn = sectorCapFlow.reduce((s,d)=>s+(d.mainNet||0), 0);
+      state[14] = rlClip(cn/1e10, -2, 2);
+    }
+
+    // 映射交易动作到RL action
+    const action = trade.action === 'buy' ? 1 : trade.action === 'sell' ? 2 : 0;
+
+    // 计算即时奖励: 基于当日交易后持仓表现
+    let reward = 0;
+    const fd = getFundData(code);
+    const todayPct = (fd?.gszzl || 0) / 100;
+    if(action === 1){ // 买入
+      reward = todayPct > 0 ? todayPct * 5 : todayPct * 8; // 买对奖励，买错扁罚
+    } else if(action === 2){ // 卖出
+      reward = todayPct < 0 ? Math.abs(todayPct) * 5 : -todayPct * 3; // 卖对奖励，卖错轻罚
+    }
+    // 组合级奖励加成
+    const totalValue = getSimTotalValue();
+    const cumReturn = (totalValue - SIM_INITIAL_CAPITAL) / SIM_INITIAL_CAPITAL;
+    reward += rlClip(cumReturn * 2, -0.5, 0.5);
+
+    // 构建下一状态(用当前状态略微偏移)
+    const nextState = Float32Array.from(state);
+    nextState[10] = simPos ? 1 : 0; // 更新持仓状态
+
+    // 喵入经验并做小批量训练
+    rlTrainer.agent.remember(state, action, reward, nextState, false);
+    onlineReplayCount++;
+  }
+
+  // 增量训练: 每次在线学习做少量Replay
+  if(onlineReplayCount > 0 && rlTrainer.agent.memory.length >= rlTrainer.agent.batchSize * 2){
+    const onlineBatches = Math.min(onlineReplayCount * 2, 8);
+    for(let i = 0; i < onlineBatches; i++){
+      rlTrainer.agent.replay();
+    }
+    // 保存更新后的模型
+    rlTrainer.saveModel();
+    // 重新生成信号
+    rlTrainer.generateSignals();
+    renderRLBrief();
+    console.log(`RL在线学习: ${onlineReplayCount}条经验·${onlineBatches}次Replay·ε=${rlTrainer.agent.epsilon.toFixed(4)}`);
+  }
 }
 
 function learnFromPerformance(){
@@ -3950,13 +4096,14 @@ function renderRLBrain(){
   // Architecture info
   html+=`<div class="rl-card"><div class="rl-card-title">⚙️ 模型架构</div>`;
   html+=`<div style="font-size:10px;color:var(--sub);line-height:1.6">`;
-  html+=`<b>算法:</b> Double DQN + Experience Replay + Adam Optimizer<br>`;
+  html+=`<b>算法:</b> Double DQN + Experience Replay + Adam Optimizer + 在线学习<br>`;
   html+=`<b>网络:</b> [${RL_STATE_SIZE}] → 64(ReLU) → 32(ReLU) → [${RL_ACTION_SIZE}]<br>`;
-  html+=`<b>状态:</b> 动量(1/5/10/20日) · 波动率(5/20日) · RSI · MACD · MA偏离 · 回撤 · 持仓 · PnL · 宏观 · 舆情 · 资金<br>`;
+  html+=`<b>状态:</b> 动量(1/5/10/20日) · 波动率(5/20日) · RSI · MACD · MA偏离 · 回撤 · 持仓 · PnL · 宏观 · 舆情 · 资金 · <b style="color:#8b5cf6">回测Sharpe · Kelly仓位 · 回测RSI</b><br>`;
   html+=`<b>动作:</b> 持有(0) / 买入(1) / 卖出(2)<br>`;
-  html+=`<b>奖励:</b> 资产增值(+) · 亏损(-) · 过度交易惩罚(-) · 回撤惩罚(-)<br>`;
+  html+=`<b>奖励:</b> 资产增值(+) · 亏损(-) · 过度交易惩罚(-) · 回撤惩罚(-) · <b style="color:#f59e0b">在线学习反馈</b><br>`;
   html+=`<b>超参:</b> γ=0.99 · ε衰减=0.998 · batch=32 · 记忆库=10K · 目标网络更新=200步<br>`;
-  html+=`<b>训练:</b> 基于全部持仓/自选基金历史NAV(近1年)训练 · 每轮遍历所有基金`;
+  html+=`<b>训练:</b> 基于全部持仓/自选基金历史NAV(近1年)训练 · 每轮遍历所有基金<br>`;
+  html+=`<b>闭环:</b> <span style="color:#22d3ee">回测特征注入 → 三引擎投票 → 模拟盘在线学习 → RL信号更新</span>`;`;
   html+=`</div></div>`;
 
   container.innerHTML=html;
@@ -4018,7 +4165,7 @@ function stopRLTraining(){
 function buildRLContext(){
   if(!_rlModelLoaded||!rlTrainer?.agent||!Object.keys(_rlSignals).length)return'';
   let ctx='\n【🧠 RL强化学习信号 (DQN)】\n';
-  ctx+=`模型: Double DQN · 已训练${rlTrainer.episode+1}轮 · ${rlTrainer.agent.trainSteps}步\n`;
+  ctx+=`模型: Double DQN(18维) · 已训练${rlTrainer.episode+1}轮 · ${rlTrainer.agent.trainSteps}步 · 含回测特征+在线学习\n`;
   ctx+=`指标: 胜率${(rlTrainer.metrics.winRate||0).toFixed(0)}% · 平均收益${(rlTrainer.metrics.avgReturn||0).toFixed(1)}% · Sharpe${(rlTrainer.metrics.sharpe||0).toFixed(2)}\n`;
   ctx+='个股RL决策:\n';
   for(const[code,sig]of Object.entries(_rlSignals)){
@@ -4026,7 +4173,7 @@ function buildRLContext(){
     const qStr=sig.qValues.map(v=>v.toFixed(2)).join('/');
     ctx+=`  ${name}(${code}): ${sig.actionName}(置信${sig.confidence}%) Q[持/买/卖]=[${qStr}]\n`;
   }
-  ctx+='⚠️ RL信号基于历史NAV训练的DQN策略网络，是量化辅助参考。请结合AI分析和数据情报综合判断。\n';
+  ctx+='⚠️ RL信号已融合回测特征(Sharpe/Kelly/RSI)并通过模拟盘交易在线学习。三引擎投票共识: AI/RL/回测多数票决策，分歧时缩减仓位。\n';
   return ctx;
 }
 
@@ -4502,10 +4649,24 @@ function backtestFund(navArray, code){
       _currentKelly = 0.05; // 默认5%仓位
     }
 
-    // === 策略信号 ===
-    // 买入: 预测涨幅>1% + RSI<70 + MA5>MA20(趋势向上)
-    if(predictedReturn > BT_MOMENTUM_BUY && rsi[i] < BT_RSI_BUY && ma5[i] > ma20[i] && position < 0.9){
-      const targetPos = Math.min(position + _currentKelly, 0.95); // Kelly控制加仓量
+    // === RL融合回测策略信号 ===
+    // 在回测中引入RL信号作为辅助确认条件
+    let rlBuyBoost = 0, rlSellBoost = 0;
+    if(_rlModelLoaded && rlTrainer?.agent && typeof _rlSignals !== 'undefined'){
+      const rlSig = _rlSignals[code];
+      if(rlSig){
+        if(rlSig.action === 1 && rlSig.confidence > 40) rlBuyBoost = 0.3; // RL看多加强买入
+        if(rlSig.action === 2 && rlSig.confidence > 40) rlSellBoost = 0.3; // RL看空加强卖出
+        if(rlSig.action === 2 && rlSig.confidence > 60) rlBuyBoost = -0.5; // RL强烈看空抑制买入
+        if(rlSig.action === 1 && rlSig.confidence > 60) rlSellBoost = -0.5; // RL强烈看多抑制卖出
+      }
+    }
+
+    // 买入: 预测涨幅>1% + RSI<70 + MA5>MA20(趋势向上) + RL信号融合
+    const adjMomentumBuy = BT_MOMENTUM_BUY * (1 - rlBuyBoost); // RL看多时降低门槛
+    if(predictedReturn > adjMomentumBuy && rsi[i] < BT_RSI_BUY && ma5[i] > ma20[i] && position < 0.9){
+      const kellyAdj = _currentKelly * (1 + rlBuyBoost); // RL看多时放大Kelly
+      const targetPos = Math.min(position + kellyAdj, 0.95);
       const addPos = targetPos - position;
       if(addPos > 0.02){
         const buyAmt = Math.round(totalValue * addPos);
@@ -4519,23 +4680,25 @@ function backtestFund(navArray, code){
           position = targetPos;
           trades.push({
             date: dates[i], action: 'buy', price, shares: buyShares, amount: buyAmt,
-            rsi: rsi[i], kelly: _currentKelly, predicted: predictedReturn, fee
+            rsi: rsi[i], kelly: kellyAdj, predicted: predictedReturn, rlBoost: rlBuyBoost, fee
           });
         }
       }
     }
 
-    // 卖出: RSI>75 或 趋势反转(MA5<MA20且持仓) 或 止损(-5%)
+    // 卖出: RSI>75 或 趋势反转(MA5<MA20且持仓) 或 止损(-5%) + RL融合
     const pnlPct = position > 0 ? (price - entryPrice) / entryPrice : 0;
-    const shouldSell = (rsi[i] > BT_RSI_SELL && position > 0.2)
+    const adjRsiSell = BT_RSI_SELL - Math.round(rlSellBoost * 10); // RL看空时降低卖出RSI门槛
+    const shouldSell = (rsi[i] > adjRsiSell && position > 0.2)
       || (ma5[i] < ma20[i] && position > 0.3 && macdHist < 0)
       || (pnlPct < -0.05 && position > 0); // 止损
 
     if(shouldSell && position > 0){
-      let sellRatio = 0.5; // 默认卖50%
-      if(rsi[i] > 80) sellRatio = 0.8; // RSI超买卖80%
+      let sellRatio = 0.5 * (1 + rlSellBoost); // RL看空时放大卖出比例
+      if(rsi[i] > 80) sellRatio = 0.8;
       if(pnlPct < -0.05) sellRatio = 1.0; // 止损全卖
       if(ma5[i] < ma20[i] && macdHist < -0.001) sellRatio = Math.max(sellRatio, 0.7);
+      sellRatio = Math.min(sellRatio, 1.0);
 
       const sellShares = Math.floor(shares * sellRatio * 100) / 100;
       const sellAmt = Math.round(sellShares * price);
@@ -4838,7 +5001,8 @@ function renderBacktest(){
   html += `<b>仓位管理:</b> Kelly f*=(b·p-q)/b · 半Kelly(max 25%) · 滚动20次交易统计<br>`;
   html += `<b>手续费:</b> ${(BT_FEE*100).toFixed(2)}% 单边<br>`;
   html += `<b>风控:</b> 总仓位≤95% · 止损-5% · RSI超买减仓<br>`;
-  html += `<b>指标:</b> Sharpe=(R-Rf)/σ·√250 · Sortino(下行波动) · Calmar(年化/最大回撤) · Kelly`;
+  html += `<b>指标:</b> Sharpe=(R-Rf)/σ·√250 · Sortino(下行波动) · Calmar(年化/最大回撤) · Kelly<br>`;
+  html += `<b>闭环:</b> <span style="color:#22d3ee">RL信号融合买卖 · 三引擎投票共识 · 回测特征注入RL状态</span>`;
   html += `</div></div>`;
 
   container.innerHTML = html;
@@ -4913,8 +5077,9 @@ function renderBTDDChart(drawdown){
 // Build backtest context for AI prompt
 function buildBTContext(){
   if(!btSummary || Object.keys(btResults).length === 0) return '';
-  let ctx = '\n【📈 策略回测结果 (RSI+Kelly)】\n';
-  ctx += `策略: 预测涨幅>1%且RSI<${BT_RSI_BUY}买入 | RSI>${BT_RSI_SELL}或趋势反转卖出 | Kelly仓位管理\n`;
+  let ctx = '\n【📈 策略回测结果 (RSI+Kelly+RL融合)】\n';
+  ctx += `策略: 预测涨幅>1%且RSI<${BT_RSI_BUY}买入 | RSI>${BT_RSI_SELL}或趋势反转卖出 | Kelly仓位管理 | RL信号辅助\n`;
+  ctx += `共识: 三引擎(AI+RL+回测)加权投票 · 全票一致×1.4 · 多数票×1.15 · 分歧×0.4\n`;
   ctx += `组合: 平均收益${(btSummary.avgReturn*100).toFixed(1)}% · Sharpe ${btSummary.avgSharpe.toFixed(2)} · 最大回撤${(btSummary.worstDD*100).toFixed(1)}% · 胜率${(btSummary.avgWinRate*100).toFixed(0)}%\n`;
   ctx += `超额收益(vs Buy&Hold): ${(btSummary.excessReturn*100).toFixed(1)}%\n`;
   ctx += `Kelly建议平均仓位: ${(btSummary.avgKelly*100).toFixed(1)}%\n`;
@@ -4922,7 +5087,7 @@ function buildBTContext(){
   Object.values(btResults).sort((a,b)=>b.sharpe-a.sharpe).forEach(r => {
     ctx += `  ${fundName(r.code)}(${r.code}): 收益${(r.totalReturn*100).toFixed(1)}% · Sharpe ${r.sharpe.toFixed(2)} · 回撤${(r.maxDD*100).toFixed(1)}% · 胜率${(r.winRate*100).toFixed(0)}% · Kelly仓位${(r.finalKelly*100).toFixed(0)}% · 当前RSI ${r.lastRSI?.toFixed(0)}\n`;
   });
-  ctx += '⚠️ 请参考回测结果验证你的操作建议。高Sharpe+低回撤的基金可加大配置，回测表现差的需谨慎。Kelly仓位用于控制风险。\n';
+  ctx += '⚠️ 回测已融合RL信号。三引擎投票共识系统: AI/RL/回测多数票→加大仓位, 分歧→缩减仓位。高Sharpe基金可加配，Sharpe<0需谨慎。\n';
   return ctx;
 }
 
