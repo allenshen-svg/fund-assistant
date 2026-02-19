@@ -65,6 +65,12 @@ body { font-family:-apple-system,BlinkMacSystemFont,'SF Pro','PingFang SC','Helv
 .signal-name { font-size:14px; font-weight:600; }
 .signal-code { font-size:10px; color:var(--sub); margin-top:2px; }
 .signal-pct { font-size:17px; font-weight:800; min-width:70px; text-align:right; font-variant-numeric:tabular-nums; }
+.signal-nav-row { display:flex; align-items:baseline; gap:6px; justify-content:flex-end; margin-top:2px; font-variant-numeric:tabular-nums; }
+.signal-nav-val { font-size:13px; font-weight:700; color:var(--text); }
+.signal-nav-prev { font-size:10px; color:var(--sub); }
+.signal-nav-time { font-size:9px; color:var(--sub); opacity:0.7; }
+.nav-live-dot { display:inline-block; width:6px; height:6px; border-radius:50%; background:#22c55e; margin-right:3px; animation:navPulse 1.5s ease-in-out infinite; }
+@keyframes navPulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
 .signal-action { display:inline-flex; align-items:center; gap:4px; padding:4px 12px; border-radius:8px; font-size:12px; font-weight:600; }
 .signal-action.buy { background:var(--red-bg); color:var(--red); }
 .signal-action.sell { background:var(--green-bg); color:var(--green); }
@@ -500,6 +506,7 @@ body { font-family:-apple-system,BlinkMacSystemFont,'SF Pro','PingFang SC','Helv
     <span class="status-dot" id="status-dot"></span>
     <span id="market-status-text">检测中...</span>
     <span class="countdown" id="countdown">--:--:--</span>
+    <span id="nav-refresh-time" style="font-size:9px;color:rgba(255,255,255,0.5);margin-left:4px;display:none"></span>
   </div>
 </div>
 
@@ -3260,6 +3267,7 @@ function renderPortfolio(){
           </div>
           <div class="pf-right">
             <div class="pf-pct" style="color:${f.gszzl>=0?'var(--red)':'var(--green)'}">${sign(f.gszzl)}${fmt(f.gszzl)}%</div>
+            ${buildNavDisplay(f, true)}
             <div class="pf-swing-tag ${swingClass}">${swingText}</div>
           </div>
         </div>
@@ -4278,6 +4286,38 @@ function renderActionGuide(){
   container.innerHTML = html;
 }
 
+// ===== 实时净值显示辅助函数 =====
+function buildNavDisplay(f, compact){
+  const ms = getMarketStatus();
+  const isLive = f._live && (ms.status==='open' || ms.status==='break');
+  const gsz = parseFloat(f.gsz);
+  const dwjz = parseFloat(f.dwjz);
+  if(isNaN(gsz) && isNaN(dwjz)) return '';
+
+  const navVal = !isNaN(gsz) ? gsz.toFixed(4) : dwjz.toFixed(4);
+  const navLabel = isLive ? '估值' : '净值';
+  const dotHtml = isLive ? '<span class="nav-live-dot"></span>' : '';
+
+  // 估算时间
+  let timeStr = '';
+  if(f.gztime){
+    const parts = f.gztime.split(' ');
+    timeStr = parts.length>1 ? parts[1] : parts[0];
+  }
+
+  if(compact){
+    return `<div style="font-size:10px;color:var(--sub);text-align:right;margin-top:1px;font-variant-numeric:tabular-nums">
+      ${dotHtml}${navLabel} ${navVal}${!isNaN(dwjz)&&!isNaN(gsz)&&gsz!==dwjz?' <span style="opacity:0.6">昨 '+dwjz.toFixed(4)+'</span>':''}
+    </div>`;
+  }
+
+  return `<div class="signal-nav-row">
+    ${dotHtml}<span class="signal-nav-val">${navLabel} ${navVal}</span>
+    ${!isNaN(dwjz)&&!isNaN(gsz)&&gsz!==dwjz?'<span class="signal-nav-prev">昨收 '+dwjz.toFixed(4)+'</span>':''}
+    ${timeStr?'<span class="signal-nav-time">'+timeStr+'</span>':''}
+  </div>`;
+}
+
 function renderSignals(){
   const container = document.getElementById('signals-container');
   const badge = document.getElementById('signal-badge');
@@ -4292,13 +4332,17 @@ function renderSignals(){
     let html = '';
     holdings.forEach((h,i)=>{
       const f = getFundData(h.code);
+      const navHtml = buildNavDisplay(f);
       html += `<div class="signal-card hold">
         <div class="signal-top">
           <div class="signal-fund">
             <div class="signal-name">${fundName(h.code)} <button class="hold-del" onclick="removeHolding(${i})" title="删除">✕</button></div>
             <div class="signal-code">${h.code} · ${fundType(h.code)}</div>
           </div>
-          <div class="signal-pct" style="color:${f.gszzl>=0?'var(--red)':'var(--green)'}">${sign(f.gszzl)}${fmt(f.gszzl)}%</div>
+          <div style="text-align:right">
+            <div class="signal-pct" style="color:${f.gszzl>=0?'var(--red)':'var(--green)'}">${sign(f.gszzl)}${fmt(f.gszzl)}%</div>
+            ${navHtml}
+          </div>
         </div>
         <div style="font-size:11px;color:var(--sub)">点击「一键AI分析」获取操作建议</div>
       </div>`;
@@ -4316,13 +4360,17 @@ function renderSignals(){
     const f = getFundData(h.code);
     const sig = r.signals[h.code];
     if(!sig){
+      const navHtml2 = buildNavDisplay(f);
       html += `<div class="signal-card hold">
         <div class="signal-top">
           <div class="signal-fund">
             <div class="signal-name">${fundName(h.code)} <button class="hold-del" onclick="removeHolding(${i})" title="删除">✕</button></div>
             <div class="signal-code">${h.code}</div>
           </div>
-          <div class="signal-pct" style="color:${f.gszzl>=0?'var(--red)':'var(--green)'}">${sign(f.gszzl)}${fmt(f.gszzl)}%</div>
+          <div style="text-align:right">
+            <div class="signal-pct" style="color:${f.gszzl>=0?'var(--red)':'var(--green)'}">${sign(f.gszzl)}${fmt(f.gszzl)}%</div>
+            ${navHtml2}
+          </div>
         </div>
         <div style="font-size:11px;color:var(--sub)">AI未返回该基金分析</div>
       </div>`;
@@ -4355,13 +4403,17 @@ function renderSignals(){
       }
     }
 
+    const navHtml3 = buildNavDisplay(f);
     html += `<div class="signal-card ${sig.action}">
       <div class="signal-top">
         <div class="signal-fund">
           <div class="signal-name">${fundName(h.code)} <button class="hold-del" onclick="removeHolding(${i})" title="删除">✕</button></div>
           <div class="signal-code">${h.code} · ${fundType(h.code)}${sig.target3m?' · 3月预期:'+sig.target3m:''}</div>
         </div>
-        <div class="signal-pct" style="color:${f.gszzl>=0?'var(--red)':'var(--green)'}">${sign(f.gszzl)}${fmt(f.gszzl)}%</div>
+        <div style="text-align:right">
+          <div class="signal-pct" style="color:${f.gszzl>=0?'var(--red)':'var(--green)'}">${sign(f.gszzl)}${fmt(f.gszzl)}%</div>
+          ${navHtml3}
+        </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:4px">
         <span class="signal-action ${sig.action}">${actionText}</span>
@@ -4398,12 +4450,16 @@ function renderWatchlist(){
     const wTrend = fundHistoryData[w.code]?.trend;
     const trendBrief = wTrend ? ` · ${wTrend.trendDir==='strong_up'||wTrend.trendDir==='up'?'📈':'📉'}60日${wTrend.chg60d>0?'+':''}${wTrend.chg60d}%` : '';
 
+    const wNavHtml = buildNavDisplay(f, true);
     html += `<div class="watch-item">
       <div class="watch-left">
         <div class="watch-name">${fundName(w.code)} <span style="font-size:10px;color:var(--sub)">${w.code}</span></div>
         <div class="watch-type">${fundType(w.code)}${trendBrief}${sig?.target3m?' · 3月:'+sig.target3m:''}</div>
       </div>
-      <span class="watch-pct" style="color:${f.gszzl>=0?'var(--red)':'var(--green)'}">${sign(f.gszzl)}${fmt(f.gszzl)}%</span>
+      <div style="text-align:right;min-width:80px">
+        <span class="watch-pct" style="color:${f.gszzl>=0?'var(--red)':'var(--green)'}">${sign(f.gszzl)}${fmt(f.gszzl)}%</span>
+        ${wNavHtml}
+      </div>
       ${sigText?`<span class="watch-signal" style="${sigColor}">${sigText}</span>`:''}
       <button class="watch-del" onclick="removeWatch(${i})">✕</button>
     </div>`;
@@ -6654,9 +6710,14 @@ function startTimers(){
     const ms = getMarketStatus();
     if(ms.status==='open' || ms.status==='break'){
       await Promise.all([fetchIndices(), fetchAllFunds()]);
+      // 更新净值刷新时间
+      const _rt = document.getElementById('nav-refresh-time');
+      if(_rt){ const _n=new Date(); _rt.textContent='净值 '+String(_n.getHours()).padStart(2,'0')+':'+String(_n.getMinutes()).padStart(2,'0')+':'+String(_n.getSeconds()).padStart(2,'0'); _rt.style.display=''; }
       renderIndices();
       renderStats();
-      if(_analysisResult) renderSignals();
+      renderSignals();
+      renderWatchlist();
+      renderPortfolio();
       // 刷新模拟盘数据（用最新市场数据更新）
       updateSimDaily();
       renderSimBrief();
