@@ -870,11 +870,12 @@ let rlAgent = null;
 let rlTrainer = null;
 let _rlModelLoaded = false;
 let _rlTraining = false;
-let _rlSignals = {}; // { code: { action, actionName, confidence, qValues } }
-const RL_STATE_SIZE = 30; // 30维超级状态: 动量×5 + 波动率×3 + RSI×2 + MACD×2 + MA偏离×2 + 布林×1 + 回撤×2 + ATR×1 + 趋势×2 + 持仓×3 + 外部×4 + 回测×3
+let _rlSignals = {}; // { code: { action, actionName, confidence, qValues, conviction, uncertainty, headVotes } }
+const RL_STATE_SIZE = 36; // 36维Rainbow状态: 动量×5 + 波动率×3 + RSI×2 + MACD×2 + MA偏离×2 + 布林×1 + 回撤×2 + ATR×1 + 趋势×2 + 持仓×3 + 外部×4 + 回测×3 + 高阶×6
 const RL_ACTION_SIZE = 3; // 0=hold, 1=buy, 2=sell
 const RL_ACTION_NAMES = ['持有','买入','卖出'];
-const RL_STORAGE_KEY = 'fa_rl_brain';
+const RL_STORAGE_KEY = 'fa_rl_brain_v3';
+const RL_ENSEMBLE_K = 3; // Bootstrapped ensemble heads
 
 // ==================== BACKTEST STATE ====================
 let btResults = {}; // { code: { totalReturn, sharpe, maxDD, kellyFraction, winRate, trades, equity, drawdown } }
@@ -1557,19 +1558,80 @@ class RLNetwork{
   }
 }
 
-// --- DQN Agent (Double DQN + PER + N-Step Returns + LR Decay) ---
+// --- Dueling Network (V + A streams) ---
+class DuelingNetwork{
+  constructor(stateSize,actionSize,hiddenSizes){
+    this.stateSize=stateSize;
+    this.actionSize=actionSize;
+    // Raw output: V(1) + A(actionSize) = 1 + actionSize
+    this.net=new RLNetwork([stateSize,...(hiddenSizes||[128,64]),1+actionSize]);
+  }
+  forward(input){
+    const raw=this.net.forward(input);
+    this._lastRaw=raw;
+    return this._dueling(raw);
+  }
+  _dueling(raw){
+    const n=this.actionSize;
+    const V=raw[0];
+    let meanA=0;
+    for(let i=0;i<n;i++)meanA+=raw[1+i];
+    meanA/=n;
+    const Q=new Float32Array(n);
+    for(let i=0;i<n;i++)Q[i]=V+raw[1+i]-meanA;
+    return Q;
+  }
+  trainDueling(input,qTarget,lr){
+    // Forward to get current Q and raw outputs
+    const Q=this.forward(input);
+    const raw=this._lastRaw;
+    const n=this.actionSize;
+    // Convert Q-space targets to raw targets via Dueling gradient routing
+    const rawTarget=Float32Array.from(raw);
+    for(let a=0;a<n;a++){
+      const delta=Q[a]-qTarget[a];
+      if(Math.abs(delta)<1e-10)continue;
+      rawTarget[0]-=delta;
+      rawTarget[1+a]-=delta*(1-1/n);
+      for(let j=0;j<n;j++){
+        if(j!==a)rawTarget[1+j]+=delta/n;
+      }
+    }
+    return this.net.trainStep(input,rawTarget,lr);
+  }
+  clone(){
+    const dn=new DuelingNetwork(this.stateSize,this.actionSize,[]);
+    dn.net=this.net.clone();
+    return dn;
+  }
+  toJSON(){
+    return{stateSize:this.stateSize,actionSize:this.actionSize,net:this.net.toJSON()};
+  }
+  static fromJSON(d){
+    const dn=new DuelingNetwork(d.stateSize,d.actionSize,[]);
+    dn.net=RLNetwork.fromJSON(d.net);
+    return dn;
+  }
+}
+
+// --- Rainbow DQN Agent (Dueling + Double + PER + N-Step + Bootstrapped Ensemble) ---
 class DQNAgent{
   constructor(stateSize,actionSize){
     this.stateSize=stateSize;
     this.actionSize=actionSize;
-    // Wider/deeper network: [30] → 128 → 64 → [3]
-    this.qNet=new RLNetwork([stateSize,128,64,actionSize]);
-    this.targetNet=this.qNet.clone();
-    // Prioritized Experience Replay
-    this.maxMemory=30000;
+    this.nHeads=RL_ENSEMBLE_K;
+    // Dueling Networks: K ensemble heads
+    this.qNets=[];this.targetNets=[];
+    for(let h=0;h<this.nHeads;h++){
+      const net=new DuelingNetwork(stateSize,actionSize,[128,64]);
+      this.qNets.push(net);
+      this.targetNets.push(net.clone());
+    }
+    // Shared Prioritized Experience Replay
+    this.maxMemory=20000;
     this.perTree=new SumTree(this.maxMemory);
-    this.perAlpha=0.6;  // priority exponent
-    this.perBeta=0.4;   // IS weight exponent
+    this.perAlpha=0.6;
+    this.perBeta=0.4;
     this.perBetaInc=0.001;
     this.perEps=0.01;
     this.maxPriority=1.0;
@@ -1588,30 +1650,48 @@ class DQNAgent{
     this.targetUpdateFreq=500;
     this.trainSteps=0;
     this.totalReward=0;
+    this.bootstrapP=0.8; // Bernoulli mask probability
   }
   act(state,explore=true){
     if(explore&&Math.random()<this.epsilon)return Math.floor(Math.random()*this.actionSize);
-    return rlArgmax(this.qNet.forward(state));
+    // Thompson sampling: use random head for exploration diversity
+    const h=Math.floor(Math.random()*this.nHeads);
+    return rlArgmax(this.qNets[h].forward(state));
   }
-  getQValues(state){return this.qNet.forward(state);}
+  getEnsembleQ(state){
+    // Compute Q-values from all heads + uncertainty
+    const qAll=[];
+    const qSum=new Float32Array(this.actionSize);
+    for(let h=0;h<this.nHeads;h++){
+      const q=Array.from(this.qNets[h].forward(state));
+      qAll.push(q);
+      for(let i=0;i<this.actionSize;i++)qSum[i]+=q[i];
+    }
+    const qMean=Array.from(qSum).map(v=>v/this.nHeads);
+    // Epistemic uncertainty = std across heads
+    const qStd=new Array(this.actionSize).fill(0);
+    for(let i=0;i<this.actionSize;i++){
+      const vals=qAll.map(q=>q[i]);
+      const mu=qMean[i];
+      qStd[i]=Math.sqrt(vals.reduce((s,v)=>s+(v-mu)**2,0)/this.nHeads);
+    }
+    // Head votes (action each head picks)
+    const votes=qAll.map(q=>rlArgmax(q));
+    return{qMean,qStd,qAll,votes};
+  }
+  getQValues(state){return this.getEnsembleQ(state).qMean;}
   remember(s,a,r,s2,done,immediate=false){
     if(immediate){
-      // Direct store for online learning (skip n-step buffer)
       this.perTree.add(this.maxPriority,{s,a,r,s2,done,gamma:this.gamma});
       return;
     }
-    // N-step return accumulation
     this.nStepBuf.push({s,a,r,s2,done});
     if(this.nStepBuf.length>=this.nStep||done){
       let R=0;
-      for(let i=this.nStepBuf.length-1;i>=0;i--){
-        R=this.nStepBuf[i].r+this.gamma*R;
-      }
-      const first=this.nStepBuf[0];
-      const last=this.nStepBuf[this.nStepBuf.length-1];
+      for(let i=this.nStepBuf.length-1;i>=0;i--)R=this.nStepBuf[i].r+this.gamma*R;
+      const first=this.nStepBuf[0],last=this.nStepBuf[this.nStepBuf.length-1];
       this.perTree.add(this.maxPriority,{
-        s:first.s,a:first.a,r:R,
-        s2:last.s2,done:last.done,
+        s:first.s,a:first.a,r:R,s2:last.s2,done:last.done,
         gamma:Math.pow(this.gamma,this.nStepBuf.length)
       });
       this.nStepBuf.shift();
@@ -1620,7 +1700,7 @@ class DQNAgent{
   }
   replay(){
     if(this.perTree.size<this.batchSize*2)return 0;
-    let totalLoss=0;
+    let totalLoss=0,trainedCount=0;
     this.perBeta=Math.min(1.0,this.perBeta+this.perBetaInc);
     const total=this.perTree.total();
     if(total<=0)return 0;
@@ -1637,38 +1717,63 @@ class DQNAgent{
     if(!samples.length)return 0;
     const maxW=Math.max(...samples.map(s=>s.w));
     for(const exp of samples){
-      const wn=exp.w/maxW; // normalized IS weight
-      const q=this.qNet.forward(exp.s);
-      const target=Float32Array.from(q);
-      if(exp.done){
-        target[exp.a]=exp.r;
-      }else{
-        // Double DQN: online selects action, target evaluates
-        const bestA=rlArgmax(this.qNet.forward(exp.s2));
-        const nextQ=this.targetNet.forward(exp.s2);
-        target[exp.a]=exp.r+(exp.gamma||this.gamma)*nextQ[bestA];
+      const wn=exp.w/maxW;
+      let maxTdErr=0;
+      for(let h=0;h<this.nHeads;h++){
+        // Bootstrapped training: each head sees ~80% of experiences
+        if(Math.random()>this.bootstrapP)continue;
+        const q=this.qNets[h].forward(exp.s);
+        const target=new Float32Array(this.actionSize);
+        for(let i=0;i<this.actionSize;i++)target[i]=q[i];
+        if(exp.done){
+          target[exp.a]=exp.r;
+        }else{
+          // Double DQN per head
+          const bestA=rlArgmax(this.qNets[h].forward(exp.s2));
+          const nextQ=this.targetNets[h].forward(exp.s2);
+          target[exp.a]=exp.r+(exp.gamma||this.gamma)*nextQ[bestA];
+        }
+        const tdErr=Math.abs(target[exp.a]-q[exp.a]);
+        maxTdErr=Math.max(maxTdErr,tdErr);
+        totalLoss+=this.qNets[h].trainDueling(exp.s,target,this.lr*wn);
+        trainedCount++;
       }
-      // Update priority with TD error
-      const tdErr=Math.abs(target[exp.a]-q[exp.a]);
-      const newP=Math.pow(tdErr+this.perEps,this.perAlpha);
+      const newP=Math.pow(maxTdErr+this.perEps,this.perAlpha);
       this.perTree.update(exp.treeIdx,newP);
       this.maxPriority=Math.max(this.maxPriority,newP);
-      // Weighted training step
-      totalLoss+=this.qNet.trainStep(exp.s,target,this.lr*wn);
     }
     this.trainSteps++;
-    if(this.trainSteps%this.targetUpdateFreq===0)this.targetNet=this.qNet.clone();
+    if(this.trainSteps%this.targetUpdateFreq===0){
+      for(let h=0;h<this.nHeads;h++)this.targetNets[h]=this.qNets[h].clone();
+    }
     if(this.epsilon>this.epsilonMin)this.epsilon*=this.epsilonDecay;
     if(this.lr>this.lrMin)this.lr*=this.lrDecay;
-    return totalLoss/samples.length;
+    return totalLoss/Math.max(1,trainedCount);
   }
   toJSON(){
-    return{qNet:this.qNet.toJSON(),epsilon:this.epsilon,trainSteps:this.trainSteps,totalReward:this.totalReward,lr:this.lr};
+    return{
+      nHeads:this.nHeads,
+      qNets:this.qNets.map(n=>n.toJSON()),
+      epsilon:this.epsilon,trainSteps:this.trainSteps,
+      totalReward:this.totalReward,lr:this.lr
+    };
   }
   static fromJSON(d){
-    const a=new DQNAgent(d.qNet.sizes[0],d.qNet.sizes[d.qNet.sizes.length-1]);
-    a.qNet=RLNetwork.fromJSON(d.qNet);
-    a.targetNet=a.qNet.clone();
+    const nH=d.nHeads||d.qNets?.length||1;
+    const s0=d.qNets?d.qNets[0].stateSize:(d.qNet?.sizes?.[0]||36);
+    const a0=d.qNets?d.qNets[0].actionSize:(d.qNet?.sizes?.[d.qNet.sizes.length-1]||3);
+    const a=new DQNAgent(s0,a0);
+    if(d.qNets){
+      a.nHeads=nH;
+      a.qNets=d.qNets.map(n=>DuelingNetwork.fromJSON(n));
+      a.targetNets=a.qNets.map(n=>n.clone());
+    }else if(d.qNet){
+      // Backward compatibility: single RLNetwork → wrap as single head
+      const net=new DuelingNetwork(s0,a0,[]);
+      net.net=RLNetwork.fromJSON(d.qNet);
+      a.nHeads=1;
+      a.qNets=[net];a.targetNets=[net.clone()];
+    }
     a.epsilon=d.epsilon||0.01;
     a.trainSteps=d.trainSteps||0;
     a.totalReward=d.totalReward||0;
@@ -1677,15 +1782,16 @@ class DQNAgent{
   }
 }
 
-// --- Market Environment (Gym-style, 30-dim state, Sharpe-based reward) ---
+// --- Market Environment (Gym-style, 36-dim Rainbow state, Sortino reward) ---
 class MarketEnv{
   constructor(navArray, code){
     this.navs=navArray;
     this._code=code||'';
-    this.lookback=60; // 60-day lookback for long-term indicators
+    this.lookback=60;
     this.fee=0.0015;
     this.holdingDays=0;
     this._returns=[];
+    this._downReturns=[];
   }
   reset(){
     this.idx=this.lookback;
@@ -1696,6 +1802,7 @@ class MarketEnv{
     this.trades=0;
     this.holdingDays=0;
     this._returns=[];
+    this._downReturns=[];
     return this._state();
   }
   _state(){
@@ -1705,31 +1812,31 @@ class MarketEnv{
     const n=p.length;
     const rets=[];
     for(let i=1;i<n;i++)rets.push((p[i]-p[i-1])/p[i-1]);
-    // Helpers
+    // --- Helpers ---
     const sum=(a,k)=>{const sl=a.slice(-k);return sl.reduce((s,v)=>s+v,0);};
     const std=(a)=>{if(a.length<2)return 0;const m=a.reduce((s,v)=>s+v,0)/a.length;return Math.sqrt(a.reduce((s,v)=>s+(v-m)**2,0)/a.length);};
     const rsiCalc=(a,period)=>{const r=a.slice(-period);let g=0,l=0;r.forEach(v=>{if(v>0)g+=v;else l+=Math.abs(v);});if(!l)return 100;if(!g)return 0;return 100-100/(1+g/l);};
     const ema=(arr,period)=>{const k=2/(period+1);let e=arr[0];for(let i=1;i<arr.length;i++)e=arr[i]*k+e*(1-k);return e;};
     const ma=(arr,k)=>arr.slice(-k).reduce((s,v)=>s+v,0)/Math.min(arr.length,k);
     const ret1=rets[rets.length-1]||0;
-    // MACD
+    // --- MACD ---
     const ema12=ema(p,12),ema26=ema(p,26);
     const macdVal=(ema12-ema26)/cur;
     const ret5=sum(rets,5),ret10=sum(rets,10);
-    const macdHist=ret5*2-ret10; // momentum acceleration proxy
-    // MA deviations
+    const macdHist=ret5*2-ret10;
+    // --- MA deviations ---
     const ma20=ma(p,20);
     const ma60=ma(p,Math.min(60,p.length));
-    // Bollinger Bands %B
+    // --- Bollinger Bands %B ---
     const prices20=p.slice(-20);
     const bbMa=prices20.reduce((s,v)=>s+v,0)/prices20.length;
     const bbStd=Math.sqrt(prices20.reduce((s,v)=>s+(v-bbMa)**2,0)/prices20.length);
     const bbUpper=bbMa+2*bbStd,bbLower=bbMa-2*bbStd;
     const bbPctB=bbUpper!==bbLower?(cur-bbLower)/(bbUpper-bbLower):0.5;
-    // Drawdowns
+    // --- Drawdowns ---
     const maxP20=Math.max(...p.slice(-20));
     const maxP60=Math.max(...p);
-    // ATR proxy & trend
+    // --- ATR proxy & trend ---
     const atr14=rets.slice(-14).reduce((s,v)=>s+Math.abs(v),0)/14;
     const recent20=rets.slice(-20);
     const upDays=recent20.filter(r=>r>0).length;
@@ -1737,13 +1844,39 @@ class MarketEnv{
     const mu20=recent20.reduce((s,v)=>s+v,0)/20;
     const sd20=std(recent20);
     const momQ=sd20>0?mu20/sd20:0;
-    // Position info
+    // --- Position info ---
     const pnl=this.pos===1?(cur-this.entryPrice)/this.entryPrice:0;
-    // Backtest features
+    // --- Backtest features ---
     const btR=typeof btResults!=='undefined'?btResults[this._code]:null;
     const btSharpe=btR?btR.sharpe:0;
     const btKelly=btR?btR.finalKelly:0.05;
     const btRSI=btR?.lastRSI||50;
+    // === NEW: 6 advanced features [30-35] ===
+    // [30] Autocorrelation lag-1 (Hurst proxy): >0=trending, <0=mean-reverting
+    const r20=rets.slice(-20);
+    const muR=r20.reduce((s,v)=>s+v,0)/r20.length;
+    let acNum=0,acDen=0;
+    for(let i=1;i<r20.length;i++){acNum+=(r20[i]-muR)*(r20[i-1]-muR);acDen+=(r20[i]-muR)**2;}
+    const autoCorr=acDen>0?acNum/acDen:0;
+    // [31] Volatility regime: short-term vol / long-term vol (>1=expanding)
+    const vol5=std(rets.slice(-5));
+    const vol60=std(rets)||0.0001;
+    const volRegime=vol5/vol60;
+    // [32] Return skewness (20d) - asymmetry of return distribution
+    const sdR=std(r20)||0.0001;
+    const skew=r20.reduce((s,v)=>s+Math.pow((v-muR)/sdR,3),0)/r20.length;
+    // [33] Excess kurtosis (20d) - heavy tails = regime change risk
+    const kurt=r20.reduce((s,v)=>s+Math.pow((v-muR)/sdR,4),0)/r20.length-3;
+    // [34] Range position: where in 60d range (0=bottom, 1=top)
+    const minP=Math.min(...p);
+    const rangePos=(maxP60-minP)>0?(cur-minP)/(maxP60-minP):0.5;
+    // [35] Consecutive direction streak (+1/day up, -1/day down)
+    let streak=0;
+    for(let i=rets.length-1;i>=Math.max(0,rets.length-10);i--){
+      if(streak===0)streak=rets[i]>0?1:-1;
+      else if((rets[i]>0&&streak>0)||(rets[i]<0&&streak<0))streak+=streak>0?1:-1;
+      else break;
+    }
     return Float32Array.from([
       rlClip(ret1*100,-5,5),                                    // [0] 1d momentum
       rlClip(sum(rets,5)*100,-15,15),                           // [1] 5d momentum
@@ -1754,7 +1887,7 @@ class MarketEnv{
       rlClip(std(rets.slice(-20))*100,0,10),                    // [6] 20d volatility
       rlClip(std(rets)*100,0,15),                               // [7] 60d volatility
       (rsiCalc(rets,14)-50)/50,                                 // [8] RSI(14)
-      (rsiCalc(rets,7)-50)/50,                                  // [9] RSI(7) short-term
+      (rsiCalc(rets,7)-50)/50,                                  // [9] RSI(7)
       rlClip(macdVal*100,-5,5),                                 // [10] MACD
       rlClip(macdHist*100,-3,3),                                // [11] MACD histogram
       rlClip((cur-ma20)/ma20*10,-3,3),                          // [12] MA20 deviation
@@ -1771,7 +1904,13 @@ class MarketEnv{
       0,0,0,0,                                                   // [23-26] macro/sentiment/capital/intl
       rlClip(btSharpe,-2,3),                                    // [27] backtest Sharpe
       rlClip(btKelly*10,-1,3),                                  // [28] backtest Kelly
-      (btRSI-50)/50                                              // [29] backtest RSI
+      (btRSI-50)/50,                                             // [29] backtest RSI
+      rlClip(autoCorr,-1,1),                                    // [30] Hurst proxy (autocorrelation)
+      rlClip(volRegime,0,4),                                    // [31] volatility regime
+      rlClip(skew,-3,3),                                        // [32] return skewness
+      rlClip(kurt,-2,10),                                       // [33] excess kurtosis
+      rlClip(rangePos,0,1),                                     // [34] range position
+      rlClip(streak/5,-1,1)                                     // [35] direction streak
     ]);
   }
   step(action){
@@ -1786,49 +1925,50 @@ class MarketEnv{
       this.pos=1;this.entryPrice=cur;
       this.portfolio*=(1-this.fee);this.trades++;
       this.holdingDays=0;
-      reward=-this.fee*5; // transaction cost penalty
+      reward=-this.fee*5;
     }else if(action===2&&this.pos===1){ // SELL
       const pnl=(cur-this.entryPrice)/this.entryPrice;
       this.portfolio*=(1+pnl)*(1-this.fee);
       this.pos=0;this.entryPrice=0;this.trades++;
-      // Risk-adjusted reward (Sharpe-inspired)
       const holdFactor=Math.max(1,Math.sqrt(this.holdingDays/5));
       reward=pnl*10/holdFactor;
-      if(pnl>0.03)reward+=0.15;  // profit bonus
-      if(pnl>0.08)reward+=0.25;  // big profit bonus
-      if(pnl<-0.03)reward-=0.1;  // loss penalty
-      if(pnl<-0.08)reward-=0.3;  // big loss penalty
+      if(pnl>0.03)reward+=0.15;
+      if(pnl>0.08)reward+=0.25;
+      if(pnl<-0.03)reward-=0.1;
+      if(pnl<-0.08)reward-=0.3;
       this.holdingDays=0;
     }else if(action===1&&this.pos===1){
-      reward=dr*3; // already long
+      reward=dr*3;
       this.holdingDays++;
     }else if(action===2&&this.pos===0){
-      reward=-Math.abs(dr)*1.5; // invalid sell
+      reward=-Math.abs(dr)*1.5;
     }else if(this.pos===1){
-      reward=dr*5; // holding position
+      reward=dr*5;
       this.holdingDays++;
     }else{
-      reward=dr<0?Math.abs(dr)*3:-dr*0.5; // cash: reward dodging drops
+      reward=dr<0?Math.abs(dr)*3:-dr*0.5;
     }
-    // Track portfolio returns for rolling Sharpe
+    // --- Track returns for Sortino ---
     const stepReturn=oldPf>0?(this.portfolio-oldPf)/oldPf:0;
     this._returns.push(stepReturn);
-    // Rolling Sharpe bonus/penalty
+    if(stepReturn<0)this._downReturns.push(stepReturn);
+    // --- Rolling Sortino (only penalize downside vol) ---
     if(this._returns.length>=20&&this._returns.length%10===0){
       const rc=this._returns.slice(-20);
       const mu=rc.reduce((s,v)=>s+v,0)/rc.length;
-      const sd=Math.sqrt(rc.reduce((s,v)=>s+(v-mu)**2,0)/rc.length);
-      const sharpe=sd>0?mu/sd:0;
-      reward+=rlClip(sharpe*0.3,-0.2,0.2);
+      const downRc=rc.filter(r=>r<0);
+      const downDev=downRc.length>1?Math.sqrt(downRc.reduce((s,v)=>s+v*v,0)/downRc.length):0.0001;
+      const sortino=downDev>0?mu/downDev:0;
+      reward+=rlClip(sortino*0.2,-0.15,0.3);
     }
-    // Graduated drawdown penalty
+    // --- Graduated drawdown penalty ---
     this.peakPf=Math.max(this.peakPf,this.portfolio);
     const mdd=(this.portfolio-this.peakPf)/this.peakPf;
     if(mdd<-0.03)reward-=0.02;
     if(mdd<-0.05)reward-=0.05;
     if(mdd<-0.10)reward-=0.15;
     if(mdd<-0.20)reward-=0.3;
-    // Overtrade penalty
+    // --- Overtrade penalty ---
     const tradeRate=this.trades/(this.idx-this.lookback+1);
     if(tradeRate>0.25)reward-=0.03;
     if(tradeRate>0.4)reward-=0.05;
@@ -1836,26 +1976,33 @@ class MarketEnv{
   }
 }
 
-// --- RL Training Pipeline (Enhanced: 80 episodes, LR scheduling) ---
+// --- RL Training Pipeline (Rainbow: Dueling+Double+PER+N-Step+Ensemble+Curriculum) ---
 class RLTrainer{
   constructor(){
     this.agent=null;
     this.isTraining=false;
     this.episode=0;
     this.maxEpisodes=80;
-    this.metrics={rewards:[],losses:[],portfolios:[],winRate:0,avgReturn:0,sharpe:0,bestReturn:-Infinity,totalTrades:0,mdd:0};
+    this.metrics={rewards:[],losses:[],portfolios:[],winRate:0,avgReturn:0,sharpe:0,sortino:0,bestReturn:-Infinity,totalTrades:0,mdd:0};
     this._data=[];
   }
   prepare(){
     this._data=[];
     for(const code of Object.keys(fundHistoryData)){
       const hd=fundHistoryData[code];
-      if(!hd||!hd.navs||hd.navs.length<80)continue; // 60 lookback + 20 min steps
+      if(!hd||!hd.navs||hd.navs.length<80)continue;
       const navArr=hd.navs.map(n=>({date:n[0],nav:parseFloat(n[1])})).filter(n=>!isNaN(n.nav)&&n.nav>0);
-      if(navArr.length>=80)this._data.push({code,navs:navArr});
+      if(navArr.length<80)continue;
+      // Pre-compute volatility for curriculum sorting
+      const rets=[];
+      for(let i=1;i<navArr.length;i++)rets.push((navArr[i].nav-navArr[i-1].nav)/navArr[i-1].nav);
+      const vol=rets.length>1?Math.sqrt(rets.reduce((s,v)=>s+v*v,0)/rets.length):0;
+      this._data.push({code,navs:navArr,vol});
     }
+    // Sort by volatility ascending (curriculum: easy → hard)
+    this._data.sort((a,b)=>a.vol-b.vol);
     this.agent=new DQNAgent(RL_STATE_SIZE,RL_ACTION_SIZE);
-    this.metrics={rewards:[],losses:[],portfolios:[],winRate:0,avgReturn:0,sharpe:0,bestReturn:-Infinity,totalTrades:0,mdd:0};
+    this.metrics={rewards:[],losses:[],portfolios:[],winRate:0,avgReturn:0,sharpe:0,sortino:0,bestReturn:-Infinity,totalTrades:0,mdd:0};
     this.episode=0;
     return this._data.length;
   }
@@ -1865,8 +2012,17 @@ class RLTrainer{
     for(let ep=0;ep<this.maxEpisodes&&this.isTraining;ep++){
       this.episode=ep;
       let epR=0,epL=0,epSteps=0,epPfs=[],epTrades=0,epMDD=0;
-      const shuffled=[...this._data].sort(()=>Math.random()-0.5);
-      for(const{code,navs}of shuffled){
+      // Curriculum: first 30% episodes use easy data (low vol), then all data
+      const curProgress=ep/this.maxEpisodes;
+      let trainData;
+      if(curProgress<0.3){
+        // Use bottom 60% by volatility
+        const cutoff=Math.max(1,Math.ceil(this._data.length*0.6));
+        trainData=[...this._data.slice(0,cutoff)].sort(()=>Math.random()-0.5);
+      }else{
+        trainData=[...this._data].sort(()=>Math.random()-0.5);
+      }
+      for(const{code,navs}of trainData){
         const env=new MarketEnv(navs,code);
         let state=env.reset(),done=false;
         while(!done){
@@ -1900,6 +2056,10 @@ class RLTrainer{
         const mu=rc.reduce((s,v)=>s+v,0)/rc.length;
         const sd=Math.sqrt(rc.reduce((s,v)=>s+(v-mu)**2,0)/rc.length);
         this.metrics.sharpe=sd>0?mu/sd:0;
+        // Sortino: only downside deviation
+        const downRc=rc.filter(r=>r<0);
+        const downDev=downRc.length>1?Math.sqrt(downRc.reduce((s,v)=>s+v*v,0)/downRc.length):0.01;
+        this.metrics.sortino=downDev>0?mu/downDev:0;
       }
       if(onProgress)onProgress(ep+1,this.maxEpisodes,this.metrics);
       if(ep%2===0)await new Promise(r=>setTimeout(r,0));
@@ -1925,7 +2085,7 @@ class RLTrainer{
       env.pos=simPos?1:0;
       if(simPos)env.entryPrice=simPos.avgCost;
       const state=env._state();
-      // Inject live macro/sentiment/capital/international signals (indices 23-26)
+      // Inject live signals (indices 23-26)
       if(_dataIntelLoaded){
         const ds=generateDataSignal();
         state[23]=rlClip((ds.score-50)/25,-2,2);
@@ -1937,14 +2097,33 @@ class RLTrainer{
           state[26]=rlClip((gSent.score-50)/25,-2,2);
         }
       }
-      const q=this.agent.getQValues(state);
-      const action=rlArgmax(q);
-      const probs=rlSoftmax(Array.from(q));
+      // Ensemble Q-values with uncertainty
+      const ens=this.agent.getEnsembleQ(state);
+      const action=rlArgmax(ens.qMean);
+      const probs=rlSoftmax(ens.qMean);
+      // Conviction from ensemble agreement
+      const voteCounts=[0,0,0];
+      ens.votes.forEach(v=>voteCounts[v]++);
+      const maxVotes=Math.max(...voteCounts);
+      const majorityAction=voteCounts.indexOf(maxVotes);
+      const agreement=maxVotes/ens.votes.length; // 1.0=unanimous, 0.33=split
+      // Uncertainty = mean std across actions
+      const avgUncertainty=ens.qStd.reduce((s,v)=>s+v,0)/ens.qStd.length;
+      // Conviction level for position sizing
+      let conviction,positionPct;
+      if(agreement>=0.99){conviction='强';positionPct=100;}
+      else if(agreement>=0.66){conviction='中';positionPct=60;}
+      else{conviction='弱';positionPct=30;}
       signals[code]={
-        action,
-        actionName:RL_ACTION_NAMES[action],
-        confidence:Math.round(probs[action]*100),
-        qValues:Array.from(q),
+        action:majorityAction,
+        actionName:RL_ACTION_NAMES[majorityAction],
+        confidence:Math.round(probs[majorityAction]*100),
+        conviction,
+        positionPct,
+        uncertainty:avgUncertainty,
+        qValues:ens.qMean,
+        qStd:ens.qStd,
+        headVotes:ens.votes,
         probabilities:probs
       };
     }
@@ -1969,8 +2148,8 @@ class RLTrainer{
       const raw=localStorage.getItem(RL_STORAGE_KEY);
       if(!raw)return false;
       const d=JSON.parse(raw);
-      // 检查模型维度是否匹配(18→30迁移兼容)
-      const savedSize = d.agent?.qNet?.sizes?.[0] || 0;
+      // 检查模型维度是否匹配(v3: Dueling+Ensemble 36维)
+      const savedSize = d.agent?.qNets?.[0]?.stateSize || d.agent?.qNet?.sizes?.[0] || 0;
       if(savedSize !== RL_STATE_SIZE){
         console.warn(`RL模型维度不匹配(保存:${savedSize} 当前:${RL_STATE_SIZE})，需重新训练`);
         localStorage.removeItem(RL_STORAGE_KEY);
@@ -4907,9 +5086,11 @@ function renderRLBrief(){
   if(buys>0)txt+=`买${buys} `;
   if(sells>0)txt+=`卖${sells} `;
   if(holds>0)txt+=`持${holds}`;
-  const avgConf=Math.round(sigs.reduce((s,v)=>s+v.confidence,0)/sigs.length);
+  // Show average conviction from ensemble
+  const strongCount=sigs.filter(s=>s.conviction==='强').length;
+  const label=strongCount===sigs.length?'强':'混';
   el.style.color=buys>sells?'var(--red)':sells>buys?'var(--green)':'var(--sub)';
-  el.textContent=txt.trim()+` (${avgConf}%)`;
+  el.textContent=txt.trim()+` ·${label}`;
 }
 
 function renderRLBrain(){
@@ -4924,7 +5105,7 @@ function renderRLBrain(){
 
   let html='';
   // Status + Metrics card
-  html+=`<div class="rl-card"><div class="rl-card-title">🧠 DQN强化学习引擎</div>`;
+  html+=`<div class="rl-card"><div class="rl-card-title">🧠 Rainbow DQN 强化学习引擎</div>`;
   html+=`<div class="rl-status"><span class="rl-status-dot ${sClass}"></span><span class="rl-status-text">${sTxt}</span></div>`;
   if(_rlTraining&&rlTrainer){
     const pct=Math.round((rlTrainer.episode+1)/rlTrainer.maxEpisodes*100);
@@ -4940,6 +5121,8 @@ function renderRLBrain(){
     html+=`<div class="rl-metric"><span class="rl-metric-label">训练轮次</span><span class="rl-metric-val">${(rlTrainer.episode||0)+1}</span></div>`;
     html+=`<div class="rl-metric"><span class="rl-metric-label">探索率ε</span><span class="rl-metric-val">${rlTrainer.agent.epsilon.toFixed(3)}</span></div>`;
     html+=`<div class="rl-metric"><span class="rl-metric-label">学习率</span><span class="rl-metric-val">${(rlTrainer.agent.lr*10000).toFixed(1)}e-4</span></div>`;
+    html+=`<div class="rl-metric"><span class="rl-metric-label">Sortino</span><span class="rl-metric-val">${(m.sortino||0).toFixed(2)}</span></div>`;
+    html+=`<div class="rl-metric"><span class="rl-metric-label">Ensemble</span><span class="rl-metric-val">${rlTrainer.agent.nHeads}头</span></div>`;
     html+=`</div>`;
     if(m.portfolios&&m.portfolios.length>1)html+=renderRLChart(m.portfolios,'收益率%');
   }
@@ -4949,46 +5132,46 @@ function renderRLBrain(){
   }else{
     const dc=Object.keys(fundHistoryData).length;
     html+=`<button class="rl-train-btn start" onclick="startRLTraining()" ${dc<1?'disabled title="需要先加载历史数据"':''}>`;
-    html+=hasModel?'🔄 重新训练 (Enhanced DQN)':'🚀 开始训练 (Enhanced DQN)';
+    html+=hasModel?'🔄 重新训练 (Rainbow DQN)':'🚀 开始训练 (Rainbow DQN)';
     html+=`</button>`;
   }
   html+=`</div>`;
 
   // RL Signals card
   if(hasModel&&Object.keys(_rlSignals).length>0){
-    html+=`<div class="rl-card"><div class="rl-card-title">📊 RL决策信号 <span style="font-size:9px;color:var(--sub);font-weight:400">Q值驱动</span></div>`;
+    html+=`<div class="rl-card"><div class="rl-card-title">📊 RL集成决策信号 <span style="font-size:9px;color:var(--sub);font-weight:400">Ensemble投票 · 置信度仓位</span></div>`;
     for(const code of Object.keys(_rlSignals)){
       const sig=_rlSignals[code];
       const name=fundName(code);
       const ac=sig.action===1?'buy':sig.action===2?'sell':'hold';
-      // Q-value bar visualization
-      const qAbs=sig.qValues.map(v=>Math.abs(v));
+      const qAbs=(sig.qValues||[0,0,0]).map(v=>Math.abs(v));
       const qMax=Math.max(...qAbs,0.01);
+      // Conviction color
+      const cvColor=sig.conviction==='强'?'#22d3ee':sig.conviction==='中'?'#f59e0b':'#ef4444';
       html+=`<div class="rl-signal-row">`;
       html+=`<span class="rl-signal-name">${name}</span>`;
       html+=`<div class="rl-qbar">`;
-      html+=`<div class="rl-qbar-seg" style="width:${qAbs[0]/qMax*30}px;background:var(--sub);opacity:0.5" title="Q(持有)=${sig.qValues[0].toFixed(2)}"></div>`;
-      html+=`<div class="rl-qbar-seg" style="width:${qAbs[1]/qMax*30}px;background:var(--red);opacity:0.6" title="Q(买入)=${sig.qValues[1].toFixed(2)}"></div>`;
-      html+=`<div class="rl-qbar-seg" style="width:${qAbs[2]/qMax*30}px;background:var(--green);opacity:0.6" title="Q(卖出)=${sig.qValues[2].toFixed(2)}"></div>`;
+      html+=`<div class="rl-qbar-seg" style="width:${qAbs[0]/qMax*30}px;background:var(--sub);opacity:0.5" title="Q(持有)=${(sig.qValues[0]||0).toFixed(2)}"></div>`;
+      html+=`<div class="rl-qbar-seg" style="width:${qAbs[1]/qMax*30}px;background:var(--red);opacity:0.6" title="Q(买入)=${(sig.qValues[1]||0).toFixed(2)}"></div>`;
+      html+=`<div class="rl-qbar-seg" style="width:${qAbs[2]/qMax*30}px;background:var(--green);opacity:0.6" title="Q(卖出)=${(sig.qValues[2]||0).toFixed(2)}"></div>`;
       html+=`</div>`;
       html+=`<span class="rl-signal-action ${ac}">${sig.actionName}</span>`;
-      html+=`<span class="rl-signal-conf">${sig.confidence}%</span>`;
+      html+=`<span style="font-size:9px;color:${cvColor};font-weight:700;min-width:16px" title="置信=${sig.conviction} 仓位=${sig.positionPct}% 不确定性=${(sig.uncertainty||0).toFixed(3)} 投票=[${(sig.headVotes||[]).join(',')}]">${sig.conviction}${sig.positionPct}%</span>`;
       html+=`</div>`;
     }
     html+=`</div>`;
   }
 
   // Architecture info
-  html+=`<div class="rl-card"><div class="rl-card-title">⚙️ 模型架构</div>`;
+  html+=`<div class="rl-card"><div class="rl-card-title">⚙️ Rainbow DQN 架构</div>`;
   html+=`<div style="font-size:10px;color:var(--sub);line-height:1.6">`;
-  html+=`<b>算法:</b> Double DQN + <b style="color:#f59e0b">PER优先回放</b> + <b style="color:#8b5cf6">N-Step(3)</b> + Adam + 梯度裁剪 + LR衰减<br>`;
-  html+=`<b>网络:</b> [${RL_STATE_SIZE}] → 128(ReLU) → 64(ReLU) → [${RL_ACTION_SIZE}]<br>`;
-  html+=`<b>状态(30维):</b> 动量×5(1/5/10/20/60日) · 波动率×3 · RSI(14/7) · MACD+直方图 · MA偏离(20/60) · <b style="color:#22d3ee">布林%B</b> · 回撤(20/60) · <b style="color:#22d3ee">ATR</b> · <b style="color:#22d3ee">趋势强度</b> · <b style="color:#22d3ee">动量质量</b> · 持仓+PnL+<b style="color:#22d3ee">持仓时长</b> · 宏观+舆情+资金+<b style="color:#f59e0b">国际舆情</b> · 回测Sharpe/Kelly/RSI<br>`;
-  html+=`<b>动作:</b> 持有(0) / 买入(1) / 卖出(2)<br>`;
-  html+=`<b>奖励:</b> <b style="color:#f59e0b">风险调整收益(Sharpe)</b> · 持仓时长因子 · 阶梯回撤惩罚(3/5/10/20%) · 过度交易惩罚 · 滚动Sharpe奖励<br>`;
-  html+=`<b>超参:</b> γ=0.99 · ε衰减=0.995→0.01 · batch=32 · PER记忆=30K · 目标网更新=500步 · LR=5e-4→5e-5<br>`;
-  html+=`<b>训练:</b> 80轮 · 基于全部持仓/自选基金历史NAV(近1年) · 3步TD学习<br>`;
-  html+=`<b>闭环:</b> <span style="color:#22d3ee">回测特征注入 → 三引擎投票 → 模拟盘在线学习(Immediate PER) → RL信号更新</span>`;
+  html+=`<b>算法:</b> <b style="color:#f59e0b">Dueling</b> + Double + <b style="color:#f59e0b">PER</b> + <b style="color:#8b5cf6">N-Step(3)</b> + <b style="color:#22d3ee">Bootstrapped Ensemble(×${RL_ENSEMBLE_K})</b> + Adam + 梯度裁剪 + LR衰减<br>`;
+  html+=`<b>网络:</b> [${RL_STATE_SIZE}] → 128(ReLU) → 64(ReLU) → <b style="color:#f59e0b">V(s)[1] + A(s,a)[${RL_ACTION_SIZE}]</b> × ${RL_ENSEMBLE_K}头<br>`;
+  html+=`<b>状态(36维):</b> 动量×5 · 波动率×3 · RSI(14/7) · MACD+直方图 · MA偏离(20/60) · 布林%B · 回撤(20/60) · ATR · 趋势 · 动量Q · 持仓+PnL+时长 · 宏观+舆情+资金+国际 · 回测Sharpe/Kelly/RSI · <b style="color:#22d3ee">Hurst代理 · 波动率体制 · 偏度 · 峰度 · 范围位置 · 连续方向</b><br>`;
+  html+=`<b>奖励:</b> <b style="color:#f59e0b">Sortino风险调整</b> · 持仓因子 · 阶梯回撤惩罚 · 过度交易惩罚 · 滚动Sortino奖励<br>`;
+  html+=`<b>训练:</b> 80轮 <b style="color:#22d3ee">课程学习</b>(低波动→高波动) · γ=0.99 · PER=20K · Bootstrap概率=80%<br>`;
+  html+=`<b>信号:</b> <b style="color:#22d3ee">Ensemble多数投票</b> · 置信度仓位(强100%/中60%/弰30%) · 认知不确定性量化<br>`;
+  html+=`<b>闭环:</b> <span style="color:#22d3ee">回测特征注入 → 三引擎投票 → 模拟盘在线学习 → Ensemble信号更新</span>`;
   html+=`</div></div>`;
 
   container.innerHTML=html;
@@ -5049,16 +5232,17 @@ function stopRLTraining(){
 // Build RL context for AI prompt
 function buildRLContext(){
   if(!_rlModelLoaded||!rlTrainer?.agent||!Object.keys(_rlSignals).length)return'';
-  let ctx='\n【🧠 RL强化学习信号 (Enhanced DQN)】\n';
-  ctx+=`模型: Double DQN(30维·PER·N-Step) · 已训练${rlTrainer.episode+1}轮 · ${rlTrainer.agent.trainSteps}步 · 含回测特征+在线学习\n`;
-  ctx+=`指标: 胜率${(rlTrainer.metrics.winRate||0).toFixed(0)}% · 平均收益${(rlTrainer.metrics.avgReturn||0).toFixed(1)}% · Sharpe${(rlTrainer.metrics.sharpe||0).toFixed(2)} · MDD${(rlTrainer.metrics.mdd||0).toFixed(1)}%\n`;
-  ctx+='个股RL决策:\n';
+  let ctx='\n【🧠 Rainbow DQN 强化学习信号 (Dueling+Ensemble)】\n';
+  ctx+=`模型: Rainbow DQN(36维·Dueling·PER·N-Step·${rlTrainer.agent.nHeads}头Ensemble) · 已训练${rlTrainer.episode+1}轮 · ${rlTrainer.agent.trainSteps}步 · 课程学习\n`;
+  ctx+=`指标: 胜率${(rlTrainer.metrics.winRate||0).toFixed(0)}% · 平均收益${(rlTrainer.metrics.avgReturn||0).toFixed(1)}% · Sharpe${(rlTrainer.metrics.sharpe||0).toFixed(2)} · Sortino${(rlTrainer.metrics.sortino||0).toFixed(2)} · MDD${(rlTrainer.metrics.mdd||0).toFixed(1)}%\n`;
+  ctx+='个股Rainbow DQN集成决策:\n';
   for(const[code,sig]of Object.entries(_rlSignals)){
     const name=fundName(code);
-    const qStr=sig.qValues.map(v=>v.toFixed(2)).join('/');
-    ctx+=`  ${name}(${code}): ${sig.actionName}(置信${sig.confidence}%) Q[持/买/卖]=[${qStr}]\n`;
+    const qStr=(sig.qValues||[]).map(v=>(v||0).toFixed(2)).join('/');
+    const votes=(sig.headVotes||[]).map(v=>RL_ACTION_NAMES[v]).join(',');
+    ctx+=`  ${name}(${code}): ${sig.actionName} 置信=${sig.conviction}(仓位${sig.positionPct}%) 投票=[${votes}] 不确定性=${(sig.uncertainty||0).toFixed(3)} Q=[${qStr}]\n`;
   }
-  ctx+='⚠️ RL信号已融合30维特征(含布林/ATR/趋势强度/国际舆情)+PER优先回放+N-Step学习，并通过模拟盘在线学习持续进化。三引擎投票共识: AI/RL/回测多数票决策，分歧时缩减仓位。\n';
+  ctx+='⚠️ Rainbow DQN: 36维特征(Hurst/偏度/峰度/波动率体制) + Dueling V/A分离 + 集成多数投票 + 置信度仓位管理 + 认知不确定性量化。三引擎投票共识: AI/RL/回测多数票决策，分歧时缩减仓位。\n';
   return ctx;
 }
 
