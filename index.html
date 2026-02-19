@@ -1081,21 +1081,44 @@ function getMacroGeoAnalysis(){
   // 按影响力排序
   const sorted = [...activeEvents].sort((a,b) => Math.abs(b.impact)*b.confidence - Math.abs(a.impact)*a.confidence);
   
-  // 对每只持仓基金计算事件影响
+  // 对每只持仓基金计算事件影响（区分利好/利空板块）
   const fundImpacts = {};
-  holdings.forEach(h => {
-    const name = fundName(h.code).toLowerCase();
+  const allCodes = [...holdings.map(h=>h.code), ...watchlist.map(w=>w.code)];
+  [...new Set(allCodes)].forEach(code => {
+    const name = fundName(code).toLowerCase();
+    const fType = (fundType(code)||'').toLowerCase();
+    const nameAndType = name + ' ' + fType;
     let fundScore = 0;
     const matchedEvents = [];
     events.forEach(e => {
-      const match = e.fundKeywords.some(kw => name.includes(kw.toLowerCase()));
-      if(match){
-        fundScore += e.impact * e.confidence * 0.1;
-        matchedEvents.push({ id: e.id, name: e.name, icon: e.icon, impact: e.impact > 0 ? 'positive' : 'negative' });
+      // 检查是否匹配利好板块
+      const posMatch = (e.sectors.positive||[]).some(sec => nameAndType.includes(sec.toLowerCase()));
+      // 检查是否匹配利空板块
+      const negMatch = (e.sectors.negative||[]).some(sec => nameAndType.includes(sec.toLowerCase()));
+      // 检查关键词匹配
+      const kwMatch = (e.fundKeywords||[]).some(kw => nameAndType.includes(kw.toLowerCase()));
+      if(posMatch || negMatch || kwMatch){
+        let direction;
+        if(posMatch && !negMatch){
+          // 基金在利好板块 → 正向受益
+          direction = 'positive';
+          fundScore += Math.abs(e.impact) * e.confidence * 0.15;
+        } else if(negMatch && !posMatch){
+          // 基金在利空板块 → 负向受损
+          direction = 'negative';
+          fundScore -= Math.abs(e.impact) * e.confidence * 0.15;
+        } else if(kwMatch){
+          // 仅关键词匹配 → 按事件整体方向
+          direction = e.impact > 0 ? 'positive' : 'negative';
+          fundScore += e.impact * e.confidence * 0.08;
+        } else {
+          direction = 'neutral';
+        }
+        matchedEvents.push({ id: e.id, name: e.name, icon: e.icon, impact: direction, eventImpact: e.impact, confidence: e.confidence, advice: e.advice });
       }
     });
     if(matchedEvents.length > 0){
-      fundImpacts[h.code] = { score: fundScore, events: matchedEvents };
+      fundImpacts[code] = { score: fundScore, events: matchedEvents };
     }
   });
   
@@ -3532,11 +3555,26 @@ function computeTriEngineVote(code, aiSig, rlSig, btR){
 
   // === 4. 加权投票 ===
   const totalW = aiW + rlW + btW || 1;
-  const score = (aiVote * aiW + rlVote * rlW + btVote * btW) / totalW;
+  let score = (aiVote * aiW + rlVote * rlW + btVote * btW) / totalW;
 
   const votes = [aiVote, rlVote, btVote].filter(v => v !== 0);
   const buyVotes = votes.filter(v => v > 0).length;
   const sellVotes = votes.filter(v => v < 0).length;
+
+  // === 4.5 地缘事件偏置(Geopolitical Event Bias) ===
+  // 当基金与重大地缘事件强关联时，注入方向性偏置
+  const geoAnalysis = getMacroGeoAnalysis();
+  const geoFundImpact = geoAnalysis.fundImpacts[code];
+  let geoBias = 0;
+  if(geoFundImpact && geoFundImpact.events.length > 0){
+    geoBias = geoFundImpact.score; // 正=利好, 负=利空
+    // 加权注入: 地缘偏置最大贡献±0.35
+    const clampedBias = Math.max(-0.35, Math.min(0.35, geoBias));
+    // 混合: 原始得分80% + 地缘偏置20%(当多引擎无信号时地缘权重更大)
+    const engineActivity = Math.min(1, (Math.abs(aiVote) + Math.abs(rlVote) + Math.abs(btVote)) / 2);
+    const geoWeight = engineActivity < 0.5 ? 0.35 : 0.15; // 引擎信号弱时，地缘权重更大
+    score = score * (1 - geoWeight) + clampedBias * geoWeight;
+  }
 
   // === 5. 共识乘数 + 反羊群效应 ===
   let consensusMult = 1.0;
@@ -3595,10 +3633,15 @@ function computeTriEngineVote(code, aiSig, rlSig, btR){
   const finalScore = temporalScore * riskMult;
   let action = 'hold', actionLabel = '🔵 持有观望';
   const effConf = aiConf * consensusMult * riskMult;
-  if(finalScore > 0.2 && effConf >= 55){ action = 'buy'; actionLabel = '🟢 建议加仓'; }
-  else if(finalScore < -0.2 && effConf >= 50){ action = 'sell'; actionLabel = '🔴 建议减仓'; }
-  else if(finalScore > 0.1){ actionLabel = '🔵 偏多持有'; }
-  else if(finalScore < -0.1){ actionLabel = '🔵 偏空持有'; }
+  // 当有强地缘事件支撑时，降低买入阈值(更容易触发)
+  const hasStrongGeo = geoBias > 0.15;
+  const buyScoreThreshold = hasStrongGeo ? 0.12 : 0.2;
+  const buyConfThreshold = hasStrongGeo ? 40 : 55;
+  const sellScoreThreshold = hasStrongGeo && geoBias < -0.15 ? -0.12 : -0.2;
+  if(finalScore > buyScoreThreshold && (effConf >= buyConfThreshold || hasStrongGeo)){ action = 'buy'; actionLabel = '🟢 建议加仓'; }
+  else if(finalScore < sellScoreThreshold && effConf >= 50){ action = 'sell'; actionLabel = '🔴 建议减仓'; }
+  else if(finalScore > 0.08){ actionLabel = '🔵 偏多持有'; }
+  else if(finalScore < -0.08){ actionLabel = '🔵 偏空持有'; }
 
   // Kelly建议仓位(受组合风险调整)
   const kelly = btR?.finalKelly || 0.05;
@@ -3610,6 +3653,7 @@ function computeTriEngineVote(code, aiSig, rlSig, btR){
   return {
     action, actionLabel, score: finalScore, rawScore: score, consensusMult, riskMult,
     regime: _marketRegime, portRisk: portRisk.riskScore,
+    geoBias, geoEvents: geoFundImpact?.events || [],
     buyVotes, sellVotes,
     ai: { vote: aiVote, conf: aiConf, reason: aiReason, accuracy: _engineAccuracy.ai, label: aiVote>0?'买入':aiVote<0?'卖出':'持有' },
     rl: { vote: rlVote, conf: rlConf, conviction: rlSig?.conviction||'--', uncertainty: rlSig?.uncertainty||0, accuracy: _engineAccuracy.rl, label: rlSig?.actionName||'--' },
@@ -3825,22 +3869,35 @@ function renderActionGuide(){
 
     // 操作理由
     let reason = '';
+    // 地缶事件理由前缀
+    let geoReason = '';
+    if(vote.geoEvents && vote.geoEvents.length > 0){
+      const posGeo = vote.geoEvents.filter(e => e.impact === 'positive');
+      const negGeo = vote.geoEvents.filter(e => e.impact === 'negative');
+      if(posGeo.length > 0) geoReason += `🌍地缘利好: ${posGeo.map(e=>e.icon+e.name).join('、')}`;
+      if(negGeo.length > 0) geoReason += `${geoReason?'; ':''}⚠️地缘利空: ${negGeo.map(e=>e.icon+e.name).join('、')}`;
+    }
     if(vote.action === 'buy'){
       reason = `共识看多(${vote.buyVotes}/3票)`;
+      if(vote.geoBias > 0.1) reason += `，地缘事件强利好(+${vote.geoBias.toFixed(2)})`;
       if(vote.ai.conf > 0) reason += `，AI置信${vote.ai.conf}%`;
       if(vote.bt.sharpe > 0) reason += `，回测Sharpe ${vote.bt.sharpe.toFixed(1)}表现优`;
       if(td?.swingAdvice?.includes('买入')) reason += `，波段信号支撑`;
       reason += `。建议用总仓位的${(vote.bt.kelly*100).toFixed(0)}%(Kelly)分批加仓`;
     } else if(vote.action === 'sell'){
       reason = `共识偏空(${vote.sellVotes}/3票)`;
+      if(vote.geoBias < -0.1) reason += `，地编事件利空(${vote.geoBias.toFixed(2)})`;
       if(vote.bt.rsi > 70) reason += `，RSI=${vote.bt.rsi.toFixed(0)}超买区`;
       if(vote.bt.sharpe < 0) reason += `，回测Sharpe ${vote.bt.sharpe.toFixed(1)}不佳`;
       if(vote.bt.maxDD < -0.15) reason += `，最大回撤${(vote.bt.maxDD*100).toFixed(0)}%较高`;
       reason += `。建议先减30-50%仓位落袋`;
     } else {
       reason = '信号未达共识阈值，维持现有仓位观望';
-      if(vote.ai.conf > 0 && vote.ai.reason) reason += `。AI参考：${vote.ai.reason.slice(0,50)}`;
+      if(vote.geoBias > 0.1) reason = `地缘事件偏利好(+${vote.geoBias.toFixed(2)})，但三引擎信号不足，可小仓先行布局`;
+      else if(vote.geoBias < -0.1) reason = `地缶事件偏利空(${vote.geoBias.toFixed(2)})，三引擎未达共识，建议谨慎`;
+      else if(vote.ai.conf > 0 && vote.ai.reason) reason += `。AI参考：${vote.ai.reason.slice(0,50)}`;
     }
+    if(geoReason) reason += `<br><span style="font-size:9px;color:#93c5fd">${geoReason}</span>`;
     html += `<div class="ag-reason">${reason}</div>`;
 
     // 核心指标
@@ -3851,6 +3908,7 @@ function renderActionGuide(){
     html += `<span class="ag-metric">Kelly <b>${(vote.bt.kelly*100).toFixed(0)}%</b></span>`;
     html += `<span class="ag-metric">胜率 <b>${(vote.bt.winRate*100).toFixed(0)}%</b></span>`;
     html += `<span class="ag-metric">风控 <b style="color:${vote.riskMult<0.8?'#ef4444':'var(--sub)'}">${vote.riskMult.toFixed(2)}×</b></span>`;
+    if(vote.geoBias !== 0) html += `<span class="ag-metric">地缘 <b style="color:${vote.geoBias>0?'#4ade80':vote.geoBias<0?'#f87171':'var(--sub)'}">${vote.geoBias>0?'+':''}${vote.geoBias.toFixed(2)}</b></span>`;
     if(td) html += `<span class="ag-metric">60日 <b style="color:${td.chg60d>=0?'var(--red)':'var(--green)'}">${td.chg60d>0?'+':''}${td.chg60d}%</b></span>`;
     html += `</div>`;
 
