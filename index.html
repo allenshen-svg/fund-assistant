@@ -876,17 +876,19 @@ const RL_ACTION_SIZE = 3; // 0=hold, 1=buy, 2=sell
 const RL_ACTION_NAMES = ['持有','买入','卖出'];
 const RL_STORAGE_KEY = 'fa_rl_brain_v3';
 const RL_ENSEMBLE_K = 3; // Bootstrapped ensemble heads
+const RL_ONLINE_PRIORITY_BOOST = 2.0; // 在线经验优先级倍数
+let _rlPendingRewards = {}; // 延迟奖励: { code: { action, state, date, entryValue } }
 
-// ==================== BACKTEST STATE ====================
+// ==================== BACKTEST STATE ==
 let btResults = {}; // { code: { totalReturn, sharpe, maxDD, kellyFraction, winRate, trades, equity, drawdown } }
 let btSummary = null;
 let _btRunning = false;
 const BT_STORAGE_KEY = 'fa_backtest';
 const BT_FEE = 0.0015; // 单边手续费
 const BT_RSI_PERIOD = 14;
-const BT_RSI_BUY = 70; // RSI<70时允许买入
-const BT_RSI_SELL = 75; // RSI>75考虑卖出
-const BT_MOMENTUM_BUY = 0.01; // 预测涨幅>1%买入
+let BT_RSI_BUY = 70; // RSI<70时允许买入(可被Sim绩效自适应调整)
+let BT_RSI_SELL = 75; // RSI>75考虑卖出(可被Sim绩效自适应调整)
+let BT_MOMENTUM_BUY = 0.01; // 预测涨幅>1%买入(可被Sim绩效自适应调整)
 const BT_RISK_FREE = 0.025; // 年化无风险利率
 
 function saveHoldings(){ localStorage.setItem('fa_holdings', JSON.stringify(holdings)); }
@@ -3048,38 +3050,51 @@ function toggleActionGuide(){
   }
 }
 
-function getTriEngineVote(code){
-  // === 引擎1: AI信号 ===
-  const aiSig = _analysisResult?.signals?.[code];
+// ==================== 共享三引擎投票核心 ====================
+function computeTriEngineVote(code, aiSig, rlSig, btR){
+  // === 引擎1: AI信号投票 ===
   let aiVote = 0, aiConf = 0, aiReason = '';
   if(aiSig){
     aiVote = aiSig.action === 'buy' ? 1 : aiSig.action === 'sell' ? -1 : 0;
     aiConf = aiSig.confidence || 0;
     aiReason = aiSig.reason || '';
   }
-  // === 引擎2: RL信号 ===
-  const rlSig = _rlSignals[code];
+  // === 引擎2: RL信号投票 ===
   let rlVote = 0, rlConf = 0;
   if(rlSig){
     rlVote = rlSig.action === 1 ? 1 : rlSig.action === 2 ? -1 : 0;
     rlConf = rlSig.confidence || 0;
+    // Ensemble conviction加权: 强=权重×1.3, 弱=×0.6
+    if(rlSig.conviction === '强') rlConf = Math.min(rlConf * 1.3, 98);
+    else if(rlSig.conviction === '弱') rlConf *= 0.6;
   }
-  // === 引擎3: 回测信号 ===
-  const btR = btResults[code];
+  // === 引擎3: 回测信号投票(RSI + Sharpe + Sortino + Kelly综合) ===
   let btVote = 0, btConf = 0;
   if(btR){
     const rsi = btR.lastRSI || 50;
     const sharpe = btR.sharpe || 0;
-    if(rsi < 40 && sharpe > 0){ btVote = 1; btConf = 70; }
+    const sortino = btR.sortino || 0;
+    const kelly = btR.finalKelly || 0;
+    // 多因子评分: Sharpe+Sortino+Kelly+RSI
+    const btScore = sharpe * 0.3 + sortino * 0.2 + kelly * 5 + (50 - rsi) / 100;
+    if(rsi < 35 && sharpe > 0){ btVote = 1; btConf = 80; }
+    else if(rsi < 45 && btScore > 0.5){ btVote = 1; btConf = 70; }
     else if(rsi < 50 && sharpe > 0.5){ btVote = 1; btConf = 60; }
+    else if(rsi > 80){ btVote = -1; btConf = 85; }
     else if(rsi > 75){ btVote = -1; btConf = 75; }
     else if(rsi > 65 && sharpe < 0){ btVote = -1; btConf = 65; }
     else { btVote = 0; btConf = 40; }
   }
-  // === 加权投票 ===
-  const aiW = Math.min(aiConf, 95) / 100;
-  const rlW = Math.min(rlConf, 95) / 100;
-  const btW = Math.min(Math.abs(btR?.sharpe||0)/2, 0.8);
+  // === 加权投票(Ensemble不确定性动态调权) ===
+  let aiW = Math.min(aiConf, 95) / 100;
+  let rlW = Math.min(rlConf, 95) / 100;
+  // RL高不确定性→降权; 低不确定性→升权
+  if(rlSig?.uncertainty !== undefined){
+    const uncert = rlSig.uncertainty;
+    if(uncert > 0.5) rlW *= 0.6; // 头间分歧大→降权
+    else if(uncert < 0.1) rlW *= 1.3; // 头间高度一致→升权
+  }
+  const btW = btR ? Math.min((Math.abs(btR.sharpe||0)*0.3 + (btR.winRate||0)*0.5), 0.85) : 0;
   const totalW = aiW + rlW + btW || 1;
   const score = (aiVote * aiW + rlVote * rlW + btVote * btW) / totalW;
 
@@ -3107,10 +3122,14 @@ function getTriEngineVote(code){
     action, actionLabel, score, consensusMult,
     buyVotes, sellVotes,
     ai: { vote: aiVote, conf: aiConf, reason: aiReason, label: aiVote>0?'买入':aiVote<0?'卖出':'持有' },
-    rl: { vote: rlVote, conf: rlConf, label: rlSig?.actionName||'--' },
-    bt: { vote: btVote, conf: btConf, sharpe: btR?.sharpe||0, rsi: btR?.lastRSI||50, maxDD: btR?.maxDD||0, winRate: btR?.winRate||0, kelly: adjKelly },
+    rl: { vote: rlVote, conf: rlConf, conviction: rlSig?.conviction||'--', uncertainty: rlSig?.uncertainty||0, label: rlSig?.actionName||'--' },
+    bt: { vote: btVote, conf: btConf, sharpe: btR?.sharpe||0, sortino: btR?.sortino||0, rsi: btR?.lastRSI||50, maxDD: btR?.maxDD||0, winRate: btR?.winRate||0, kelly: adjKelly },
     effConf: Math.round(effConf),
   };
+}
+
+function getTriEngineVote(code){
+  return computeTriEngineVote(code, _analysisResult?.signals?.[code], _rlSignals[code], btResults[code]);
 }
 
 function renderActionGuide(){
@@ -4507,56 +4526,16 @@ function simAutoTrade(){
     const sectorBullish = sectorFlow && sectorFlow.mainNet > 0;
     const sectorBearish = sectorFlow && sectorFlow.mainNet < -1e8;
 
-    // === 三引擎投票共识 ===
+    // === 使用共享三引擎投票核心 ===
+    const triVote = computeTriEngineVote(pos.code, sig, _rlSignals[pos.code], btResults[pos.code]);
+    const { score: consensusScore, consensusMult, buyVotes, sellVotes } = triVote;
+    const unanimousBuy = buyVotes >= 2 && sellVotes === 0;
+    const unanimousSell = sellVotes >= 2 && buyVotes === 0;
+    const effConf = triVote.effConf;
+
     const rlSig = _rlSignals[pos.code];
     const btR = btResults[pos.code];
-
-    // 引擎1: AI信号投票
-    const aiVote = sig.action === 'buy' ? 1 : sig.action === 'sell' ? -1 : 0;
-    const aiWeight = Math.min(sig.confidence, 95) / 100; // 0~0.95
-
-    // 引擎2: RL信号投票
-    let rlVote = 0, rlWeight = 0;
-    if(rlSig){
-      rlVote = rlSig.action === 1 ? 1 : rlSig.action === 2 ? -1 : 0;
-      rlWeight = Math.min(rlSig.confidence, 95) / 100;
-    }
-
-    // 引擎3: 回测信号投票(基于当前RSI+Sharpe+趋势)
-    let btVote = 0, btWeight = 0;
-    if(btR){
-      const rsiVal = btR.lastRSI || 50;
-      const sharpeVal = btR.sharpe || 0;
-      // RSI<40+Sharpe>0 → 买入信号; RSI>70+任何 → 卖出信号
-      if(rsiVal < 40 && sharpeVal > 0) btVote = 1;
-      else if(rsiVal < 50 && sharpeVal > 0.5) btVote = 1;
-      else if(rsiVal > 75) btVote = -1;
-      else if(rsiVal > 65 && sharpeVal < 0) btVote = -1;
-      btWeight = Math.min(Math.abs(sharpeVal) / 2, 0.8); // Sharpe越高权重越大
-      if(btR.winRate > 0.5) btWeight = Math.min(btWeight + 0.1, 0.9);
-    }
-
-    // 加权投票: 得分 ∈ [-1, 1]
-    const totalWeight = aiWeight + rlWeight + btWeight || 1;
-    const consensusScore = (aiVote * aiWeight + rlVote * rlWeight + btVote * btWeight) / totalWeight;
-
-    // 统计一致性: 多少引擎同方向
-    const votes = [aiVote, rlVote, btVote].filter(v => v !== 0);
-    const buyVotes = votes.filter(v => v > 0).length;
-    const sellVotes = votes.filter(v => v < 0).length;
-    const consensus = Math.max(buyVotes, sellVotes); // 最大同向票数
-    const unanimousBuy = buyVotes >= 2 && sellVotes === 0; // 至少2票看多无反对
-    const unanimousSell = sellVotes >= 2 && buyVotes === 0; // 至少2票看空无反对
-
-    // 共识乘数: 全票一致→1.3倍，2票→1.0倍，分歧→0.5倍
-    let consensusMult = 1.0;
-    if(consensus >= 3) consensusMult = 1.4; // 三引擎全票
-    else if(consensus >= 2 && votes.length >= 2) consensusMult = 1.15; // 多数票
-    else if(buyVotes > 0 && sellVotes > 0) consensusMult = 0.4; // 有分歧,大幅缩量
-
-    // 有效置信度 = AI置信度 × 共识乘数
-    const effConf = sig.confidence * consensusMult;
-    const rlTag = rlSig ? ` RL:${rlSig.actionName}${rlSig.confidence}%` : '';
+    const rlTag = rlSig ? ` RL:${rlSig.actionName}${rlSig.confidence}%${rlSig.conviction?'('+rlSig.conviction+')':''}` : '';
     const btTag = btR ? ` BT:${btR.sharpe>0?'▲':'▼'}${btR.sharpe.toFixed(1)}` : '';
     const voteTag = ` 投票[${buyVotes}买/${sellVotes}卖]×${consensusMult.toFixed(1)}`;
 
@@ -4564,12 +4543,13 @@ function simAutoTrade(){
       const posValue = pos.shares * (getSimNav(pos.code) || pos.avgCost);
       const totalValue = getSimTotalValue();
       if(posValue / totalValue < strategy.maxSinglePos){
-        // Kelly仓位控制: 用回测Kelly分数限制加仓比例 × 共识系数
         const kellyLimit = btR?.finalKelly || 0.05;
         let addPct = Math.min(0.03 * buyMult * consensusMult, kellyLimit);
         if(sectorBullish) addPct *= 1.3;
-        if(unanimousBuy) addPct *= 1.2; // 全票看多加码
-        // 回测Sharpe过滤: Sharpe<0不加仓
+        if(unanimousBuy) addPct *= 1.2;
+        // RL高确信度额外加成
+        if(rlSig?.conviction === '强' && rlSig?.action === 1) addPct *= 1.15;
+        // 回测Sharpe过滤
         if(btR && btR.sharpe < 0) addPct = 0;
         const addAmt = Math.min(Math.round(totalValue * addPct), Math.round(simPortfolio.cash * 0.3));
         if(addAmt >= 1000){
@@ -4584,7 +4564,9 @@ function simAutoTrade(){
     if(sig.action==='sell' && effConf>=sellConfThreshold && todayPct>=strategy.surgeSellThreshold && pos.group==='satellite'){
       let sellPct = 0.3 * sellMult * consensusMult;
       if(sectorBearish) sellPct = Math.min(0.5, sellPct * 1.3);
-      if(unanimousSell) sellPct = Math.min(0.7, sellPct * 1.3); // 全票看空加大卖出
+      if(unanimousSell) sellPct = Math.min(0.7, sellPct * 1.3);
+      // RL高确信卖出加码
+      if(rlSig?.conviction === '强' && rlSig?.action === 2) sellPct = Math.min(0.8, sellPct * 1.2);
       sellPct = Math.max(0.1, Math.min(0.8, sellPct));
       simTrade(pos.code, 'sell', sellPct, `AI减仓(${sig.confidence}%)+涨${todayPct.toFixed(1)}% [${voteTag} 数据${dsScore}${sectorBearish?' 板块流出':''}${rlTag}${btTag}]`);
       tradesExecuted++;
@@ -4631,6 +4613,8 @@ function simAutoTrade(){
   learnFromPerformance();
   // 5. RL在线学习反馈：用模拟盘交易结果进行增量训练
   if(tradesExecuted > 0) rlOnlineLearning();
+  // 6. 结算延迟奖励：检查前几天的pending交易，用实际多日收益做RL更新
+  settleDelayedRewards();
   saveSimPortfolio();
   return tradesExecuted;
 }
@@ -4657,7 +4641,7 @@ function rlOnlineLearning(){
     env.pos = simPos ? 1 : 0;
     if(simPos) env.entryPrice = simPos.avgCost;
     const state = env._state();
-    // 注入宏观/舆情/资金流/国际 (30维状态: indices 23-26)
+    // 注入宏观/舆情/资金流/国际 (36维状态: indices 23-26)
     if(_dataIntelLoaded){
       const ds = generateDataSignal();
       state[23] = rlClip((ds.score-50)/25, -2, 2);
@@ -4673,42 +4657,156 @@ function rlOnlineLearning(){
     // 映射交易动作到RL action
     const action = trade.action === 'buy' ? 1 : trade.action === 'sell' ? 2 : 0;
 
-    // 计算即时奖励: 基于当日交易后持仓表现
+    // === 即时小奖励(方向性) + 登记延迟奖励 ===
     let reward = 0;
     const fd = getFundData(code);
     const todayPct = (fd?.gszzl || 0) / 100;
-    if(action === 1){ // 买入
-      reward = todayPct > 0 ? todayPct * 5 : todayPct * 8; // 买对奖励，买错扁罚
-    } else if(action === 2){ // 卖出
-      reward = todayPct < 0 ? Math.abs(todayPct) * 5 : -todayPct * 3; // 卖对奖励，卖错轻罚
-    }
-    // 组合级奖励加成
+    // 即时奖励: 较小的方向信号(最终奖励由延迟结算给出)
+    if(action === 1) reward = todayPct > 0 ? todayPct * 2 : todayPct * 3;
+    else if(action === 2) reward = todayPct < 0 ? Math.abs(todayPct) * 2 : -todayPct * 1.5;
+    // 组合级奖励
     const totalValue = getSimTotalValue();
     const cumReturn = (totalValue - SIM_INITIAL_CAPITAL) / SIM_INITIAL_CAPITAL;
-    reward += rlClip(cumReturn * 2, -0.5, 0.5);
+    reward += rlClip(cumReturn * 1, -0.3, 0.3);
 
-    // 构建下一状态(用当前状态略微偏移)
+    // 注册延迟奖励(3天后结算真实多日回报)
+    const pendingKey = `${code}_${today}_${action}`;
+    _rlPendingRewards[pendingKey] = {
+      code, action, state: Float32Array.from(state),
+      date: today, entryNav: parseFloat(fd?.dwjz || fd?.gsz || 0),
+      positionValue: simPos ? simPos.shares * (getSimNav(code) || simPos.avgCost) : 0,
+      timestamp: Date.now()
+    };
+
+    // 在线经验存入PER(提升优先级)
     const nextState = Float32Array.from(state);
-    nextState[20] = simPos ? 1 : 0; // 更新持仓状态 (index 20 in 30-dim state)
-
-    // 存入经验并做小批量训练 (immediate mode for online learning)
+    nextState[20] = simPos ? 1 : 0;
+    // 即时经验用提升的优先级
+    const origMaxP = rlTrainer.agent.maxPriority;
+    rlTrainer.agent.maxPriority = origMaxP * RL_ONLINE_PRIORITY_BOOST;
     rlTrainer.agent.remember(state, action, reward, nextState, false, true);
+    rlTrainer.agent.maxPriority = origMaxP;
     onlineReplayCount++;
   }
 
   // 增量训练: 每次在线学习做少量Replay
   if(onlineReplayCount > 0 && rlTrainer.agent.perTree.size >= rlTrainer.agent.batchSize * 2){
-    const onlineBatches = Math.min(onlineReplayCount * 2, 8);
+    const onlineBatches = Math.min(onlineReplayCount * 3, 12);
     for(let i = 0; i < onlineBatches; i++){
       rlTrainer.agent.replay();
     }
-    // 保存更新后的模型
     rlTrainer.saveModel();
-    // 重新生成信号
     rlTrainer.generateSignals();
     renderRLBrief();
-    console.log(`RL在线学习: ${onlineReplayCount}条经验·${onlineBatches}次Replay·ε=${rlTrainer.agent.epsilon.toFixed(4)}`);
+    console.log(`RL在线学习: ${onlineReplayCount}条即时经验·${onlineBatches}次Replay·ε=${rlTrainer.agent.epsilon.toFixed(4)}·${Object.keys(_rlPendingRewards).length}条待延迟结算`);
   }
+}
+
+// ==================== RL延迟奖励结算 ====================
+function settleDelayedRewards(){
+  if(!_rlModelLoaded || !rlTrainer?.agent) return;
+  const today = todayStr();
+  const SETTLE_DAYS = 3; // 3天后结算
+  let settled = 0;
+
+  for(const [key, pending] of Object.entries(_rlPendingRewards)){
+    // 检查是否满3天
+    const daysSince = Math.floor((Date.now() - pending.timestamp) / 86400000);
+    if(daysSince < SETTLE_DAYS) continue;
+
+    const code = pending.code;
+    const fd = getFundData(code);
+    const currentNav = parseFloat(fd?.dwjz || fd?.gsz || 0);
+    if(!currentNav || !pending.entryNav) { delete _rlPendingRewards[key]; continue; }
+
+    // 计算多日实际回报
+    const multiDayReturn = (currentNav - pending.entryNav) / pending.entryNav;
+    let delayedReward = 0;
+
+    if(pending.action === 1){ // 买入
+      // 买入后上涨=好决策, 下跌=坏决策
+      delayedReward = multiDayReturn > 0 ? multiDayReturn * 8 : multiDayReturn * 12;
+      if(multiDayReturn > 0.03) delayedReward += 0.3; // 超过3%额外奖励
+      if(multiDayReturn < -0.03) delayedReward -= 0.4; // 超过-3%额外惩罚
+    } else if(pending.action === 2){ // 卖出
+      // 卖出后下跌=好决策(逃顶), 上涨=错过
+      delayedReward = multiDayReturn < 0 ? Math.abs(multiDayReturn) * 8 : -multiDayReturn * 6;
+      if(multiDayReturn < -0.03) delayedReward += 0.3;
+      if(multiDayReturn > 0.03) delayedReward -= 0.3;
+    }
+
+    // 构建结算时的下一状态
+    const hd = fundHistoryData[code];
+    if(hd?.navs && hd.navs.length >= 65){
+      const navArr = hd.navs.map(n=>({date:n[0],nav:parseFloat(n[1])})).filter(n=>!isNaN(n.nav)&&n.nav>0);
+      if(navArr.length >= 65){
+        const env = new MarketEnv(navArr, code);
+        env.idx = navArr.length - 1;
+        const simPos = simPortfolio?.positions?.find(p => p.code === code);
+        env.pos = simPos ? 1 : 0;
+        if(simPos) env.entryPrice = simPos.avgCost;
+        const nextState = env._state();
+        // 延迟经验以更高优先级存入
+        const origMaxP = rlTrainer.agent.maxPriority;
+        rlTrainer.agent.maxPriority = origMaxP * RL_ONLINE_PRIORITY_BOOST * 1.5;
+        rlTrainer.agent.remember(pending.state, pending.action, delayedReward, nextState, false, true);
+        rlTrainer.agent.maxPriority = origMaxP;
+        settled++;
+      }
+    }
+    delete _rlPendingRewards[key];
+  }
+
+  // 延迟经验专门做Replay
+  if(settled > 0 && rlTrainer.agent.perTree.size >= rlTrainer.agent.batchSize * 2){
+    for(let i = 0; i < Math.min(settled * 4, 16); i++){
+      rlTrainer.agent.replay();
+    }
+    rlTrainer.saveModel();
+    rlTrainer.generateSignals();
+    renderRLBrief();
+    console.log(`RL延迟奖励结算: ${settled}条·多日回报经验已注入`);
+  }
+  // 清理超过7天未结算的pending(数据不可用)
+  for(const [key, pending] of Object.entries(_rlPendingRewards)){
+    if(Date.now() - pending.timestamp > 7 * 86400000) delete _rlPendingRewards[key];
+  }
+}
+
+// ==================== 模拟盘绩效→回测参数自适应 ====================
+function simFeedbackToBT(){
+  if(!simPortfolio?.history || simPortfolio.history.length < 10) return;
+  const recent = simPortfolio.history.slice(-30);
+  const buyTrades = recent.filter(t => t.action === 'buy');
+  const sellTrades = recent.filter(t => t.action === 'sell');
+  if(buyTrades.length + sellTrades.length < 5) return;
+
+  // 统计模拟盘实际胜率
+  const positions = simPortfolio.positions || [];
+  const snapshots = simPortfolio.dailySnapshots || [];
+  if(snapshots.length < 3) return;
+  const recentSnaps = snapshots.slice(-5);
+  const avgReturn = recentSnaps.reduce((s,d) => s + (d.dailyReturn||0), 0) / recentSnaps.length;
+  const totalValue = getSimTotalValue();
+  const simReturn = (totalValue - SIM_INITIAL_CAPITAL) / SIM_INITIAL_CAPITAL;
+
+  // 根据模拟盘绩效调整回测参数
+  // 模拟盘亏损→回测趋于保守(提高买入门槛, 降低卖出门槛)
+  // 模拟盘盈利→回测趋于积极(降低买入门槛)
+  if(simReturn < -0.03){ // 亏损>3%
+    BT_RSI_BUY = Math.max(55, BT_RSI_BUY - 2); // 更严格的买入RSI
+    BT_RSI_SELL = Math.max(65, BT_RSI_SELL - 2); // 更早卖出
+    BT_MOMENTUM_BUY = Math.min(0.02, BT_MOMENTUM_BUY + 0.002); // 需要更强动量
+  } else if(simReturn > 0.05){ // 盈利>5%
+    BT_RSI_BUY = Math.min(75, BT_RSI_BUY + 1); // 放宽买入
+    BT_RSI_SELL = Math.min(80, BT_RSI_SELL + 1); // 给更多空间
+    BT_MOMENTUM_BUY = Math.max(0.005, BT_MOMENTUM_BUY - 0.001);
+  }
+  // 最近日均回报极端→额外调整
+  if(avgReturn < -0.01){
+    BT_MOMENTUM_BUY = Math.min(0.025, BT_MOMENTUM_BUY + 0.003);
+  }
+  console.log(`BT参数自适应(SimReturn=${(simReturn*100).toFixed(1)}%): RSI_BUY=${BT_RSI_BUY} RSI_SELL=${BT_RSI_SELL} MOM_BUY=${BT_MOMENTUM_BUY.toFixed(4)}`);
 }
 
 function learnFromPerformance(){
@@ -5171,7 +5269,7 @@ function renderRLBrain(){
   html+=`<b>奖励:</b> <b style="color:#f59e0b">Sortino风险调整</b> · 持仓因子 · 阶梯回撤惩罚 · 过度交易惩罚 · 滚动Sortino奖励<br>`;
   html+=`<b>训练:</b> 80轮 <b style="color:#22d3ee">课程学习</b>(低波动→高波动) · γ=0.99 · PER=20K · Bootstrap概率=80%<br>`;
   html+=`<b>信号:</b> <b style="color:#22d3ee">Ensemble多数投票</b> · 置信度仓位(强100%/中60%/弰30%) · 认知不确定性量化<br>`;
-  html+=`<b>闭环:</b> <span style="color:#22d3ee">回测特征注入 → 三引擎投票 → 模拟盘在线学习 → Ensemble信号更新</span>`;
+  html+=`<b>闭环:</b> <span style="color:#22d3ee">逐步RL回测 → Sim绩效→BT参数自适应 → 共享三引擎投票 → 延迟奖励在线学习 → Ensemble信号更新</span>`;
   html+=`</div></div>`;
 
   container.innerHTML=html;
@@ -5221,6 +5319,11 @@ async function startRLTraining(){
   rlTrainer.generateSignals();
   renderRLBrain();renderRLBrief();
   console.log('RL训练完成:',rlTrainer.metrics);
+  // RL训练完成 → 自动重跑回测(RL信号已更新，回测结果需要同步)
+  if(Object.keys(fundHistoryData).length > 0){
+    console.log('RL训练后自动重跑回测(同步逐步RL信号)...');
+    setTimeout(()=>runBacktest(), 300);
+  }
 }
 
 function stopRLTraining(){
@@ -5235,14 +5338,21 @@ function buildRLContext(){
   let ctx='\n【🧠 Rainbow DQN 强化学习信号 (Dueling+Ensemble)】\n';
   ctx+=`模型: Rainbow DQN(36维·Dueling·PER·N-Step·${rlTrainer.agent.nHeads}头Ensemble) · 已训练${rlTrainer.episode+1}轮 · ${rlTrainer.agent.trainSteps}步 · 课程学习\n`;
   ctx+=`指标: 胜率${(rlTrainer.metrics.winRate||0).toFixed(0)}% · 平均收益${(rlTrainer.metrics.avgReturn||0).toFixed(1)}% · Sharpe${(rlTrainer.metrics.sharpe||0).toFixed(2)} · Sortino${(rlTrainer.metrics.sortino||0).toFixed(2)} · MDD${(rlTrainer.metrics.mdd||0).toFixed(1)}%\n`;
-  ctx+='个股Rainbow DQN集成决策:\n';
+  ctx+=`在线学习: ${Object.keys(_rlPendingRewards).length}条延迟奖励待结算 · BT参数自适应: RSI买=${BT_RSI_BUY}/卖=${BT_RSI_SELL} 动量=${BT_MOMENTUM_BUY.toFixed(4)}\n`;
+  ctx+='个股Rainbow DQN集成决策 + 三引擎共识:\n';
   for(const[code,sig]of Object.entries(_rlSignals)){
     const name=fundName(code);
     const qStr=(sig.qValues||[]).map(v=>(v||0).toFixed(2)).join('/');
     const votes=(sig.headVotes||[]).map(v=>RL_ACTION_NAMES[v]).join(',');
-    ctx+=`  ${name}(${code}): ${sig.actionName} 置信=${sig.conviction}(仓位${sig.positionPct}%) 投票=[${votes}] 不确定性=${(sig.uncertainty||0).toFixed(3)} Q=[${qStr}]\n`;
+    // 附加三引擎共识信息
+    let triInfo = '';
+    if(_analysisResult?.signals?.[code] || btResults[code]){
+      const tri = computeTriEngineVote(code, _analysisResult?.signals?.[code], sig, btResults[code]);
+      triInfo = ` → 三引擎共识:${tri.actionLabel}(${tri.buyVotes}买/${tri.sellVotes}卖×${tri.consensusMult.toFixed(1)}) 综合=${tri.score.toFixed(2)}`;
+    }
+    ctx+=`  ${name}(${code}): ${sig.actionName} 置信=${sig.conviction}(仓位${sig.positionPct}%) 投票=[${votes}] 不确定性=${(sig.uncertainty||0).toFixed(3)} Q=[${qStr}]${triInfo}\n`;
   }
-  ctx+='⚠️ Rainbow DQN: 36维特征(Hurst/偏度/峰度/波动率体制) + Dueling V/A分离 + 集成多数投票 + 置信度仓位管理 + 认知不确定性量化。三引擎投票共识: AI/RL/回测多数票决策，分歧时缩减仓位。\n';
+  ctx+='⚠️ 闭环联动: RL逐步信号融入回测(消除前瞻偏差) → 回测Sharpe/Kelly/RSI注入RL状态 → 模拟盘三引擎共识执行 → 即时+3日延迟奖励在线学习 → Sim绩效自适应回测参数 → RL训练完成自动重跑回测。高不确定性RL信号自动降权。\n';
   return ctx;
 }
 
@@ -5705,7 +5815,15 @@ function backtestFund(navArray, code){
   // 滚动统计(用于Kelly)
   const recentTrades = []; // 最近N次交易的盈亏率
 
-  const startIdx = Math.max(26, BT_RSI_PERIOD + 1); // 确保指标已计算
+  const startIdx = Math.max(60, BT_RSI_PERIOD + 1); // 确保指标+RL回溯窗口已够
+
+  // === RL逐步信号(消除前瞻偏差): 用RL Agent在每一bar生成实时信号 ===
+  const hasRLAgent = _rlModelLoaded && rlTrainer?.agent;
+  let btEnv = null;
+  if(hasRLAgent){
+    const navSlice = navArray.map(n => ({date: n.date||n[0], nav: typeof n.nav==='number'?n.nav:parseFloat(n.nav||n[1])}));
+    btEnv = new MarketEnv(navSlice, code);
+  }
 
   for(let i = startIdx; i < n; i++){
     const price = prices[i];
@@ -5732,17 +5850,29 @@ function backtestFund(navArray, code){
       _currentKelly = 0.05; // 默认5%仓位
     }
 
-    // === RL融合回测策略信号 ===
-    // 在回测中引入RL信号作为辅助确认条件
+    // === RL逐步信号(每个bar用Agent实时推断，消除前瞻偏差) ===
     let rlBuyBoost = 0, rlSellBoost = 0;
-    if(_rlModelLoaded && rlTrainer?.agent && typeof _rlSignals !== 'undefined'){
-      const rlSig = _rlSignals[code];
-      if(rlSig){
-        if(rlSig.action === 1 && rlSig.confidence > 40) rlBuyBoost = 0.3; // RL看多加强买入
-        if(rlSig.action === 2 && rlSig.confidence > 40) rlSellBoost = 0.3; // RL看空加强卖出
-        if(rlSig.action === 2 && rlSig.confidence > 60) rlBuyBoost = -0.5; // RL强烈看空抑制买入
-        if(rlSig.action === 1 && rlSig.confidence > 60) rlSellBoost = -0.5; // RL强烈看多抑制卖出
-      }
+    if(hasRLAgent && btEnv && i >= 60){
+      // 同步env到当前bar
+      btEnv.idx = i;
+      btEnv.pos = position > 0.01 ? 1 : 0;
+      if(position > 0.01) btEnv.entryPrice = entryPrice;
+      try {
+        const barState = btEnv._state();
+        const ens = rlTrainer.agent.getEnsembleQ(barState);
+        const barAction = rlArgmax(ens.qMean);
+        const probs = rlSoftmax(ens.qMean);
+        const barConf = Math.round(probs[barAction] * 100);
+        // Ensemble agreement加权
+        const voteCounts = [0,0,0];
+        ens.votes.forEach(v => voteCounts[v]++);
+        const agreement = Math.max(...voteCounts) / ens.votes.length;
+        const effConf = barConf * (agreement >= 0.99 ? 1.3 : agreement >= 0.66 ? 1.0 : 0.5);
+        if(barAction === 1 && effConf > 40) rlBuyBoost = Math.min(0.5, effConf / 150);
+        if(barAction === 2 && effConf > 40) rlSellBoost = Math.min(0.5, effConf / 150);
+        if(barAction === 2 && effConf > 60) rlBuyBoost = -0.5;
+        if(barAction === 1 && effConf > 60) rlSellBoost = -0.5;
+      } catch(e){ /* RL state build failed for this bar, skip */ }
     }
 
     // 买入: 预测涨幅>1% + RSI<70 + MA5>MA20(趋势向上) + RL信号融合
@@ -5867,6 +5997,8 @@ async function runBacktest(){
   if(_btRunning) return;
   _btRunning = true;
   btResults = {};
+  // 模拟盘绩效反馈→回测参数自适应(在回测前调整)
+  simFeedbackToBT();
 
   const codes = [...new Set([...holdings.map(h=>h.code), ...watchlist.map(w=>w.code)])];
   if(codes.length === 0){
