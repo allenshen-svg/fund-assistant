@@ -865,6 +865,251 @@ let globalNewsSummary = null; // AI国际新闻摘要 { summary, impact, sentime
 let _globalNewsLoading = false;
 let _dataIntelLoaded = false;
 
+// ==================== 宏观地缘事件引擎 (Macro-Geopolitical Event Engine) ====================
+// 重大国际事件数据库 — 每条记录事件名称、类别、影响方向、影响板块、持续时间、权重
+// 事件会被实时评估并注入三引擎投票 + 行动指南
+const MACRO_GEO_EVENTS = [
+  // === 地缘政治 ===
+  {
+    id: 'us_iran_tension',
+    name: '美国-伊朗局势紧张',
+    category: 'geopolitics',
+    icon: '⚔️',
+    description: '中东地缘冲突升级风险，美伊关系持续紧张，波斯湾航运安全受威胁',
+    impact: -8, // -100~+100 对A股影响
+    sectors: {
+      positive: ['军工', '黄金', '石油石化', '能源'],
+      negative: ['航空', '消费', '出口制造'],
+    },
+    fundKeywords: ['军工','国防','黄金','原油','能源','石油'],
+    duration: '2026Q1-Q2',
+    confidence: 0.75,
+    advice: '中东局势不确定性增加避险需求，可适当配置黄金/军工ETF对冲，降低航空消费类仓位',
+  },
+  {
+    id: 'us_china_trade',
+    name: '中美关税博弈持续',
+    category: 'geopolitics',
+    icon: '🇺🇸🇨🇳',
+    description: '美国对华关税政策反复，科技脱钩压力下中国加速自主可控',
+    impact: -5,
+    sectors: {
+      positive: ['半导体', '信创', '国产替代', '内需消费'],
+      negative: ['出口导向', '苹果产业链', '外贸'],
+    },
+    fundKeywords: ['半导体','芯片','信创','科技','国产替代','自主可控'],
+    duration: '长期',
+    confidence: 0.85,
+    advice: '贸易摩擦利好国产替代链，半导体/信创是长期主线，但短期波动大，建议定投分批',
+  },
+  {
+    id: 'russia_ukraine',
+    name: '俄乌冲突与欧洲能源',
+    category: 'geopolitics',
+    icon: '🌍',
+    description: '俄乌冲突持续影响全球能源供应和粮食安全，欧洲经济承压',
+    impact: -3,
+    sectors: {
+      positive: ['能源', '农业', '化工'],
+      negative: ['欧洲市场相关'],
+    },
+    fundKeywords: ['能源','农业','化工','大宗商品'],
+    duration: '长期',
+    confidence: 0.7,
+    advice: '全球供应链风险溢价持续，能源和农业板块有支撑，但需关注停火谈判进展',
+  },
+  // === 科技革命 ===
+  {
+    id: 'ai_revolution',
+    name: '2026春晚AI秀引爆全民AI热',
+    category: 'technology',
+    icon: '🤖',
+    description: '2026春晚AI表演秀全网刷屏，AI应用加速落地，中国AI产业链迎来"Sora时刻"',
+    impact: +18,
+    sectors: {
+      positive: ['AI', '算力', '光模块', '大模型', '机器人', 'AI应用', '传媒'],
+      negative: ['传统劳动密集型'],
+    },
+    fundKeywords: ['人工智能','AI','科技','算力','机器人','传媒','TMT','信息技术','创新'],
+    duration: '2026全年',
+    confidence: 0.9,
+    advice: '春晚AI秀点燃市场热情，AI硬件(算力/光模块)+应用(大模型/机器人)双主线，短期追高需谨慎但中期趋势确定',
+  },
+  {
+    id: 'humanoid_robot',
+    name: '人形机器人产业元年',
+    category: 'technology',
+    icon: '🦾',
+    description: '特斯拉Optimus量产推进、国内多家企业人形机器人亮相，产业链加速成熟',
+    impact: +12,
+    sectors: {
+      positive: ['机器人', '减速器', '传感器', '伺服电机', 'AI'],
+      negative: [],
+    },
+    fundKeywords: ['机器人','智能制造','高端装备','AI'],
+    duration: '2026-2027',
+    confidence: 0.8,
+    advice: '人形机器人处于0→1阶段，核心零部件(减速器/丝杠/传感器)确定性较高，但估值已偏贵需等回调',
+  },
+  // === 货币政策 ===
+  {
+    id: 'fed_rate_path',
+    name: '美联储降息预期反复',
+    category: 'monetary',
+    icon: '💵',
+    description: '美联储2026年降息节奏不确定，美元指数波动加大，人民币汇率承压',
+    impact: -3,
+    sectors: {
+      positive: ['黄金', '债券'],
+      negative: ['美元债相关', '港股(汇率)'],
+    },
+    fundKeywords: ['黄金','债券','纯债','港股'],
+    duration: '2026H1',
+    confidence: 0.7,
+    advice: '降息预期反复导致波动，债券基金可作为稳定器配置。若美联储转鸽，利好新兴市场和黄金',
+  },
+  {
+    id: 'pboc_easing',
+    name: '中国央行宽松周期延续',
+    category: 'monetary',
+    icon: '🏛️',
+    description: '央行维持宽松货币政策，降准降息预期，社融/M2稳步扩张，流动性充裕',
+    impact: +10,
+    sectors: {
+      positive: ['券商', '银行', '地产', '成长股', '科技'],
+      negative: [],
+    },
+    fundKeywords: ['券商','金融','银行','地产','成长','科技'],
+    duration: '2026全年',
+    confidence: 0.8,
+    advice: '宽松货币环境有利于A股估值扩张，特别是成长股/科技股弹性大。关注社融拐点',
+  },
+  // === 产业政策 ===
+  {
+    id: 'new_quality_prod',
+    name: '新质生产力国家战略',
+    category: 'policy',
+    icon: '🚀',
+    description: '两会将新质生产力列为首要任务，政策聚焦AI、量子计算、新能源、生物医药',
+    impact: +8,
+    sectors: {
+      positive: ['新能源', '生物医药', '半导体', '量子计算', 'AI'],
+      negative: ['高污染', '落后产能'],
+    },
+    fundKeywords: ['新能源','医药','半导体','科技','创新'],
+    duration: '2026-2030',
+    confidence: 0.85,
+    advice: '政策确定性强，新质生产力相关基金是中长期主线。但需避免盲目追高，等技术回调再配置',
+  },
+  {
+    id: 'consumption_stimulus',
+    name: '扩大内需消费刺激',
+    category: 'policy',
+    icon: '🛒',
+    description: '以旧换新2.0+消费券发放+服务消费升级，春节消费数据超预期',
+    impact: +6,
+    sectors: {
+      positive: ['消费', '家电', '汽车', '旅游', '白酒'],
+      negative: [],
+    },
+    fundKeywords: ['消费','白酒','家电','汽车','食品饮料'],
+    duration: '2026全年',
+    confidence: 0.75,
+    advice: '消费复苏确认中，可逢低配置消费ETF。春节数据若超预期，消费板块有望迎来估值修复',
+  },
+  // === 市场结构 ===
+  {
+    id: 'a_share_reform',
+    name: 'A股市场制度改革',
+    category: 'market',
+    icon: '📊',
+    description: '注册制深化、退市新规、量化监管加强、长期资金入市(社保/养老金/险资)',
+    impact: +5,
+    sectors: {
+      positive: ['大盘蓝筹', '红利', '指数基金'],
+      negative: ['小市值壳股', '高频量化'],
+    },
+    fundKeywords: ['沪深300','红利','指数','蓝筹','价值'],
+    duration: '长期',
+    confidence: 0.8,
+    advice: '制度改革利好长期价值投资，沪深300/中证红利等宽基指数基金是稳健底仓首选',
+  },
+];
+
+// 三个月展望 (根据当前事件综合研判)
+const MACRO_3M_OUTLOOK = {
+  period: '2026年2月-5月',
+  overall: '结构性行情延续，AI主线最确定',
+  score: 62, // 0-100, 50=中性
+  themes: [
+    { name: 'AI产业链', conviction: '强', direction: 'up', reason: '春晚引爆全民AI热+政策支持+业绩兑现期' },
+    { name: '军工/黄金', conviction: '中', direction: 'up', reason: '中东局势+美伊紧张→避险需求上升' },
+    { name: '消费复苏', conviction: '中', direction: 'up', reason: '春节数据超预期+政策刺激+低基数' },
+    { name: '国产替代', conviction: '强', direction: 'up', reason: '中美脱钩压力→半导体/信创长期受益' },
+    { name: '出口链', conviction: '弱', direction: 'down', reason: '关税博弈+全球需求放缓' },
+    { name: '港股科技', conviction: '中', direction: 'neutral', reason: '估值有优势但汇率压制，波段操作为主' },
+  ],
+  risks: [
+    '美伊冲突升级导致油价飙升→拖累全球经济',
+    '美联储降息不及预期→美元走强→人民币承压→外资流出',
+    'AI板块估值泡沫化→短期剧烈回调风险',
+    '地产下行超预期→内需不足→消费复苏证伪',
+  ],
+  allocation: {
+    offensive: 'AI/机器人 30% + 半导体/信创 15% = 45%进攻仓',
+    core: '沪深300 20% + 中证红利 10% = 30%核心仓',
+    hedge: '黄金 10% + 纯债 10% = 20%防御仓',
+    cash: '现金 5% = 灵活调仓',
+  },
+};
+
+// 分析宏观地缘事件对特定基金的影响
+function getMacroGeoAnalysis(){
+  const events = MACRO_GEO_EVENTS;
+  const outlook = MACRO_3M_OUTLOOK;
+  // 计算综合影响分
+  let totalImpact = 0;
+  let totalWeight = 0;
+  const activeEvents = events.filter(e => e.confidence >= 0.5);
+  activeEvents.forEach(e => {
+    totalImpact += e.impact * e.confidence;
+    totalWeight += e.confidence;
+  });
+  const avgImpact = totalWeight > 0 ? totalImpact / totalWeight : 0;
+  const normalizedScore = Math.max(0, Math.min(100, 50 + avgImpact));
+  
+  // 按影响力排序
+  const sorted = [...activeEvents].sort((a,b) => Math.abs(b.impact)*b.confidence - Math.abs(a.impact)*a.confidence);
+  
+  // 对每只持仓基金计算事件影响
+  const fundImpacts = {};
+  holdings.forEach(h => {
+    const name = fundName(h.code).toLowerCase();
+    let fundScore = 0;
+    const matchedEvents = [];
+    events.forEach(e => {
+      const match = e.fundKeywords.some(kw => name.includes(kw.toLowerCase()));
+      if(match){
+        fundScore += e.impact * e.confidence * 0.1;
+        matchedEvents.push({ id: e.id, name: e.name, icon: e.icon, impact: e.impact > 0 ? 'positive' : 'negative' });
+      }
+    });
+    if(matchedEvents.length > 0){
+      fundImpacts[h.code] = { score: fundScore, events: matchedEvents };
+    }
+  });
+  
+  return {
+    score: normalizedScore,
+    avgImpact,
+    topEvents: sorted.slice(0, 5),
+    allEvents: activeEvents,
+    outlook,
+    fundImpacts,
+    label: normalizedScore >= 60 ? '地缘偏多' : normalizedScore <= 40 ? '地缘偏空' : '地缘中性',
+  };
+}
+
 // ==================== RL BRAIN STATE ====================
 let rlAgent = null;
 let rlTrainer = null;
@@ -2593,7 +2838,38 @@ function buildDataIntelContext(){
   const dataSignal = generateDataSignal();
   ctx += `\n■ 综合数据信号: ${dataSignal.icon} ${dataSignal.label} (评分${dataSignal.score}/100)\n`;
   ctx += `  建议: ${dataSignal.advice}\n`;
-  ctx += '\n⚠️ 请结合以上宏观数据、资金流向、国内舆情以及国际新闻形势分析，对你的操作建议进行验证和调整。数据驱动决策，减少主观偏差。\n';
+
+  // 宏观地缘事件引擎
+  const geoA = getMacroGeoAnalysis();
+  ctx += `\n■ 🌍 宏观地缘事件引擎 (综合评分${geoA.score}/100 · ${geoA.label}):\n`;
+  geoA.topEvents.forEach(e => {
+    ctx += `  ${e.icon} ${e.name}: 影响=${e.impact>0?'+':''}${e.impact} 置信度=${(e.confidence*100).toFixed(0)}%\n`;
+    ctx += `    ${e.description}\n`;
+    ctx += `    利好板块: ${e.sectors.positive.join('、')} | 利空板块: ${e.sectors.negative.join('、')||'无'}\n`;
+    ctx += `    操作建议: ${e.advice}\n`;
+  });
+  ctx += `\n  📅 三个月展望(${geoA.outlook.period}): ${geoA.outlook.overall}\n`;
+  ctx += `  投资主线:\n`;
+  geoA.outlook.themes.forEach(t => {
+    const arrow = t.direction==='up'?'↑':t.direction==='down'?'↓':'→';
+    ctx += `    ${arrow} ${t.name}(置信:${t.conviction}): ${t.reason}\n`;
+  });
+  ctx += `  建议配置:\n`;
+  ctx += `    🔴 进攻仓: ${geoA.outlook.allocation.offensive}\n`;
+  ctx += `    🔵 核心仓: ${geoA.outlook.allocation.core}\n`;
+  ctx += `    🟡 防御仓: ${geoA.outlook.allocation.hedge}\n`;
+  ctx += `    ⚪ 现金: ${geoA.outlook.allocation.cash}\n`;
+  ctx += `  ⚠️ 重点风险: ${geoA.outlook.risks.join('; ')}\n`;
+
+  // 持仓基金地缘事件关联
+  if(Object.keys(geoA.fundImpacts).length > 0){
+    ctx += `\n  [持仓基金地缘事件关联]:\n`;
+    Object.entries(geoA.fundImpacts).forEach(([code, fi]) => {
+      ctx += `    ${fundName(code)}(${code}): 地缘影响=${fi.score>0?'+':''}${fi.score.toFixed(1)} 相关事件=${fi.events.map(e=>e.icon+e.name).join(',')}\n`;
+    });
+  }
+
+  ctx += '\n⚠️ 请结合以上宏观数据、资金流向、国内舆情、国际新闻以及重大地缘事件分析，对你的操作建议进行验证和调整。特别注意：①地缘事件对持仓基金的板块影响 ②三个月投资主线是否与持仓吻合 ③风险事件是否需要调仓对冲。数据驱动决策，减少主观偏差。\n';
 
   return ctx;
 }
@@ -3446,6 +3722,67 @@ function renderActionGuide(){
   html += `</div>`;
   html += `</div>`;
 
+  // 1.5 宏观地缘事件与三个月展望
+  const geoData = getMacroGeoAnalysis();
+  html += `<div class="ag-overview" style="background:linear-gradient(135deg,#1a1a2e 0%,#0f172a 50%,#1e1b4b 100%);margin-top:10px">`;
+  html += `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">`;
+  html += `<div style="font-weight:700;font-size:13px">🌍 宏观地缘事件与三个月展望</div>`;
+  const geoColor = geoData.score >= 60 ? '#4ade80' : geoData.score <= 40 ? '#f87171' : '#fbbf24';
+  html += `<span style="font-size:11px;color:${geoColor};font-weight:700">${geoData.label} ${geoData.score}分</span>`;
+  html += `</div>`;
+
+  // 关键事件列表
+  html += `<div style="margin-bottom:10px">`;
+  geoData.topEvents.forEach(e => {
+    const impactColor = e.impact > 0 ? '#4ade80' : e.impact < 0 ? '#f87171' : '#fbbf24';
+    const impactArrow = e.impact > 0 ? '↑' : e.impact < 0 ? '↓' : '→';
+    html += `<div style="display:flex;align-items:center;gap:6px;padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.05);font-size:10px">`;
+    html += `<span style="font-size:14px;min-width:22px">${e.icon}</span>`;
+    html += `<div style="flex:1">`;
+    html += `<div style="font-weight:600;color:#e2e8f0;font-size:11px">${e.name}</div>`;
+    html += `<div style="color:var(--sub);margin-top:1px">${e.description.slice(0,50)}...</div>`;
+    html += `</div>`;
+    html += `<div style="text-align:right;min-width:50px">`;
+    html += `<div style="color:${impactColor};font-weight:700;font-size:12px">${impactArrow}${Math.abs(e.impact)}</div>`;
+    html += `<div style="color:var(--sub);font-size:9px">置信${(e.confidence*100).toFixed(0)}%</div>`;
+    html += `</div></div>`;
+  });
+  html += `</div>`;
+
+  // 三个月主题展望
+  const ol = geoData.outlook;
+  html += `<div style="background:rgba(139,92,246,0.1);border-radius:8px;padding:8px 10px;margin-bottom:8px">`;
+  html += `<div style="font-size:11px;font-weight:700;color:#c084fc;margin-bottom:6px">📅 ${ol.period} 投资主线</div>`;
+  html += `<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px">`;
+  ol.themes.forEach(t => {
+    const tColor = t.direction === 'up' ? '#4ade80' : t.direction === 'down' ? '#f87171' : '#fbbf24';
+    const arrow = t.direction === 'up' ? '▲' : t.direction === 'down' ? '▼' : '●';
+    html += `<span style="padding:3px 7px;border-radius:6px;font-size:9px;font-weight:600;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1)">`;
+    html += `<span style="color:${tColor}">${arrow}</span> ${t.name}`;
+    html += `<span style="color:var(--sub)"> · ${t.conviction}</span></span>`;
+  });
+  html += `</div>`;
+  html += `<div style="font-size:10px;color:#e2e8f0;line-height:1.5">${ol.overall}</div>`;
+  html += `</div>`;
+
+  // 配置建议
+  html += `<div style="background:rgba(34,211,238,0.06);border-radius:8px;padding:8px 10px;margin-bottom:8px">`;
+  html += `<div style="font-size:10px;font-weight:700;color:#22d3ee;margin-bottom:4px">💼 建议配置 (${ol.period})</div>`;
+  html += `<div style="font-size:10px;line-height:1.6;color:#e2e8f0">`;
+  html += `🔴 进攻仓: ${ol.allocation.offensive}<br>`;
+  html += `🔵 核心仓: ${ol.allocation.core}<br>`;
+  html += `🟡 防御仓: ${ol.allocation.hedge}<br>`;
+  html += `⚪ 现金: ${ol.allocation.cash}`;
+  html += `</div></div>`;
+
+  // 风险提示
+  html += `<div style="font-size:9px;color:#f87171;line-height:1.5;padding:4px 8px;background:rgba(239,68,68,0.06);border-radius:6px">`;
+  html += `<b>⚠️ 重点风险:</b> `;
+  html += ol.risks.map(r => r).join(' | ');
+  html += `</div>`;
+
+  html += `</div>`;
+
   // 2. 逐只基金操作卡片
   // 排序：卖出优先(风控优先)，然后买入，最后持有
   const order = {sell: 0, buy: 1, hold: 2};
@@ -3476,6 +3813,14 @@ function renderActionGuide(){
     if(vote.buyVotes >= 2 && vote.sellVotes === 0) html += `<span class="ag-vote-chip bullish">✓共识看多×${vote.consensusMult.toFixed(1)}</span>`;
     else if(vote.sellVotes >= 2 && vote.buyVotes === 0) html += `<span class="ag-vote-chip bearish">✓共识看空×${vote.consensusMult.toFixed(1)}</span>`;
     else if(vote.buyVotes > 0 && vote.sellVotes > 0) html += `<span class="ag-vote-chip neutral">⚠分歧×${vote.consensusMult.toFixed(1)}</span>`;
+    // 宏观地缘事件标签
+    const fImpact = geoData.fundImpacts[code];
+    if(fImpact && fImpact.events.length > 0){
+      fImpact.events.slice(0,2).forEach(ev => {
+        const cls = ev.impact === 'positive' ? 'bullish' : 'bearish';
+        html += `<span class="ag-vote-chip ${cls}">${ev.icon}${ev.name.slice(0,6)}</span>`;
+      });
+    }
     html += `</div>`;
 
     // 操作理由
@@ -5306,6 +5651,9 @@ function generateDataSignal(){
     // AI评分加权
     if(globalNewsSummary?.score) score += (globalNewsSummary.score - 50) * 0.08;
   }
+  // 宏观地缘事件 ±12
+  const geoAnalysis = getMacroGeoAnalysis();
+  score += (geoAnalysis.score - 50) * 0.24;
   // PMI特殊权重
   if(macroData.pmi?.[0]){
     const pmi = macroData.pmi[0].MAKE_INDEX;
@@ -5608,6 +5956,22 @@ function buildRLContext(){
     ctx+=`  ${name}(${code}): ${sig.actionName} 置信=${sig.conviction}(仓位${sig.positionPct}%) 投票=[${votes}] 不确定性=${(sig.uncertainty||0).toFixed(3)} Q=[${qStr}]${triInfo}\n`;
   }
   ctx+='⚠️ 闭环联动: RL逐步信号融入回测(消除前瞻偏差) → 回测指标注入RL 40维状态(含组合DD/现金/集中度/权重) → Regime自适应引擎权重 → 引擎准确率EMA动态调权 → 反羊群RSI极端校正 → 时序一致性+滞回防翻转 → 组合风险约束 → 延迟奖励在线学习 → Sim绩效自适应BT参数 → RL训练完成自动重跑回测。\n';
+  // 宏观地缘事件上下文
+  const geoCtx = getMacroGeoAnalysis();
+  ctx+='\n【🌍 宏观地缘事件分析】\n';
+  ctx+=`综合地缘评分: ${geoCtx.score}/100 (${geoCtx.label})\n`;
+  ctx+=`三个月展望(${geoCtx.outlook.period}): ${geoCtx.outlook.overall}\n`;
+  ctx+='关键事件:\n';
+  geoCtx.topEvents.forEach(e => {
+    ctx+=`  ${e.icon} ${e.name}: 影响=${e.impact>0?'+':''}${e.impact} 置信=${(e.confidence*100).toFixed(0)}% — ${e.advice}\n`;
+  });
+  ctx+='投资主线:\n';
+  geoCtx.outlook.themes.forEach(t => {
+    const arrow = t.direction==='up'?'↑':t.direction==='down'?'↓':'→';
+    ctx+=`  ${arrow} ${t.name}(${t.conviction}): ${t.reason}\n`;
+  });
+  ctx+=`建议配置: 进攻=${geoCtx.outlook.allocation.offensive} / 核心=${geoCtx.outlook.allocation.core} / 防御=${geoCtx.outlook.allocation.hedge}\n`;
+  ctx+='⚠️ 请结合以上地缘事件和三个月展望，对每只基金给出是否受益/受损的具体判断，并在操作建议中体现宏观逻辑。\n';
   return ctx;
 }
 
