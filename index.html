@@ -3694,6 +3694,181 @@ function getTriEngineVote(code){
   return computeTriEngineVote(code, _analysisResult?.signals?.[code], _rlSignals[code], btResults[code]);
 }
 
+// === 板块资金流匹配基金类型 ===
+function getRelevantCapFlow(code){
+  if(!sectorCapFlow.length) return null;
+  const fType = (fundType(code)||'').toLowerCase();
+  const fName = (fundName(code)||'').toLowerCase();
+  const typeMap = {
+    '黄金':['贵金属','黄金'],
+    '有色金属':['有色金属','矿业','有色'],
+    'ai/科技':['计算机','电子','科技','通信','信息技术'],
+    '半导体':['半导体','电子','芯片'],
+    '军工':['军工','国防'],
+    '新能源':['新能源','电力设备','汽车'],
+    '消费':['食品饮料','家电','商贸零售','消费'],
+    '医药':['医药','生物'],
+    '红利':['银行','煤炭','公用事业'],
+    '金融':['券商','银行','保险','金融','非银金融'],
+    '宽基':[], // 宽基不匹配单一板块
+  };
+  const matchSectors = typeMap[fType] || [];
+  // 额外从基金名称提取关键词
+  const extraKw = [];
+  if(fName.includes('银行')) extraKw.push('银行');
+  if(fName.includes('券商')||fName.includes('证券')) extraKw.push('券商','非银金融');
+  if(fName.includes('医药')||fName.includes('医疗')) extraKw.push('医药','生物');
+  if(fName.includes('消费')||fName.includes('食品')) extraKw.push('食品饮料','消费');
+  if(fName.includes('科技')||fName.includes('ai')||fName.includes('人工智能')) extraKw.push('计算机','电子');
+  const allKw = [...new Set([...matchSectors, ...extraKw])];
+  for(const sec of allKw){
+    const found = sectorCapFlow.find(s => s.name.includes(sec) || sec.includes(s.name));
+    if(found) return found;
+  }
+  return null;
+}
+
+// === 组合板块集中度分析 ===
+function getPortfolioSectorAnalysis(plans){
+  const typeGroups = {};
+  plans.forEach(p => {
+    const t = fundType(p.code) || '其他';
+    if(!typeGroups[t]) typeGroups[t] = { count:0, codes:[], totalAction:0 };
+    typeGroups[t].count++;
+    typeGroups[t].codes.push(p.code);
+    if(p.vote.action === 'buy') typeGroups[t].totalAction++;
+    else if(p.vote.action === 'sell') typeGroups[t].totalAction--;
+  });
+  const warnings = [];
+  Object.entries(typeGroups).forEach(([type, info]) => {
+    if(info.count >= 2){
+      warnings.push({ type, count: info.count, sameBias: info.totalAction === info.count || info.totalAction === -info.count });
+    }
+  });
+  // 板块分布
+  const distribution = Object.entries(typeGroups)
+    .map(([type, info]) => ({ type, count: info.count, pct: Math.round(info.count / plans.length * 100) }))
+    .sort((a,b) => b.count - a.count);
+  return { warnings, distribution };
+}
+
+// === 综合趋势标签生成 ===
+function getTrendLabel(td){
+  if(!td) return { icon:'', text:'', color:'var(--sub)' };
+  const dirMap = {
+    'strong_up': { icon:'🔥', text:'强势上攻', color:'#ef4444' },
+    'up': { icon:'📈', text:'趋势向上', color:'#f87171' },
+    'sideways': { icon:'↔️', text:'横盘震荡', color:'#fbbf24' },
+    'down': { icon:'📉', text:'趋势走弱', color:'#4ade80' },
+    'strong_down': { icon:'⚠️', text:'强势下跌', color:'#22c55e' },
+  };
+  const swingMap = {
+    'deep_dip': { icon:'💎', text:'深度回调', color:'#ef4444' },
+    'dip': { icon:'🔻', text:'短期回调', color:'#f87171' },
+    'mid': { icon:'●', text:'中位运行', color:'var(--sub)' },
+    'rally': { icon:'🔺', text:'短期反弹', color:'#fbbf24' },
+    'surge': { icon:'🚀', text:'短期冲高', color:'#4ade80' },
+  };
+  return {
+    dir: dirMap[td.trendDir] || dirMap['sideways'],
+    swing: swingMap[td.swingPos] || swingMap['mid'],
+    maStatus: td.latest > td.ma5 && td.ma5 > td.ma20 && td.ma20 > td.ma60 ? '多头排列' :
+              td.latest < td.ma5 && td.ma5 < td.ma20 && td.ma20 < td.ma60 ? '空头排列' : '交织',
+    drawdown: td.drawdownFromHigh,
+    rebound: td.reboundFromLow,
+  };
+}
+
+// === 生成智能操作理由(整合所有数据源) ===
+function generateSmartReason(p, capFlow, ds){
+  const { code, td, vote } = p;
+  const parts = [];
+  const fType = fundType(code) || '';
+
+  // 1. 三引擎共识
+  if(vote.action === 'buy'){
+    if(vote.buyVotes >= 3) parts.push('三引擎一致看多');
+    else if(vote.buyVotes >= 2) parts.push(`${vote.buyVotes}/3引擎看多`);
+    else if(vote.geoBias > 0.15) parts.push('地缘事件驱动看多');
+  } else if(vote.action === 'sell'){
+    if(vote.sellVotes >= 3) parts.push('三引擎一致看空');
+    else if(vote.sellVotes >= 2) parts.push(`${vote.sellVotes}/3引擎看空`);
+  }
+
+  // 2. 地缘事件分析
+  if(vote.geoBias > 0.2) parts.push(`地缘强利好(+${vote.geoBias.toFixed(2)})`);
+  else if(vote.geoBias > 0.1) parts.push(`地缘偏利好(+${vote.geoBias.toFixed(2)})`);
+  else if(vote.geoBias < -0.2) parts.push(`地缘强利空(${vote.geoBias.toFixed(2)})`);
+  else if(vote.geoBias < -0.1) parts.push(`地缘偏利空(${vote.geoBias.toFixed(2)})`);
+
+  // 3. 趋势+波段位置
+  if(td){
+    const tl = getTrendLabel(td);
+    if(td.trendDir === 'strong_up' && td.swingPos === 'dip') parts.push('强势趋势中回调，波段买点');
+    else if(td.trendDir === 'strong_up' && td.swingPos === 'deep_dip') parts.push('强势回调过深，超级买点');
+    else if(td.trendDir === 'up' && (td.swingPos === 'dip' || td.swingPos === 'deep_dip')) parts.push('上升趋势回调，低吸机会');
+    else if((td.trendDir === 'strong_up' || td.trendDir === 'up') && td.swingPos === 'surge') parts.push('短期冲高，注意止盈');
+    else if(td.trendDir === 'strong_down' && td.swingPos === 'rally') parts.push('下跌反弹，建议逢高减仓');
+    else if(td.trendDir === 'strong_down' && td.swingPos === 'deep_dip') parts.push('持续下跌中，暂不抄底');
+    else if(td.trendDir === 'down' && td.swingPos === 'rally') parts.push('弱势反弹，谨慎对待');
+    else if(td.trendDir === 'sideways') parts.push('横盘震荡，等待方向');
+
+    // MA排列
+    if(tl.maStatus === '多头排列') parts.push('均线多头排列');
+    else if(tl.maStatus === '空头排列') parts.push('均线空头排列');
+
+    // 距高点/低点位置
+    if(td.drawdownFromHigh < -15) parts.push(`距高点回撤${td.drawdownFromHigh.toFixed(0)}%`);
+    if(td.reboundFromLow > 15) parts.push(`从低点反弹${td.reboundFromLow.toFixed(0)}%`);
+  }
+
+  // 4. 板块资金流向
+  if(capFlow){
+    const netB = capFlow.mainNet;
+    if(netB > 1e8) parts.push(`${fType}板块主力净流入${(netB/1e8).toFixed(1)}亿`);
+    else if(netB < -1e8) parts.push(`${fType}板块主力净流出${(Math.abs(netB)/1e8).toFixed(1)}亿`);
+  }
+
+  // 5. 回测指标
+  if(vote.bt.sharpe > 1) parts.push(`回测Sharpe ${vote.bt.sharpe.toFixed(1)}优秀`);
+  else if(vote.bt.sharpe > 0.3) parts.push(`回测Sharpe ${vote.bt.sharpe.toFixed(1)}尚可`);
+  else if(vote.bt.sharpe < 0) parts.push(`回测Sharpe ${vote.bt.sharpe.toFixed(1)}偏弱`);
+
+  if(vote.bt.rsi < 30) parts.push(`RSI=${vote.bt.rsi.toFixed(0)}超卖区`);
+  else if(vote.bt.rsi > 70) parts.push(`RSI=${vote.bt.rsi.toFixed(0)}超买区`);
+
+  if(vote.bt.maxDD < -0.2) parts.push(`最大回撤${(vote.bt.maxDD*100).toFixed(0)}%较高`);
+  if(vote.bt.winRate > 0.6) parts.push(`胜率${(vote.bt.winRate*100).toFixed(0)}%`);
+
+  // 6. AI专项分析
+  if(vote.ai.conf >= 70) parts.push(`AI置信${vote.ai.conf}%`);
+
+  // 7. RL信心
+  if(vote.rl.conviction === '强' && vote.rl.vote !== 0) parts.push(`RL${vote.rl.vote > 0 ? '看多' : '看空'}信心强`);
+
+  // 8. 宏观环境
+  if(ds){
+    if(ds.score >= 65 && vote.action === 'buy') parts.push('宏观环境配合');
+    else if(ds.score <= 35 && vote.action === 'sell') parts.push('宏观环境走弱');
+  }
+
+  // 汇总
+  let reason = parts.join('，');
+  // 加入操作建议
+  if(vote.action === 'buy'){
+    reason += `。建议用总仓位的${(vote.bt.kelly*100).toFixed(0)}%(Kelly)分批加仓`;
+    if(td?.swingPos === 'dip' || td?.swingPos === 'deep_dip') reason += '，当前处于回调低点，可适当加大力度';
+  } else if(vote.action === 'sell'){
+    reason += '。建议先减30-50%仓位落袋';
+    if(td?.swingPos === 'surge' || td?.swingPos === 'rally') reason += '，趁反弹出货';
+  } else {
+    if(parts.length === 0) reason = '信号未达共识阈值，维持现有仓位观望';
+    if(vote.geoBias > 0.1 && vote.buyVotes < 2) reason += '。地缘偏利好但引擎信号不足，可小仓先行布局';
+    if(vote.ai.reason && vote.ai.conf > 0) reason += `。AI参考：${vote.ai.reason.slice(0,60)}`;
+  }
+  return reason;
+}
+
 function renderActionGuide(){
   const container = document.getElementById('action-guide-container');
   const brief = document.getElementById('action-guide-brief');
@@ -3723,14 +3898,20 @@ function renderActionGuide(){
   const overallScore = Math.round(Math.max(0, Math.min(100, 50 + avgScore * 50)));
   const ds = _dataIntelLoaded ? generateDataSignal() : null;
 
-  // 整体建议
+  // 整体建议 (结合组合结构+数据信号)
   let overallAdvice = '', overallColor = '#94a3b8', overallLabel = '中性观望';
+  const sectorAnalysis = getPortfolioSectorAnalysis(plans);
   if(overallScore >= 70){ overallLabel = '积极加仓'; overallColor = '#ef4444'; overallAdvice = '三引擎多数看多，市场环境偏积极。建议按Kelly仓位逐步加仓看多品种，控制单笔不超组合5%。'; }
   else if(overallScore >= 58){ overallLabel = '偏多持有'; overallColor = '#f59e0b'; overallAdvice = '信号偏正面，维持现有仓位为主。可在回调时对高共识品种小幅低吸，控制节奏。'; }
   else if(overallScore >= 42){ overallLabel = '中性观望'; overallColor = '#94a3b8'; overallAdvice = '信号分歧较大或数据不足。建议持有不动，等待引擎信号趋于一致后再行动。'; }
   else if(overallScore >= 30){ overallLabel = '偏空谨慎'; overallColor = '#f59e0b'; overallAdvice = '部分引擎看空。建议先减仓高风险卫星仓品种，保留核心仓。新资金暂不入场。'; }
   else { overallLabel = '防御减仓'; overallColor = '#22c55e'; overallAdvice = '多引擎看空。建议主动减仓卫星仓，增加现金比例，等待市场企稳信号。'; }
-  if(ds) overallAdvice += ` [宏观环境: ${ds.label}(${ds.score})]`;
+  // 组合结构风险提示
+  if(sectorAnalysis.warnings.length > 0){
+    const concTypes = sectorAnalysis.warnings.map(w => `${w.type}×${w.count}`).join('、');
+    overallAdvice += ` ⚠️板块集中: ${concTypes}，注意相关性风险。`;
+  }
+  if(ds) overallAdvice += ` [宏观: ${ds.label}(${ds.score})]`;
 
   // 引擎总投票汇总
   const engAI = plans.filter(p => p.vote.ai.vote > 0).length;
@@ -3791,6 +3972,56 @@ function renderActionGuide(){
   html += `<span>现金:<b>${(pRisk.cashRatio*100).toFixed(0)}%</b></span>`;
   html += `<span>集中度:<b>${(pRisk.hhi*100).toFixed(0)}%</b></span>`;
   html += `</div>`;
+
+  // 1.2 数据信号分解 (宏观/资金/舆情/国际/地缘)
+  if(_dataIntelLoaded){
+    const macro = getMacroSummary();
+    const capFlow = getCapFlowSummary();
+    const gSent = globalNews.length > 0 ? getGlobalNewsSentiment() : null;
+    const geoScore = getMacroGeoAnalysis().score;
+    html += `<div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:4px;padding:5px 8px;background:rgba(34,211,238,0.06);border-radius:8px;font-size:9px">`;
+    html += `<span style="font-weight:700;color:#22d3ee;font-size:10px">📊 多维信号</span>`;
+    // 宏观
+    const macroColor = macro.positiveCount >= 4 ? '#4ade80' : macro.positiveCount >= 2 ? '#fbbf24' : '#f87171';
+    html += `<span style="padding:2px 6px;border-radius:4px;background:rgba(255,255,255,0.05)">宏观<b style="color:${macroColor}"> ${macro.overallSignal}</b></span>`;
+    // 资金流
+    const netB = capFlow.netTotal;
+    const capColor = netB > 5e9 ? '#4ade80' : netB > 0 ? '#fbbf24' : netB > -5e9 ? '#fb923c' : '#f87171';
+    const capLabel = netB > 0 ? `+${(netB/1e8).toFixed(0)}亿` : `${(netB/1e8).toFixed(0)}亿`;
+    html += `<span style="padding:2px 6px;border-radius:4px;background:rgba(255,255,255,0.05)">主力资金<b style="color:${capColor}"> ${capLabel}</b></span>`;
+    // 舆情
+    const sentColor = newsSentiment.score >= 55 ? '#4ade80' : newsSentiment.score <= 45 ? '#f87171' : '#fbbf24';
+    html += `<span style="padding:2px 6px;border-radius:4px;background:rgba(255,255,255,0.05)">A股舆情<b style="color:${sentColor}"> ${newsSentiment.score}</b></span>`;
+    // 国际
+    if(gSent){
+      const gColor = gSent.score >= 55 ? '#4ade80' : gSent.score <= 45 ? '#f87171' : '#fbbf24';
+      html += `<span style="padding:2px 6px;border-radius:4px;background:rgba(255,255,255,0.05)">国际<b style="color:${gColor}"> ${gSent.score}</b></span>`;
+    }
+    // 地缘
+    const geoC = geoScore >= 60 ? '#4ade80' : geoScore <= 40 ? '#f87171' : '#fbbf24';
+    html += `<span style="padding:2px 6px;border-radius:4px;background:rgba(255,255,255,0.05)">地缘<b style="color:${geoC}"> ${geoScore}</b></span>`;
+    // PMI特写
+    if(macroData.pmi?.[0]){
+      const pmi = macroData.pmi[0].MAKE_INDEX;
+      const pmiC = pmi >= 51 ? '#4ade80' : pmi >= 50 ? '#fbbf24' : '#f87171';
+      html += `<span style="padding:2px 6px;border-radius:4px;background:rgba(255,255,255,0.05)">PMI<b style="color:${pmiC}"> ${pmi}</b></span>`;
+    }
+    html += `</div>`;
+  }
+
+  // 1.3 组合持仓结构
+  if(sectorAnalysis.distribution.length > 1){
+    html += `<div style="display:flex;gap:3px;flex-wrap:wrap;margin-top:4px;padding:4px 8px;background:rgba(139,92,246,0.05);border-radius:8px;font-size:9px">`;
+    html += `<span style="font-weight:700;color:#a78bfa;font-size:10px">💼 持仓结构</span>`;
+    sectorAnalysis.distribution.forEach(d => {
+      html += `<span style="padding:2px 5px;border-radius:4px;background:rgba(255,255,255,0.06)">${d.type} <b>${d.pct}%</b></span>`;
+    });
+    if(sectorAnalysis.warnings.length > 0){
+      html += `<span style="color:#f87171;font-weight:600">⚠️集中度风险</span>`;
+    }
+    html += `</div>`;
+  }
+
   html += `</div>`;
 
   // 1.5 宏观地缘事件与三个月展望
@@ -3855,31 +4086,49 @@ function renderActionGuide(){
   html += `</div>`;
 
   // 2. 逐只基金操作卡片
-  // 排序：卖出优先(风控优先)，然后买入，最后持有
+  // 排序：卖出优先(风控优先)，然后买入(geoBias高优先)，最后持有
   const order = {sell: 0, buy: 1, hold: 2};
-  plans.sort((a,b) => (order[a.vote.action]||2) - (order[b.vote.action]||2));
+  plans.sort((a,b) => {
+    const oa = order[a.vote.action]||2, ob = order[b.vote.action]||2;
+    if(oa !== ob) return oa - ob;
+    // 同action内: 按|score|+geoBias降序排
+    return (Math.abs(b.vote.score) + Math.abs(b.vote.geoBias)) - (Math.abs(a.vote.score) + Math.abs(a.vote.geoBias));
+  });
 
-  plans.forEach(p => {
+  plans.forEach((p, pidx) => {
     const { code, fd, td, vote } = p;
     const todayPct = fd?.gszzl || 0;
     const pctColor = todayPct >= 0 ? 'var(--red)' : 'var(--green)';
+    const capFlow = getRelevantCapFlow(code);
+    const trendInfo = getTrendLabel(td);
 
     html += `<div class="ag-fund-card action-${vote.action}">`;
+    // 顶部: 基金名+动作+优先级
     html += `<div class="ag-fund-top">`;
     html += `<div><div class="ag-fund-name">${fundName(code)}</div><div class="ag-fund-code">${code} · ${fundType(code)} · 今日 <span style="color:${pctColor}">${todayPct>=0?'+':''}${fmt(todayPct)}%</span></div></div>`;
+    html += `<div style="display:flex;align-items:center;gap:6px">`;
+    // 优先级标记
+    if(vote.action !== 'hold'){
+      const urgency = Math.abs(vote.score) > 0.3 ? '⚡高' : Math.abs(vote.score) > 0.15 ? '●中' : '○低';
+      html += `<span style="font-size:9px;padding:1px 5px;border-radius:4px;background:rgba(255,255,255,0.06);color:var(--sub)">#${pidx+1} ${urgency}</span>`;
+    }
     html += `<span class="ag-fund-action ${vote.action}">${vote.actionLabel}</span>`;
-    html += `</div>`;
+    html += `</div></div>`;
 
     // 三引擎投票条
     html += `<div class="ag-vote-strip">`;
-    const mkChip = (name, v, conf) => {
+    const mkChip = (name, v, conf, extra) => {
       const cls = v > 0 ? 'bullish' : v < 0 ? 'bearish' : 'neutral';
       const txt = v > 0 ? '买' : v < 0 ? '卖' : '持';
-      return `<span class="ag-vote-chip ${cls}">${name}:${txt}${conf>0?' '+conf+'%':''}</span>`;
+      let label = `${name}:${txt}${conf>0?' '+conf+'%':''}`;
+      if(extra) label += ' '+extra;
+      return `<span class="ag-vote-chip ${cls}">${label}</span>`;
     };
-    html += mkChip('AI', vote.ai.vote, vote.ai.conf);
-    html += mkChip('RL', vote.rl.vote, vote.rl.conf);
-    html += mkChip('BT', vote.bt.vote, vote.bt.conf);
+    html += mkChip('AI', vote.ai.vote, vote.ai.conf, vote.ai.conf >= 70 ? '🎯' : '');
+    // RL: 显示信心
+    const rlExtra = vote.rl.conviction !== '--' ? (vote.rl.conviction === '强' ? '💪' : vote.rl.conviction === '弱' ? '？' : '') : '';
+    html += mkChip('RL', vote.rl.vote, vote.rl.conf, rlExtra);
+    html += mkChip('BT', vote.bt.vote, vote.bt.conf, '');
     // 共识标签
     if(vote.buyVotes >= 2 && vote.sellVotes === 0) html += `<span class="ag-vote-chip bullish">✓共识看多×${vote.consensusMult.toFixed(1)}</span>`;
     else if(vote.sellVotes >= 2 && vote.buyVotes === 0) html += `<span class="ag-vote-chip bearish">✓共识看空×${vote.consensusMult.toFixed(1)}</span>`;
@@ -3894,9 +4143,38 @@ function renderActionGuide(){
     }
     html += `</div>`;
 
-    // 操作理由
-    let reason = '';
-    // 地缶事件理由前缀
+    // 趋势+波段+资金流条 (新增)
+    if(td || capFlow){
+      html += `<div style="display:flex;gap:4px;flex-wrap:wrap;padding:4px 0;font-size:9px">`;
+      if(td){
+        // 趋势方向
+        html += `<span style="padding:2px 5px;border-radius:4px;background:rgba(255,255,255,0.05);color:${trendInfo.dir.color}">${trendInfo.dir.icon} ${trendInfo.dir.text}</span>`;
+        // 波段位置
+        html += `<span style="padding:2px 5px;border-radius:4px;background:rgba(255,255,255,0.05);color:${trendInfo.swing.color}">${trendInfo.swing.icon} ${trendInfo.swing.text}</span>`;
+        // MA排列
+        const maColor = trendInfo.maStatus === '多头排列' ? '#f87171' : trendInfo.maStatus === '空头排列' ? '#4ade80' : 'var(--sub)';
+        html += `<span style="padding:2px 5px;border-radius:4px;background:rgba(255,255,255,0.05);color:${maColor}">MA ${trendInfo.maStatus}</span>`;
+        // 距高点回撤
+        if(td.drawdownFromHigh < -5){
+          html += `<span style="padding:2px 5px;border-radius:4px;background:rgba(255,255,255,0.05);color:#4ade80">距高点${td.drawdownFromHigh.toFixed(0)}%</span>`;
+        }
+        // 从低点反弹
+        if(td.reboundFromLow > 5){
+          html += `<span style="padding:2px 5px;border-radius:4px;background:rgba(255,255,255,0.05);color:#f87171">从低点+${td.reboundFromLow.toFixed(0)}%</span>`;
+        }
+      }
+      // 板块资金流
+      if(capFlow){
+        const cfColor = capFlow.mainNet > 0 ? '#4ade80' : '#f87171';
+        const cfVal = capFlow.mainNet > 0 ? `+${(capFlow.mainNet/1e8).toFixed(1)}亿` : `${(capFlow.mainNet/1e8).toFixed(1)}亿`;
+        html += `<span style="padding:2px 5px;border-radius:4px;background:rgba(255,255,255,0.05);color:${cfColor}">💰主力${cfVal}</span>`;
+      }
+      html += `</div>`;
+    }
+
+    // 操作理由 (使用智能生成)
+    const reason = generateSmartReason(p, capFlow, ds);
+    // 地缘事件理由补充
     let geoReason = '';
     if(vote.geoEvents && vote.geoEvents.length > 0){
       const posGeo = vote.geoEvents.filter(e => e.impact === 'positive');
@@ -3904,39 +4182,29 @@ function renderActionGuide(){
       if(posGeo.length > 0) geoReason += `🌍地缘利好: ${posGeo.map(e=>e.icon+e.name).join('、')}`;
       if(negGeo.length > 0) geoReason += `${geoReason?'; ':''}⚠️地缘利空: ${negGeo.map(e=>e.icon+e.name).join('、')}`;
     }
-    if(vote.action === 'buy'){
-      reason = `共识看多(${vote.buyVotes}/3票)`;
-      if(vote.geoBias > 0.1) reason += `，地缘事件强利好(+${vote.geoBias.toFixed(2)})`;
-      if(vote.ai.conf > 0) reason += `，AI置信${vote.ai.conf}%`;
-      if(vote.bt.sharpe > 0) reason += `，回测Sharpe ${vote.bt.sharpe.toFixed(1)}表现优`;
-      if(td?.swingAdvice?.includes('买入')) reason += `，波段信号支撑`;
-      reason += `。建议用总仓位的${(vote.bt.kelly*100).toFixed(0)}%(Kelly)分批加仓`;
-    } else if(vote.action === 'sell'){
-      reason = `共识偏空(${vote.sellVotes}/3票)`;
-      if(vote.geoBias < -0.1) reason += `，地编事件利空(${vote.geoBias.toFixed(2)})`;
-      if(vote.bt.rsi > 70) reason += `，RSI=${vote.bt.rsi.toFixed(0)}超买区`;
-      if(vote.bt.sharpe < 0) reason += `，回测Sharpe ${vote.bt.sharpe.toFixed(1)}不佳`;
-      if(vote.bt.maxDD < -0.15) reason += `，最大回撤${(vote.bt.maxDD*100).toFixed(0)}%较高`;
-      reason += `。建议先减30-50%仓位落袋`;
-    } else {
-      reason = '信号未达共识阈值，维持现有仓位观望';
-      if(vote.geoBias > 0.1) reason = `地缘事件偏利好(+${vote.geoBias.toFixed(2)})，但三引擎信号不足，可小仓先行布局`;
-      else if(vote.geoBias < -0.1) reason = `地缶事件偏利空(${vote.geoBias.toFixed(2)})，三引擎未达共识，建议谨慎`;
-      else if(vote.ai.conf > 0 && vote.ai.reason) reason += `。AI参考：${vote.ai.reason.slice(0,50)}`;
-    }
-    if(geoReason) reason += `<br><span style="font-size:9px;color:#93c5fd">${geoReason}</span>`;
-    html += `<div class="ag-reason">${reason}</div>`;
+    html += `<div class="ag-reason">${reason}`;
+    if(geoReason) html += `<br><span style="font-size:9px;color:#93c5fd">${geoReason}</span>`;
+    html += `</div>`;
 
-    // 核心指标
+    // 核心指标 (增强版)
     html += `<div class="ag-metrics">`;
     html += `<span class="ag-metric">共识 <b>${vote.effConf}%</b></span>`;
     html += `<span class="ag-metric">Sharpe <b style="color:${vote.bt.sharpe>0?'var(--red)':'var(--green)'}">${vote.bt.sharpe.toFixed(2)}</b></span>`;
-    html += `<span class="ag-metric">RSI <b>${vote.bt.rsi.toFixed(0)}</b></span>`;
+    html += `<span class="ag-metric">Sortino <b style="color:${vote.bt.sortino>0?'var(--red)':'var(--green)'}">${vote.bt.sortino.toFixed(2)}</b></span>`;
+    html += `<span class="ag-metric">RSI <b style="color:${vote.bt.rsi<30?'#ef4444':vote.bt.rsi>70?'#22c55e':'var(--sub)'}">${vote.bt.rsi.toFixed(0)}</b></span>`;
     html += `<span class="ag-metric">Kelly <b>${(vote.bt.kelly*100).toFixed(0)}%</b></span>`;
     html += `<span class="ag-metric">胜率 <b>${(vote.bt.winRate*100).toFixed(0)}%</b></span>`;
+    html += `<span class="ag-metric">回撤 <b style="color:${vote.bt.maxDD<-0.15?'#ef4444':'var(--sub)'}">${(vote.bt.maxDD*100).toFixed(0)}%</b></span>`;
     html += `<span class="ag-metric">风控 <b style="color:${vote.riskMult<0.8?'#ef4444':'var(--sub)'}">${vote.riskMult.toFixed(2)}×</b></span>`;
     if(vote.geoBias !== 0) html += `<span class="ag-metric">地缘 <b style="color:${vote.geoBias>0?'#4ade80':vote.geoBias<0?'#f87171':'var(--sub)'}">${vote.geoBias>0?'+':''}${vote.geoBias.toFixed(2)}</b></span>`;
-    if(td) html += `<span class="ag-metric">60日 <b style="color:${td.chg60d>=0?'var(--red)':'var(--green)'}">${td.chg60d>0?'+':''}${td.chg60d}%</b></span>`;
+    // 引擎权重分配
+    html += `<span class="ag-metric">权重 <b style="color:var(--sub);font-size:8px">AI${vote.engineWeights.ai} RL${vote.engineWeights.rl} BT${vote.engineWeights.bt}</b></span>`;
+    // 多维涨跌幅
+    if(td){
+      html += `<span class="ag-metric">5日 <b style="color:${td.chg5d>=0?'var(--red)':'var(--green)'}">${td.chg5d>0?'+':''}${td.chg5d}%</b></span>`;
+      html += `<span class="ag-metric">20日 <b style="color:${td.chg20d>=0?'var(--red)':'var(--green)'}">${td.chg20d>0?'+':''}${td.chg20d}%</b></span>`;
+      html += `<span class="ag-metric">60日 <b style="color:${td.chg60d>=0?'var(--red)':'var(--green)'}">${td.chg60d>0?'+':''}${td.chg60d}%</b></span>`;
+    }
     html += `</div>`;
 
     // Kelly仓位条
@@ -3956,6 +4224,18 @@ function renderActionGuide(){
   html += `<div class="ag-summary-text">`;
   html += `今日建议：<b style="color:var(--red)">${totalBuy}只加仓</b> · <b style="color:var(--green)">${totalSell}只减仓</b> · <b>${totalHold}只持有</b><br>`;
 
+  // 优先行动清单
+  const actionFunds = plans.filter(p => p.vote.action !== 'hold');
+  if(actionFunds.length > 0){
+    html += `<b>📋 执行优先序：</b><br>`;
+    actionFunds.forEach((p, i) => {
+      const emoji = p.vote.action === 'sell' ? '🔴' : '🟢';
+      const act = p.vote.action === 'sell' ? '减仓' : '加仓';
+      const kellyStr = p.vote.action === 'buy' ? ` Kelly${(p.vote.bt.kelly*100).toFixed(0)}%` : ' 减30-50%';
+      html += `${emoji} #${i+1} ${fundName(p.code).slice(0,8)} → ${act}${kellyStr}<br>`;
+    });
+  }
+
   // 与模拟盘今日操作对比
   if(simPortfolio?.history){
     const today = todayStr();
@@ -3972,6 +4252,19 @@ function renderActionGuide(){
     const cumR = (totalVal - SIM_INITIAL_CAPITAL) / SIM_INITIAL_CAPITAL * 100;
     html += `模拟盘累计收益: <b style="color:${cumR>=0?'var(--red)':'var(--green)'}">${cumR>=0?'+':''}${cumR.toFixed(2)}%</b> — 可参考模拟盘验证三引擎信号可靠性<br>`;
   }
+
+  // 数据融合说明
+  html += `<br><b>📐 本次分析融合数据源：</b><br>`;
+  const dataSources = [];
+  if(_analysisResult) dataSources.push(`AI(${_analysisResult.engineCount}引擎)`);
+  if(_rlModelLoaded) dataSources.push(`RL(E${rlTrainer?.episode||0})`);
+  if(btSummary) dataSources.push('回测');
+  if(_dataIntelLoaded) dataSources.push('宏观·资金流·A股舆情·国际舆情');
+  const geoEvtCount = getMacroGeoAnalysis().allEvents.length;
+  if(geoEvtCount > 0) dataSources.push(`${geoEvtCount}项地缘事件`);
+  const trendCount = plans.filter(p => p.td).length;
+  if(trendCount > 0) dataSources.push(`${trendCount}只趋势+波段分析`);
+  html += `${dataSources.join(' × ')}<br>`;
 
   html += `<br><b>⚠️ 操作原则：</b><br>`;
   html += `① 分批执行：单次操作不超总仓位5%，分2-3次完成<br>`;
