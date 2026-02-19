@@ -3568,11 +3568,11 @@ function computeTriEngineVote(code, aiSig, rlSig, btR){
   let geoBias = 0;
   if(geoFundImpact && geoFundImpact.events.length > 0){
     geoBias = geoFundImpact.score; // 正=利好, 负=利空
-    // 加权注入: 地缘偏置最大贡献±0.35
-    const clampedBias = Math.max(-0.35, Math.min(0.35, geoBias));
-    // 混合: 原始得分80% + 地缘偏置20%(当多引擎无信号时地缘权重更大)
+    // 加权注入: 地缘偏置最大贡献±0.5
+    const clampedBias = Math.max(-0.5, Math.min(0.5, geoBias));
+    // 混合: 引擎信号弱时地缘权重更大
     const engineActivity = Math.min(1, (Math.abs(aiVote) + Math.abs(rlVote) + Math.abs(btVote)) / 2);
-    const geoWeight = engineActivity < 0.5 ? 0.35 : 0.15; // 引擎信号弱时，地缘权重更大
+    const geoWeight = engineActivity < 0.5 ? 0.45 : 0.25; // 引擎无信号→地缘45%, 有信号→25%
     score = score * (1 - geoWeight) + clampedBias * geoWeight;
   }
 
@@ -3599,11 +3599,12 @@ function computeTriEngineVote(code, aiSig, rlSig, btR){
   // === 6. 时序一致性(防翻转) ===
   const lastSig = _lastTriSignals[code];
   let temporalScore = score;
+  const geoOverride = Math.abs(geoBias) > 0.2; // 强地缘事件可突破惯性
   if(lastSig && lastSig.date === todayStr()){
     // 同日内不翻转
     temporalScore = score;
-  } else if(lastSig){
-    // 应用惯性: 30%前信号 + 70%当前信号
+  } else if(lastSig && !geoOverride){
+    // 无地缘覆盖时: 应用惯性 30%前信号 + 70%当前信号
     temporalScore = score * 0.7 + lastSig.score * 0.3;
     // 方向翻转需要更大阈值(滞回)
     if(lastSig.action === 'buy' && score < 0 && score > -0.3){
@@ -3612,32 +3613,41 @@ function computeTriEngineVote(code, aiSig, rlSig, btR){
     if(lastSig.action === 'sell' && score > 0 && score < 0.3){
       temporalScore = Math.min(temporalScore, 0); // 卖→买需 score > 0.3
     }
+  } else if(lastSig && geoOverride){
+    // 有强地缘事件时: 减少惯性(仅15%), 让地缘信号快速生效
+    temporalScore = score * 0.85 + lastSig.score * 0.15;
   }
 
   // === 7. 组合风险约束 ===
   const portRisk = getPortfolioRiskMetrics();
   let riskMult = 1.0;
+  const hasGeoSupport = geoBias > 0.15; // 地缘利好保护
   if(portRisk.riskScore > 0.7){
     // 组合高风险: 抑制买入，鼓励卖出
-    if(temporalScore > 0) riskMult = 0.5;
+    if(temporalScore > 0) riskMult = hasGeoSupport ? 0.75 : 0.5; // 有地缘支撑时少抑制
     else if(temporalScore < 0) riskMult = 1.3;
   }
   if(portRisk.cashRatio < 0.05 && temporalScore > 0){
-    riskMult *= 0.3; // 现金几乎耗尽 → 几乎不买
+    riskMult *= hasGeoSupport ? 0.6 : 0.3; // 地缘利好时给更多余地
   }
   // 集中度过高→限制已有重仓基金的买入
   const fundW = portRisk.fundWeight[code] || 0;
   if(fundW > 0.25 && temporalScore > 0) riskMult *= 0.5;
+  // 地缘事件保底: riskMult 不低于0.5(确保地缘信号不被完全扼杀)
+  if(hasGeoSupport && riskMult < 0.5) riskMult = 0.5;
 
   // === 8. 最终决策 ===
   const finalScore = temporalScore * riskMult;
   let action = 'hold', actionLabel = '🔵 持有观望';
-  const effConf = aiConf * consensusMult * riskMult;
+  // effConf: 当AI未分析时(aiConf=0)，用地缘事件置信度作为备用
+  const geoConfFallback = geoBias > 0 ? Math.min(80, geoBias * 60) : 0;
+  const baseConf = aiConf > 0 ? aiConf : geoConfFallback;
+  const effConf = baseConf * consensusMult * riskMult;
   // 当有强地缘事件支撑时，降低买入阈值(更容易触发)
   const hasStrongGeo = geoBias > 0.15;
-  const buyScoreThreshold = hasStrongGeo ? 0.12 : 0.2;
-  const buyConfThreshold = hasStrongGeo ? 40 : 55;
-  const sellScoreThreshold = hasStrongGeo && geoBias < -0.15 ? -0.12 : -0.2;
+  const buyScoreThreshold = hasStrongGeo ? 0.1 : 0.2;
+  const buyConfThreshold = hasStrongGeo ? 30 : 55;
+  const sellScoreThreshold = geoBias < -0.15 ? -0.1 : -0.2;
   if(finalScore > buyScoreThreshold && (effConf >= buyConfThreshold || hasStrongGeo)){ action = 'buy'; actionLabel = '🟢 建议加仓'; }
   else if(finalScore < sellScoreThreshold && effConf >= 50){ action = 'sell'; actionLabel = '🔴 建议减仓'; }
   else if(finalScore > 0.08){ actionLabel = '🔵 偏多持有'; }
