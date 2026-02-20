@@ -1415,7 +1415,7 @@ function getMacroGeoAnalysis(){
     totalWeight += e.confidence;
   });
   const avgImpact = totalWeight > 0 ? totalImpact / totalWeight : 0;
-  const normalizedScore = Math.max(0, Math.min(100, 50 + avgImpact));
+  const normalizedScore = Math.round(Math.max(0, Math.min(100, 50 + avgImpact)));
   
   // 按类别分组+影响力排序，确保各类别均有展示
   // 分类: geopolitics(地缘) / technology(科技) / monetary(货币) / policy(政策) / commodity(商品) / market(市场)
