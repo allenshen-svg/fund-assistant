@@ -4386,20 +4386,6 @@ function renderActionGuide(){
 
   // 整体建议
   html += `<div class="ag-advice-bar"><b>📌 今日操作建议：</b>${overallAdvice}</div>`;
-  // 新增: Regime + 引擎准确率 + 组合风险指标
-  const regimeDisplay = { bull:'🐂牛市', bear:'🐻熊市', volatile:'⚡高波', sideways:'↔️震荡', unknown:'❓' };
-  const pRisk = getPortfolioRiskMetrics();
-  html += `<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;padding:6px 8px;background:rgba(139,92,246,0.08);border-radius:8px;font-size:10px">`;
-  html += `<span style="color:#f59e0b;font-weight:600">Regime: ${regimeDisplay[_marketRegime]||_marketRegime}</span>`;
-  html += `<span style="color:var(--sub)">·</span>`;
-  html += `<span>准确率 AI:<b style="color:${_engineAccuracy.ai>0.55?'#22d3ee':'#ef4444'}">${(_engineAccuracy.ai*100).toFixed(0)}%</b>`;
-  html += ` RL:<b style="color:${_engineAccuracy.rl>0.55?'#22d3ee':'#ef4444'}">${(_engineAccuracy.rl*100).toFixed(0)}%</b>`;
-  html += ` BT:<b style="color:${_engineAccuracy.bt>0.55?'#22d3ee':'#ef4444'}">${(_engineAccuracy.bt*100).toFixed(0)}%</b></span>`;
-  html += `<span style="color:var(--sub)">·</span>`;
-  html += `<span>风控:<b style="color:${pRisk.riskScore>0.7?'#ef4444':pRisk.riskScore>0.4?'#f59e0b':'#4ade80'}">${(pRisk.riskScore*100).toFixed(0)}%</b></span>`;
-  html += `<span>现金:<b>${(pRisk.cashRatio*100).toFixed(0)}%</b></span>`;
-  html += `<span>集中度:<b>${(pRisk.hhi*100).toFixed(0)}%</b></span>`;
-  html += `</div>`;
 
   // 1.2 数据信号分解 (宏观/资金/舆情/国际/地缘)
   if(_dataIntelLoaded){
