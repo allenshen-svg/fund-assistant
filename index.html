@@ -4706,14 +4706,7 @@ function renderActionGuide(){
       });
       html += `</div>`;
     }
-    // 最新媒体动态（由全球媒体实时刷新填充）
-    if(e._latestNews){
-      html += `<div style="margin:4px 0 2px 28px;padding:5px 8px;background:rgba(34,211,238,0.07);border-radius:6px;border-left:2px solid #22d3ee">`;
-      html += `<div style="font-size:9px;font-weight:700;color:#22d3ee;margin-bottom:2px">📰 最新媒体动态</div>`;
-      html += `<div style="font-size:9px;color:#e2e8f0;line-height:1.4">${e._latestNews}</div>`;
-      if(e._newsSource) html += `<div style="font-size:8px;color:var(--sub);margin-top:2px">来源: ${e._newsSource}${e._newsTime ? ' · '+e._newsTime : ''}</div>`;
-      html += `</div>`;
-    }
+    // 媒体数据已通过AI分析融入事件影响力和置信度，不单独显示
     html += `</div>`;
   });
   html += `</div>`;
