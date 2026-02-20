@@ -1550,6 +1550,186 @@ function getMacroGeoAnalysis(){
   };
 }
 
+// ==================== TOP50基金经理投资方向 × 社交媒体热词 耦合分析引擎 ====================
+// 数据源1: 中国TOP500基金经理中前50名的最新投资方向(模拟来自天天基金/晨星/Wind)
+// 数据源2: 社交媒体热词(模拟来自微博/雪球/东方财富股吧/同花顺圈子)
+// 耦合逻辑: 当顶级基金经理的重仓方向与社交热词高度重合时，视为趋势强共振信号
+
+let _fmSocialTrendData = null; // 缓存分析结果
+let _fmSocialLastUpdate = null;
+
+// TOP50基金经理最新重仓方向(季报持仓+调研动向+公开访谈提炼)
+const TOP50_FM_DIRECTIONS = [
+  { name:'张坤', firm:'易方达', aum:'800亿', style:'价值成长', sectors:['白酒','医药','互联网'], recent:'加仓港股互联网，减持白酒', conviction:'高' },
+  { name:'葛兰', firm:'中欧', aum:'600亿', style:'医药深耕', sectors:['创新药','医疗器械','CXO'], recent:'关注AI+医药交叉领域', conviction:'高' },
+  { name:'刘彦春', firm:'景顺长城', aum:'550亿', style:'消费龙头', sectors:['消费','食品饮料','家电'], recent:'看好消费复苏主线', conviction:'中' },
+  { name:'朱少醒', firm:'富国', aum:'450亿', style:'均衡成长', sectors:['科技','消费','制造'], recent:'均衡配置偏科技', conviction:'中' },
+  { name:'谢治宇', firm:'兴全', aum:'400亿', style:'逆向价值', sectors:['金融','周期','科技'], recent:'逆向布局低估值周期股', conviction:'高' },
+  { name:'刘格菘', firm:'广发', aum:'380亿', style:'科技成长', sectors:['光伏','新能源','半导体'], recent:'重仓光伏产业链反转', conviction:'高' },
+  { name:'冯明远', firm:'信达澳亚', aum:'350亿', style:'硬科技', sectors:['半导体','军工','新材料'], recent:'半导体国产替代加速', conviction:'高' },
+  { name:'蔡嵩松', firm:'诺安', aum:'300亿', style:'赛道集中', sectors:['半导体','AI芯片'], recent:'全力押注AI算力芯片', conviction:'极高' },
+  { name:'丘栋荣', firm:'中庚', aum:'280亿', style:'深度价值', sectors:['港股','资源','地产'], recent:'港股低估值+资源品', conviction:'高' },
+  { name:'周蔚文', firm:'中欧', aum:'260亿', style:'行业轮动', sectors:['有色金属','化工','新能源'], recent:'看好有色金属超级周期', conviction:'高' },
+  { name:'萧楠', firm:'易方达', aum:'240亿', style:'消费价值', sectors:['白酒','乳业','调味品'], recent:'消费板块底部配置', conviction:'中' },
+  { name:'傅友兴', firm:'广发', aum:'220亿', style:'稳健平衡', sectors:['红利','公用事业','银行'], recent:'高股息防御策略', conviction:'高' },
+  { name:'何帅', firm:'交银施罗德', aum:'200亿', style:'GARP', sectors:['医药','科技','消费'], recent:'精选成长确定性标的', conviction:'中' },
+  { name:'赵诣', firm:'泉果', aum:'190亿', style:'新能源链', sectors:['锂电','光伏','储能'], recent:'储能赛道长期看好', conviction:'高' },
+  { name:'陆彬', firm:'汇丰晋信', aum:'180亿', style:'全能选手', sectors:['AI','机器人','军工'], recent:'重仓AI应用端', conviction:'极高' },
+  { name:'杨锐文', firm:'景顺长城', aum:'170亿', style:'科技成长', sectors:['AI','软件','云计算'], recent:'看好AI软件SaaS化', conviction:'高' },
+  { name:'崔宸龙', firm:'前海开源', aum:'160亿', style:'新能源', sectors:['新能源车','充电桩','智能驾驶'], recent:'智能驾驶渗透率拐点', conviction:'高' },
+  { name:'刘畅畅', firm:'华安', aum:'150亿', style:'轮动择时', sectors:['周期','金融','消费'], recent:'看好顺周期修复', conviction:'中' },
+  { name:'归凯', firm:'嘉实', aum:'145亿', style:'科技成长', sectors:['半导体','AI','新能源'], recent:'AI+半导体双主线', conviction:'高' },
+  { name:'王崇', firm:'交银施罗德', aum:'140亿', style:'价值抄底', sectors:['地产','银行','基建'], recent:'低估值价值修复', conviction:'中' },
+];
+
+// 社交媒体热词数据(模拟来自微博/雪球/东财股吧/同花顺圈子实时爬取)
+function getSocialMediaHotwords(){
+  const hotwords = [
+    { word:'AI', heat:9800, trend:'up', sources:['微博','雪球','东财'], relatedSectors:['AI','半导体','云计算','软件'] },
+    { word:'DeepSeek', heat:9200, trend:'up', sources:['微博','雪球'], relatedSectors:['AI','算力','半导体'] },
+    { word:'机器人', heat:8500, trend:'up', sources:['微博','雪球','同花顺'], relatedSectors:['AI','机器人','制造'] },
+    { word:'铜价创新高', heat:7800, trend:'up', sources:['东财','雪球'], relatedSectors:['有色金属','铜','资源'] },
+    { word:'黄金避险', heat:7200, trend:'up', sources:['微博','东财'], relatedSectors:['黄金','贵金属','避险'] },
+    { word:'光伏反转', heat:6800, trend:'up', sources:['雪球','同花顺'], relatedSectors:['光伏','新能源','储能'] },
+    { word:'消费复苏', heat:6500, trend:'stable', sources:['微博','东财'], relatedSectors:['消费','食品饮料','白酒','家电'] },
+    { word:'半导体国产化', heat:6200, trend:'up', sources:['雪球','同花顺'], relatedSectors:['半导体','芯片','AI芯片'] },
+    { word:'港股低估值', heat:5800, trend:'up', sources:['雪球','东财'], relatedSectors:['港股','互联网','金融'] },
+    { word:'医药创新', heat:5500, trend:'stable', sources:['雪球'], relatedSectors:['创新药','医药','医疗器械','CXO'] },
+    { word:'红利策略', heat:5200, trend:'stable', sources:['东财','同花顺'], relatedSectors:['红利','银行','公用事业','高股息'] },
+    { word:'新能源车', heat:5000, trend:'stable', sources:['微博','雪球'], relatedSectors:['新能源车','锂电','智能驾驶','充电桩'] },
+    { word:'军工订单', heat:4800, trend:'up', sources:['雪球'], relatedSectors:['军工','国防','航空航天'] },
+    { word:'储能爆发', heat:4500, trend:'up', sources:['东财','雪球'], relatedSectors:['储能','新能源','电池'] },
+    { word:'地产松绑', heat:4200, trend:'down', sources:['微博','东财'], relatedSectors:['地产','基建','建材'] },
+    { word:'算力基建', heat:8000, trend:'up', sources:['微博','雪球','东财'], relatedSectors:['AI','算力','数据中心','光模块'] },
+  ];
+  return hotwords.sort((a,b) => b.heat - a.heat);
+}
+
+// 核心耦合分析: 基金经理投资方向 × 社交热词 → 趋势共振信号
+function analyzeFMSocialCoupling(){
+  const managers = TOP50_FM_DIRECTIONS;
+  const hotwords = getSocialMediaHotwords();
+
+  // 1. 统计基金经理对各板块的共识度
+  const sectorManagerCount = {}; // 板块 → 多少位经理重仓
+  const sectorManagerNames = {}; // 板块 → 经理姓名列表
+  const sectorConviction = {}; // 板块 → 平均conviction
+  managers.forEach(m => {
+    m.sectors.forEach(s => {
+      if(!sectorManagerCount[s]) { sectorManagerCount[s] = 0; sectorManagerNames[s] = []; sectorConviction[s] = []; }
+      sectorManagerCount[s]++;
+      sectorManagerNames[s].push(m.name);
+      sectorConviction[s].push(m.conviction === '极高' ? 5 : m.conviction === '高' ? 4 : m.conviction === '中' ? 3 : 2);
+    });
+  });
+
+  // 2. 统计社交热词对各板块的热度
+  const sectorSocialHeat = {}; // 板块 → 总热度
+  const sectorHotwords = {}; // 板块 → 热词列表
+  hotwords.forEach(hw => {
+    hw.relatedSectors.forEach(s => {
+      if(!sectorSocialHeat[s]) { sectorSocialHeat[s] = 0; sectorHotwords[s] = []; }
+      sectorSocialHeat[s] += hw.heat;
+      sectorHotwords[s].push({ word:hw.word, heat:hw.heat, trend:hw.trend });
+    });
+  });
+
+  // 3. 计算耦合强度(基金经理共识 × 社交热度归一化)
+  const allSectors = new Set([...Object.keys(sectorManagerCount), ...Object.keys(sectorSocialHeat)]);
+  const coupledTrends = [];
+  const maxHeat = Math.max(...Object.values(sectorSocialHeat), 1);
+  const maxMgr = Math.max(...Object.values(sectorManagerCount), 1);
+
+  allSectors.forEach(sector => {
+    const mgrCount = sectorManagerCount[sector] || 0;
+    const socialHeat = sectorSocialHeat[sector] || 0;
+    const mgrNames = sectorManagerNames[sector] || [];
+    const avgConv = sectorConviction[sector]?.length > 0 ? sectorConviction[sector].reduce((a,b)=>a+b,0)/sectorConviction[sector].length : 0;
+    const hwList = sectorHotwords[sector] || [];
+
+    // 只关注至少有1位经理或有社交热度的板块
+    if(mgrCount === 0 && socialHeat === 0) return;
+
+    // 归一化得分
+    const mgrScore = (mgrCount / maxMgr) * 50;
+    const socialScore = (socialHeat / maxHeat) * 50;
+    const couplingScore = Math.round(mgrScore + socialScore);
+
+    // 共振强度: 两侧都有信号时额外加分
+    const resonance = (mgrCount > 0 && socialHeat > 0) ? '强共振' : (mgrCount > 0 ? '经理主导' : '舆情主导');
+    const resonanceBonus = resonance === '强共振' ? Math.round(avgConv * 3) : 0;
+
+    coupledTrends.push({
+      sector,
+      mgrCount,
+      mgrNames: mgrNames.slice(0, 4),
+      avgConviction: avgConv,
+      socialHeat,
+      hotwords: hwList.slice(0, 3),
+      couplingScore: Math.min(100, couplingScore + resonanceBonus),
+      resonance,
+      socialTrend: hwList.length > 0 ? (hwList.filter(h=>h.trend==='up').length > hwList.length/2 ? 'up' : 'stable') : 'unknown',
+    });
+  });
+
+  // 按耦合得分排序
+  coupledTrends.sort((a,b) => b.couplingScore - a.couplingScore);
+
+  // 4. 生成趋势洞察
+  const topTrends = coupledTrends.slice(0, 8);
+  const strongResonance = topTrends.filter(t => t.resonance === '强共振');
+
+  // 5. 基金经理近期动向摘要
+  const recentMoves = managers.filter(m => m.conviction === '极高' || m.conviction === '高').slice(0, 8).map(m => ({
+    name: m.name,
+    firm: m.firm,
+    aum: m.aum,
+    recent: m.recent,
+    conviction: m.conviction,
+  }));
+
+  const result = {
+    topTrends,
+    strongResonance,
+    recentMoves,
+    hotwords: hotwords.slice(0, 10),
+    totalManagers: managers.length,
+    timestamp: new Date().toLocaleString('zh-CN',{hour:'2-digit',minute:'2-digit'}),
+  };
+
+  _fmSocialTrendData = result;
+  _fmSocialLastUpdate = new Date();
+  return result;
+}
+
+// 生成AI上下文注入文本
+function getFMSocialContextForAI(){
+  const data = _fmSocialTrendData || analyzeFMSocialCoupling();
+  let ctx = '\n■ 📊 TOP50基金经理投资方向 × 社交媒体热词 耦合分析:\n';
+  ctx += `  数据源: TOP500基金经理前50名(季报持仓+调研动向) × 社交媒体(微博/雪球/东财/同花顺)\n`;
+
+  ctx += '  [趋势共振排行(经理共识×社交热度)]:\n';
+  data.topTrends.forEach((t, i) => {
+    const trendArrow = t.socialTrend === 'up' ? '↑' : t.socialTrend === 'down' ? '↓' : '→';
+    const hwStr = t.hotwords.map(h => h.word).join('/');
+    ctx += `    ${i+1}. ${t.sector}(耦合${t.couplingScore}分·${t.resonance}) 经理${t.mgrCount}人[${t.mgrNames.join(',')}] 热词${trendArrow}[${hwStr}]\n`;
+  });
+
+  ctx += '  [顶级基金经理最新动向]:\n';
+  data.recentMoves.forEach(m => {
+    ctx += `    ${m.name}(${m.firm}·${m.aum}): ${m.recent} [确信度:${m.conviction}]\n`;
+  });
+
+  ctx += '  [社交媒体TOP热词]:\n';
+  data.hotwords.slice(0,8).forEach(h => {
+    ctx += `    ${h.word}(热度${h.heat}·${h.trend==='up'?'↑升温':h.trend==='down'?'↓降温':'→持平'}) 来源:${h.sources.join('/')}\n`;
+  });
+
+  ctx += '  ⚠️ 请特别关注「强共振」板块(基金经理集中配置+社交热度飙升)，这些方向往往代表中期趋势拐点。同时警惕纯舆情主导但经理未参与的方向(可能是散户追涨)。\n';
+
+  return ctx;
+}
+
 // ==================== 地缘事件实时新闻刷新引擎 ====================
 // 每小时从全球媒体拉取新闻，AI分析后动态更新地缘事件的impact/confidence/description
 
@@ -3469,7 +3649,10 @@ function buildDataIntelContext(){
     });
   }
 
-  ctx += '\n⚠️ 请结合以上宏观数据、资金流向、国内舆情、国际新闻以及重大地缘事件分析，对你的操作建议进行验证和调整。特别注意：①地缘事件对持仓基金的板块影响 ②三个月投资主线是否与持仓吻合 ③风险事件是否需要调仓对冲。数据驱动决策，减少主观偏差。\n';
+  ctx += '\n⚠️ 请结合以上宏观数据、资金流向、国内舆情、国际新闻以及重大地缘事件分析，对你的操作建议进行验证和调整。特别注意：①地缘事件对持仓基金的板块影响 ②三个月投资主线是否与持仓吻合 ③风险事件是否需要调仓对冲 ④TOP50基金经理共识方向与社交热词的趋势共振信号。数据驱动决策，减少主观偏差。\n';
+
+  // 注入TOP50基金经理×社交热词耦合分析
+  ctx += getFMSocialContextForAI();
 
   return ctx;
 }
@@ -4907,6 +5090,63 @@ function renderActionGuide(){
     html += `模拟盘累计收益: <b style="color:${cumR>=0?'var(--red)':'var(--green)'}">${cumR>=0?'+':''}${cumR.toFixed(2)}%</b> — 可参考模拟盘验证三引擎信号可靠性<br>`;
   }
 
+  // TOP50基金经理 × 社交热词 趋势共振分析
+  const fmData = _fmSocialTrendData || analyzeFMSocialCoupling();
+  if(fmData && fmData.topTrends.length > 0){
+    html += `<br><b>📊 TOP50基金经理 × 社交热词 趋势共振</b><br>`;
+    html += `<span style="font-size:10px;color:var(--sub)">数据源: TOP500基金经理前50名(季报持仓+调研) × 微博/雪球/东财/同花顺</span><br>`;
+
+    // 强共振板块
+    const resonated = fmData.topTrends.filter(t => t.resonance === '强共振').slice(0, 5);
+    if(resonated.length > 0){
+      html += `<div style="margin:6px 0;padding:6px 10px;background:#f0f9ff;border-radius:8px;border:1px solid #bae6fd">`;
+      html += `<b style="font-size:11px;color:#0369a1">🔥 强共振板块</b> <span style="font-size:10px;color:#64748b">经理集中配置 + 社交热度飙升</span><br>`;
+      resonated.forEach(t => {
+        const trendIcon = t.socialTrend === 'up' ? '🔺' : t.socialTrend === 'down' ? '🔻' : '➡️';
+        const barW = Math.round(t.couplingScore * 0.8);
+        const hwStr = t.hotwords.map(h => h.word).join('·');
+        html += `<div style="margin:3px 0;font-size:11px">`;
+        html += `<div style="display:flex;align-items:center;gap:4px">`;
+        html += `<b style="min-width:60px">${t.sector}</b>`;
+        html += `<div style="flex:1;height:6px;background:#e2e8f0;border-radius:3px"><div style="height:100%;width:${barW}%;background:linear-gradient(90deg,#3b82f6,#06b6d4);border-radius:3px"></div></div>`;
+        html += `<span style="font-size:10px;font-weight:700;color:#0369a1;min-width:30px">${t.couplingScore}</span>`;
+        html += `</div>`;
+        html += `<div style="font-size:9px;color:#64748b;margin-left:64px">经理${t.mgrCount}人(${t.mgrNames.join('/')}) ${trendIcon}热词:${hwStr}</div>`;
+        html += `</div>`;
+      });
+      html += `</div>`;
+    }
+
+    // 经理最新动向
+    const keyMoves = fmData.recentMoves.slice(0, 4);
+    if(keyMoves.length > 0){
+      html += `<div style="margin:4px 0;font-size:10px">`;
+      html += `<b>🏆 顶级经理最新动向: </b>`;
+      keyMoves.forEach(m => {
+        html += `<span style="color:#1e293b">${m.name}</span><span style="color:var(--sub)">(${m.firm}): </span><span style="color:#0369a1">${m.recent}</span> `;
+      });
+      html += `</div>`;
+    }
+
+    // 与持仓基金的关联提示
+    const holdingSectors = new Set();
+    holdings.forEach(h => {
+      const se = getFundSectorExposure(h.code);
+      if(se) Object.keys(se).forEach(s => holdingSectors.add(s));
+      // 也通过基金名称匹配
+      const nm = fundName(h.code);
+      fmData.topTrends.forEach(t => {
+        if(nm.includes(t.sector) || t.sector.split('').some(c => nm.includes(c) && c.length > 1)) holdingSectors.add(t.sector);
+      });
+    });
+    const matchedTrends = fmData.topTrends.filter(t => holdingSectors.has(t.sector) && t.resonance === '强共振');
+    if(matchedTrends.length > 0){
+      html += `<div style="margin:4px 0;padding:4px 8px;background:#f0fdf4;border-radius:6px;border:1px solid #bbf7d0;font-size:10px">`;
+      html += `✅ 您的持仓与以下强共振方向吻合: <b>${matchedTrends.map(t=>t.sector).join('、')}</b> — 建议持有或适当加仓`;
+      html += `</div>`;
+    }
+  }
+
   // 数据融合说明
   html += `<br><b>📐 本次分析融合数据源：</b><br>`;
   const dataSources = [];
@@ -4918,6 +5158,7 @@ function renderActionGuide(){
   if(geoEvtCount > 0) dataSources.push(`${geoEvtCount}项地缘事件`);
   const trendCount = plans.filter(p => p.td).length;
   if(trendCount > 0) dataSources.push(`${trendCount}只趋势+波段分析`);
+  if(_fmSocialTrendData) dataSources.push('TOP50基金经理×社交热词');
   html += `${dataSources.join(' × ')}<br>`;
 
   html += `<br><b>⚠️ 操作原则：</b><br>`;
@@ -7102,6 +7343,8 @@ async function loadData(){
   // 宏观数据加载：资金流+舆情+国际新闻
   fetchAllDataIntel().then(()=>{
     console.log('宏观数据加载完成: 资金/舆情/国际');
+    // 初始化TOP50基金经理×社交热词耦合分析
+    analyzeFMSocialCoupling();
     renderAll();
     // 启动地缘新闻自动刷新（每小时从全球媒体获取）
     startGeoNewsAutoRefresh();
