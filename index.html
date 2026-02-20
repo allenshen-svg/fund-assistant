@@ -1016,6 +1016,27 @@ const MACRO_GEO_EVENTS = [
   },
   // === 大宗商品 ===
   {
+    id: 'crude_oil_volatility',
+    name: '国际原油价格高波动',
+    category: 'commodity',
+    icon: '🛢️',
+    description: '2026年原油市场多空交织：OPEC+减产挺价vs美国页岩油增产，美伊谈判走向决定伊朗原油是否重返市场(日产400万桶)，俄乌冲突持续影响欧洲能源供应。布伦特原油在70-85美元区间震荡，地缘风险溢价显著',
+    impact: +5,
+    sectors: {
+      positive: ['石油石化', '油气', '能源', '化工', '油服'],
+      negative: ['航空', '物流运输', '化纤(成本端)'],
+    },
+    scenarios: [
+      { name: 'OPEC+深度减产+美伊谈崩', probability: 0.25, impact: +15, benefitSectors: ['油气','能源','化工','油服'], hurtSectors: ['航空','物流','消费'], note: '油价冲上90-100美元，能源股/油气基金大幅受益' },
+      { name: '供需基本平衡', probability: 0.45, impact: +3, benefitSectors: ['油气','化工'], hurtSectors: [], note: '油价维持70-80美元区间震荡，油气基金稳健收益' },
+      { name: '美伊达成协议+需求放缓', probability: 0.30, impact: -8, benefitSectors: ['航空','消费','化工(成本降)'], hurtSectors: ['油气','能源','油服'], note: '伊朗原油重返+全球需求疲软，油价跌至55-65美元' },
+    ],
+    fundKeywords: ['原油','油气','石油','天然气','能源','化工','石化','油服'],
+    duration: '2026全年',
+    confidence: 0.85,
+    advice: '原油是2026最具波动性的大宗商品。油气基金适合波段操作：①关注美伊谈判进展(核心变量)；②OPEC+会议前后是关键时间窗口；③油价跌破65美元可加仓，突破85美元考虑止盈',
+  },
+  {
     id: 'commodity_supercycle',
     name: '全球铜铝供需紧张与能源转型',
     category: 'commodity',
@@ -1060,6 +1081,7 @@ const MACRO_3M_OUTLOOK = {
     { name: '军工/黄金', conviction: '中', direction: 'up', reason: '美伊核谈判不确定性→避险需求支撑，若谈判破裂将大幅利好' },
     { name: '消费复苏', conviction: '中', direction: 'up', reason: '春节数据超预期+政策刺激+低基数' },
     { name: '国产替代', conviction: '强', direction: 'up', reason: '中美脱钩压力→半导体/信创长期受益' },
+    { name: '原油/能源', conviction: '中', direction: 'up', reason: 'OPEC+减产+地缘溢价→油价高位震荡，美伊谈判是核心变量' },
     { name: '出口链', conviction: '弱', direction: 'down', reason: '关税博弈+全球需求放缓' },
     { name: '港股科技', conviction: '中', direction: 'neutral', reason: '估值有优势但汇率压制，波段操作为主' },
   ],
@@ -1395,8 +1417,31 @@ function getMacroGeoAnalysis(){
   const avgImpact = totalWeight > 0 ? totalImpact / totalWeight : 0;
   const normalizedScore = Math.max(0, Math.min(100, 50 + avgImpact));
   
-  // 按影响力排序
-  const sorted = [...activeEvents].sort((a,b) => Math.abs(b.impact)*b.confidence - Math.abs(a.impact)*a.confidence);
+  // 按类别分组+影响力排序，确保各类别均有展示
+  // 分类: geopolitics(地缘) / technology(科技) / monetary(货币) / policy(政策) / commodity(商品) / market(市场)
+  const catGroups = {};
+  activeEvents.forEach(e => {
+    if(!catGroups[e.category]) catGroups[e.category] = [];
+    catGroups[e.category].push(e);
+  });
+  // 每个类别内按影响力排序
+  Object.values(catGroups).forEach(arr => arr.sort((a,b) => Math.abs(b.impact)*b.confidence - Math.abs(a.impact)*a.confidence));
+  // 轮询各类别取事件，保证多样性 (优先级: commodity > geopolitics > technology > monetary > policy > market)
+  const catPriority = ['commodity','geopolitics','technology','monetary','policy','market'];
+  const sorted = [];
+  const catIdx = {};
+  catPriority.forEach(c => catIdx[c] = 0);
+  for(let round = 0; sorted.length < activeEvents.length; round++){
+    let added = false;
+    for(const cat of catPriority){
+      const arr = catGroups[cat];
+      if(arr && catIdx[cat] < arr.length){
+        sorted.push(arr[catIdx[cat]++]);
+        added = true;
+      }
+    }
+    if(!added) break;
+  }
   
   // 对每只持仓基金计算事件影响（基于持仓行业分布，而非仅名称匹配）
   const fundImpacts = {};
@@ -1493,7 +1538,7 @@ function getMacroGeoAnalysis(){
   return {
     score: normalizedScore,
     avgImpact,
-    topEvents: sorted.slice(0, 5),
+    topEvents: sorted.slice(0, 7),
     allEvents: activeEvents,
     outlook,
     fundImpacts,
