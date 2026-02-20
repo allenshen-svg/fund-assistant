@@ -4685,7 +4685,7 @@ function renderActionGuide(){
     html += `</div>`;
     html += `<div style="text-align:right;min-width:50px">`;
     html += `<div style="color:${impactColor};font-weight:700;font-size:12px">${impactArrow}${Math.abs(e.impact)}</div>`;
-    html += `<div style="color:var(--sub);font-size:9px">置信${(e.confidence*100).toFixed(0)}%</div>`;
+    html += `<div style="color:#94a3b8;font-size:9px">置信${(e.confidence*100).toFixed(0)}%</div>`;
     html += `</div></div>`;
     // 情景推演（如果有scenarios字段）
     if(e.scenarios && e.scenarios.length > 0){
