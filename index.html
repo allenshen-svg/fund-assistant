@@ -863,20 +863,25 @@ let _dataIntelLoaded = false;
 const MACRO_GEO_EVENTS = [
   // === 地缘政治 ===
   {
-    id: 'us_iran_tension',
-    name: '美国-伊朗局势紧张',
+    id: 'us_iran_negotiation',
+    name: '美伊核谈判重启博弈',
     category: 'geopolitics',
-    icon: '⚔️',
-    description: '中东地缘冲突升级风险，美伊关系持续紧张，波斯湾航运安全受威胁，国际油价上行压力大',
-    impact: -8, // -100~+100 对A股影响
+    icon: '🕊️⚔️',
+    description: '2026年2月美伊重启核谈判，特朗普政府与伊朗在核计划限制、制裁解除等关键议题上角力。谈判成功→伊朗原油重返市场→油价承压→利好航空消费；谈判破裂→制裁加码→油价飙升→避险抬头。当前处于高度不确定阶段',
+    impact: -3, // 谈判中不确定性较高，但比纯冲突时风险小
     sectors: {
       positive: ['军工', '黄金', '石油石化', '能源', '油气'],
       negative: ['航空', '消费', '出口制造'],
     },
-    fundKeywords: ['军工','国防','黄金','原油','能源','石油','油气','天然气','化工'],
-    duration: '2026Q1-Q2',
-    confidence: 0.75,
-    advice: '中东局势不确定性增加避险需求，可适当配置黄金/军工ETF对冲，降低航空消费类仓位',
+    scenarios: [
+      { name: '谈判达成协议', probability: 0.35, impact: +8, benefitSectors: ['航空','消费','化工'], hurtSectors: ['油气','军工'], note: '伊朗原油回归市场，油价回落至60-70美元，利好下游成本' },
+      { name: '谈判僵局/破裂', probability: 0.45, impact: -12, benefitSectors: ['军工','黄金','能源','油气'], hurtSectors: ['航空','消费'], note: '制裁加码+军事威胁升级，油价冲击90美元+' },
+      { name: '维持现状拉锯', probability: 0.20, impact: -2, benefitSectors: ['黄金'], hurtSectors: [], note: '市场已部分定价，波动收窄' },
+    ],
+    fundKeywords: ['军工','国防','黄金','原油','能源','石油','油气','天然气','化工','航空'],
+    duration: '2026Q1-Q3',
+    confidence: 0.8,
+    advice: '美伊谈判是Q1最大地缘变量。建议：①黄金仓位维持10%对冲尾部风险；②油气基金短期持有但设止盈；③若达成协议信号明确，及时减持军工/油气转配航空消费',
   },
   {
     id: 'us_china_trade',
@@ -1052,14 +1057,14 @@ const MACRO_3M_OUTLOOK = {
   score: 62, // 0-100, 50=中性
   themes: [
     { name: 'AI产业链', conviction: '强', direction: 'up', reason: '春晚引爆全民AI热+政策支持+业绩兑现期' },
-    { name: '军工/黄金', conviction: '中', direction: 'up', reason: '中东局势+美伊紧张→避险需求上升' },
+    { name: '军工/黄金', conviction: '中', direction: 'up', reason: '美伊核谈判不确定性→避险需求支撑，若谈判破裂将大幅利好' },
     { name: '消费复苏', conviction: '中', direction: 'up', reason: '春节数据超预期+政策刺激+低基数' },
     { name: '国产替代', conviction: '强', direction: 'up', reason: '中美脱钩压力→半导体/信创长期受益' },
     { name: '出口链', conviction: '弱', direction: 'down', reason: '关税博弈+全球需求放缓' },
     { name: '港股科技', conviction: '中', direction: 'neutral', reason: '估值有优势但汇率压制，波段操作为主' },
   ],
   risks: [
-    '美伊冲突升级导致油价飙升→拖累全球经济',
+    '美伊核谈判破裂→制裁加码/军事威胁→油价飙升拖累全球经济',
     '美联储降息不及预期→美元走强→人民币承压→外资流出',
     'AI板块估值泡沫化→短期剧烈回调风险',
     '地产下行超预期→内需不足→消费复苏证伪',
@@ -3228,6 +3233,14 @@ function buildDataIntelContext(){
     ctx += `  ${e.icon} ${e.name}: 影响=${e.impact>0?'+':''}${e.impact} 置信度=${(e.confidence*100).toFixed(0)}%\n`;
     ctx += `    ${e.description}\n`;
     ctx += `    利好板块: ${e.sectors.positive.join('、')} | 利空板块: ${e.sectors.negative.join('、')||'无'}\n`;
+    if(e.scenarios && e.scenarios.length > 0){
+      ctx += `    情景推演:\n`;
+      e.scenarios.forEach(sc => {
+        ctx += `      ${sc.name}(概率${(sc.probability*100).toFixed(0)}% 影响${sc.impact>0?'+':''}${sc.impact}): ${sc.note}\n`;
+        if(sc.benefitSectors?.length) ctx += `        利好: ${sc.benefitSectors.join('、')}\n`;
+        if(sc.hurtSectors?.length) ctx += `        利空: ${sc.hurtSectors.join('、')}\n`;
+      });
+    }
     ctx += `    操作建议: ${e.advice}\n`;
   });
   ctx += `\n  📅 三个月展望(${geoA.outlook.period}): ${geoA.outlook.overall}\n`;
@@ -4475,16 +4488,37 @@ function renderActionGuide(){
   geoData.topEvents.forEach(e => {
     const impactColor = e.impact > 0 ? '#4ade80' : e.impact < 0 ? '#f87171' : '#fbbf24';
     const impactArrow = e.impact > 0 ? '↑' : e.impact < 0 ? '↓' : '→';
-    html += `<div style="display:flex;align-items:center;gap:6px;padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.05);font-size:10px">`;
+    html += `<div style="border-bottom:1px solid rgba(255,255,255,0.05);padding:5px 0">`;
+    html += `<div style="display:flex;align-items:center;gap:6px;font-size:10px">`;
     html += `<span style="font-size:14px;min-width:22px">${e.icon}</span>`;
     html += `<div style="flex:1">`;
     html += `<div style="font-weight:600;color:#e2e8f0;font-size:11px">${e.name}</div>`;
-    html += `<div style="color:var(--sub);margin-top:1px">${e.description.slice(0,50)}...</div>`;
+    html += `<div style="color:var(--sub);margin-top:1px">${e.description.slice(0,60)}...</div>`;
     html += `</div>`;
     html += `<div style="text-align:right;min-width:50px">`;
     html += `<div style="color:${impactColor};font-weight:700;font-size:12px">${impactArrow}${Math.abs(e.impact)}</div>`;
     html += `<div style="color:var(--sub);font-size:9px">置信${(e.confidence*100).toFixed(0)}%</div>`;
     html += `</div></div>`;
+    // 情景推演（如果有scenarios字段）
+    if(e.scenarios && e.scenarios.length > 0){
+      html += `<div style="margin:4px 0 2px 28px;padding:5px 8px;background:rgba(139,92,246,0.08);border-radius:6px;border-left:2px solid #8b5cf6">`;
+      html += `<div style="font-size:9px;font-weight:700;color:#a78bfa;margin-bottom:3px">📊 情景推演</div>`;
+      e.scenarios.forEach(sc => {
+        const scColor = sc.impact > 0 ? '#4ade80' : sc.impact < 0 ? '#f87171' : '#fbbf24';
+        const probWidth = Math.round(sc.probability * 100);
+        html += `<div style="padding:2px 0;font-size:9px">`;
+        html += `<div style="display:flex;align-items:center;gap:4px;margin-bottom:2px">`;
+        html += `<span style="font-weight:600;color:#e2e8f0;min-width:70px">${sc.name}</span>`;
+        html += `<div style="flex:1;height:4px;border-radius:2px;background:rgba(255,255,255,0.06)"><div style="height:100%;width:${probWidth}%;border-radius:2px;background:${scColor}"></div></div>`;
+        html += `<span style="color:${scColor};font-weight:700;min-width:28px;text-align:right">${probWidth}%</span>`;
+        html += `<span style="color:${scColor};min-width:24px;text-align:right;font-weight:600">${sc.impact>0?'+':''}${sc.impact}</span>`;
+        html += `</div>`;
+        html += `<div style="color:rgba(255,255,255,0.4);padding-left:2px;line-height:1.3">${sc.note}</div>`;
+        html += `</div>`;
+      });
+      html += `</div>`;
+    }
+    html += `</div>`;
   });
   html += `</div>`;
 
@@ -6599,6 +6633,11 @@ function buildRLContext(){
   ctx+='关键事件:\n';
   geoCtx.topEvents.forEach(e => {
     ctx+=`  ${e.icon} ${e.name}: 影响=${e.impact>0?'+':''}${e.impact} 置信=${(e.confidence*100).toFixed(0)}% — ${e.advice}\n`;
+    if(e.scenarios && e.scenarios.length > 0){
+      e.scenarios.forEach(sc => {
+        ctx+=`    [${sc.name}] 概率${(sc.probability*100).toFixed(0)}% 影响${sc.impact>0?'+':''}${sc.impact}: ${sc.note}\n`;
+      });
+    }
   });
   ctx+='投资主线:\n';
   geoCtx.outlook.themes.forEach(t => {
