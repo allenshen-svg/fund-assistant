@@ -4722,34 +4722,6 @@ function renderActionGuide(){
     if(geoReason) html += `<br><span style="font-size:9px;color:#1e40af">${geoReason}</span>`;
     html += `</div>`;
 
-    // 核心指标 (增强版)
-    html += `<div class="ag-metrics">`;
-    html += `<span class="ag-metric">共识 <b>${vote.effConf}%</b></span>`;
-    html += `<span class="ag-metric">Sharpe <b style="color:${vote.bt.sharpe>0?'var(--red)':'var(--green)'}">${vote.bt.sharpe.toFixed(2)}</b></span>`;
-    html += `<span class="ag-metric">Sortino <b style="color:${vote.bt.sortino>0?'var(--red)':'var(--green)'}">${vote.bt.sortino.toFixed(2)}</b></span>`;
-    html += `<span class="ag-metric">RSI <b style="color:${vote.bt.rsi<30?'#ef4444':vote.bt.rsi>70?'#22c55e':'var(--sub)'}">${vote.bt.rsi.toFixed(0)}</b></span>`;
-    html += `<span class="ag-metric">Kelly <b>${(vote.bt.kelly*100).toFixed(0)}%</b></span>`;
-    html += `<span class="ag-metric">胜率 <b>${(vote.bt.winRate*100).toFixed(0)}%</b></span>`;
-    html += `<span class="ag-metric">回撤 <b style="color:${vote.bt.maxDD<-0.15?'#ef4444':'var(--sub)'}">${(vote.bt.maxDD*100).toFixed(0)}%</b></span>`;
-    html += `<span class="ag-metric">风控 <b style="color:${vote.riskMult<0.8?'#ef4444':'var(--sub)'}">${vote.riskMult.toFixed(2)}×</b></span>`;
-    if(vote.geoBias !== 0) html += `<span class="ag-metric">地缘 <b style="color:${vote.geoBias>0?'#4ade80':vote.geoBias<0?'#f87171':'var(--sub)'}">${vote.geoBias>0?'+':''}${vote.geoBias.toFixed(2)}</b></span>`;
-    // 引擎权重分配
-    html += `<span class="ag-metric">权重 <b style="color:var(--sub);font-size:8px">AI${vote.engineWeights.ai} RL${vote.engineWeights.rl} BT${vote.engineWeights.bt}</b></span>`;
-    // 多维涨跌幅
-    if(td){
-      html += `<span class="ag-metric">5日 <b style="color:${td.chg5d>=0?'var(--red)':'var(--green)'}">${td.chg5d>0?'+':''}${td.chg5d}%</b></span>`;
-      html += `<span class="ag-metric">20日 <b style="color:${td.chg20d>=0?'var(--red)':'var(--green)'}">${td.chg20d>0?'+':''}${td.chg20d}%</b></span>`;
-      html += `<span class="ag-metric">60日 <b style="color:${td.chg60d>=0?'var(--red)':'var(--green)'}">${td.chg60d>0?'+':''}${td.chg60d}%</b></span>`;
-    }
-    html += `</div>`;
-
-    // Kelly仓位条
-    const kellyPct = Math.round(vote.bt.kelly * 100);
-    html += `<div class="ag-position-bar">`;
-    html += `<div class="ag-pos-label"><span>建议仓位 (半Kelly)</span><span>${Math.round(kellyPct/2)}%~${kellyPct}%</span></div>`;
-    const barColor = vote.action === 'buy' ? 'var(--red)' : vote.action === 'sell' ? 'var(--green)' : 'var(--primary)';
-    html += `<div class="ag-pos-track"><div class="ag-pos-fill" style="width:${Math.min(kellyPct, 100)}%;background:${barColor}"></div></div>`;
-    html += `</div>`;
 
     html += `</div>`; // end ag-fund-card
   });
