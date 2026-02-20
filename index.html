@@ -1087,7 +1087,310 @@ const MACRO_3M_OUTLOOK = {
   },
 };
 
-// 分析宏观地缘事件对特定基金的影响
+// ==================== 基金持仓分析引擎 (Fund Holdings Analysis Engine) ====================
+// 股票代码 → 行业板块映射 (覆盖A股/港股常见重仓股)
+const STOCK_SECTOR_DB = {
+  // === 白酒/消费 ===
+  '600519': '白酒', '000858': '白酒', '600809': '白酒', '000568': '白酒',
+  '002304': '白酒', '603369': '白酒', '000799': '白酒', '600779': '白酒',
+  '000596': '白酒', '600559': '白酒', '600132': '白酒',
+  // === 食品饮料/消费 ===
+  '600887': '消费', '000895': '消费', '002714': '消费', '603288': '消费',
+  '600690': '消费', '000568': '消费', '002557': '消费', '300146': '消费',
+  '601888': '消费', '000651': '消费', '000333': '消费', '002032': '消费',
+  // === 医药/医疗 ===
+  '300760': '医药', '600276': '医药', '300122': '医药', '300347': '医药',
+  '000538': '医药', '600196': '医药', '300015': '医药', '002007': '医药',
+  '300003': '医药', '600085': '医药', '300529': '医药', '688180': '医药',
+  '002001': '医药', '300759': '医药', '600436': '医药', '300142': '医药',
+  // === 银行/金融 ===
+  '601398': '金融', '601939': '金融', '601288': '金融', '600036': '金融',
+  '601166': '金融', '000001': '金融', '601328': '金融', '601818': '金融',
+  '600000': '金融', '601988': '金融', '600016': '金融', '601229': '金融',
+  // === 保险/金融 ===
+  '601318': '金融', '601628': '金融', '601601': '金融', '600030': '金融',
+  '601688': '金融', '601211': '金融', '600837': '金融', '601881': '金融',
+  // === 券商/金融 ===
+  '600030': '金融', '601688': '金融', '600999': '金融', '601066': '金融',
+  '601377': '金融', '601236': '金融', '600958': '金融', '300059': '金融',
+  // === 半导体/芯片 ===
+  '688981': '半导体', '603501': '半导体', '002371': '半导体', '300661': '半导体',
+  '688012': '半导体', '603986': '半导体', '002049': '半导体', '688008': '半导体',
+  '300782': '半导体', '688396': '半导体', '002185': '半导体', '300223': '半导体',
+  '688062': '半导体', '688036': '半导体', '603160': '半导体', '300327': '半导体',
+  // === AI/科技/软件 ===
+  '002230': '科技', '300496': '科技', '688111': '科技', '300474': '科技',
+  '688561': '科技', '300033': '科技', '300253': '科技', '300124': '科技',
+  '002415': '科技', '000977': '科技', '300999': '科技', '688256': '科技',
+  '002236': '科技', '688169': '科技', '300418': '科技', '002405': '科技',
+  '600570': '科技', '002241': '科技', '600588': '科技', '002410': '科技',
+  // === 新能源/光伏/电池 ===
+  '300750': '新能源', '600438': '新能源', '002459': '新能源', '601012': '新能源',
+  '002594': '新能源', '300274': '新能源', '601877': '新能源', '688599': '新能源',
+  '300763': '新能源', '601615': '新能源', '002129': '新能源', '600905': '新能源',
+  '688303': '新能源', '688390': '新能源', '601615': '新能源', '300037': '新能源',
+  // === 军工/国防 ===
+  '600893': '军工', '000768': '军工', '600760': '军工', '601989': '军工',
+  '600118': '军工', '002179': '军工', '600150': '军工', '000738': '军工',
+  '601698': '军工', '002013': '军工', '600372': '军工', '002414': '军工',
+  '600862': '军工', '002025': '军工', '600316': '军工', '000687': '军工',
+  // === 石油/能源/化工 ===
+  '601857': '能源', '600028': '能源', '601808': '能源', '600346': '能源',
+  '600339': '能源', '002221': '能源', '000703': '能源', '600688': '能源',
+  '000983': '能源', '600803': '能源', '601011': '能源', '000059': '能源',
+  '002493': '化工', '600309': '化工', '600426': '化工', '000792': '化工',
+  '002601': '化工', '600989': '化工', '002064': '化工', '600352': '化工',
+  // === 有色金属/资源 ===
+  '601899': '有色金属', '603993': '有色金属', '000630': '有色金属', '601600': '有色金属',
+  '002460': '有色金属', '601212': '有色金属', '000878': '有色金属', '601168': '有色金属',
+  '002466': '有色金属', '600362': '有色金属', '600547': '有色金属', '600489': '有色金属',
+  '002756': '有色金属', '603799': '有色金属', '002203': '有色金属', '600459': '有色金属',
+  // === 黄金/贵金属 ===
+  '600489': '黄金', '600547': '黄金', '002155': '黄金', '600988': '黄金',
+  '000975': '黄金', '002237': '黄金', '601899': '黄金', '600311': '黄金',
+  // === 钢铁/基建 ===
+  '600019': '基建', '000898': '基建', '600010': '基建', '000709': '基建',
+  '601390': '基建', '601668': '基建', '601186': '基建', '601800': '基建',
+  '600068': '基建', '601618': '基建', '600585': '基建', '600170': '基建',
+  // === 房地产 ===
+  '001979': '地产', '000002': '地产', '600048': '地产', '600383': '地产',
+  '000069': '地产', '600340': '地产', '000656': '地产', '601155': '地产',
+  // === 电力/公用事业 ===
+  '600900': '电力', '600886': '电力', '003816': '电力', '601985': '电力',
+  '600023': '电力', '000027': '电力', '601991': '电力', '600795': '电力',
+  // === 交通/航空/物流 ===
+  '601111': '航空', '600115': '航空', '600029': '航空', '002928': '航空',
+  '601006': '交通', '600009': '交通', '600897': '交通', '000089': '交通',
+  // === 汽车 ===
+  '600104': '汽车', '000625': '汽车', '601238': '汽车', '002594': '汽车',
+  '601127': '汽车', '600741': '汽车', '000800': '汽车', '002920': '汽车',
+  // === 传媒/娱乐 ===
+  '002027': '传媒', '300413': '传媒', '603444': '传媒', '002607': '传媒',
+  '300251': '传媒', '300002': '传媒', '002555': '传媒', '603019': '传媒',
+  // === 通信/5G ===
+  '600941': '通信', '000063': '通信', '002281': '通信', '600050': '通信',
+  '300502': '通信', '603236': '通信', '002396': '通信', '600522': '通信',
+  // === 港股常见重仓 ===
+  '00700': '科技', '09988': '科技', '09987': '科技', '09999': '科技',
+  '09618': '科技', '03690': '科技', '01024': '科技', '02015': '科技',
+  '01810': '科技', '06618': '医药', '02269': '医药', '01177': '医药',
+  '00883': '能源', '00386': '能源', '02688': '新能源', '01211': '新能源',
+  '00388': '金融', '03988': '金融', '01398': '金融', '02318': '金融',
+  '00941': '通信', '00728': '通信', '01088': '能源', '02899': '有色金属',
+  '00175': '科技', '09626': '科技', '02382': '科技', '00020': '消费',
+  '00027': '消费', '01928': '消费', '06862': '医药', '02196': '医药',
+  '06160': '消费', '09868': '科技', '09888': '消费', '01024': '科技',
+  '00002': '电力', '02007': '地产', '01109': '地产', '00960': '有色金属',
+};
+
+// 基金名称/类型 → 行业板块暴露 (用于ETF联接/指数基金的板块推断)
+// 当无法获取持仓明细时，通过基金名称关键词推断行业分布
+const FUND_SECTOR_KEYWORD_MAP = [
+  // 精确匹配优先（越长的关键词越先匹配）
+  { keywords: ['中证油气产业','油气产业'], sectors: {'能源':0.70,'化工':0.20,'有色金属':0.10} },
+  { keywords: ['原油','石油'], sectors: {'能源':0.85,'化工':0.15} },
+  { keywords: ['油气','天然气'], sectors: {'能源':0.80,'化工':0.20} },
+  { keywords: ['黄金','Gold'], sectors: {'黄金':0.95,'有色金属':0.05} },
+  { keywords: ['白银'], sectors: {'有色金属':0.80,'黄金':0.20} },
+  { keywords: ['有色金属','铜铝','资源'], sectors: {'有色金属':0.85,'能源':0.10,'基建':0.05} },
+  { keywords: ['军工','国防','军事'], sectors: {'军工':0.90,'科技':0.10} },
+  { keywords: ['半导体','芯片','集成电路'], sectors: {'半导体':0.85,'科技':0.15} },
+  { keywords: ['人工智能','AI','机器人','算力','大数据','云计算'], sectors: {'科技':0.85,'半导体':0.15} },
+  { keywords: ['科技龙头','科技100','科技创新','硬科技','信创'], sectors: {'科技':0.60,'半导体':0.25,'通信':0.15} },
+  { keywords: ['新能源车','新能源汽车','电动车','智能汽车'], sectors: {'新能源':0.60,'汽车':0.30,'半导体':0.10} },
+  { keywords: ['新能源','光伏','风电','碳中和','能源革新'], sectors: {'新能源':0.80,'电力':0.15,'科技':0.05} },
+  { keywords: ['白酒','酒'], sectors: {'白酒':0.90,'消费':0.10} },
+  { keywords: ['食品饮料','消费'], sectors: {'消费':0.85,'白酒':0.15} },
+  { keywords: ['医药','医疗','生物','创新药','医药100','中药'], sectors: {'医药':0.90,'科技':0.10} },
+  { keywords: ['红利','高股息','低波动','价值'], sectors: {'金融':0.30,'能源':0.20,'电力':0.20,'消费':0.15,'基建':0.15} },
+  { keywords: ['证券','券商'], sectors: {'金融':0.95,'科技':0.05} },
+  { keywords: ['银行','金融'], sectors: {'金融':0.90,'地产':0.10} },
+  { keywords: ['沪深300','中证500','A500','上证50'], sectors: {'金融':0.25,'消费':0.20,'科技':0.15,'新能源':0.10,'医药':0.10,'能源':0.08,'基建':0.07,'通信':0.05} },
+  { keywords: ['创业板','科创'], sectors: {'科技':0.30,'新能源':0.25,'医药':0.20,'半导体':0.15,'消费':0.10} },
+  { keywords: ['中小盘','中证1000'], sectors: {'科技':0.25,'消费':0.20,'医药':0.15,'新能源':0.15,'半导体':0.10,'化工':0.08,'有色金属':0.07} },
+  { keywords: ['蓝筹','大盘'], sectors: {'金融':0.25,'消费':0.20,'能源':0.15,'科技':0.15,'医药':0.10,'基建':0.08,'通信':0.07} },
+  { keywords: ['通信','5G'], sectors: {'通信':0.80,'科技':0.20} },
+  { keywords: ['地产','房地产','REITs'], sectors: {'地产':0.85,'基建':0.15} },
+  { keywords: ['基建','钢铁','建筑','一带一路'], sectors: {'基建':0.80,'有色金属':0.10,'能源':0.10} },
+  { keywords: ['电力','公用事业'], sectors: {'电力':0.85,'新能源':0.15} },
+  { keywords: ['传媒','影视','游戏','文化'], sectors: {'传媒':0.80,'科技':0.20} },
+  { keywords: ['汽车','车'], sectors: {'汽车':0.75,'新能源':0.15,'科技':0.10} },
+  { keywords: ['航空','航运','交通','物流'], sectors: {'航空':0.60,'交通':0.40} },
+  { keywords: ['港股','恒生','H股'], sectors: {'科技':0.35,'金融':0.25,'消费':0.15,'能源':0.10,'医药':0.08,'通信':0.07} },
+  { keywords: ['纯债','债券','利率','信用'], sectors: {'债券':0.95,'金融':0.05} },
+  { keywords: ['货币','现金管理'], sectors: {'现金':1.0} },
+];
+
+// 持仓数据缓存
+let _fundHoldingsCache = {}; // { code: { stockCodes:[], assetAlloc:{}, sectorExposure:{}, fetchTime:number, raw:{} } }
+let _holdingsFetchQueue = [];
+let _holdingsFetching = false;
+
+// 通过 eastmoney pingzhongdata 获取基金持仓数据
+function fetchFundHoldings(code){
+  return new Promise((resolve) => {
+    if(_fundHoldingsCache[code] && (Date.now() - _fundHoldingsCache[code].fetchTime < 3600000)){
+      return resolve(_fundHoldingsCache[code]); // 1小时缓存
+    }
+    // 备份当前全局变量(防止污染)
+    const backupVars = {
+      fS_name: window.fS_name, fS_code: window.fS_code,
+      stockCodesNew: window.stockCodesNew, zqCodesNew: window.zqCodesNew,
+      Data_assetAllocation: window.Data_assetAllocation,
+      Data_currentFundManager: window.Data_currentFundManager,
+      Data_performanceEvaluation: window.Data_performanceEvaluation,
+      Data_holderStructure: window.Data_holderStructure,
+      syl_1n: window.syl_1n, syl_6y: window.syl_6y, syl_3y: window.syl_3y, syl_1y: window.syl_1y,
+    };
+    const script = document.createElement('script');
+    script.src = `https://fund.eastmoney.com/pingzhongdata/${code}.js?v=${Date.now()}`;
+    script.onload = () => {
+      try {
+        // 提取持仓股票代码 (stockCodesNew格式: "market.code")
+        const rawStockCodes = window.stockCodesNew || [];
+        const stockCodes = rawStockCodes.map(sc => {
+          const parts = sc.split('.');
+          return parts.length === 2 ? parts[1] : sc;
+        });
+        // 提取资产配置
+        const assetAlloc = window.Data_assetAllocation || null;
+        // 提取业绩评价
+        const perfEval = window.Data_performanceEvaluation || null;
+        // 提取基金经理
+        const fundManager = window.Data_currentFundManager || null;
+        // 提取收益率
+        const returns = {
+          y1: parseFloat(window.syl_1n) || 0,
+          m6: parseFloat(window.syl_6y) || 0,
+          m3: parseFloat(window.syl_3y) || 0,
+          m1: parseFloat(window.syl_1y) || 0,
+        };
+        // 计算行业板块暴露
+        const sectorExposure = _computeSectorFromHoldings(code, stockCodes);
+        
+        const result = {
+          code,
+          name: window.fS_name || fundName(code),
+          stockCodes,
+          stockCount: stockCodes.length,
+          assetAlloc,
+          perfEval,
+          fundManager,
+          returns,
+          sectorExposure,
+          fetchTime: Date.now(),
+          source: stockCodes.length > 0 ? 'holdings' : 'inferred',
+        };
+        _fundHoldingsCache[code] = result;
+        resolve(result);
+      } catch(err) {
+        console.warn(`持仓解析失败[${code}]:`, err);
+        // 退回基于名称的推断
+        const sectorExposure = _inferSectorFromName(code);
+        const result = { code, stockCodes: [], sectorExposure, fetchTime: Date.now(), source: 'name-fallback' };
+        _fundHoldingsCache[code] = result;
+        resolve(result);
+      } finally {
+        // 还原全局变量
+        Object.keys(backupVars).forEach(k => { window[k] = backupVars[k]; });
+        script.remove();
+      }
+    };
+    script.onerror = () => {
+      console.warn(`持仓数据加载失败[${code}]`);
+      const sectorExposure = _inferSectorFromName(code);
+      const result = { code, stockCodes: [], sectorExposure, fetchTime: Date.now(), source: 'name-fallback' };
+      _fundHoldingsCache[code] = result;
+      script.remove();
+      resolve(result);
+    };
+    document.head.appendChild(script);
+  });
+}
+
+// 从持仓股票代码计算行业板块暴露
+function _computeSectorFromHoldings(code, stockCodes){
+  if(!stockCodes || stockCodes.length === 0){
+    return _inferSectorFromName(code);
+  }
+  const sectorWeights = {};
+  let matched = 0;
+  stockCodes.forEach((sc, idx) => {
+    // 去掉前导零匹配港股 (如 00700 → 00700)
+    const sector = STOCK_SECTOR_DB[sc] || STOCK_SECTOR_DB[sc.replace(/^0+/, '')] || null;
+    if(sector){
+      // 前10持仓权重递减: 第1位约15%, 第10位约5%
+      const weight = Math.max(0.05, 0.15 - idx * 0.01);
+      sectorWeights[sector] = (sectorWeights[sector] || 0) + weight;
+      matched++;
+    }
+  });
+  if(matched === 0) return _inferSectorFromName(code);
+  // 归一化
+  const total = Object.values(sectorWeights).reduce((a,b) => a+b, 0);
+  const normalized = {};
+  Object.keys(sectorWeights).forEach(s => { normalized[s] = parseFloat((sectorWeights[s] / total).toFixed(3)); });
+  // 合并名称推断以补充覆盖率
+  const nameInferred = _inferSectorFromName(code);
+  if(nameInferred && Object.keys(nameInferred).length > 0){
+    Object.keys(nameInferred).forEach(s => {
+      if(!normalized[s]) normalized[s] = nameInferred[s] * 0.3; // 名称推断的权重降为30%
+    });
+    // 重新归一化
+    const t2 = Object.values(normalized).reduce((a,b) => a+b, 0);
+    Object.keys(normalized).forEach(s => { normalized[s] = parseFloat((normalized[s] / t2).toFixed(3)); });
+  }
+  return normalized;
+}
+
+// 从基金名称/类型推断行业板块暴露
+function _inferSectorFromName(code){
+  const name = (fundName(code) || '').toLowerCase();
+  const fType = (fundType(code) || '').toLowerCase();
+  const text = name + ' ' + fType;
+  for(const rule of FUND_SECTOR_KEYWORD_MAP){
+    if(rule.keywords.some(kw => text.includes(kw.toLowerCase()))){
+      return { ...rule.sectors };
+    }
+  }
+  return {}; // 无法推断
+}
+
+// 获取基金的行业板块暴露（优先从缓存读取，否则基于名称推断）
+function getFundSectorExposure(code){
+  const cached = _fundHoldingsCache[code];
+  if(cached && cached.sectorExposure && Object.keys(cached.sectorExposure).length > 0){
+    return cached.sectorExposure;
+  }
+  return _inferSectorFromName(code);
+}
+
+// 批量加载所有持仓和关注基金的持仓数据(顺序加载防止全局变量冲突)
+async function loadAllFundHoldings(){
+  const allCodes = [...new Set([
+    ...holdings.map(h=>h.code),
+    ...watchlist.map(w=>w.code),
+    ...MODEL_PORTFOLIO.core.funds.map(f=>f.code),
+    ...MODEL_PORTFOLIO.satellite.funds.map(f=>f.code),
+  ])];
+  console.log(`[持仓分析] 开始加载 ${allCodes.length} 只基金的持仓数据...`);
+  for(const code of allCodes){
+    await fetchFundHoldings(code);
+  }
+  console.log('[持仓分析] 全部持仓数据加载完成', Object.keys(_fundHoldingsCache).length, '只');
+}
+
+// 格式化板块暴露为可读字符串
+function formatSectorExposure(sectorExposure){
+  if(!sectorExposure || Object.keys(sectorExposure).length === 0) return '暂无数据';
+  return Object.entries(sectorExposure)
+    .sort((a,b) => b[1] - a[1])
+    .filter(([,w]) => w >= 0.05) // 只显示>=5%的板块
+    .map(([s, w]) => `${s}${(w*100).toFixed(0)}%`)
+    .join(' | ');
+}
+
+// 分析宏观地缘事件对特定基金的影响 (基于持仓行业分布)
 function getMacroGeoAnalysis(){
   const events = MACRO_GEO_EVENTS;
   const outlook = MACRO_3M_OUTLOOK;
@@ -1105,44 +1408,95 @@ function getMacroGeoAnalysis(){
   // 按影响力排序
   const sorted = [...activeEvents].sort((a,b) => Math.abs(b.impact)*b.confidence - Math.abs(a.impact)*a.confidence);
   
-  // 对每只持仓基金计算事件影响（区分利好/利空板块）
+  // 对每只持仓基金计算事件影响（基于持仓行业分布，而非仅名称匹配）
   const fundImpacts = {};
   const allCodes = [...holdings.map(h=>h.code), ...watchlist.map(w=>w.code)];
   [...new Set(allCodes)].forEach(code => {
+    // 获取该基金的行业板块暴露
+    const sectorExposure = getFundSectorExposure(code);
+    const hasSectorData = sectorExposure && Object.keys(sectorExposure).length > 0;
+    
+    // 同时保留名称匹配作为补充
     const name = fundName(code).toLowerCase();
     const fType = (fundType(code)||'').toLowerCase();
     const nameAndType = name + ' ' + fType;
+    
     let fundScore = 0;
     const matchedEvents = [];
+    
     events.forEach(e => {
-      // 检查是否匹配利好板块
-      const posMatch = (e.sectors.positive||[]).some(sec => nameAndType.includes(sec.toLowerCase()));
-      // 检查是否匹配利空板块
-      const negMatch = (e.sectors.negative||[]).some(sec => nameAndType.includes(sec.toLowerCase()));
-      // 检查关键词匹配
-      const kwMatch = (e.fundKeywords||[]).some(kw => nameAndType.includes(kw.toLowerCase()));
-      if(posMatch || negMatch || kwMatch){
+      let posScore = 0, negScore = 0, kwScore = 0;
+      
+      if(hasSectorData){
+        // === 基于持仓行业分布的精确匹配 ===
+        // 计算与利好板块的重叠度
+        (e.sectors.positive||[]).forEach(sec => {
+          const secLow = sec.toLowerCase();
+          Object.entries(sectorExposure).forEach(([fundSec, weight]) => {
+            if(fundSec.toLowerCase().includes(secLow) || secLow.includes(fundSec.toLowerCase())){
+              posScore += weight; // 按实际持仓权重计算影响
+            }
+          });
+        });
+        // 计算与利空板块的重叠度
+        (e.sectors.negative||[]).forEach(sec => {
+          const secLow = sec.toLowerCase();
+          Object.entries(sectorExposure).forEach(([fundSec, weight]) => {
+            if(fundSec.toLowerCase().includes(secLow) || secLow.includes(fundSec.toLowerCase())){
+              negScore += weight;
+            }
+          });
+        });
+      }
+      
+      // 名称关键词匹配作为补充(降低权重)
+      const kwMatchList = (e.fundKeywords||[]).filter(kw => nameAndType.includes(kw.toLowerCase()));
+      if(kwMatchList.length > 0) kwScore = 0.3; // 名称匹配基础分
+      
+      // 旧式板块名称匹配也作为补充
+      const posNameMatch = (e.sectors.positive||[]).some(sec => nameAndType.includes(sec.toLowerCase()));
+      const negNameMatch = (e.sectors.negative||[]).some(sec => nameAndType.includes(sec.toLowerCase()));
+      if(posNameMatch && posScore === 0) posScore = 0.2;
+      if(negNameMatch && negScore === 0) negScore = 0.2;
+      
+      const totalMatch = posScore + negScore + kwScore;
+      if(totalMatch > 0 || posNameMatch || negNameMatch || kwMatchList.length > 0){
         let direction;
-        if(posMatch && !negMatch){
-          // 基金在利好板块 → 正向受益
+        if(posScore > negScore){
           direction = 'positive';
-          fundScore += Math.abs(e.impact) * e.confidence * 0.15;
-        } else if(negMatch && !posMatch){
-          // 基金在利空板块 → 负向受损
+          // 使用持仓权重而非固定系数，板块暴露越大影响越强
+          const effectiveWeight = hasSectorData ? Math.min(0.35, posScore * 0.5) : 0.15;
+          fundScore += Math.abs(e.impact) * e.confidence * effectiveWeight;
+        } else if(negScore > posScore){
           direction = 'negative';
-          fundScore -= Math.abs(e.impact) * e.confidence * 0.15;
-        } else if(kwMatch){
-          // 仅关键词匹配 → 按事件整体方向
+          const effectiveWeight = hasSectorData ? Math.min(0.35, negScore * 0.5) : 0.15;
+          fundScore -= Math.abs(e.impact) * e.confidence * effectiveWeight;
+        } else if(kwScore > 0 || posNameMatch || negNameMatch){
           direction = e.impact > 0 ? 'positive' : 'negative';
           fundScore += e.impact * e.confidence * 0.08;
         } else {
           direction = 'neutral';
         }
-        matchedEvents.push({ id: e.id, name: e.name, icon: e.icon, impact: direction, eventImpact: e.impact, confidence: e.confidence, advice: e.advice });
+        
+        const matchSource = hasSectorData ? 
+          (posScore > 0 || negScore > 0 ? '持仓分析' : '名称匹配') : '名称匹配';
+        
+        matchedEvents.push({
+          id: e.id, name: e.name, icon: e.icon,
+          impact: direction, eventImpact: e.impact, confidence: e.confidence, advice: e.advice,
+          matchSource, // 新增: 标记匹配来源
+          sectorOverlap: hasSectorData ? Math.max(posScore, negScore) : 0, // 新增: 板块重叠度
+        });
       }
     });
+    
     if(matchedEvents.length > 0){
-      fundImpacts[code] = { score: fundScore, events: matchedEvents };
+      fundImpacts[code] = {
+        score: fundScore,
+        events: matchedEvents,
+        sectorExposure: hasSectorData ? sectorExposure : null, // 新增: 附带板块暴露数据
+        analysisSource: hasSectorData ? (_fundHoldingsCache[code]?.source || 'inferred') : 'name-only',
+      };
     }
   });
   
@@ -2908,11 +3262,23 @@ function buildDataIntelContext(){
   ctx += `    ⚪ 现金: ${geoA.outlook.allocation.cash}\n`;
   ctx += `  ⚠️ 重点风险: ${geoA.outlook.risks.join('; ')}\n`;
 
-  // 持仓基金地缘事件关联
+  // 持仓基金地缘事件关联 (增强：包含行业板块暴露)
   if(Object.keys(geoA.fundImpacts).length > 0){
-    ctx += `\n  [持仓基金地缘事件关联]:\n`;
+    ctx += `\n  [持仓基金行业暴露与地缘事件关联]:\n`;
     Object.entries(geoA.fundImpacts).forEach(([code, fi]) => {
-      ctx += `    ${fundName(code)}(${code}): 地缘影响=${fi.score>0?'+':''}${fi.score.toFixed(1)} 相关事件=${fi.events.map(e=>e.icon+e.name).join(',')}\n`;
+      const sectorStr = fi.sectorExposure ? formatSectorExposure(fi.sectorExposure) : '暂无';
+      ctx += `    ${fundName(code)}(${code}): 行业板块=[${sectorStr}] 数据来源=${fi.analysisSource||'名称'} 地缘影响=${fi.score>0?'+':''}${fi.score.toFixed(1)} 相关事件=${fi.events.map(e=>e.icon+e.name+'('+e.matchSource+')').join(',')}\n`;
+    });
+  }
+  // 无地缘关联的基金也输出行业暴露
+  const geoLinked = new Set(Object.keys(geoA.fundImpacts));
+  const allTracked = [...new Set([...holdings.map(h=>h.code), ...watchlist.map(w=>w.code)])];
+  const unlinked = allTracked.filter(c => !geoLinked.has(c));
+  if(unlinked.length > 0){
+    ctx += `\n  [其他持仓基金行业分布]:\n`;
+    unlinked.forEach(code => {
+      const sectorStr = formatSectorExposure(getFundSectorExposure(code));
+      ctx += `    ${fundName(code)}(${code}): 行业板块=[${sectorStr}]\n`;
     });
   }
 
@@ -3739,6 +4105,8 @@ function getRelevantCapFlow(code){
 // === 组合板块集中度分析 ===
 function getPortfolioSectorAnalysis(plans){
   const typeGroups = {};
+  // 增强: 基于实际持仓行业分布的集中度分析
+  const sectorWeights = {}; // 各行业在组合中的综合权重
   plans.forEach(p => {
     const t = fundType(p.code) || '其他';
     if(!typeGroups[t]) typeGroups[t] = { count:0, codes:[], totalAction:0 };
@@ -3746,6 +4114,13 @@ function getPortfolioSectorAnalysis(plans){
     typeGroups[t].codes.push(p.code);
     if(p.vote.action === 'buy') typeGroups[t].totalAction++;
     else if(p.vote.action === 'sell') typeGroups[t].totalAction--;
+    // 统计行业暴露
+    const sectorExp = getFundSectorExposure(p.code);
+    if(sectorExp && Object.keys(sectorExp).length > 0){
+      Object.entries(sectorExp).forEach(([sec, weight]) => {
+        sectorWeights[sec] = (sectorWeights[sec] || 0) + weight / plans.length;
+      });
+    }
   });
   const warnings = [];
   Object.entries(typeGroups).forEach(([type, info]) => {
@@ -3753,11 +4128,17 @@ function getPortfolioSectorAnalysis(plans){
       warnings.push({ type, count: info.count, sameBias: info.totalAction === info.count || info.totalAction === -info.count });
     }
   });
-  // 板块分布
+  // 基于持仓行业的集中度警告
+  Object.entries(sectorWeights).forEach(([sec, weight]) => {
+    if(weight > 0.35 && !warnings.some(w => w.type.includes(sec))){
+      warnings.push({ type: `${sec}(持仓)`, count: Math.ceil(weight * plans.length), sameBias: false });
+    }
+  });
+  // 板块分布 (增强: 合并基金类型和持仓行业)
   const distribution = Object.entries(typeGroups)
     .map(([type, info]) => ({ type, count: info.count, pct: Math.round(info.count / plans.length * 100) }))
     .sort((a,b) => b.count - a.count);
-  return { warnings, distribution };
+  return { warnings, distribution, sectorWeights };
 }
 
 // === 综合趋势标签生成 ===
@@ -4177,6 +4558,26 @@ function renderActionGuide(){
         const cfVal = capFlow.mainNet > 0 ? `+${(capFlow.mainNet/1e8).toFixed(1)}亿` : `${(capFlow.mainNet/1e8).toFixed(1)}亿`;
         html += `<span style="padding:2px 5px;border-radius:4px;background:rgba(255,255,255,0.05);color:${cfColor}">💰主力${cfVal}</span>`;
       }
+      html += `</div>`;
+    }
+
+    // 持仓行业分布 (基于持仓分析引擎)
+    const sectorExp = getFundSectorExposure(code);
+    const holdingsInfo = _fundHoldingsCache[code];
+    if(sectorExp && Object.keys(sectorExp).length > 0){
+      html += `<div style="display:flex;gap:4px;flex-wrap:wrap;padding:4px 0;font-size:9px;align-items:center">`;
+      html += `<span style="padding:2px 5px;border-radius:4px;background:rgba(139,92,246,0.15);color:#c084fc;font-weight:600">📊行业</span>`;
+      const topSectors = Object.entries(sectorExp).sort((a,b) => b[1] - a[1]).filter(([,w]) => w >= 0.05);
+      topSectors.forEach(([sec, weight]) => {
+        const pct = (weight * 100).toFixed(0);
+        const barW = Math.max(8, weight * 60);
+        html += `<span style="padding:2px 5px;border-radius:4px;background:rgba(139,92,246,0.08);color:#e2e8f0;position:relative;overflow:hidden">`;
+        html += `<span style="position:absolute;left:0;top:0;bottom:0;width:${barW}px;background:rgba(139,92,246,0.15);border-radius:4px"></span>`;
+        html += `<span style="position:relative">${sec} ${pct}%</span></span>`;
+      });
+      // 数据来源标注
+      const srcLabel = holdingsInfo?.source === 'holdings' ? '持仓' : holdingsInfo?.source === 'inferred' ? '推断' : '名称';
+      html += `<span style="color:var(--sub);font-size:8px;margin-left:auto">[${srcLabel}]</span>`;
       html += `</div>`;
     }
 
@@ -6741,6 +7142,12 @@ function startTimers(){
   renderAll();
   startTimers();
   await loadData();
+
+  // 加载基金持仓数据(异步，不阻塞渲染)
+  loadAllFundHoldings().then(() => {
+    console.log('[持仓分析] 持仓数据就绪，重新渲染信号');
+    renderAll(); // 重新渲染以反映持仓分析结果
+  });
 
   // 初始化模拟盘
   initSimPortfolio();
