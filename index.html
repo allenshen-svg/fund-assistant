@@ -856,6 +856,10 @@ let globalNews = []; // 国际新闻聚合
 let globalNewsSummary = null; // AI国际新闻摘要 { summary, impact, sentiment }
 let _globalNewsLoading = false;
 let _dataIntelLoaded = false;
+let _geoNewsLastUpdate = null; // 地缘事件最后更新时间
+let _geoNewsLiveItems = []; // 来自全球媒体的最新地缘新闻
+let _geoNewsRefreshTimer = null; // 1小时刷新定时器
+let _geoNewsRefreshing = false;
 
 // ==================== 宏观地缘事件引擎 (Macro-Geopolitical Event Engine) ====================
 // 重大国际事件数据库 — 每条记录事件名称、类别、影响方向、影响板块、持续时间、权重
@@ -1544,6 +1548,150 @@ function getMacroGeoAnalysis(){
     fundImpacts,
     label: normalizedScore >= 60 ? '地缘偏多' : normalizedScore <= 40 ? '地缘偏空' : '地缘中性',
   };
+}
+
+// ==================== 地缘事件实时新闻刷新引擎 ====================
+// 每小时从全球媒体拉取新闻，AI分析后动态更新地缘事件的impact/confidence/description
+
+const GEO_NEWS_RSS_SOURCES = [
+  { id:'reuters-world', name:'Reuters', url:'https://www.rss-bridge.org/bridge01/?action=display&bridge=Reuters&feed=world&format=Mrss' },
+  { id:'nyt-world', name:'NYT', url:'https://rss.nytimes.com/services/xml/rss/nyt/World.xml' },
+  { id:'bbc-world', name:'BBC', url:'https://feeds.bbci.co.uk/news/world/rss.xml' },
+  { id:'bbc-biz', name:'BBC-Biz', url:'https://feeds.bbci.co.uk/news/business/rss.xml' },
+  { id:'wsj', name:'WSJ', url:'https://feeds.a.dj.com/rss/RSSWorldNews.xml' },
+  { id:'guardian', name:'Guardian', url:'https://www.theguardian.com/world/rss' },
+  { id:'cnbc', name:'CNBC', url:'https://search.cnbc.com/rs/search/combinedcms/view.xml?partnerId=wrss01&id=100003114' },
+  { id:'ft', name:'FT', url:'https://www.ft.com/rss/home' },
+  { id:'cnn', name:'CNN', url:'http://rss.cnn.com/rss/edition_world.rss' },
+  { id:'aljazeera', name:'AlJazeera', url:'https://www.aljazeera.com/xml/rss/all.xml' },
+];
+
+// 地缘关键词匹配（更严格，聚焦地缘/大宗/政策）
+const GEO_NEWS_FILTER = /iran|nuclear|opec|crude|oil price|brent|wti|russia|ukraine|china.*(trade|tariff|sanction)|us.*(china|iran|russia)|nato|conflict|war |military|geopolit|commodity|copper|aluminum|rare.earth|central.bank|fed |ecb |pboc|rate.cut|rate.hike|easing|tariff|sanction|gold|Haven|defense|weapon|missile|drone|ceasefire|negotiat|diplomac|summit|g7|g20|inflation|recession|stimulus|yuan|dollar|euro|yen|energy.cris/i;
+
+async function fetchGeoNewsFromMedia(){
+  if(_geoNewsRefreshing) return;
+  _geoNewsRefreshing = true;
+  console.log('[GeoNews] 开始拉取全球媒体地缘新闻...');
+  const rss2jsonBase = 'https://api.rss2json.com/v1/api.json?rss_url=';
+  const allItems = [];
+
+  const fetches = GEO_NEWS_RSS_SOURCES.map(async src => {
+    try {
+      const resp = await fetch(rss2jsonBase + encodeURIComponent(src.url), { signal: AbortSignal.timeout(12000) });
+      const data = await resp.json();
+      if(data.status === 'ok' && data.items){
+        return data.items.map(item => ({
+          title: (item.title||'').replace(/<[^>]+>/g,'').trim(),
+          desc: (item.description||'').replace(/<[^>]+>/g,'').trim().slice(0,300),
+          url: item.link || '',
+          time: item.pubDate || '',
+          source: src.name,
+        }));
+      }
+    } catch(e) { /* skip */ }
+    return [];
+  });
+
+  const results = await Promise.allSettled(fetches);
+  results.forEach(r => {
+    if(r.status==='fulfilled' && r.value) allItems.push(...r.value);
+  });
+
+  // 过滤地缘相关新闻
+  const filtered = allItems.filter(item => {
+    const text = `${item.title} ${item.desc}`;
+    return GEO_NEWS_FILTER.test(text);
+  });
+
+  // 去重+排序
+  filtered.sort((a,b) => new Date(b.time) - new Date(a.time));
+  const seen = new Set();
+  _geoNewsLiveItems = [];
+  for(const item of filtered){
+    const key = item.title.toLowerCase().replace(/[^a-z0-9]/g,'').slice(0,50);
+    if(!seen.has(key) && _geoNewsLiveItems.length < 20){
+      seen.add(key);
+      item.timeStr = item.time ? new Date(item.time).toLocaleString('zh-CN',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'}) : '';
+      _geoNewsLiveItems.push(item);
+    }
+  }
+
+  console.log(`[GeoNews] 拉取 ${allItems.length} 条 → 地缘相关 ${_geoNewsLiveItems.length} 条`);
+
+  // 用AI分析新闻对地缘事件的影响
+  if(_geoNewsLiveItems.length > 0){
+    await analyzeGeoNewsWithAI();
+  }
+
+  _geoNewsLastUpdate = new Date();
+  _geoNewsRefreshing = false;
+  renderAll(); // 刷新界面
+}
+
+async function analyzeGeoNewsWithAI(){
+  const key = _aiKey || localStorage.getItem('fa_302ai_key') || '';
+  if(!key){ console.warn('[GeoNews] 无API Key，跳过AI分析'); return; }
+  if(!_aiKey) _aiKey = key;
+
+  const newsText = _geoNewsLiveItems.slice(0,15).map((n,i) => `${i+1}. [${n.source}] ${n.title}`).join('\n');
+  const eventIds = MACRO_GEO_EVENTS.map(e => `${e.id}(${e.name})`).join(', ');
+
+  const model = AI_ENGINES[0]?.model || 'deepseek-ai/DeepSeek-V3';
+  const sysPrompt = '你是专业的地缘政治与投资分析师。基于最新全球媒体新闻，分析其对现有地缘事件的影响。';
+  const userPrompt = `以下是最新全球媒体新闻标题：
+${newsText}
+
+现有地缘事件列表：${eventIds}
+
+请分析这些新闻对上述事件的影响，用JSON数组格式返回（仅返回有变化的事件）：
+[{"id":"事件id", "impactDelta": 数字(-5到+5,表示影响强度变化), "confidenceDelta": 数字(-0.1到+0.1,表示置信度变化), "latestNews": "一句话中文概括最新进展", "newsSource": "来源媒体名"}]
+
+规则：
+1. 如果新闻没有明显影响某事件，就不要包含该事件
+2. impactDelta正值=利好投资市场，负值=利空
+3. latestNews用简洁中文
+4. 只返回JSON数组，不要其他文字`;
+
+  try {
+    console.log('[GeoNews] AI分析新闻对地缘事件影响...');
+    const resp = await callAI(model, sysPrompt, userPrompt, 0.3);
+    // 提取JSON
+    const jsonMatch = resp.match(/\[[\s\S]*\]/);
+    if(jsonMatch){
+      const updates = JSON.parse(jsonMatch[0]);
+      updates.forEach(u => {
+        const ev = MACRO_GEO_EVENTS.find(e => e.id === u.id);
+        if(ev){
+          // 动态调整impact和confidence（有上下限）
+          if(typeof u.impactDelta === 'number'){
+            ev.impact = Math.max(-20, Math.min(20, ev.impact + u.impactDelta));
+          }
+          if(typeof u.confidenceDelta === 'number'){
+            ev.confidence = Math.max(0.3, Math.min(1.0, ev.confidence + u.confidenceDelta));
+          }
+          // 保存最新动态
+          ev._latestNews = u.latestNews || '';
+          ev._newsSource = u.newsSource || '';
+          ev._newsTime = new Date().toLocaleString('zh-CN',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'});
+        }
+      });
+      console.log(`[GeoNews] AI更新 ${updates.length} 个事件的动态`);
+    }
+  } catch(e){
+    console.warn('[GeoNews] AI分析失败:', e.message || e);
+  }
+}
+
+function startGeoNewsAutoRefresh(){
+  // 立即执行一次
+  fetchGeoNewsFromMedia();
+  // 每1小时刷新
+  if(_geoNewsRefreshTimer) clearInterval(_geoNewsRefreshTimer);
+  _geoNewsRefreshTimer = setInterval(() => {
+    fetchGeoNewsFromMedia();
+  }, 3600000); // 60min
+  console.log('[GeoNews] 已启动每小时自动刷新');
 }
 
 // ==================== RL BRAIN STATE ====================
@@ -4441,11 +4589,20 @@ function renderActionGuide(){
   // 1.5 宏观地缘事件与投资研判
   const geoData = getMacroGeoAnalysis();
   html += `<div class="ag-overview" style="background:linear-gradient(135deg,#1a1a2e 0%,#0f172a 50%,#1e1b4b 100%);margin-top:10px">`;
-  html += `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">`;
+  html += `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">`;
   html += `<div style="font-weight:700;font-size:13px">🌍 宏观地缘事件与投资研判</div>`;
   const geoColor = geoData.score >= 60 ? '#4ade80' : geoData.score <= 40 ? '#f87171' : '#fbbf24';
   html += `<span style="font-size:11px;color:${geoColor};font-weight:700">${geoData.label} ${geoData.score}分</span>`;
   html += `</div>`;
+  // 数据来源 + 刷新时间
+  const _geoSrcNames = ['NYT','BBC','WSJ','Guardian','CNBC','FT','CNN','AlJazeera','Reuters'];
+  const _geoUpdateStr = _geoNewsLastUpdate ? _geoNewsLastUpdate.toLocaleString('zh-CN',{hour:'2-digit',minute:'2-digit'}) + '更新' : '加载中...';
+  html += `<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;font-size:8px;color:rgba(255,255,255,0.45)">`;
+  html += `<div>数据源: ${_geoSrcNames.join(' · ')}</div>`;
+  html += `<div style="display:flex;align-items:center;gap:4px">`;
+  html += `<span>${_geoUpdateStr}</span>`;
+  html += `<span onclick="fetchGeoNewsFromMedia()" style="cursor:pointer;padding:1px 4px;border-radius:3px;background:rgba(255,255,255,0.08)">🔄</span>`;
+  html += `</div></div>`;
 
   // ===== 综合信号仪表板 (整合原数据情报中心核心数据) =====
   if(_dataIntelLoaded){
@@ -4549,9 +4706,32 @@ function renderActionGuide(){
       });
       html += `</div>`;
     }
+    // 最新媒体动态（由全球媒体实时刷新填充）
+    if(e._latestNews){
+      html += `<div style="margin:4px 0 2px 28px;padding:5px 8px;background:rgba(34,211,238,0.07);border-radius:6px;border-left:2px solid #22d3ee">`;
+      html += `<div style="font-size:9px;font-weight:700;color:#22d3ee;margin-bottom:2px">📰 最新媒体动态</div>`;
+      html += `<div style="font-size:9px;color:#e2e8f0;line-height:1.4">${e._latestNews}</div>`;
+      if(e._newsSource) html += `<div style="font-size:8px;color:var(--sub);margin-top:2px">来源: ${e._newsSource}${e._newsTime ? ' · '+e._newsTime : ''}</div>`;
+      html += `</div>`;
+    }
     html += `</div>`;
   });
   html += `</div>`;
+
+  // 全球媒体实时快讯
+  if(_geoNewsLiveItems && _geoNewsLiveItems.length > 0){
+    html += `<div style="background:rgba(34,211,238,0.06);border-radius:8px;padding:8px 10px;margin-bottom:8px;border:1px solid rgba(34,211,238,0.15)">`;
+    html += `<div style="font-size:11px;font-weight:700;color:#22d3ee;margin-bottom:6px">📡 全球媒体实时快讯 <span style="font-size:9px;font-weight:400;color:var(--sub)">(${_geoNewsLiveItems.length}条)</span></div>`;
+    const showItems = _geoNewsLiveItems.slice(0, 8);
+    showItems.forEach((item, idx) => {
+      const timeStr = item.pubDate ? new Date(item.pubDate).toLocaleString('zh-CN',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'}) : '';
+      html += `<div style="padding:4px 0;${idx < showItems.length-1 ? 'border-bottom:1px solid rgba(255,255,255,0.05)':''}">`;
+      html += `<div style="font-size:10px;color:#e2e8f0;line-height:1.4">${item.title}</div>`;
+      html += `<div style="font-size:8px;color:var(--sub);margin-top:1px">${item.source || ''} ${timeStr ? '· '+timeStr : ''}</div>`;
+      html += `</div>`;
+    });
+    html += `</div>`;
+  }
 
   // 三个月主题展望
   const ol = geoData.outlook;
@@ -6943,6 +7123,8 @@ async function loadData(){
   fetchAllDataIntel().then(()=>{
     console.log('宏观数据加载完成: 资金/舆情/国际');
     renderAll();
+    // 启动地缘新闻自动刷新（每小时从全球媒体获取）
+    startGeoNewsAutoRefresh();
   }).catch(e=>console.warn('宏观数据加载失败:', e));
 }
 
