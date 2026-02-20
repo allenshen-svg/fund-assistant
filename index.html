@@ -4440,7 +4440,7 @@ function renderActionGuide(){
   // 1.3 组合持仓结构
   if(sectorAnalysis.distribution.length > 1){
     html += `<div style="display:flex;gap:3px;flex-wrap:wrap;margin-top:4px;padding:4px 8px;background:rgba(139,92,246,0.05);border-radius:8px;font-size:9px">`;
-    html += `<span style="font-weight:700;color:#a78bfa;font-size:10px">💼 持仓结构</span>`;
+    html += `<span style="font-weight:700;color:#e2e8f0;font-size:10px">💼 持仓结构</span>`;
     sectorAnalysis.distribution.forEach(d => {
       html += `<span style="padding:2px 5px;border-radius:4px;background:rgba(255,255,255,0.06)">${d.type} <b>${d.pct}%</b></span>`;
     });
@@ -4693,13 +4693,13 @@ function renderActionGuide(){
     const holdingsInfo = _fundHoldingsCache[code];
     if(sectorExp && Object.keys(sectorExp).length > 0){
       html += `<div style="display:flex;gap:4px;flex-wrap:wrap;padding:4px 0;font-size:9px;align-items:center">`;
-      html += `<span style="padding:2px 5px;border-radius:4px;background:rgba(139,92,246,0.15);color:#c084fc;font-weight:600">📊行业</span>`;
+      html += `<span style="padding:2px 5px;border-radius:4px;background:rgba(30,41,59,0.08);color:#1e293b;font-weight:600">📊行业</span>`;
       const topSectors = Object.entries(sectorExp).sort((a,b) => b[1] - a[1]).filter(([,w]) => w >= 0.05);
       topSectors.forEach(([sec, weight]) => {
         const pct = (weight * 100).toFixed(0);
         const barW = Math.max(8, weight * 60);
-        html += `<span style="padding:2px 5px;border-radius:4px;background:rgba(139,92,246,0.08);color:#e2e8f0;position:relative;overflow:hidden">`;
-        html += `<span style="position:absolute;left:0;top:0;bottom:0;width:${barW}px;background:rgba(139,92,246,0.15);border-radius:4px"></span>`;
+        html += `<span style="padding:2px 5px;border-radius:4px;background:rgba(30,41,59,0.06);color:#1e293b;position:relative;overflow:hidden">`;
+        html += `<span style="position:absolute;left:0;top:0;bottom:0;width:${barW}px;background:rgba(59,130,246,0.15);border-radius:4px"></span>`;
         html += `<span style="position:relative">${sec} ${pct}%</span></span>`;
       });
       // 数据来源标注
