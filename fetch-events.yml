@@ -1,0 +1,37 @@
+name: 📡 宏观事件自动追踪
+
+on:
+  schedule:
+    - cron: '0,30 0-12 * * 1-5'
+    - cron: '0 0,3,6,9 * * 0,6'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  fetch-events:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Fetch & Process Events
+        env:
+          AI_API_KEY: ${{ secrets.AI_API_KEY }}
+          AI_API_BASE: ${{ secrets.AI_API_BASE }}
+          AI_MODEL: ${{ secrets.AI_MODEL }}
+        run: python scripts/fetch_events.py
+      - name: Commit & Push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/hot_events.json
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "data: 更新宏观事件 $(TZ=Asia/Shanghai date '+%m-%d %H:%M')"
+            git push
+          fi
