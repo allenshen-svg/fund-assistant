@@ -1413,10 +1413,28 @@ function renderSOTDashboard() {
   const stressTest = howardMarksStressTest();
   let html = '';
 
+  // ===== 0. 行动摘要 =====
+  const summaryAnalysis = analyzeSecondOrderThinking();
+  const crowdCount = summaryAnalysis.crowdedTrades.length;
+  const oppCount = summaryAnalysis.contrarianPicks.length;
+  html += '<div style="background:var(--card);border-radius:10px;padding:12px 14px;margin-bottom:8px;box-shadow:var(--shadow)">';
+  html += '<div style="font-size:13px;font-weight:800;margin-bottom:8px">📋 一句话总结</div>';
+  html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">';
+  html += '<div style="background:#fef2f2;border-radius:8px;padding:10px;text-align:center">';
+  html += '<div style="font-size:24px;font-weight:800;color:#ef4444">' + crowdCount + '</div>';
+  html += '<div style="font-size:11px;font-weight:600;color:#ef4444">⛔ 过热方向</div>';
+  html += '<div style="font-size:9px;color:#9ca3af;margin-top:2px">不要追高</div>';
+  html += '</div>';
+  html += '<div style="background:#ecfdf5;border-radius:8px;padding:10px;text-align:center">';
+  html += '<div style="font-size:24px;font-weight:800;color:#22c55e">' + oppCount + '</div>';
+  html += '<div style="font-size:11px;font-weight:600;color:#22c55e">✅ 逆向机会</div>';
+  html += '<div style="font-size:9px;color:#9ca3af;margin-top:2px">可以布局</div>';
+  html += '</div></div></div>';
+
   // ===== 1. 反拥挤Kelly仪表盘 =====
   html += '<div class="kelly-adj-card">';
-  html += '<div class="kelly-adj-title">📐 反拥挤Kelly仓位引擎 <span style="font-size:9px;color:rgba(255,255,255,0.4)">ΔP = Reality - Expectation</span></div>';
-  html += '<div class="kelly-formula">f* = (b·p - q) / b × 反拥挤惩罚 × 逆向奖励</div>';
+  html += '<div class="kelly-adj-title">📐 持仓Kelly仓位建议 <span style="font-size:9px;color:rgba(255,255,255,0.4)">根据拥挤度+RSI自动调整</span></div>';
+  html += '<div class="kelly-formula" style="font-size:11px;color:rgba(255,255,255,0.5)">🔴红=减仓  🟢绿=可加  🔵蓝=正常持有</div>';
 
   // 对用户持仓的基金计算调整后Kelly
   const kellyItems = [];
@@ -1452,30 +1470,39 @@ function renderSOTDashboard() {
   if (kellyItems.length > 0) {
     html += '<div style="margin-top:8px">';
     kellyItems.forEach(k => {
-      const statusColor = k.status === 'crowded_warning' ? '#4ade80' : k.status === 'contrarian_opportunity' ? '#f87171' : 'rgba(255,255,255,0.7)';
-      const statusIcon = k.status === 'crowded_warning' ? '🟢' : k.status === 'contrarian_opportunity' ? '🔴' : '🔵';
+      // 修正颜色：拥挤=红色警告，逆向=绿色机会
+      const statusColor = k.status === 'crowded_warning' ? '#f87171' : k.status === 'contrarian_opportunity' ? '#4ade80' : 'rgba(255,255,255,0.7)';
+      const statusIcon = k.status === 'crowded_warning' ? '🔴' : k.status === 'contrarian_opportunity' ? '🟢' : '🔵';
+      const actionLabel = k.status === 'crowded_warning' ? '⛔ 减仓/不追' : k.status === 'contrarian_opportunity' ? '✅ 可布局' : '➖ 正常持有';
+      const actionBg = k.status === 'crowded_warning' ? 'rgba(239,68,68,0.2)' : k.status === 'contrarian_opportunity' ? 'rgba(34,197,94,0.2)' : 'rgba(255,255,255,0.08)';
       const crowdCls = k.crowdingScore >= 80 ? 'extreme' : k.crowdingScore >= 60 ? 'high' : k.crowdingScore >= 40 ? 'mid' : k.crowdingScore >= 20 ? 'low' : 'desert';
 
-      html += '<div style="background:rgba(255,255,255,0.04);border-radius:8px;padding:8px 10px;margin-bottom:6px">';
-      html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">';
-      html += '<span style="font-size:11px;font-weight:600;color:#e2e8f0">' + statusIcon + ' ' + k.name.slice(0, 10) + '</span>';
-      html += '<span style="font-size:10px;color:' + statusColor + '">' + (k.kellyAdjusted * 100).toFixed(1) + '% 仓位</span>';
+      html += '<div style="background:rgba(255,255,255,0.04);border-radius:10px;padding:10px 12px;margin-bottom:8px;border-left:3px solid ' + statusColor + '">';
+      // 第一行：基金名 + 操作建议
+      html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">';
+      html += '<span style="font-size:12px;font-weight:700;color:#e2e8f0">' + statusIcon + ' ' + k.name.slice(0, 10) + '</span>';
+      html += '<span style="font-size:10px;font-weight:700;color:' + statusColor + ';background:' + actionBg + ';padding:2px 8px;border-radius:6px">' + actionLabel + '</span>';
+      html += '</div>';
+      // 第二行：Kelly仓位大字
+      html += '<div style="display:flex;align-items:baseline;gap:6px;margin-bottom:6px">';
+      html += '<span style="font-size:22px;font-weight:800;color:' + statusColor + ';font-variant-numeric:tabular-nums">' + (k.kellyAdjusted * 100).toFixed(1) + '%</span>';
+      html += '<span style="font-size:10px;color:rgba(255,255,255,0.5)">建议仓位</span>';
+      html += '<span style="font-size:10px;color:rgba(255,255,255,0.35);margin-left:auto">原始 ' + (k.kellyBase * 100).toFixed(1) + '%</span>';
       html += '</div>';
       // 拥挤度条
       html += '<div class="crowd-gauge">';
-      html += '<span style="font-size:8px;color:rgba(255,255,255,0.4);min-width:28px">拥挤度</span>';
+      html += '<span style="font-size:9px;color:rgba(255,255,255,0.5);min-width:36px">拥挤度</span>';
       html += '<div class="crowd-bar" style="background:rgba(255,255,255,0.08)"><div class="crowd-fill ' + crowdCls + '" style="width:' + k.crowdingScore + '%"></div></div>';
-      html += '<span class="crowd-label" style="color:' + statusColor + '">' + k.crowdingScore + '</span>';
+      html += '<span class="crowd-label" style="color:' + statusColor + ';font-size:12px">' + k.crowdingScore + '</span>';
       html += '</div>';
-      // Kelly对比
-      html += '<div style="display:flex;gap:8px;font-size:9px;color:rgba(255,255,255,0.5)">';
-      html += '<span>原始Kelly: ' + (k.kellyBase * 100).toFixed(1) + '%</span>';
-      html += '<span>惩罚: ×' + k.penalty.toFixed(2) + '</span>';
-      html += '<span>逆向奖励: ×' + k.bonus.toFixed(2) + '</span>';
-      html += '<span>RSI: ' + k.rsiValue.toFixed(0) + '</span>';
+      // 指标行
+      html += '<div style="display:flex;gap:10px;font-size:10px;color:rgba(255,255,255,0.55);margin-top:4px">';
+      html += '<span>惩罚 ×' + k.penalty.toFixed(2) + '</span>';
+      html += '<span>逆向奖励 ×' + k.bonus.toFixed(2) + '</span>';
+      html += '<span>RSI ' + k.rsiValue.toFixed(0) + '</span>';
       html += '</div>';
       if (k.warning) {
-        html += '<div style="font-size:9px;margin-top:3px;color:' + statusColor + '">' + k.warning + '</div>';
+        html += '<div style="font-size:10px;margin-top:5px;padding:4px 8px;border-radius:6px;background:' + actionBg + ';color:' + statusColor + ';line-height:1.5">' + k.warning + '</div>';
       }
       html += '</div>';
     });
@@ -1488,22 +1515,28 @@ function renderSOTDashboard() {
   // ===== 2. 拥挤交易警告 (What NOT to buy) =====
   if (analysis.crowdedTrades.length > 0) {
     html += '<div class="sot-card warning">';
-    html += '<div class="sot-card-title">🚨 拥挤交易预警 <span class="sot-tag hot">Expectation极高</span></div>';
+    html += '<div class="sot-card-title">🚨 拥挤交易预警 — 不要追高 <span class="sot-tag hot">⛔ 共识过热</span></div>';
+    html += '<div style="font-size:10px;color:var(--sub);margin-bottom:8px;padding:6px 8px;background:#fef2f2;border-radius:6px;line-height:1.5">以下方向市场共识度极高，"买预期卖事实"风险大。即使看好，也应等回调再介入，不宜追高。</div>';
     analysis.crowdedTrades.forEach(ct => {
-      html += '<div style="padding:6px 0;border-bottom:1px solid var(--border)">';
-      html += '<div style="display:flex;justify-content:space-between;align-items:center">';
-      html += '<span style="font-size:12px;font-weight:700">' + ct.tag + '</span>';
-      html += '<span style="font-size:11px;font-weight:700;color:var(--red)">🔥 温度 ' + ct.temperature + '</span>';
-      html += '</div>';
-      html += '<div class="sot-event">' + ct.insight + '</div>';
+      const tempColor = ct.temperature >= 85 ? '#dc2626' : '#ef4444';
+      const tempBg = ct.temperature >= 85 ? '#fef2f2' : '#fff7ed';
+      html += '<div style="padding:8px 0;border-bottom:1px solid var(--border)">';
+      html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">';
+      html += '<span style="font-size:13px;font-weight:700">' + ct.tag + '</span>';
+      html += '<div style="display:flex;align-items:center;gap:6px">';
+      html += '<span style="font-size:12px;font-weight:800;color:' + tempColor + '">🔥 ' + ct.temperature + '°</span>';
+      html += '<span style="font-size:9px;font-weight:700;color:white;background:' + tempColor + ';padding:2px 6px;border-radius:4px">' + (ct.temperature >= 85 ? '极度拥挤' : '偏拥挤') + '</span>';
+      html += '</div></div>';
+      html += '<div class="sot-event" style="font-size:11px;line-height:1.6">' + ct.insight + '</div>';
       // 第二层受益标的
       if (ct.secondOrderTargets.length > 0) {
-        html += '<div style="font-size:10px;color:var(--primary);font-weight:600;margin-bottom:3px">💡 第二层受益(卖铲子)：</div>';
+        html += '<div style="margin-top:4px;padding:6px 8px;background:#eef2ff;border-radius:6px">';
+        html += '<div style="font-size:10px;color:var(--primary);font-weight:700;margin-bottom:4px">💡 不追热点，买"卖铲子"的：</div>';
         html += '<div class="sot-second-targets">';
         ct.secondOrderTargets.forEach(t => {
           html += '<span class="sot-target-chip">' + t + '</span>';
         });
-        html += '</div>';
+        html += '</div></div>';
       }
       html += '</div>';
     });
@@ -1513,26 +1546,37 @@ function renderSOTDashboard() {
   // ===== 3. 逆向机会发掘 (Where to look) =====
   if (analysis.contrarianPicks.length > 0) {
     html += '<div class="sot-card opportunity">';
-    html += '<div class="sot-card-title">🧊 逆向机会发掘 <span class="sot-tag cold">Expectation极低</span></div>';
+    html += '<div class="sot-card-title">🧊 逆向机会 — 可以布局 <span class="sot-tag cold">✅ 情绪冰点</span></div>';
+    html += '<div style="font-size:10px;color:var(--sub);margin-bottom:8px;padding:6px 8px;background:#ecfdf5;border-radius:6px;line-height:1.5">以下方向市场极度悲观，预期已充分下调。如果基本面未恶化，预期差ΔP为正，适合逐步左侧布局。</div>';
     analysis.contrarianPicks.forEach(cp => {
       const fund = getFundamentalStatus(cp.tag);
-      html += '<div style="padding:6px 0;border-bottom:1px solid var(--border)">';
-      html += '<div style="display:flex;justify-content:space-between;align-items:center">';
-      html += '<span style="font-size:12px;font-weight:700">' + cp.tag + '</span>';
-      html += '<span style="font-size:11px;font-weight:700;color:var(--green)">❄️ 温度 ' + cp.temperature + '</span>';
+      const gapValue = fund.score - cp.temperature;
+      const gapLabel = gapValue > 30 ? '预期差极大' : gapValue > 15 ? '有预期差' : '预期差一般';
+      const gapColor = gapValue > 30 ? '#16a34a' : gapValue > 15 ? '#22c55e' : '#64748b';
+      html += '<div style="padding:8px 0;border-bottom:1px solid var(--border)">';
+      html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">';
+      html += '<span style="font-size:13px;font-weight:700">' + cp.tag + '</span>';
+      html += '<div style="display:flex;align-items:center;gap:6px">';
+      html += '<span style="font-size:12px;font-weight:800;color:#22c55e">❄️ ' + cp.temperature + '°</span>';
+      html += '<span style="font-size:9px;font-weight:700;color:white;background:' + gapColor + ';padding:2px 6px;border-radius:4px">' + gapLabel + '</span>';
+      html += '</div></div>';
+      html += '<div class="sot-event" style="font-size:11px;line-height:1.6">' + cp.insight + '</div>';
+      // 预期差可视化 - 更清晰的对比
+      html += '<div style="margin-top:6px;padding:6px 8px;background:var(--bg);border-radius:6px">';
+      html += '<div style="display:flex;justify-content:space-between;font-size:10px;margin-bottom:4px">';
+      html += '<span style="color:#ef4444;font-weight:600">市场预期(Expect): ' + cp.temperature + '</span>';
+      html += '<span style="color:#22c55e;font-weight:600">基本面(Reality): ' + fund.score + '</span>';
       html += '</div>';
-      html += '<div class="sot-event">' + cp.insight + '</div>';
-      // 预期差可视化
-      html += '<div class="expectation-bar">';
-      html += '<span class="exp-label">Expect</span>';
-      html += '<div class="exp-track">';
+      html += '<div class="expectation-bar" style="margin:0">';
+      html += '<div class="exp-track" style="height:10px;border-radius:5px">';
       html += '<div class="exp-fill-expect" style="width:' + cp.temperature + '%"></div>';
       html += '<div class="exp-fill-reality" style="width:' + fund.score + '%"></div>';
       html += '<div class="exp-marker" style="left:' + cp.temperature + '%"></div>';
       html += '</div>';
-      html += '<span class="exp-label" style="color:var(--green)">Reality</span>';
       html += '</div>';
-      html += '<div style="font-size:10px;color:var(--sub);margin-top:2px">Reality: ' + fund.reality + ' | 趋势: ' + fund.trend + '</div>';
+      html += '<div style="text-align:center;font-size:10px;color:' + gapColor + ';font-weight:700;margin-top:3px">ΔP = +' + gapValue + ' (' + gapLabel + ')</div>';
+      html += '</div>';
+      html += '<div style="font-size:10px;color:var(--sub);margin-top:3px">Reality: ' + fund.reality + ' | 趋势: ' + fund.trend + '</div>';
       html += '</div>';
     });
     html += '</div>';
