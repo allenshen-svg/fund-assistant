@@ -772,6 +772,7 @@ const RECO_FUND_POOL = [
   {code:'014832',name:'天弘中证有色金属ETF联接C',type:'有色金属',tags:['有色','铜铝']},
   {code:'013308',name:'易方达中证全指证券公司C',type:'金融',tags:['券商','政策受益']},
   {code:'012810',name:'鹏华国证钢铁行业指数C',type:'钢铁',tags:['钢铁','周期','资源']},
+  {code:'013403',name:'华夏恒生科技ETF联接C',type:'港股科技/QDII',tags:['港股','恒生科技','互联网','QDII']},
 ];
 
 const INDICES_CONFIG = [
@@ -1057,6 +1058,49 @@ const MACRO_GEO_EVENTS = [
     confidence: 0.8,
     advice: '铜是"新时代的石油"，全球电气化趋势确定。有色金属ETF适合中长期配置，短期关注LME铜价和国内库存变化，回调时分批建仓',
   },
+  // === 科技产业分化 ===
+  {
+    id: 'hk_tech_correction',
+    name: '港股科技指数深度回调',
+    category: 'market',
+    icon: '📉🇭🇰',
+    description: '2026年2月港股科技指数遭遇深度回调，恒生科技近3月跌超12%。美团/阿里/腾讯三大巨头跌幅显著，受多重压力：①中国AI创企(MiniMax/智谱)崛起分流资金和估值溢价；②美联储降息不及预期→港元承压→外资撤离；③互联网巨头增速放缓→市场重新定价。短期下行趋势明确，不宜追涨加仓',
+    impact: -12,
+    sectors: {
+      positive: ['A股AI', 'A股科技', '内需消费'],
+      negative: ['港股科技', '港股互联网', '恒生科技', 'QDII科技'],
+    },
+    scenarios: [
+      { name: '持续下探(大概率)', probability: 0.50, impact: -15, benefitSectors: ['A股AI','黄金'], hurtSectors: ['港股科技','QDII'], note: '外资持续撤离+AI创企虹吸效应→恒生科技可能跌至年内新低' },
+      { name: '震荡筑底', probability: 0.30, impact: -5, benefitSectors: [], hurtSectors: ['港股科技'], note: '南向资金托底，但反弹力度有限' },
+      { name: '政策催化反弹', probability: 0.20, impact: +10, benefitSectors: ['港股科技','互联网'], hurtSectors: [], note: '若港股通扩容或互联网巨头发布超预期业绩' },
+    ],
+    fundKeywords: ['港股','恒生','恒生科技','QDII','互联网','腾讯','阿里','美团','港股通'],
+    duration: '2026Q1-Q2',
+    confidence: 0.9,
+    advice: '⚠️ 港股科技短期下行趋势明确，不建议加仓恒生科技ETF(如013403)。等待：①恒生科技指数企稳（连续3日缩量止跌）；②南向资金连续净流入；③互联网巨头财报催化。当前应减仓或观望，资金转配A股AI/算力方向',
+  },
+  {
+    id: 'china_ai_startup_surge',
+    name: '中国AI创企崛起(MiniMax/智谱)',
+    category: 'technology',
+    icon: '🚀🤖',
+    description: '2026年初中国AI大模型赛道爆发性增长：MiniMax估值暴涨(海螺AI/星野用户破亿)、智谱清言GLM系列获国资战投、月之暗面Kimi持续破圈。AI创企崛起正深刻重塑产业格局：①A股AI算力/应用链直接受益；②传统互联网巨头(腾讯/阿里/百度)面临估值重新定价压力；③资金从港股互联网转向A股AI概念',
+    impact: +15,
+    sectors: {
+      positive: ['AI', 'AI应用', '算力', '光模块', 'AI芯片', '大模型', '云计算', '数据中心'],
+      negative: ['港股互联网', '传统软件'],
+    },
+    scenarios: [
+      { name: 'AI创企持续融资扩张', probability: 0.55, impact: +18, benefitSectors: ['AI','算力','光模块','AI应用'], hurtSectors: ['港股互联网'], note: 'MiniMax/智谱/Kimi持续获大额融资→A股AI链狂欢，港股虹吸效应加剧' },
+      { name: 'AI泡沫化回调', probability: 0.25, impact: -5, benefitSectors: ['港股科技(资金回流)'], hurtSectors: ['AI','算力'], note: 'AI估值过高→短期暴力回调，但中期方向不变' },
+      { name: '巨头反击+创企合作', probability: 0.20, impact: +8, benefitSectors: ['AI','港股科技','互联网'], hurtSectors: [], note: '腾讯/阿里加大AI投入+与创企合作→全面利好' },
+    ],
+    fundKeywords: ['人工智能','AI','算力','大模型','科技','TMT','创新','光模块','数据中心','云计算'],
+    duration: '2026全年',
+    confidence: 0.9,
+    advice: 'MiniMax/智谱等创企崛起是2026年最重要的产业信号。A股AI链(算力/光模块/AI应用)是核心受益方向，但估值已高需控制仓位。注意：这一趋势同时利空港股传统互联网——资金和估值溢价正从港股互联网转向A股AI链',
+  },
   // === 市场结构 ===
   {
     id: 'a_share_reform',
@@ -1088,13 +1132,15 @@ const MACRO_3M_OUTLOOK = {
     { name: '国产替代', conviction: '强', direction: 'up', reason: '中美脱钩压力→半导体/信创长期受益' },
     { name: '原油/能源', conviction: '中', direction: 'up', reason: 'OPEC+减产+地缘溢价→油价高位震荡，美伊谈判是核心变量' },
     { name: '出口链', conviction: '弱', direction: 'down', reason: '关税博弈+全球需求放缓' },
-    { name: '港股科技', conviction: '中', direction: 'neutral', reason: '估值有优势但汇率压制，波段操作为主' },
+    { name: '港股科技', conviction: '弱', direction: 'down', reason: '⚠️ 美团/阿里/腾讯大跌+AI创企虹吸资金+美联储鹰派→恒生科技近3月-12%，短期规避' },
+    { name: 'AI创企(MiniMax/智谱)', conviction: '强', direction: 'up', reason: 'MiniMax/智谱大涨，AI创企崛起重塑产业格局，A股AI链直接受益' },
   ],
   risks: [
     '美伊核谈判破裂→制裁加码/军事威胁→油价飙升拖累全球经济',
     '美联储降息不及预期→美元走强→人民币承压→外资流出',
     'AI板块估值泡沫化→短期剧烈回调风险',
     '地产下行超预期→内需不足→消费复苏证伪',
+    '港股科技持续失血→恒生科技ETF(QDII)大幅回撤→持有者深套',
   ],
   allocation: {
     offensive: 'AI/机器人 30% + 半导体/信创 15% = 45%进攻仓',
@@ -1594,7 +1640,9 @@ function getSocialMediaHotwords(){
     { word:'光伏反转', heat:6800, trend:'up', sources:['雪球','同花顺'], relatedSectors:['光伏','新能源','储能'] },
     { word:'消费复苏', heat:6500, trend:'stable', sources:['微博','东财'], relatedSectors:['消费','食品饮料','白酒','家电'] },
     { word:'半导体国产化', heat:6200, trend:'up', sources:['雪球','同花顺'], relatedSectors:['半导体','芯片','AI芯片'] },
-    { word:'港股低估值', heat:5800, trend:'up', sources:['雪球','东财'], relatedSectors:['港股','互联网','金融'] },
+    { word:'MiniMax海螺AI', heat:8800, trend:'up', sources:['微博','雪球','36氪'], relatedSectors:['AI','AI应用','大模型','算力'] },
+    { word:'智谱清言GLM', heat:8200, trend:'up', sources:['微博','雪球','东财'], relatedSectors:['AI','大模型','算力','国产替代'] },
+    { word:'港股科技暴跌', heat:7500, trend:'up', sources:['雪球','东财','同花顺'], relatedSectors:['港股','互联网'] },
     { word:'医药创新', heat:5500, trend:'stable', sources:['雪球'], relatedSectors:['创新药','医药','医疗器械','CXO'] },
     { word:'红利策略', heat:5200, trend:'stable', sources:['东财','同花顺'], relatedSectors:['红利','银行','公用事业','高股息'] },
     { word:'新能源车', heat:5000, trend:'stable', sources:['微博','雪球'], relatedSectors:['新能源车','锂电','智能驾驶','充电桩'] },
