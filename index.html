@@ -329,6 +329,43 @@ body { font-family:-apple-system,BlinkMacSystemFont,'SF Pro','PingFang SC','Helv
 .global-news-btn { display:block; width:100%; padding:8px; border:1px dashed rgba(59,130,246,0.4); background:transparent; color:#3b82f6; font-size:10px; border-radius:8px; cursor:pointer; text-align:center; margin-top:6px; transition:all .2s; }
 .global-news-btn:hover { background:rgba(59,130,246,0.1); border-color:#3b82f6; }
 .global-news-btn:disabled { opacity:0.5; cursor:not-allowed; }
+/* ===== 宏观异动雷达 (Macro & Anomaly Radar) ===== */
+.radar-section { background:linear-gradient(135deg,#0f172a 0%,#1a1a2e 50%,#1e1b4b 100%); border-radius:var(--radius); padding:14px 16px; margin-top:10px; color:#fff; box-shadow:0 2px 12px rgba(22,33,62,0.25); }
+.radar-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
+.radar-title { font-size:13px; font-weight:700; }
+.radar-meta { font-size:9px; color:rgba(255,255,255,0.45); display:flex; align-items:center; gap:6px; }
+.radar-score { font-size:11px; font-weight:700; padding:2px 8px; border-radius:6px; }
+/* 热点温度计 */
+.radar-module { margin-bottom:12px; }
+.radar-mod-title { font-size:11px; font-weight:700; margin-bottom:6px; display:flex; align-items:center; gap:4px; }
+.heatmap-grid { display:grid; grid-template-columns:1fr 1fr; gap:4px 8px; }
+.heat-item { display:flex; align-items:center; gap:4px; padding:3px 6px; border-radius:6px; background:rgba(255,255,255,0.04); font-size:10px; }
+.heat-tag { min-width:50px; font-weight:600; color:#e2e8f0; }
+.heat-bar { flex:1; height:5px; border-radius:3px; background:rgba(255,255,255,0.08); overflow:hidden; min-width:30px; }
+.heat-fill { height:100%; border-radius:3px; transition:width .5s; }
+.heat-temp { font-weight:700; min-width:22px; text-align:right; font-size:10px; }
+.heat-trend { font-size:9px; min-width:10px; }
+/* 持仓异动归因 */
+.impact-list { display:flex; flex-direction:column; gap:6px; }
+.impact-item { padding:8px 10px; border-radius:8px; border-left:3px solid transparent; background:rgba(255,255,255,0.04); }
+.impact-item.positive { border-left-color:#4ade80; }
+.impact-item.negative { border-left-color:#f87171; }
+.impact-item.neutral { border-left-color:#fbbf24; }
+.impact-fund { font-size:12px; font-weight:700; color:#e2e8f0; margin-bottom:2px; }
+.impact-pct { font-size:11px; font-weight:700; }
+.impact-reason { font-size:10px; color:#cbd5e1; line-height:1.4; margin-top:2px; }
+.impact-events { display:flex; gap:3px; flex-wrap:wrap; margin-top:4px; }
+.impact-evt-chip { font-size:8px; padding:1px 6px; border-radius:4px; font-weight:600; }
+.impact-evt-chip.pos { background:rgba(74,222,128,0.15); color:#4ade80; }
+.impact-evt-chip.neg { background:rgba(248,113,113,0.15); color:#f87171; }
+/* AI策略建议 */
+.strategy-list { display:flex; flex-direction:column; gap:6px; }
+.strategy-item { padding:6px 10px; border-radius:8px; background:rgba(255,255,255,0.04); display:flex; gap:8px; align-items:flex-start; }
+.strategy-icon { font-size:16px; min-width:20px; text-align:center; }
+.strategy-body { flex:1; }
+.strategy-label { font-size:10px; font-weight:700; margin-bottom:2px; }
+.strategy-text { font-size:10px; color:#cbd5e1; line-height:1.4; }
+.strategy-fund { font-size:9px; color:#22d3ee; font-weight:600; cursor:pointer; margin-top:2px; }
 /* Real-World Action Guide */
 .action-guide { padding:12px 16px 6px; }
 .action-guide-header { display:flex; justify-content:space-between; align-items:center; cursor:pointer; }
@@ -863,339 +900,112 @@ let _geoNewsLiveItems = []; // 来自全球媒体的最新地缘新闻
 let _geoNewsRefreshTimer = null; // 1小时刷新定时器
 let _geoNewsRefreshing = false;
 
-// ==================== 宏观地缘事件引擎 (Macro-Geopolitical Event Engine) ====================
-// 重大国际事件数据库 — 每条记录事件名称、类别、影响方向、影响板块、持续时间、权重
-// 事件会被实时评估并注入三引擎投票 + 行动指南
-const MACRO_GEO_EVENTS = [
-  // === 地缘政治 ===
+// ==================== 宏观事件引擎 v2 (Hot Events Pipeline) ====================
+// 事件数据由 GitHub Actions 每2小时自动更新到 data/hot_events.json
+// 前端动态加载, 不再硬编码事件列表
+
+// 热点数据全局状态
+let _hotEventsData = null;        // 原始JSON数据
+let _hotEventsLoaded = false;     // 是否已加载
+let _hotEventsLastUpdate = null;  // 上次加载时间
+
+// 类别图标映射
+const CATEGORY_ICONS = {
+  technology: '🤖', geopolitics: '🌍', monetary: '🏦',
+  policy: '📜', commodity: '🛢️', market: '📊',
+};
+
+// 动态事件数组 (从JSON加载后填充, 兼容原getMacroGeoAnalysis接口)
+let MACRO_GEO_EVENTS = [
+  // === 最小回退集 (JSON加载失败时使用) ===
   {
-    id: 'us_iran_negotiation',
-    name: '美伊核谈判重启博弈',
-    category: 'geopolitics',
-    icon: '🕊️⚔️',
-    description: '2026年2月美伊重启核谈判，特朗普政府与伊朗在核计划限制、制裁解除等关键议题上角力。谈判成功→伊朗原油重返市场→油价承压→利好航空消费；谈判破裂→制裁加码→油价飙升→避险抬头。当前处于高度不确定阶段',
-    impact: -3, // 谈判中不确定性较高，但比纯冲突时风险小
-    sectors: {
-      positive: ['军工', '黄金', '石油石化', '能源', '油气'],
-      negative: ['航空', '消费', '出口制造'],
-    },
-    scenarios: [
-      { name: '谈判达成协议', probability: 0.35, impact: +8, benefitSectors: ['航空','消费','化工'], hurtSectors: ['油气','军工'], note: '伊朗原油回归市场，油价回落至60-70美元，利好下游成本' },
-      { name: '谈判僵局/破裂', probability: 0.45, impact: -12, benefitSectors: ['军工','黄金','能源','油气'], hurtSectors: ['航空','消费'], note: '制裁加码+军事威胁升级，油价冲击90美元+' },
-      { name: '维持现状拉锯', probability: 0.20, impact: -2, benefitSectors: ['黄金'], hurtSectors: [], note: '市场已部分定价，波动收窄' },
-    ],
-    fundKeywords: ['军工','国防','黄金','原油','能源','石油','油气','天然气','化工','航空'],
-    duration: '2026Q1-Q3',
-    confidence: 0.8,
-    advice: '美伊谈判是Q1最大地缘变量。建议：①黄金仓位维持10%对冲尾部风险；②油气基金短期持有但设止盈；③若达成协议信号明确，及时减持军工/油气转配航空消费',
+    id: 'fallback_ai', name: 'AI产业持续爆发', category: 'technology', icon: '🤖',
+    description: 'AI全面渗透各行业，算力需求持续爆发',
+    impact: 15, confidence: 0.85,
+    sectors: { positive: ['AI/科技','半导体','算力','AIGC'], negative: ['传统劳动密集型','港股互联网'] },
+    fundKeywords: ['人工智能','AI','算力','科技'], duration: 'long', advice: 'AI/算力逢回调加仓',
   },
   {
-    id: 'us_china_trade',
-    name: '中美关税博弈持续',
-    category: 'geopolitics',
-    icon: '🇺🇸🇨🇳',
-    description: '美国对华关税政策反复，科技脱钩压力下中国加速自主可控',
-    impact: -5,
-    sectors: {
-      positive: ['半导体', '信创', '国产替代', '内需消费'],
-      negative: ['出口导向', '苹果产业链', '外贸'],
-    },
-    fundKeywords: ['半导体','芯片','信创','科技','国产替代','自主可控'],
-    duration: '长期',
-    confidence: 0.85,
-    advice: '贸易摩擦利好国产替代链，半导体/信创是长期主线，但短期波动大，建议定投分批',
+    id: 'fallback_gold', name: '避险资产受青睐', category: 'commodity', icon: '🥇',
+    description: '地缘不确定性+央行购金→黄金走强',
+    impact: 8, confidence: 0.8,
+    sectors: { positive: ['黄金','贵金属','有色金属'], negative: [] },
+    fundKeywords: ['黄金','贵金属','避险'], duration: 'medium', advice: '黄金ETF作底仓配置',
   },
   {
-    id: 'russia_ukraine',
-    name: '俄乌冲突与欧洲能源',
-    category: 'geopolitics',
-    icon: '🌍',
-    description: '俄乌冲突持续影响全球能源供应和粮食安全，俄罗斯镍/钯/铝出口受限推高有色金属价格',
-    impact: -3,
-    sectors: {
-      positive: ['能源', '农业', '化工', '有色金属', '黄金'],
-      negative: ['欧洲市场相关'],
-    },
-    fundKeywords: ['能源','农业','化工','大宗商品','有色','铜','铝','镍','油气','石油','天然气'],
-    duration: '长期',
-    confidence: 0.7,
-    advice: '全球供应链风险溢价持续，能源和农业板块有支撑，但需关注停火谈判进展',
-  },
-  // === 科技革命 ===
-  {
-    id: 'ai_revolution',
-    name: '2026春晚AI秀引爆全民AI热',
-    category: 'technology',
-    icon: '🤖',
-    description: '2026春晚AI表演秀全网刷屏，AI应用加速落地，中国AI产业链迎来"Sora时刻"',
-    impact: +18,
-    sectors: {
-      positive: ['AI', '算力', '光模块', '大模型', '机器人', 'AI应用', '传媒'],
-      negative: ['传统劳动密集型', '港股互联网'],
-    },
-    fundKeywords: ['人工智能','AI','科技','算力','机器人','传媒','TMT','信息技术','创新'],
-    duration: '2026全年',
-    confidence: 0.9,
-    advice: '春晚AI秀点燃市场热情，AI硬件(算力/光模块)+应用(大模型/机器人)双主线，短期追高需谨慎但中期趋势确定',
-  },
-  {
-    id: 'humanoid_robot',
-    name: '人形机器人产业元年',
-    category: 'technology',
-    icon: '🦾',
-    description: '特斯拉Optimus量产推进、国内多家企业人形机器人亮相，产业链加速成熟',
-    impact: +12,
-    sectors: {
-      positive: ['机器人', '减速器', '传感器', '伺服电机', 'AI'],
-      negative: [],
-    },
-    fundKeywords: ['机器人','智能制造','高端装备','AI'],
-    duration: '2026-2027',
-    confidence: 0.8,
-    advice: '人形机器人处于0→1阶段，核心零部件(减速器/丝杠/传感器)确定性较高，但估值已偏贵需等回调',
-  },
-  // === 货币政策 ===
-  {
-    id: 'fed_rate_path',
-    name: '美联储降息预期反复',
-    category: 'monetary',
-    icon: '💵',
-    description: '美联储2026年降息节奏不确定，美元指数波动加大，人民币汇率承压',
-    impact: -3,
-    sectors: {
-      positive: ['黄金', '债券'],
-      negative: ['美元债相关', '港股(汇率)'],
-    },
-    fundKeywords: ['黄金','债券','纯债','港股'],
-    duration: '2026H1',
-    confidence: 0.7,
-    advice: '降息预期反复导致波动，债券基金可作为稳定器配置。若美联储转鸽，利好新兴市场和黄金',
-  },
-  {
-    id: 'pboc_easing',
-    name: '中国央行宽松周期延续',
-    category: 'monetary',
-    icon: '🏛️',
-    description: '央行维持宽松货币政策，降准降息预期，社融/M2稳步扩张，流动性充裕驱动大宗商品和有色金属走强',
-    impact: +10,
-    sectors: {
-      positive: ['券商', '银行', '地产', '成长股', '科技', '有色金属'],
-      negative: [],
-    },
-    fundKeywords: ['券商','金融','银行','地产','成长','科技','有色','铜','铝'],
-    duration: '2026全年',
-    confidence: 0.8,
-    advice: '宽松货币环境有利于A股估值扩张，特别是成长股/科技股弹性大。关注社融拐点',
-  },
-  // === 产业政策 ===
-  {
-    id: 'new_quality_prod',
-    name: '新质生产力国家战略',
-    category: 'policy',
-    icon: '🚀',
-    description: '两会将新质生产力列为首要任务，政策聚焦AI、量子计算、新能源、生物医药，新能源(电动车/光伏/风电)拉动铜铝需求',
-    impact: +8,
-    sectors: {
-      positive: ['新能源', '生物医药', '半导体', '量子计算', 'AI', '有色金属'],
-      negative: ['高污染', '落后产能'],
-    },
-    fundKeywords: ['新能源','医药','半导体','科技','创新','有色','铜','铝'],
-    duration: '2026-2030',
-    confidence: 0.85,
-    advice: '政策确定性强，新质生产力相关基金是中长期主线。但需避免盲目追高，等技术回调再配置',
-  },
-  {
-    id: 'consumption_stimulus',
-    name: '扩大内需消费刺激',
-    category: 'policy',
-    icon: '🛒',
-    description: '以旧换新2.0+消费券发放+服务消费升级，春节消费数据超预期',
-    impact: +6,
-    sectors: {
-      positive: ['消费', '家电', '汽车', '旅游', '白酒'],
-      negative: [],
-    },
-    fundKeywords: ['消费','白酒','家电','汽车','食品饮料'],
-    duration: '2026全年',
-    confidence: 0.75,
-    advice: '消费复苏确认中，可逢低配置消费ETF。春节数据若超预期，消费板块有望迎来估值修复',
-  },
-  // === 大宗商品 ===
-  {
-    id: 'crude_oil_volatility',
-    name: '国际原油价格高波动',
-    category: 'commodity',
-    icon: '🛢️',
-    description: '2026年原油市场多空交织：OPEC+减产挺价vs美国页岩油增产，美伊谈判走向决定伊朗原油是否重返市场(日产400万桶)，俄乌冲突持续影响欧洲能源供应。布伦特原油在70-85美元区间震荡，地缘风险溢价显著',
-    impact: +5,
-    sectors: {
-      positive: ['石油石化', '油气', '能源', '化工', '油服'],
-      negative: ['航空', '物流运输', '化纤(成本端)'],
-    },
-    scenarios: [
-      { name: 'OPEC+深度减产+美伊谈崩', probability: 0.25, impact: +15, benefitSectors: ['油气','能源','化工','油服'], hurtSectors: ['航空','物流','消费'], note: '油价冲上90-100美元，能源股/油气基金大幅受益' },
-      { name: '供需基本平衡', probability: 0.45, impact: +3, benefitSectors: ['油气','化工'], hurtSectors: [], note: '油价维持70-80美元区间震荡，油气基金稳健收益' },
-      { name: '美伊达成协议+需求放缓', probability: 0.30, impact: -8, benefitSectors: ['航空','消费','化工(成本降)'], hurtSectors: ['油气','能源','油服'], note: '伊朗原油重返+全球需求疲软，油价跌至55-65美元' },
-    ],
-    fundKeywords: ['原油','油气','石油','天然气','能源','化工','石化','油服'],
-    duration: '2026全年',
-    confidence: 0.85,
-    advice: '原油是2026最具波动性的大宗商品。油气基金适合波段操作：①关注美伊谈判进展(核心变量)；②OPEC+会议前后是关键时间窗口；③油价跌破65美元可加仓，突破85美元考虑止盈',
-  },
-  {
-    id: 'commodity_supercycle',
-    name: '全球铜铝供需紧张与能源转型',
-    category: 'commodity',
-    icon: '⛏️',
-    description: '全球能源转型(电动车/光伏/风电/AI算力中心)驱动铜铝需求激增，矿端供给受限(铜矿品位下降+环保限产)，叠加全球基建潮(美国基建法案+中国新基建)，有色金属进入长期供需紧张格局',
-    impact: +10,
-    sectors: {
-      positive: ['有色金属', '铜', '铝', '黄金', '矿业', '资源'],
-      negative: ['下游制造(成本上升)'],
-    },
-    fundKeywords: ['有色','铜','铝','金属','矿','资源','大宗商品','黄金'],
-    duration: '2025-2028',
-    confidence: 0.8,
-    advice: '铜是"新时代的石油"，全球电气化趋势确定。有色金属ETF适合中长期配置，短期关注LME铜价和国内库存变化，回调时分批建仓',
-  },
-  // === 科技产业分化 ===
-  {
-    id: 'hk_tech_correction',
-    name: '港股科技指数深度回调',
-    category: 'market',
-    icon: '📉🇭🇰',
-    description: '2026年2月港股科技指数遭遇深度回调，恒生科技近3月跌超12%。美团/阿里/腾讯三大巨头跌幅显著，受多重压力：①中国AI创企(MiniMax/智谱)崛起分流资金和估值溢价；②美联储降息不及预期→港元承压→外资撤离；③互联网巨头增速放缓→市场重新定价。短期下行趋势明确，不宜追涨加仓',
-    impact: -12,
-    sectors: {
-      positive: ['A股AI', 'A股科技', '内需消费'],
-      negative: ['港股科技', '港股互联网', '恒生科技', 'QDII科技'],
-    },
-    scenarios: [
-      { name: '持续下探(大概率)', probability: 0.50, impact: -15, benefitSectors: ['A股AI','黄金'], hurtSectors: ['港股科技','QDII'], note: '外资持续撤离+AI创企虹吸效应→恒生科技可能跌至年内新低' },
-      { name: '震荡筑底', probability: 0.30, impact: -5, benefitSectors: [], hurtSectors: ['港股科技'], note: '南向资金托底，但反弹力度有限' },
-      { name: '政策催化反弹', probability: 0.20, impact: +10, benefitSectors: ['港股科技','互联网'], hurtSectors: [], note: '若港股通扩容或互联网巨头发布超预期业绩' },
-    ],
-    fundKeywords: ['港股','恒生','恒生科技','QDII','互联网','腾讯','阿里','美团','港股通'],
-    duration: '2026Q1-Q2',
-    confidence: 0.9,
-    advice: '⚠️ 港股科技短期下行趋势明确，不建议加仓恒生科技ETF(如013403)。等待：①恒生科技指数企稳（连续3日缩量止跌）；②南向资金连续净流入；③互联网巨头财报催化。当前应减仓或观望，资金转配A股AI/算力方向',
-  },
-  {
-    id: 'china_ai_startup_surge',
-    name: '中国AI创企崛起(MiniMax/智谱)',
-    category: 'technology',
-    icon: '🚀🤖',
-    description: '2026年初中国AI大模型赛道爆发性增长：MiniMax估值暴涨(海螺AI/星野用户破亿)、智谱清言GLM系列获国资战投、月之暗面Kimi持续破圈。AI创企崛起正深刻重塑产业格局：①A股AI算力/应用链直接受益；②传统互联网巨头(腾讯/阿里/百度)面临估值重新定价压力；③资金从港股互联网转向A股AI概念',
-    impact: +15,
-    sectors: {
-      positive: ['AI', 'AI应用', '算力', '光模块', 'AI芯片', '大模型', '云计算', '数据中心'],
-      negative: ['港股互联网', '港股科技', '传统软件'],
-    },
-    scenarios: [
-      { name: 'AI创企持续融资扩张', probability: 0.55, impact: +18, benefitSectors: ['AI','算力','光模块','AI应用'], hurtSectors: ['港股互联网'], note: 'MiniMax/智谱/Kimi持续获大额融资→A股AI链狂欢，港股虹吸效应加剧' },
-      { name: 'AI泡沫化回调', probability: 0.25, impact: -5, benefitSectors: ['港股科技(资金回流)'], hurtSectors: ['AI','算力'], note: 'AI估值过高→短期暴力回调，但中期方向不变' },
-      { name: '巨头反击+创企合作', probability: 0.20, impact: +8, benefitSectors: ['AI','港股科技','互联网'], hurtSectors: [], note: '腾讯/阿里加大AI投入+与创企合作→全面利好' },
-    ],
-    fundKeywords: ['人工智能','AI','算力','大模型','科技','TMT','创新','光模块','数据中心','云计算'],
-    duration: '2026全年',
-    confidence: 0.9,
-    advice: 'MiniMax/智谱等创企崛起是2026年最重要的产业信号。A股AI链(算力/光模块/AI应用)是核心受益方向，但估值已高需控制仓位。注意：这一趋势同时利空港股传统互联网——资金和估值溢价正从港股互联网转向A股AI链',
-  },
-  // === 行业结构性风险 ===
-  {
-    id: 'baijiu_structural_decline',
-    name: '白酒板块结构性下行',
-    category: 'market',
-    icon: '🍷📉',
-    description: '白酒行业面临多重结构性压力：①库存周期：经销商库存处于历史高位，去库存周期漫长(2024-2026)；②人口结构：主力消费群体(35-55岁)增速放缓，年轻一代饮酒意愿下降；③反腐常态化：政务/商务宴请需求被持续压缩；④消费降级：宏观经济承压→高端白酒动销放缓→中低端价格战加剧。中证白酒指数近3年跌45%，处于深度熊市，短期无反转信号',
-    impact: -10,
-    sectors: {
-      positive: ['替代消费', '低度酒', '饮料'],
-      negative: ['白酒', '食品饮料'],
-    },
-    scenarios: [
-      { name: '库存出清缓慢(大概率)', probability: 0.50, impact: -12, benefitSectors: [], hurtSectors: ['白酒','食品饮料'], note: '渠道库存持续高位→批价承压→茅台批价跌破2300→带动板块估值下移' },
-      { name: '政策催化+消费回暖', probability: 0.25, impact: +5, benefitSectors: ['白酒','消费'], hurtSectors: [], note: '若消费刺激政策超预期+春节动销数据亮眼，可能触发估值修复' },
-      { name: '行业出清加速', probability: 0.25, impact: -8, benefitSectors: ['高端白酒(茅台)'], hurtSectors: ['中低端白酒','区域白酒'], note: '行业加速洗牌，中小酒企退出→龙头集中度提升但板块整体承压' },
-    ],
-    fundKeywords: ['白酒','食品饮料','消费','蓝筹'],
-    duration: '2024-2027',
-    confidence: 0.9,
-    advice: '⚠️ 白酒板块处于3年熊市周期(近3年-45%)，不建议加仓白酒指数基金(如161725)。张坤蓝筹基金(005827)因重仓39%白酒+42%港股互联网也受双重拖累。等待信号：①茅台批价企稳；②经销商库存降至合理水平；③社零消费数据连续3月超预期',
-  },
-  {
-    id: 'solar_lithium_overcapacity',
-    name: '光伏锂电产能过剩与出清',
-    category: 'market',
-    icon: '☀️🔋',
-    description: '光伏/锂电产业链严重产能过剩：光伏组件价格跌至0.8元/W(较高点腰斩)，硅料/电池片利润归零；碳酸锂价格从60万跌至7万/吨。行业进入残酷出清期：二三线企业亏损退出、龙头也被迫降价保份额。但需注意：①电网设备/储能需求仍旺盛；②新能源车渗透率持续提升利好产业链龙头；③海外市场(中东/东南亚)开辟新增长极。出清后龙头将显著受益',
-    impact: -6,
-    sectors: {
-      positive: ['电网设备', '储能', '新能源车'],
-      negative: ['光伏', '锂电材料', '硅料', '组件', '新能源'],
-    },
-    scenarios: [
-      { name: '出清加速→龙头突围', probability: 0.40, impact: +8, benefitSectors: ['电网设备','储能','龙头新能源'], hurtSectors: ['二三线光伏/锂电'], note: '落后产能加速退出→供需再平衡→龙头市占率提升+利润修复' },
-      { name: '产能过剩持续→全行业承压', probability: 0.40, impact: -10, benefitSectors: [], hurtSectors: ['光伏','锂电','新能源'], note: '出清慢于预期→价格战持续→龙头利润也被侵蚀' },
-      { name: '政策干预+海外突破', probability: 0.20, impact: +12, benefitSectors: ['新能源','光伏','锂电','储能'], hurtSectors: [], note: '国家出台产能指导意见+中东大单→行业提前见底反弹' },
-    ],
-    fundKeywords: ['新能源','能源革新','光伏','锂电','电池','碳中和','清洁能源'],
-    duration: '2025-2027',
-    confidence: 0.85,
-    advice: '新能源板块处于"黎明前的黑暗"：近6月+43%反弹说明市场已在定价出清预期，但短期仍有反复。003834华夏能源革新近3月-0.23%显示动能减弱。建议：①现有仓位可持有但不加仓；②关注龙头(宁德/阳光)和电网设备(思源电气)的分化；③等碳酸锂价格企稳+组件价格反弹信号再加仓',
-  },
-  // === 市场结构 ===
-  {
-    id: 'a_share_reform',
-    name: 'A股市场制度改革',
-    category: 'market',
-    icon: '📊',
-    description: '注册制深化、退市新规、量化监管加强、长期资金入市(社保/养老金/险资)',
-    impact: +5,
-    sectors: {
-      positive: ['大盘蓝筹', '红利', '指数基金'],
-      negative: ['小市值壳股', '高频量化'],
-    },
-    fundKeywords: ['沪深300','红利','指数','蓝筹','价值'],
-    duration: '长期',
-    confidence: 0.8,
-    advice: '制度改革利好长期价值投资，沪深300/中证红利等宽基指数基金是稳健底仓首选',
+    id: 'fallback_hktech', name: '港股科技承压', category: 'market', icon: '📉',
+    description: '外资流出+AI创企虹吸→恒生科技回调',
+    impact: -10, confidence: 0.85,
+    sectors: { positive: [], negative: ['港股科技','港股互联网','恒生科技','QDII科技'] },
+    fundKeywords: ['恒生科技','港股','互联网','QDII'], duration: 'medium', advice: '恒生科技ETF建议减仓',
   },
 ];
 
-// 三个月展望 (根据当前事件综合研判)
-const MACRO_3M_OUTLOOK = {
-  period: '2026年2月-5月',
-  overall: '结构性行情延续，AI主线最确定',
-  score: 62, // 0-100, 50=中性
-  themes: [
-    { name: 'AI产业链', conviction: '强', direction: 'up', reason: '春晚引爆全民AI热+政策支持+业绩兑现期' },
-    { name: '军工/黄金', conviction: '中', direction: 'up', reason: '美伊核谈判不确定性→避险需求支撑，若谈判破裂将大幅利好' },
-    { name: '消费复苏(除白酒)', conviction: '中', direction: 'up', reason: '春节数据超预期+政策刺激+低基数，但白酒板块仍在去库存周期中' },
-    { name: '国产替代', conviction: '强', direction: 'up', reason: '中美脱钩压力→半导体/信创长期受益' },
-    { name: '原油/能源', conviction: '中', direction: 'up', reason: 'OPEC+减产+地缘溢价→油价高位震荡，美伊谈判是核心变量' },
-    { name: '出口链', conviction: '弱', direction: 'down', reason: '关税博弈+全球需求放缓' },
-    { name: '港股科技', conviction: '弱', direction: 'down', reason: '⚠️ 美团/阿里/腾讯大跌+AI创企虹吸资金+美联储鹰派→恒生科技近3月-12%，短期规避' },
-    { name: 'AI创企(MiniMax/智谱)', conviction: '强', direction: 'up', reason: 'MiniMax/智谱大涨，AI创企崛起重塑产业格局，A股AI链直接受益' },
-    { name: '白酒/食品饮料', conviction: '弱', direction: 'down', reason: '⚠️ 中证白酒近3年-45%，库存高企+消费降级+人口老龄化→结构性熊市，短期无反转信号' },
-    { name: '新能源(光伏/锂电)', conviction: '中', direction: 'neutral', reason: '产能过剩出清中，近6月反弹+43%但动能减弱，龙头(宁德/阳光)和电网设备相对安全' },
-  ],
-  risks: [
-    '美伊核谈判破裂→制裁加码/军事威胁→油价飙升拖累全球经济',
-    '美联储降息不及预期→美元走强→人民币承压→外资流出',
-    'AI板块估值泡沫化→短期剧烈回调风险',
-    '地产下行超预期→内需不足→消费复苏证伪',
-    '港股科技持续失血→恒生科技ETF(QDII)大幅回撤→持有者深套',
-    '白酒行业去库存超预期慢→161725持续下跌→005827蓝筹基金因39%白酒+42%港股双杀拖累',
-    '光伏/锂电产能过剩出清不及预期→新能源板块反弹夭折→003834回撤',
-  ],
-  allocation: {
-    offensive: 'AI/机器人 30% + 半导体/信创 15% = 45%进攻仓',
-    core: '沪深300 20% + 中证红利 10% = 30%核心仓',
-    hedge: '黄金 10% + 纯债 10% = 20%防御仓',
-    cash: '现金 5% = 灵活调仓',
-  },
+// 动态三月展望
+let MACRO_3M_OUTLOOK = {
+  period: '加载中...', overall: '等待数据更新', score: 50,
+  themes: [], risks: [], allocation: { offensive:'', core:'', hedge:'', cash:'' },
 };
+
+// 从JSON加载并标准化事件到内部格式
+async function fetchHotEvents(){
+  try {
+    // GitHub Pages部署时从同域加载; 开发时从相对路径
+    const urls = ['./data/hot_events.json', 'data/hot_events.json'];
+    let data = null;
+    for(const url of urls){
+      try {
+        const resp = await fetch(url + '?_=' + Date.now(), { signal: AbortSignal.timeout(8000) });
+        if(resp.ok){ data = await resp.json(); break; }
+      } catch(e){ continue; }
+    }
+    if(!data || !data.events){ console.warn('[HotEvents] JSON加载失败, 使用回退数据'); return; }
+
+    _hotEventsData = data;
+    _hotEventsLoaded = true;
+    _hotEventsLastUpdate = new Date();
+
+    // 标准化事件到内部格式 (兼容getMacroGeoAnalysis)
+    MACRO_GEO_EVENTS = data.events.map(e => ({
+      id: e.id,
+      name: e.title,
+      category: e.category || 'market',
+      icon: CATEGORY_ICONS[e.category] || '📌',
+      description: e.reason || e.title,
+      impact: e.impact || 0,
+      confidence: e.confidence || 0.7,
+      sectors: {
+        positive: e.sectors_positive || [],
+        negative: e.sectors_negative || [],
+      },
+      fundKeywords: e.fund_keywords || [],
+      duration: 'medium',
+      advice: e.advice || '',
+      concepts: e.concepts || [],    // 新增: 关联标签
+      sentiment: e.sentiment || 0,   // 新增: 情绪分数
+    }));
+
+    // 更新展望
+    if(data.outlook){
+      MACRO_3M_OUTLOOK = {
+        period: data.outlook.period || '',
+        overall: data.outlook.summary || '',
+        score: data.outlook.score || 50,
+        themes: [], risks: [],
+        allocation: { offensive:'', core:'', hedge:'', cash:'' },
+      };
+    }
+
+    console.log(`[HotEvents] ✅ 加载 ${MACRO_GEO_EVENTS.length} 个事件, 更新时间: ${data.updated_at}`);
+  } catch(e){
+    console.warn('[HotEvents] 加载失败, 使用回退数据:', e);
+  }
+}
+
+// 原有事件格式占位 (已被上面的动态数组替代, 此处标记废弃)
+// LEGACY: 原 MACRO_GEO_EVENTS 硬编码已迁移到 data/hot_events.json
+// ==================== 原硬编码事件数据 (以下全部替换为动态加载) ====================
+const _LEGACY_EVENTS_REMOVED = true; // 标记: 16个硬编码事件已移除
 
 // ==================== 基金持仓分析引擎 (Fund Holdings Analysis Engine) ====================
 // 股票代码 → 行业板块映射 (覆盖A股/港股常见重仓股)
@@ -1830,196 +1640,19 @@ function getFMSocialContextForAI(){
   return ctx;
 }
 
-// ==================== 地缘事件实时新闻刷新引擎 ====================
-// 每小时从全球媒体拉取新闻，AI分析后动态更新地缘事件的impact/confidence/description
-
-const GEO_NEWS_RSS_SOURCES = [
-  { id:'bbc-world', name:'BBC', url:'https://feeds.bbci.co.uk/news/world/rss.xml' },
-  { id:'bbc-biz', name:'BBC-Biz', url:'https://feeds.bbci.co.uk/news/business/rss.xml' },
-  { id:'nyt-world', name:'NYT', url:'https://rss.nytimes.com/services/xml/rss/nyt/World.xml' },
-  { id:'guardian', name:'Guardian', url:'https://www.theguardian.com/world/rss' },
-  { id:'cnn', name:'CNN', url:'http://rss.cnn.com/rss/edition_world.rss' },
-  { id:'aljazeera', name:'AlJazeera', url:'https://www.aljazeera.com/xml/rss/all.xml' },
-  { id:'gn-geo', name:'GoogleNews', url:'https://news.google.com/rss/search?q=geopolitics+OR+sanctions+OR+tariff+OR+central+bank+OR+OPEC+OR+crude+oil&hl=en&gl=US&ceid=US:en' },
-  { id:'gn-commodity', name:'GN-商品', url:'https://news.google.com/rss/search?q=copper+price+OR+gold+price+OR+oil+price+OR+rare+earth+OR+aluminum&hl=en&gl=US&ceid=US:en' },
-  { id:'gn-china', name:'GN-中国', url:'https://news.google.com/rss/search?q=China+trade+OR+China+tariff+OR+PBOC+OR+yuan+OR+China+economy&hl=en&gl=US&ceid=US:en' },
-];
-
-// 地缘关键词匹配（更严格，聚焦地缘/大宗/政策）
-const GEO_NEWS_FILTER = /iran|nuclear|opec|crude|oil price|brent|wti|russia|ukraine|china.*(trade|tariff|sanction)|us.*(china|iran|russia)|nato|conflict|war |military|geopolit|commodity|copper|aluminum|aluminium|rare.earth|central.bank|fed |ecb |pboc|rate.cut|rate.hike|easing|tariff|sanction|gold|haven|defense|weapon|missile|drone|ceasefire|negotiat|diplomac|summit|g7|g20|inflation|recession|stimulus|yuan|dollar|euro|yen|energy.cris|oil.price|gas.price|lithium|nickel|palladium|steel|iron.ore/i;
-
-// RSS代理池 - 多代理轮询+回退
-const _RSS_PROXIES = [
-  { name:'allorigins', build: u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`, type:'xml' },
-  { name:'rss2json',   build: u => `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(u)}`, type:'json' },
-];
-
-// 从XML文本解析RSS条目
-function _parseRSSXml(xmlText, srcName){
-  try {
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(xmlText, 'text/xml');
-    if(doc.querySelector('parsererror')) return [];
-    const items = doc.querySelectorAll('item');
-    const result = [];
-    items.forEach(item => {
-      const title = (item.querySelector('title')?.textContent || '').replace(/<!\[CDATA\[(.*?)\]\]>/g,'$1').trim();
-      const desc = (item.querySelector('description')?.textContent || '').replace(/<[^>]+>/g,'').replace(/<!\[CDATA\[(.*?)\]\]>/g,'$1').trim().slice(0,300);
-      const link = item.querySelector('link')?.textContent?.trim() || '';
-      const pubDate = item.querySelector('pubDate')?.textContent?.trim() || '';
-      if(title) result.push({ title, desc, url:link, time:pubDate, source:srcName });
-    });
-    return result;
-  } catch(e){ return []; }
-}
-
-// 用多代理尝试拉取单个RSS源
-async function _fetchSingleRSS(src, proxyIdx=0){
-  if(proxyIdx >= _RSS_PROXIES.length) return [];
-  const proxy = _RSS_PROXIES[proxyIdx];
-  try {
-    const resp = await fetch(proxy.build(src.url), { signal: AbortSignal.timeout(15000) });
-    if(!resp.ok) throw new Error(`HTTP ${resp.status}`);
-    if(proxy.type === 'json'){
-      const data = await resp.json();
-      if(data.status === 'ok' && data.items){
-        return data.items.map(item => ({
-          title: (item.title||'').replace(/<[^>]+>/g,'').trim(),
-          desc: (item.description||'').replace(/<[^>]+>/g,'').trim().slice(0,300),
-          url: item.link || '', time: item.pubDate || '', source: src.name,
-        }));
-      }
-      throw new Error('rss2json status not ok');
-    } else {
-      const text = await resp.text();
-      const items = _parseRSSXml(text, src.name);
-      if(items.length === 0) throw new Error('XML parse empty');
-      return items;
-    }
-  } catch(e){
-    console.warn(`[GeoNews] ${proxy.name}→${src.name} 失败: ${e.message}, 尝试下一个代理...`);
-    return _fetchSingleRSS(src, proxyIdx + 1);
-  }
-}
-
-async function fetchGeoNewsFromMedia(){
-  if(_geoNewsRefreshing) return;
-  _geoNewsRefreshing = true;
-  console.log('[GeoNews] 开始拉取全球媒体地缘新闻...');
-  const allItems = [];
-  let successCount = 0;
-
-  // 分批请求(每批3个, 间隔500ms)避免代理限流
-  for(let i=0; i<GEO_NEWS_RSS_SOURCES.length; i+=3){
-    const batch = GEO_NEWS_RSS_SOURCES.slice(i, i+3);
-    const results = await Promise.allSettled(batch.map(src => _fetchSingleRSS(src)));
-    results.forEach(r => {
-      if(r.status==='fulfilled' && r.value?.length > 0){
-        allItems.push(...r.value);
-        successCount++;
-      }
-    });
-    if(i + 3 < GEO_NEWS_RSS_SOURCES.length) await new Promise(ok => setTimeout(ok, 500));
-  }
-
-  console.log(`[GeoNews] ${successCount}/${GEO_NEWS_RSS_SOURCES.length}个源成功, 共 ${allItems.length} 条原始新闻`);
-
-  // 过滤地缘相关新闻
-  const filtered = allItems.filter(item => {
-    const text = `${item.title} ${item.desc}`;
-    return GEO_NEWS_FILTER.test(text);
-  });
-
-  // 去重+排序
-  filtered.sort((a,b) => new Date(b.time) - new Date(a.time));
-  const seen = new Set();
-  _geoNewsLiveItems = [];
-  for(const item of filtered){
-    const key = item.title.toLowerCase().replace(/[^a-z0-9]/g,'').slice(0,50);
-    if(!seen.has(key) && _geoNewsLiveItems.length < 25){
-      seen.add(key);
-      item.timeStr = item.time ? new Date(item.time).toLocaleString('zh-CN',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'}) : '';
-      _geoNewsLiveItems.push(item);
-    }
-  }
-
-  console.log(`[GeoNews] 地缘相关 ${_geoNewsLiveItems.length} 条 (过滤自 ${allItems.length} 条)`);
-
-  // 即使只有少量新闻也尝试AI分析
-  if(_geoNewsLiveItems.length > 0){
-    await analyzeGeoNewsWithAI();
-  } else {
-    console.warn('[GeoNews] ⚠ 未获取到任何地缘相关新闻, 请检查网络或RSS源');
-  }
-
-  _geoNewsLastUpdate = new Date();
-  _geoNewsRefreshing = false;
-  renderAll();
-}
-
-async function analyzeGeoNewsWithAI(){
-  const key = _aiKey || localStorage.getItem('fa_302ai_key') || '';
-  if(!key){ console.warn('[GeoNews] 无API Key，跳过AI分析'); return; }
-  if(!_aiKey) _aiKey = key;
-
-  const newsText = _geoNewsLiveItems.slice(0,15).map((n,i) => `${i+1}. [${n.source}] ${n.title}`).join('\n');
-  const eventIds = MACRO_GEO_EVENTS.map(e => `${e.id}(${e.name})`).join(', ');
-
-  const model = AI_ENGINES[0]?.model || 'deepseek-ai/DeepSeek-V3';
-  const sysPrompt = '你是专业的地缘政治与投资分析师。基于最新全球媒体新闻，分析其对现有地缘事件的影响。';
-  const userPrompt = `以下是最新全球媒体新闻标题：
-${newsText}
-
-现有地缘事件列表：${eventIds}
-
-请分析这些新闻对上述事件的影响，用JSON数组格式返回（仅返回有变化的事件）：
-[{"id":"事件id", "impactDelta": 数字(-5到+5,表示影响强度变化), "confidenceDelta": 数字(-0.1到+0.1,表示置信度变化), "latestNews": "一句话中文概括最新进展", "newsSource": "来源媒体名"}]
-
-规则：
-1. 如果新闻没有明显影响某事件，就不要包含该事件
-2. impactDelta正值=利好投资市场，负值=利空
-3. latestNews用简洁中文
-4. 只返回JSON数组，不要其他文字`;
-
-  try {
-    console.log('[GeoNews] AI分析新闻对地缘事件影响...');
-    const resp = await callAI(model, sysPrompt, userPrompt, 0.3);
-    // 提取JSON
-    const jsonMatch = resp.match(/\[[\s\S]*\]/);
-    if(jsonMatch){
-      const updates = JSON.parse(jsonMatch[0]);
-      updates.forEach(u => {
-        const ev = MACRO_GEO_EVENTS.find(e => e.id === u.id);
-        if(ev){
-          // 动态调整impact和confidence（有上下限）
-          if(typeof u.impactDelta === 'number'){
-            ev.impact = Math.max(-20, Math.min(20, ev.impact + u.impactDelta));
-          }
-          if(typeof u.confidenceDelta === 'number'){
-            ev.confidence = Math.max(0.3, Math.min(1.0, ev.confidence + u.confidenceDelta));
-          }
-          // 保存最新动态
-          ev._latestNews = u.latestNews || '';
-          ev._newsSource = u.newsSource || '';
-          ev._newsTime = new Date().toLocaleString('zh-CN',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'});
-        }
-      });
-      console.log(`[GeoNews] AI更新 ${updates.length} 个事件的动态`);
-    }
-  } catch(e){
-    console.warn('[GeoNews] AI分析失败:', e.message || e);
-  }
-}
+// ==================== 地缘事件加载 (v2: 从 data/hot_events.json 加载) ====================
+// RSS实时抓取已迁移到 GitHub Actions 后端管道 (scripts/fetch_events.py)
+// 前端只需加载预处理好的JSON数据
 
 function startGeoNewsAutoRefresh(){
-  // 立即执行一次
-  fetchGeoNewsFromMedia();
-  // 每1小时刷新
-  if(_geoNewsRefreshTimer) clearInterval(_geoNewsRefreshTimer);
-  _geoNewsRefreshTimer = setInterval(() => {
-    fetchGeoNewsFromMedia();
-  }, 3600000); // 60min
-  console.log('[GeoNews] 已启动每小时自动刷新');
+  // v2: 不再前端抓取RSS, 改为定时重新加载 hot_events.json
+  // 页面加载时已通过 fetchHotEvents() 加载
+  // 每30分钟重新加载一次 (GitHub Actions每2小时更新)
+  setInterval(async () => {
+    await fetchHotEvents();
+    renderAll();
+  }, 1800000); // 30min
+  console.log('[HotEvents] 已启动定时加载 (30min)');
 }
 
 // ==================== RL BRAIN STATE ====================
@@ -4803,6 +4436,244 @@ function generateSmartReason(p, capFlow, ds){
   return reason;
 }
 
+// ==================== 宏观异动雷达 渲染 (三模块) ====================
+function renderRadarSection(geoData){
+  let html = '';
+  const heatmap = _hotEventsData?.heatmap || [];
+  const outlook = geoData.outlook || MACRO_3M_OUTLOOK;
+  const geoColor = geoData.score >= 60 ? '#4ade80' : geoData.score <= 40 ? '#f87171' : '#fbbf24';
+  const updateStr = _hotEventsLastUpdate
+    ? _hotEventsLastUpdate.toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'}) + ' 更新'
+    : (_hotEventsData?.updated_at ? new Date(_hotEventsData.updated_at).toLocaleString('zh-CN',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'}) + ' 更新' : '⏳ 加载中');
+  const srcStr = _hotEventsData?.meta?.sources?.join(' · ') || 'GitHub Actions 自动更新';
+
+  html += '<div class="radar-section">';
+  // 标题栏
+  html += '<div class="radar-header">';
+  html += '<div class="radar-title">📡 宏观与异动雷达</div>';
+  html += '<div class="radar-meta">';
+  html += '<span>' + srcStr + '</span>';
+  html += '<span>' + updateStr + '</span>';
+  html += '<span class="radar-score" style="background:' + geoColor + '22;color:' + geoColor + '">' + geoData.label + ' ' + geoData.score + '</span>';
+  html += '</div></div>';
+
+  // ===== 综合信号仪表板 (整合数据情报) =====
+  if(typeof _dataIntelLoaded !== 'undefined' && _dataIntelLoaded){
+    const _macro = getMacroSummary();
+    const _capFlow = getCapFlowSummary();
+    const _gSent = (typeof globalNews !== 'undefined' && globalNews.length > 0) ? getGlobalNewsSentiment() : null;
+    const _ds = generateDataSignal();
+    html += '<div style="background:rgba(15,23,42,0.6);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:8px 10px;margin-bottom:10px">';
+    html += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">';
+    html += '<span style="font-size:10px;font-weight:700;color:#22d3ee">🤖 AI多维信号综合</span>';
+    html += '<span style="font-size:14px;font-weight:800;color:' + _ds.color + '">' + _ds.icon + ' ' + _ds.label + ' ' + _ds.score + '</span>';
+    html += '</div>';
+    // 四维度网格
+    html += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:4px;margin-bottom:6px">';
+    var _macroC = _macro.positiveCount >= 4 ? '#4ade80' : _macro.positiveCount >= 2 ? '#fbbf24' : '#f87171';
+    html += '<div style="text-align:center;padding:4px 2px;background:rgba(255,255,255,0.04);border-radius:6px"><div style="font-size:8px;color:rgba(255,255,255,0.4)">宏观面</div><div style="font-size:11px;font-weight:700;color:' + _macroC + '">' + _macro.overallSignal + '</div></div>';
+    var _netB = _capFlow.netTotal;
+    var _capC = _netB > 5e9 ? '#4ade80' : _netB > 0 ? '#fbbf24' : _netB > -5e9 ? '#fb923c' : '#f87171';
+    html += '<div style="text-align:center;padding:4px 2px;background:rgba(255,255,255,0.04);border-radius:6px"><div style="font-size:8px;color:rgba(255,255,255,0.4)">资金面</div><div style="font-size:11px;font-weight:700;color:' + _capC + '">' + (_netB>=0?'+':'') + (_netB/1e8).toFixed(0) + '亿</div></div>';
+    var _sentC = newsSentiment.score >= 55 ? '#4ade80' : newsSentiment.score <= 45 ? '#f87171' : '#fbbf24';
+    html += '<div style="text-align:center;padding:4px 2px;background:rgba(255,255,255,0.04);border-radius:6px"><div style="font-size:8px;color:rgba(255,255,255,0.4)">A股舆情</div><div style="font-size:11px;font-weight:700;color:' + _sentC + '">' + newsSentiment.label + ' ' + newsSentiment.score + '</div></div>';
+    if(_gSent){
+      var _gC = _gSent.score >= 55 ? '#4ade80' : _gSent.score <= 45 ? '#f87171' : '#fbbf24';
+      html += '<div style="text-align:center;padding:4px 2px;background:rgba(255,255,255,0.04);border-radius:6px"><div style="font-size:8px;color:rgba(255,255,255,0.4)">国际舆情</div><div style="font-size:11px;font-weight:700;color:' + _gC + '">' + _gSent.label + ' ' + _gSent.score + '</div></div>';
+    } else {
+      html += '<div style="text-align:center;padding:4px 2px;background:rgba(255,255,255,0.04);border-radius:6px"><div style="font-size:8px;color:rgba(255,255,255,0.4)">国际舆情</div><div style="font-size:11px;color:var(--sub)">加载中</div></div>';
+    }
+    html += '</div>';
+    // 资金流向 Top3
+    if(sectorCapFlow.length > 0){
+      var _maxAbs = Math.max.apply(null, sectorCapFlow.map(function(s){return Math.abs(s.mainNet||0)})) || 1;
+      html += '<div style="display:flex;gap:6px;font-size:9px">';
+      html += '<div style="flex:1"><div style="color:#4ade80;font-weight:600;margin-bottom:2px">▲ 主力流入</div>';
+      _capFlow.topInflow.slice(0,3).forEach(function(s){
+        var v = (s.mainNet/1e8).toFixed(1);
+        var w = Math.min(100, Math.abs(s.mainNet)/_maxAbs*100);
+        html += '<div style="display:flex;align-items:center;gap:3px;padding:1px 0"><span style="min-width:38px;font-weight:600;color:#e2e8f0">' + s.name.slice(0,4) + '</span><div style="flex:1;height:5px;border-radius:3px;background:rgba(255,255,255,0.06)"><div style="height:100%;width:' + w + '%;border-radius:3px;background:#4ade80"></div></div><span style="color:#4ade80;min-width:32px;text-align:right">+' + v + '</span></div>';
+      });
+      html += '</div><div style="flex:1"><div style="color:#f87171;font-weight:600;margin-bottom:2px">▼ 主力流出</div>';
+      _capFlow.topOutflow.slice(0,3).forEach(function(s){
+        var v = (Math.abs(s.mainNet)/1e8).toFixed(1);
+        var w = Math.min(100, Math.abs(s.mainNet)/_maxAbs*100);
+        html += '<div style="display:flex;align-items:center;gap:3px;padding:1px 0"><span style="min-width:38px;font-weight:600;color:#e2e8f0">' + s.name.slice(0,4) + '</span><div style="flex:1;height:5px;border-radius:3px;background:rgba(255,255,255,0.06)"><div style="height:100%;width:' + w + '%;border-radius:3px;background:#f87171"></div></div><span style="color:#f87171;min-width:32px;text-align:right">-' + v + '</span></div>';
+      });
+      html += '</div></div>';
+    }
+    // 舆情快报
+    if(typeof newsHeadlines !== 'undefined' && newsHeadlines.length > 0){
+      html += '<div style="margin-top:6px;padding-top:6px;border-top:1px solid rgba(255,255,255,0.06)">';
+      html += '<div style="font-size:9px;color:rgba(255,255,255,0.4);margin-bottom:3px">📰 舆情焦点</div>';
+      newsHeadlines.slice(0,3).forEach(function(n){
+        var ic = n.sentiment==='bull'?'🟢':n.sentiment==='bear'?'🔴':'⚪';
+        html += '<div style="display:flex;gap:4px;padding:2px 0;font-size:9px;color:#e2e8f0;line-height:1.3"><span style="min-width:12px">' + ic + '</span><span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + n.title + '</span></div>';
+      });
+      html += '</div>';
+    }
+    // AI建议
+    html += '<div style="margin-top:6px;padding:4px 8px;background:rgba(34,211,238,0.06);border-radius:6px;font-size:9px;color:rgba(255,255,255,0.6);text-align:center">' + _ds.advice + '</div>';
+    html += '</div>';
+  }
+
+  // ===== 模块A: 热点温度计 =====
+  html += '<div class="radar-module">';
+  html += '<div class="radar-mod-title">🔥 热点温度计</div>';
+  html += '<div class="heatmap-grid">';
+  var displayHeatmap = heatmap.length > 0 ? heatmap : _buildFallbackHeatmap(geoData);
+  displayHeatmap.slice(0, 14).forEach(function(h){
+    var temp = h.temperature;
+    var barColor = temp >= 70 ? '#ef4444' : temp >= 50 ? '#f59e0b' : temp >= 30 ? '#3b82f6' : '#64748b';
+    var tempIcon = temp >= 80 ? '🔥' : temp >= 60 ? '🌡️' : temp >= 40 ? '📊' : '❄️';
+    var trendIcon = h.trend === 'up' ? '↑' : h.trend === 'down' ? '↓' : '';
+    var trendColor = h.trend === 'up' ? '#4ade80' : h.trend === 'down' ? '#f87171' : 'transparent';
+    html += '<div class="heat-item">';
+    html += '<span class="heat-tag">' + h.tag + '</span>';
+    html += '<div class="heat-bar"><div class="heat-fill" style="width:' + temp + '%;background:' + barColor + '"></div></div>';
+    html += '<span class="heat-temp" style="color:' + barColor + '">' + tempIcon + temp + '</span>';
+    html += '<span class="heat-trend" style="color:' + trendColor + '">' + trendIcon + '</span>';
+    html += '</div>';
+  });
+  html += '</div></div>';
+
+  // ===== 模块B: 持仓异动归因 =====
+  html += '<div class="radar-module">';
+  html += '<div class="radar-mod-title">⚡ 持仓异动归因</div>';
+  html += '<div class="impact-list">';
+  var impactEntries = Object.entries(geoData.fundImpacts || {})
+    .filter(function(pair){ return pair[1].events.length > 0 && Math.abs(pair[1].score) > 0.5; })
+    .sort(function(a,b){ return Math.abs(b[1].score) - Math.abs(a[1].score); });
+
+  if(impactEntries.length > 0){
+    impactEntries.slice(0, 6).forEach(function(pair){
+      var code = pair[0], fi = pair[1];
+      var fName = fundName(code);
+      var fd = getFundData(code);
+      var todayPct = fd?.gszzl || 0;
+      var cls = fi.score > 0 ? 'positive' : fi.score < 0 ? 'negative' : 'neutral';
+      var pctColor = todayPct >= 0 ? '#f87171' : '#4ade80';
+      var topEvts = fi.events.slice(0, 2);
+      var evtNames = topEvts.map(function(e){ return '【' + e.name.slice(0,8) + '】'; }).join('');
+      var sectorStr = fi.sectorExposure ? Object.entries(fi.sectorExposure)
+        .sort(function(a,b){ return b[1] - a[1]; }).slice(0,2)
+        .map(function(pair){ return pair[0] + (pair[1]*100).toFixed(0) + '%'; }).join('、') : '';
+      var reasonText = sectorStr
+        ? '受' + evtNames + '影响，基金配置' + sectorStr
+        : '受' + evtNames + '影响';
+      html += '<div class="impact-item ' + cls + '">';
+      html += '<div style="display:flex;justify-content:space-between;align-items:center">';
+      html += '<div class="impact-fund">' + fName + '</div>';
+      html += '<span class="impact-pct" style="color:' + pctColor + '">今日 ' + (todayPct>=0?'+':'') + fmt(todayPct) + '%</span>';
+      html += '</div>';
+      html += '<div class="impact-reason">' + reasonText + '</div>';
+      html += '<div class="impact-events">';
+      topEvts.forEach(function(ev){
+        var chipCls = ev.impact === 'positive' ? 'pos' : 'neg';
+        html += '<span class="impact-evt-chip ' + chipCls + '">' + (ev.icon || '📌') + ev.name.slice(0,8) + '</span>';
+      });
+      html += '</div></div>';
+    });
+  } else {
+    html += '<div style="text-align:center;font-size:10px;color:rgba(255,255,255,0.4);padding:8px 0">暂无显著异动归因</div>';
+  }
+  html += '</div></div>';
+
+  // ===== 模块C: AI顺势策略建议 =====
+  html += '<div class="radar-module">';
+  html += '<div class="radar-mod-title">💡 AI 顺势策略</div>';
+  html += '<div class="strategy-list">';
+
+  // 机会: 高温概念 + 对应推荐基金 (用户未持有)
+  var hotTags = displayHeatmap.filter(function(h){ return h.temperature >= 70 && h.sentiment > 0.3; });
+  var holdingCodes = new Set(holdings.map(function(h){ return h.code; }));
+  var strategyCount = 0;
+  hotTags.slice(0, 3).forEach(function(ht){
+    var relatedFunds = (typeof RECO_FUND_POOL !== 'undefined' ? RECO_FUND_POOL : []).filter(function(f){
+      var fNameLow = (f.name + ' ' + (f.type||'') + ' ' + (f.tags||[]).join(' ')).toLowerCase();
+      return fNameLow.indexOf(ht.tag.toLowerCase()) >= 0 || fNameLow.indexOf(ht.tag.slice(0,2).toLowerCase()) >= 0;
+    }).filter(function(f){ return !holdingCodes.has(f.code); });
+    if(relatedFunds.length > 0){
+      var rf = relatedFunds[0];
+      html += '<div class="strategy-item">';
+      html += '<div class="strategy-icon">🟢</div>';
+      html += '<div class="strategy-body">';
+      html += '<div class="strategy-label" style="color:#4ade80">机会 · ' + ht.tag + ' 🔥' + ht.temperature + '</div>';
+      html += '<div class="strategy-text">热度' + ht.temperature + '，情绪偏多。你未持有相关资产。</div>';
+      html += '<div class="strategy-fund" onclick="addFromPortfolio(\'' + rf.code + '\',\'' + rf.name.replace(/'/g,"\\'") + '\',\'' + rf.type + '\',\'watch\')">💡 推荐关注: ' + rf.name + ' (' + rf.code + ')</div>';
+      html += '</div></div>';
+      strategyCount++;
+    }
+  });
+
+  // 风险: 低温概念 + 用户持仓有暴露
+  var coldTags = displayHeatmap.filter(function(h){ return h.temperature <= 30 && h.sentiment < -0.3; });
+  coldTags.slice(0, 3).forEach(function(ct){
+    var exposedHoldings = holdings.filter(function(holding){
+      var fNameLow = (fundName(holding.code) + ' ' + (holding.type||'')).toLowerCase();
+      return fNameLow.indexOf(ct.tag.toLowerCase()) >= 0 || fNameLow.indexOf(ct.tag.slice(0,2).toLowerCase()) >= 0;
+    });
+    if(exposedHoldings.length > 0){
+      html += '<div class="strategy-item">';
+      html += '<div class="strategy-icon">🔴</div>';
+      html += '<div class="strategy-body">';
+      html += '<div class="strategy-label" style="color:#f87171">风险 · ' + ct.tag + ' ❄️' + ct.temperature + '</div>';
+      html += '<div class="strategy-text">热度仅' + ct.temperature + '，情绪偏空。你持有: ' + exposedHoldings.map(function(x){return fundName(x.code).slice(0,6);}).join('、') + '</div>';
+      html += '<div class="strategy-fund" style="color:#f87171">⚠️ 建议关注减仓时机</div>';
+      html += '</div></div>';
+      strategyCount++;
+    }
+  });
+
+  // 如果没有明确策略, 显示市场总览
+  if(strategyCount === 0){
+    html += '<div class="strategy-item">';
+    html += '<div class="strategy-icon">📊</div>';
+    html += '<div class="strategy-body">';
+    html += '<div class="strategy-label" style="color:#22d3ee">市场总览</div>';
+    html += '<div class="strategy-text">' + (outlook.overall || outlook.summary || '市场结构性行情延续') + '</div>';
+    html += '</div></div>';
+  }
+
+  html += '</div></div>';
+
+  // ===== 关键事件清单 (紧凑) =====
+  html += '<div class="radar-module">';
+  html += '<div class="radar-mod-title">📋 关键事件 (' + geoData.topEvents.length + ')</div>';
+  html += '<div style="display:flex;flex-direction:column;gap:2px">';
+  geoData.topEvents.forEach(function(e){
+    var ic = e.impact > 0 ? '#4ade80' : e.impact < 0 ? '#f87171' : '#fbbf24';
+    var arrow = e.impact > 0 ? '↑' : e.impact < 0 ? '↓' : '→';
+    html += '<div style="display:flex;align-items:center;gap:6px;padding:4px 6px;border-radius:6px;background:rgba(255,255,255,0.03);font-size:10px">';
+    html += '<span style="font-size:13px;min-width:18px">' + e.icon + '</span>';
+    html += '<span style="flex:1;color:#e2e8f0;font-weight:600">' + e.name + '</span>';
+    html += '<span style="color:' + ic + ';font-weight:700;min-width:30px;text-align:right">' + arrow + Math.abs(e.impact) + '</span>';
+    html += '<span style="color:#94a3b8;font-size:8px;min-width:30px;text-align:right">' + (e.confidence*100).toFixed(0) + '%</span>';
+    html += '</div>';
+  });
+  html += '</div></div>';
+
+  html += '</div>'; // end radar-section
+  return html;
+}
+
+// 回退热度图 (当hot_events.json未加载时, 从事件推导)
+function _buildFallbackHeatmap(geoData){
+  var tagScores = {};
+  (geoData.allEvents || []).forEach(function(e){
+    (e.concepts || e.fundKeywords || []).forEach(function(tag){
+      if(!tagScores[tag]) tagScores[tag] = { tag: tag, temperature: 50, sentiment: 0, trend: 'stable', count: 0 };
+      tagScores[tag].temperature += Math.abs(e.impact) * 1.5;
+      tagScores[tag].sentiment += (e.impact > 0 ? 0.3 : -0.3);
+      tagScores[tag].count++;
+    });
+  });
+  return Object.values(tagScores)
+    .map(function(t){ return Object.assign({}, t, { temperature: Math.min(100, Math.max(0, t.temperature)), sentiment: Math.max(-1, Math.min(1, t.sentiment)) }); })
+    .sort(function(a,b){ return b.temperature - a.temperature; })
+    .slice(0, 14);
+}
+
 function renderActionGuide(){
   const container = document.getElementById('action-guide-container');
   const brief = document.getElementById('action-guide-brief');
@@ -4944,166 +4815,9 @@ function renderActionGuide(){
 
   html += `</div>`;
 
-  // 1.5 宏观地缘事件与投资研判
+  // 1.5 宏观与异动雷达 (Macro & Anomaly Radar) — 三模块设计
   const geoData = getMacroGeoAnalysis();
-  html += `<div class="ag-overview" style="background:linear-gradient(135deg,#1a1a2e 0%,#0f172a 50%,#1e1b4b 100%);margin-top:10px">`;
-  html += `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">`;
-  html += `<div style="font-weight:700;font-size:13px">🌍 宏观地缘事件与投资研判</div>`;
-  const geoColor = geoData.score >= 60 ? '#4ade80' : geoData.score <= 40 ? '#f87171' : '#fbbf24';
-  html += `<span style="font-size:11px;color:${geoColor};font-weight:700">${geoData.label} ${geoData.score}分</span>`;
-  html += `</div>`;
-  // 数据来源 + 刷新时间
-  const _geoSrcNames = ['BBC','NYT','Guardian','CNN','AlJazeera','GoogleNews'];
-  const _geoUpdateStr = _geoNewsLastUpdate ? _geoNewsLastUpdate.toLocaleString('zh-CN',{hour:'2-digit',minute:'2-digit'}) + '更新' : '⏳ 加载中...';
-  html += `<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;font-size:8px;color:rgba(255,255,255,0.45)">`;
-  html += `<div>数据源: ${_geoSrcNames.join(' · ')}</div>`;
-  html += `<div style="display:flex;align-items:center;gap:4px">`;
-  html += `<span>${_geoUpdateStr}</span>`;
-  html += `<span onclick="fetchGeoNewsFromMedia()" style="cursor:pointer;padding:1px 4px;border-radius:3px;background:rgba(255,255,255,0.08)">🔄</span>`;
-  html += `</div></div>`;
-
-  // ===== 综合信号仪表板 (整合原数据情报中心核心数据) =====
-  if(_dataIntelLoaded){
-    const _macro = getMacroSummary();
-    const _capFlow = getCapFlowSummary();
-    const _gSent = globalNews.length > 0 ? getGlobalNewsSentiment() : null;
-    const _ds = generateDataSignal();
-    // 综合信号大卡
-    html += `<div style="background:rgba(15,23,42,0.6);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:8px 10px;margin-bottom:10px">`;
-    html += `<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">`;
-    html += `<span style="font-size:10px;font-weight:700;color:#22d3ee">🤖 AI多维信号综合</span>`;
-    html += `<span style="font-size:14px;font-weight:800;color:${_ds.color}">${_ds.icon} ${_ds.label} ${_ds.score}</span>`;
-    html += `</div>`;
-    // 四维度网格
-    html += `<div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:4px;margin-bottom:6px">`;
-    const _macroC = _macro.positiveCount >= 4 ? '#4ade80' : _macro.positiveCount >= 2 ? '#fbbf24' : '#f87171';
-    html += `<div style="text-align:center;padding:4px 2px;background:rgba(255,255,255,0.04);border-radius:6px"><div style="font-size:8px;color:rgba(255,255,255,0.4)">宏观面</div><div style="font-size:11px;font-weight:700;color:${_macroC}">${_macro.overallSignal}</div></div>`;
-    const _netB = _capFlow.netTotal;
-    const _capC = _netB > 5e9 ? '#4ade80' : _netB > 0 ? '#fbbf24' : _netB > -5e9 ? '#fb923c' : '#f87171';
-    html += `<div style="text-align:center;padding:4px 2px;background:rgba(255,255,255,0.04);border-radius:6px"><div style="font-size:8px;color:rgba(255,255,255,0.4)">资金面</div><div style="font-size:11px;font-weight:700;color:${_capC}">${_netB>=0?'+':''}${(_netB/1e8).toFixed(0)}亿</div></div>`;
-    const _sentC = newsSentiment.score >= 55 ? '#4ade80' : newsSentiment.score <= 45 ? '#f87171' : '#fbbf24';
-    html += `<div style="text-align:center;padding:4px 2px;background:rgba(255,255,255,0.04);border-radius:6px"><div style="font-size:8px;color:rgba(255,255,255,0.4)">A股舆情</div><div style="font-size:11px;font-weight:700;color:${_sentC}">${newsSentiment.label} ${newsSentiment.score}</div></div>`;
-    if(_gSent){
-      const _gC = _gSent.score >= 55 ? '#4ade80' : _gSent.score <= 45 ? '#f87171' : '#fbbf24';
-      html += `<div style="text-align:center;padding:4px 2px;background:rgba(255,255,255,0.04);border-radius:6px"><div style="font-size:8px;color:rgba(255,255,255,0.4)">国际舆情</div><div style="font-size:11px;font-weight:700;color:${_gC}">${_gSent.label} ${_gSent.score}</div></div>`;
-    } else {
-      html += `<div style="text-align:center;padding:4px 2px;background:rgba(255,255,255,0.04);border-radius:6px"><div style="font-size:8px;color:rgba(255,255,255,0.4)">国际舆情</div><div style="font-size:11px;color:var(--sub)">加载中</div></div>`;
-    }
-    html += `</div>`;
-    // 资金流向 Top3 inflow/outflow 紧凑展示
-    if(sectorCapFlow.length > 0){
-      const _maxAbs = Math.max(...sectorCapFlow.map(s=>Math.abs(s.mainNet||0)), 1);
-      html += `<div style="display:flex;gap:6px;font-size:9px">`;
-      // 流入
-      html += `<div style="flex:1">`;
-      html += `<div style="color:#4ade80;font-weight:600;margin-bottom:2px">▲ 主力流入</div>`;
-      _capFlow.topInflow.slice(0,3).forEach(s => {
-        const v = (s.mainNet/1e8).toFixed(1);
-        const w = Math.min(100, Math.abs(s.mainNet)/_maxAbs*100);
-        html += `<div style="display:flex;align-items:center;gap:3px;padding:1px 0"><span style="min-width:38px;font-weight:600;color:#e2e8f0">${s.name.slice(0,4)}</span><div style="flex:1;height:5px;border-radius:3px;background:rgba(255,255,255,0.06)"><div style="height:100%;width:${w}%;border-radius:3px;background:#4ade80"></div></div><span style="color:#4ade80;min-width:32px;text-align:right">+${v}</span></div>`;
-      });
-      html += `</div>`;
-      // 流出
-      html += `<div style="flex:1">`;
-      html += `<div style="color:#f87171;font-weight:600;margin-bottom:2px">▼ 主力流出</div>`;
-      _capFlow.topOutflow.slice(0,3).forEach(s => {
-        const v = (Math.abs(s.mainNet)/1e8).toFixed(1);
-        const w = Math.min(100, Math.abs(s.mainNet)/_maxAbs*100);
-        html += `<div style="display:flex;align-items:center;gap:3px;padding:1px 0"><span style="min-width:38px;font-weight:600;color:#e2e8f0">${s.name.slice(0,4)}</span><div style="flex:1;height:5px;border-radius:3px;background:rgba(255,255,255,0.06)"><div style="height:100%;width:${w}%;border-radius:3px;background:#f87171"></div></div><span style="color:#f87171;min-width:32px;text-align:right">-${v}</span></div>`;
-      });
-      html += `</div>`;
-      html += `</div>`;
-    }
-    // 舆情快报 (top 3 新闻)
-    if(newsHeadlines.length > 0){
-      html += `<div style="margin-top:6px;padding-top:6px;border-top:1px solid rgba(255,255,255,0.06)">`;
-      html += `<div style="font-size:9px;color:rgba(255,255,255,0.4);margin-bottom:3px">📰 舆情焦点</div>`;
-      newsHeadlines.slice(0,3).forEach(n => {
-        const ic = n.sentiment==='bull'?'🟢':n.sentiment==='bear'?'🔴':'⚪';
-        html += `<div style="display:flex;gap:4px;padding:2px 0;font-size:9px;color:#e2e8f0;line-height:1.3"><span style="min-width:12px">${ic}</span><span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${n.title}</span></div>`;
-      });
-      html += `</div>`;
-    }
-    // AI建议
-    html += `<div style="margin-top:6px;padding:4px 8px;background:rgba(34,211,238,0.06);border-radius:6px;font-size:9px;color:rgba(255,255,255,0.6);text-align:center">${_ds.advice}</div>`;
-    html += `</div>`;
-  }
-
-  // 关键事件列表
-  html += `<div style="margin-bottom:10px">`;
-  geoData.topEvents.forEach(e => {
-    const impactColor = e.impact > 0 ? '#4ade80' : e.impact < 0 ? '#f87171' : '#fbbf24';
-    const impactArrow = e.impact > 0 ? '↑' : e.impact < 0 ? '↓' : '→';
-    html += `<div style="border-bottom:1px solid rgba(255,255,255,0.05);padding:5px 0">`;
-    html += `<div style="display:flex;align-items:center;gap:6px;font-size:10px">`;
-    html += `<span style="font-size:14px;min-width:22px">${e.icon}</span>`;
-    html += `<div style="flex:1">`;
-    html += `<div style="font-weight:600;color:#e2e8f0;font-size:11px">${e.name}</div>`;
-    html += `<div style="color:#cbd5e1;margin-top:1px">${e.description.slice(0,60)}...</div>`;
-    html += `</div>`;
-    html += `<div style="text-align:right;min-width:50px">`;
-    html += `<div style="color:${impactColor};font-weight:700;font-size:12px">${impactArrow}${Math.abs(e.impact)}</div>`;
-    html += `<div style="color:#94a3b8;font-size:9px">置信${(e.confidence*100).toFixed(0)}%</div>`;
-    html += `</div></div>`;
-    // 情景推演（如果有scenarios字段）
-    if(e.scenarios && e.scenarios.length > 0){
-      html += `<div style="margin:4px 0 2px 28px;padding:5px 8px;background:rgba(139,92,246,0.08);border-radius:6px;border-left:2px solid #8b5cf6">`;
-      html += `<div style="font-size:9px;font-weight:700;color:#a78bfa;margin-bottom:3px">📊 情景推演</div>`;
-      e.scenarios.forEach(sc => {
-        const scColor = sc.impact > 0 ? '#4ade80' : sc.impact < 0 ? '#f87171' : '#fbbf24';
-        const probWidth = Math.round(sc.probability * 100);
-        html += `<div style="padding:2px 0;font-size:9px">`;
-        html += `<div style="display:flex;align-items:center;gap:4px;margin-bottom:2px">`;
-        html += `<span style="font-weight:600;color:#e2e8f0;min-width:70px">${sc.name}</span>`;
-        html += `<div style="flex:1;height:4px;border-radius:2px;background:rgba(255,255,255,0.06)"><div style="height:100%;width:${probWidth}%;border-radius:2px;background:${scColor}"></div></div>`;
-        html += `<span style="color:${scColor};font-weight:700;min-width:28px;text-align:right">${probWidth}%</span>`;
-        html += `<span style="color:${scColor};min-width:24px;text-align:right;font-weight:600">${sc.impact>0?'+':''}${sc.impact}</span>`;
-        html += `</div>`;
-        html += `<div style="color:rgba(255,255,255,0.4);padding-left:2px;line-height:1.3">${sc.note}</div>`;
-        html += `</div>`;
-      });
-      html += `</div>`;
-    }
-    // 媒体数据已通过AI分析融入事件影响力和置信度，不单独显示
-    html += `</div>`;
-  });
-  html += `</div>`;
-
-  // 全球媒体实时快讯数据仍在后台抓取更新地缘事件，但不显示快讯列表
-
-  // 三个月主题展望
-  const ol = geoData.outlook;
-  html += `<div style="background:rgba(139,92,246,0.1);border-radius:8px;padding:8px 10px;margin-bottom:8px">`;
-  html += `<div style="font-size:11px;font-weight:700;color:#c084fc;margin-bottom:6px">📅 ${ol.period} 投资主线</div>`;
-  html += `<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px">`;
-  ol.themes.forEach(t => {
-    const tColor = t.direction === 'up' ? '#4ade80' : t.direction === 'down' ? '#f87171' : '#fbbf24';
-    const arrow = t.direction === 'up' ? '▲' : t.direction === 'down' ? '▼' : '●';
-    html += `<span style="padding:3px 7px;border-radius:6px;font-size:9px;font-weight:600;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1)">`;
-    html += `<span style="color:${tColor}">${arrow}</span> ${t.name}`;
-    html += `<span style="color:var(--sub)"> · ${t.conviction}</span></span>`;
-  });
-  html += `</div>`;
-  html += `<div style="font-size:10px;color:#e2e8f0;line-height:1.5">${ol.overall}</div>`;
-  html += `</div>`;
-
-  // 配置建议
-  html += `<div style="background:rgba(34,211,238,0.06);border-radius:8px;padding:8px 10px;margin-bottom:8px">`;
-  html += `<div style="font-size:10px;font-weight:700;color:#22d3ee;margin-bottom:4px">💼 建议配置 (${ol.period})</div>`;
-  html += `<div style="font-size:10px;line-height:1.6;color:#e2e8f0">`;
-  html += `🔴 进攻仓: ${ol.allocation.offensive}<br>`;
-  html += `🔵 核心仓: ${ol.allocation.core}<br>`;
-  html += `🟡 防御仓: ${ol.allocation.hedge}<br>`;
-  html += `⚪ 现金: ${ol.allocation.cash}`;
-  html += `</div></div>`;
-
-  // 风险提示
-  html += `<div style="font-size:9px;color:#f87171;line-height:1.5;padding:4px 8px;background:rgba(239,68,68,0.06);border-radius:6px">`;
-  html += `<b>⚠️ 重点风险:</b> `;
-  html += ol.risks.map(r => r).join(' | ');
-  html += `</div>`;
-
-  html += `</div>`;
+  html += renderRadarSection(geoData);
 
   // 2. 逐只基金操作卡片
   // 排序：卖出优先(风控优先)，然后买入(geoBias高优先)，最后持有
@@ -7497,7 +7211,8 @@ function syncSimFromHoldings(){
 })();
 
 async function loadData(){
-  await Promise.all([fetchIndices(), fetchSectors(), fetchAllFunds()]);
+  // 并行: 行情+热点事件
+  await Promise.all([fetchIndices(), fetchSectors(), fetchAllFunds(), fetchHotEvents()]);
   renderAll();
   // 异步加载历史数据和数据情报（不阻塞主渲染）
   fetchAllHistory().then(()=>{
