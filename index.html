@@ -521,6 +521,71 @@ body { font-family:-apple-system,BlinkMacSystemFont,'SF Pro','PingFang SC','Helv
 .manage-action-btn:hover { background:#1e293b; color:white; border-color:#1e293b; }
 .manage-action-btn.danger { color:var(--red); border-color:#fca5a5; }
 .manage-action-btn.danger:hover { background:var(--red); color:white; border-color:var(--red); }
+
+/* ==================== 第二层思维 & 逆向投资模块 ==================== */
+.sot-section { padding:10px 16px 4px; }
+.sot-header { display:flex; justify-content:space-between; align-items:center; cursor:pointer; }
+.sot-header-right { display:flex; align-items:center; gap:8px; }
+.sot-toggle { font-size:12px; color:var(--sub); transition:transform .2s; }
+.sot-brief { font-size:11px; font-weight:600; }
+.sot-container { margin-top:8px; }
+.sot-card { background:var(--card); border-radius:10px; padding:12px 14px; margin-bottom:8px; box-shadow:var(--shadow); }
+.sot-card.warning { border-left:3px solid #ef4444; }
+.sot-card.opportunity { border-left:3px solid #22c55e; }
+.sot-card.neutral { border-left:3px solid #64748b; }
+.sot-card-title { font-size:12px; font-weight:700; margin-bottom:6px; display:flex; align-items:center; gap:6px; }
+.sot-tag { font-size:9px; padding:2px 8px; border-radius:10px; font-weight:600; }
+.sot-tag.hot { background:#fef2f2; color:#ef4444; }
+.sot-tag.cold { background:#ecfdf5; color:#22a065; }
+.sot-tag.crowd { background:#fef3c7; color:#d97706; }
+.sot-event { font-size:11px; color:#1e293b; line-height:1.6; margin-bottom:6px; }
+.sot-metrics { display:grid; grid-template-columns:1fr 1fr 1fr; gap:6px; margin-bottom:6px; }
+.sot-metric { text-align:center; background:var(--bg); border-radius:6px; padding:6px 4px; }
+.sot-metric-label { font-size:8px; color:var(--sub); display:block; letter-spacing:0.3px; }
+.sot-metric-val { font-size:12px; font-weight:700; margin-top:1px; font-variant-numeric:tabular-nums; }
+.sot-insight { font-size:11px; color:#1e293b; line-height:1.5; padding:8px 10px; background:var(--bg); border-radius:8px; margin-top:6px; }
+.sot-insight b { color:var(--primary); }
+.sot-second-targets { display:flex; gap:4px; flex-wrap:wrap; margin-top:4px; }
+.sot-target-chip { font-size:9px; padding:2px 8px; border-radius:6px; font-weight:600; background:#eef2ff; color:#4F6EF7; }
+/* 拥挤度仪表盘 */
+.crowd-gauge { display:flex; align-items:center; gap:6px; margin:4px 0; }
+.crowd-bar { flex:1; height:8px; background:#e2e8f0; border-radius:4px; overflow:hidden; position:relative; }
+.crowd-fill { height:100%; border-radius:4px; transition:width .4s; }
+.crowd-fill.extreme { background:linear-gradient(90deg,#ef4444,#dc2626); }
+.crowd-fill.high { background:linear-gradient(90deg,#f59e0b,#ef4444); }
+.crowd-fill.mid { background:linear-gradient(90deg,#3b82f6,#f59e0b); }
+.crowd-fill.low { background:linear-gradient(90deg,#22c55e,#3b82f6); }
+.crowd-fill.desert { background:linear-gradient(90deg,#06b6d4,#22c55e); }
+.crowd-label { font-size:10px; font-weight:700; min-width:40px; text-align:right; }
+/* Kelly调整仪表 */
+.kelly-adj-card { background:linear-gradient(135deg,#0f172a,#1e293b); border-radius:10px; padding:12px 14px; margin-bottom:8px; color:#e2e8f0; }
+.kelly-adj-title { font-size:11px; font-weight:700; color:#22d3ee; margin-bottom:8px; display:flex; align-items:center; gap:6px; }
+.kelly-adj-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+.kelly-adj-item { background:rgba(255,255,255,0.05); border-radius:8px; padding:8px 10px; }
+.kelly-adj-item-label { font-size:9px; color:rgba(255,255,255,0.5); margin-bottom:3px; }
+.kelly-adj-item-val { font-size:16px; font-weight:800; font-variant-numeric:tabular-nums; }
+.kelly-adj-item-warn { font-size:9px; color:#f87171; margin-top:2px; }
+.kelly-adj-item-ok { font-size:9px; color:#4ade80; margin-top:2px; }
+.kelly-formula { font-size:10px; color:rgba(255,255,255,0.4); padding:6px 0; text-align:center; font-family:'SF Mono','Menlo',monospace; }
+/* 逆向投资压力测试 */
+.contrarian-card { background:var(--card); border-radius:10px; padding:12px 14px; margin-bottom:8px; box-shadow:var(--shadow); border:1px solid var(--border); }
+.contrarian-title { font-size:12px; font-weight:700; margin-bottom:8px; display:flex; align-items:center; gap:6px; }
+.contrarian-section { margin-bottom:10px; }
+.contrarian-section-title { font-size:11px; font-weight:700; color:var(--primary); margin-bottom:4px; }
+.contrarian-item { padding:6px 0; border-bottom:1px solid var(--border); }
+.contrarian-item:last-child { border-bottom:none; }
+.contrarian-item-name { font-size:11px; font-weight:600; display:flex; justify-content:space-between; align-items:center; }
+.contrarian-item-desc { font-size:10px; color:var(--sub); line-height:1.5; margin-top:2px; }
+.contrarian-badge { font-size:9px; padding:1px 6px; border-radius:4px; font-weight:600; }
+.contrarian-badge.danger { background:#fef2f2; color:#ef4444; }
+.contrarian-badge.safe { background:#ecfdf5; color:#22a065; }
+.contrarian-badge.watch { background:#fef3c7; color:#d97706; }
+.expectation-bar { display:flex; align-items:center; gap:4px; margin:4px 0; }
+.exp-label { font-size:9px; color:var(--sub); min-width:30px; }
+.exp-track { flex:1; height:6px; background:#e2e8f0; border-radius:3px; overflow:hidden; position:relative; }
+.exp-marker { position:absolute; width:3px; height:12px; top:-3px; border-radius:2px; background:#1e293b; }
+.exp-fill-reality { position:absolute; height:100%; border-radius:3px; background:linear-gradient(90deg,#22c55e,#16a34a); top:0; left:0; }
+.exp-fill-expect { position:absolute; height:100%; border-radius:3px; background:linear-gradient(90deg,#ef4444,#dc2626); opacity:0.3; top:0; left:0; }
 </style>
 </head>
 <body>
@@ -593,6 +658,18 @@ body { font-family:-apple-system,BlinkMacSystemFont,'SF Pro','PingFang SC','Helv
     </div>
   </div>
   <div id="bt-container" class="bt-container" style="display:none"></div>
+</div>
+
+<!-- Second-Order Thinking Dashboard -->
+<div class="sot-section">
+  <div class="section-title sot-header" onclick="toggleSOT()">
+    <span>🧊 第二层思维 <span style="font-size:10px;color:var(--sub);font-weight:400">反拥挤 · 预期差 · 逆向Kelly</span></span>
+    <div class="sot-header-right">
+      <span id="sot-brief" class="sot-brief" style="color:var(--sub)">加载中</span>
+      <span class="sot-toggle" id="sot-toggle">▶</span>
+    </div>
+  </div>
+  <div id="sot-container" class="sot-container" style="display:none"></div>
 </div>
 
 <!-- Simulation Portfolio -->
@@ -1006,6 +1083,543 @@ async function fetchHotEvents(){
 // LEGACY: 原 MACRO_GEO_EVENTS 硬编码已迁移到 data/hot_events.json
 // ==================== 原硬编码事件数据 (以下全部替换为动态加载) ====================
 const _LEGACY_EVENTS_REMOVED = true; // 标记: 16个硬编码事件已移除
+
+// ==================== 第二层思维引擎 (Second-Order Thinking Engine) ====================
+
+/**
+ * 计算反拥挤度调整后的Kelly仓位
+ * @param {number} winRate 基础胜率 (0~1)
+ * @param {number} odds 赔率 (平均盈利/平均亏损)
+ * @param {number} crowdingScore 拥挤度评分 (0~100, 越高越拥挤)
+ * @param {number} rsiValue RSI指标值 (0~100)
+ * @returns {object} { kellyBase, kellyAdjusted, penalty, bonus, status, warning }
+ */
+function calculateAdjustedKelly(winRate, odds, crowdingScore, rsiValue) {
+  // 1. 标准Kelly公式: f* = (b*p - q) / b
+  const b = odds;
+  const p = Math.max(0, Math.min(1, winRate));
+  const q = 1 - p;
+  const kellyBase = Math.max(0, (b * p - q) / b);
+
+  let kellyAdjusted = kellyBase;
+  let penalty = 1.0;
+  let bonus = 1.0;
+  let status = 'normal'; // normal | crowded_warning | contrarian_opportunity
+  let warning = '';
+
+  // 2. 拥挤度惩罚机制 (Anti-Crowding Penalty)
+  // 极度拥挤: crowding > 80 且 RSI > 70 → 共识陷阱，大幅惩罚
+  if (crowdingScore > 80 && rsiValue > 70) {
+    penalty = 0.15; // 仅保留15%仓位
+    status = 'crowded_warning';
+    warning = '⚠️ 极度拥挤+超买: 拥挤度' + crowdingScore + ', RSI=' + rsiValue.toFixed(0) + '。共识陷阱风险极高，Kelly仓位惩罚至15%';
+  } else if (crowdingScore > 80) {
+    penalty = 0.35; // 高拥挤度但RSI未极端
+    status = 'crowded_warning';
+    warning = '⚠️ 高度拥挤: 拥挤度' + crowdingScore + '。"买预期卖事实"风险大，Kelly仓位惩罚至35%';
+  } else if (crowdingScore > 60 && rsiValue > 65) {
+    penalty = 0.6;
+    status = 'crowded_warning';
+    warning = '⚠️ 偏拥挤: 拥挤度' + crowdingScore + ', RSI=' + rsiValue.toFixed(0) + '。适度降低仓位';
+  } else if (crowdingScore > 60) {
+    penalty = 0.75;
+  }
+
+  // 3. 左侧逆向奖励机制 (Contrarian Bonus)
+  // 极度悲观: crowding < 20 且 RSI < 30 → 预期差极大，给予流动性补偿
+  if (crowdingScore < 20 && rsiValue < 30) {
+    bonus = 1.3; // 130% 流动性补偿
+    status = 'contrarian_opportunity';
+    warning = '� 逆向机会: 拥挤度' + crowdingScore + '(极冷), RSI=' + rsiValue.toFixed(0) + '(超卖)。预期差=Reality-Expectation极大，左侧布局窗口';
+  } else if (crowdingScore < 25 && rsiValue < 35) {
+    bonus = 1.15;
+    status = 'contrarian_opportunity';
+    warning = '� 逆向信号: 情绪冰点+技术超卖，可逆向布局。流动性补偿+15%';
+  } else if (crowdingScore < 30) {
+    bonus = 1.05;
+  }
+
+  // 4. 综合调整
+  kellyAdjusted = kellyBase * penalty * bonus;
+  // 半Kelly上限25%
+  kellyAdjusted = Math.min(kellyAdjusted, 0.25);
+  kellyAdjusted = Math.max(kellyAdjusted, 0);
+
+  // 5. 预期差评分 ΔP = Reality - Expectation
+  // crowdingScore高 → Expectation高 → ΔP可能为负(利空定价不足)
+  // crowdingScore低 → Expectation低 → ΔP可能为正(利好未定价)
+  const expectationGap = 100 - crowdingScore; // 简化：越不拥挤，预期差越大
+
+  return {
+    kellyBase: Math.round(kellyBase * 10000) / 10000,
+    kellyAdjusted: Math.round(kellyAdjusted * 10000) / 10000,
+    penalty,
+    bonus,
+    status,
+    warning,
+    expectationGap,
+    crowdingScore,
+    rsiValue
+  };
+}
+
+/**
+ * 分析热点的第二层思维：从表面狂热挖掘"卖铲子"行业和被忽视的替代品
+ * @returns {Array} 第二层分析结果
+ */
+function analyzeSecondOrderThinking() {
+  const heatmap = _hotEventsData?.heatmap || [];
+  const events = MACRO_GEO_EVENTS || [];
+  const results = [];
+
+  // 第二层思维映射表：表面热点 → 实际受益的"卖铲子"产业
+  const SECOND_ORDER_MAP = {
+    '人工智能': { shovels: ['算力基础设施', '数据中心电力', '光模块/PCB', '液冷散热'], contrarian: ['传统IT服务', '软件外包'] },
+    'AI算力':   { shovels: ['铜缆/光纤', '电力设备', '变压器', '服务器代工'], contrarian: ['传统云计算'] },
+    '大模型':   { shovels: ['数据标注', '算力芯片', '数据中心基建', '光通信'], contrarian: ['传统软件'] },
+    '机器人':   { shovels: ['减速器/伺服', '传感器', '精密制造', 'CNC数控'], contrarian: ['传统自动化'] },
+    '黄金':     { shovels: ['矿业/冶炼', '贵金属设备', '央行储备'], contrarian: ['美元资产', '实际利率标的'] },
+    '有色金属': { shovels: ['矿山机械', '冶炼电力', '资源循环'], contrarian: ['替代材料'] },
+    '半导体':   { shovels: ['半导体设备', 'EDA/IP', '光刻胶/特气', '封测'], contrarian: ['成熟制程替代'] },
+    '军工':     { shovels: ['特种材料', '军工电子', '卫星通信'], contrarian: ['民用航空'] },
+    '新能源':   { shovels: ['储能/逆变器', '电网改造', '充电桩设备'], contrarian: ['火电/煤炭'] },
+    '港股科技': { shovels: ['A股AI纯正标的', '国产替代链'], contrarian: ['港股科技ETF'] },
+  };
+
+  // 拥挤的交易方向 (Howard Marks "最拥挤的交易")
+  const CROWDED_TRADES = [];
+  const CONTRARIAN_PICKS = [];
+
+  heatmap.forEach(h => {
+    const mapping = SECOND_ORDER_MAP[h.tag];
+    const crowdingScore = h.temperature;
+    const sentiment = h.sentiment || 0;
+
+    // 找到关联的RSI数据
+    let avgRSI = 50;
+    const matchingFunds = [...(holdings || []), ...(watchlist || [])].filter(f => {
+      const fName = fundName(f.code).toLowerCase();
+      const fType = (fundType(f.code) || '').toLowerCase();
+      return fName.includes(h.tag.slice(0, 2).toLowerCase()) || fType.includes(h.tag.slice(0, 2).toLowerCase());
+    });
+    if (matchingFunds.length > 0) {
+      const rsis = matchingFunds.map(f => btResults[f.code]?.lastRSI || 50);
+      avgRSI = rsis.reduce((a, b) => a + b, 0) / rsis.length;
+    }
+
+    // Kelly调整
+    const kellyResult = calculateAdjustedKelly(0.55, 1.5, crowdingScore, avgRSI);
+
+    if (crowdingScore >= 70) {
+      // 高拥挤度 → 表面热点 + 挖掘卖铲子机会
+      CROWDED_TRADES.push({
+        tag: h.tag,
+        temperature: crowdingScore,
+        trend: h.trend,
+        sentiment,
+        avgRSI,
+        kelly: kellyResult,
+        secondOrderTargets: mapping?.shovels || [],
+        expectationGap: 'Low', // 预期已高，实际存疑
+        type: 'surface_hype',
+        insight: '大众追捧' + h.tag + '(温度' + crowdingScore + ')，Expectation极高。真正的Alpha在上下游"卖铲子"行业：' + (mapping?.shovels?.join('、') || '待分析')
+      });
+    }
+
+    if (crowdingScore <= 30 && (h.trend === 'down' || h.trend === 'stable')) {
+      // 低温+下行趋势 → 逆向布局候选
+      CONTRARIAN_PICKS.push({
+        tag: h.tag,
+        temperature: crowdingScore,
+        trend: h.trend,
+        sentiment,
+        avgRSI,
+        kelly: kellyResult,
+        secondOrderTargets: mapping?.contrarian || [],
+        expectationGap: 'High', // 预期极低，Reality可能改善
+        type: 'contrarian',
+        insight: h.tag + '处于情绪冰点(温度' + crowdingScore + ')，大众极度悲观。ΔP=Reality-Expectation可能为正——如果基本面未恶化，均值回归空间大'
+      });
+    }
+  });
+
+  // 构建最终结果
+  return {
+    crowdedTrades: CROWDED_TRADES.sort((a, b) => b.temperature - a.temperature),
+    contrarianPicks: CONTRARIAN_PICKS.sort((a, b) => a.temperature - b.temperature),
+    timestamp: new Date().toISOString()
+  };
+}
+
+/**
+ * Howard Marks风格的逆向投资压力测试
+ * @returns {object} 压力测试结果
+ */
+function howardMarksStressTest() {
+  const heatmap = _hotEventsData?.heatmap || [];
+  const events = MACRO_GEO_EVENTS || [];
+
+  // 1. 预期差体检：最拥挤的3个交易方向
+  const mostCrowded = heatmap
+    .filter(h => h.temperature >= 60)
+    .sort((a, b) => b.temperature - a.temperature)
+    .slice(0, 3)
+    .map(h => ({
+      name: h.tag,
+      crowding: h.temperature,
+      reason: getCrowdingReason(h),
+      risk: h.temperature >= 80 ? '极高' : h.temperature >= 70 ? '高' : '较高'
+    }));
+
+  // 2. 第二层思维推演：被冷落的"卖铲子"行业
+  const secondLayer = [];
+  const hotTags = heatmap.filter(h => h.temperature >= 75);
+  hotTags.forEach(h => {
+    const shovels = getSecondOrderShovels(h.tag);
+    if (shovels.length > 0) {
+      secondLayer.push({
+        hotTopic: h.tag,
+        shovels,
+        logic: getSecondOrderLogic(h.tag)
+      });
+    }
+  });
+
+  // 3. 深水区的明珠：情绪冰点但基本面修复
+  const deepValuePicks = heatmap
+    .filter(h => h.temperature <= 35 && (h.trend === 'down' || h.trend === 'stable'))
+    .sort((a, b) => a.temperature - b.temperature)
+    .slice(0, 3)
+    .map(h => ({
+      name: h.tag,
+      temperature: h.temperature,
+      sentiment: h.sentiment,
+      reversionLogic: getMeanReversionLogic(h.tag),
+      fundamentals: getFundamentalStatus(h.tag)
+    }));
+
+  return {
+    mostCrowded,
+    secondLayer,
+    deepValuePicks,
+    masterAdvice: generateMasterAdvice(mostCrowded, deepValuePicks)
+  };
+}
+
+function getCrowdingReason(h) {
+  const reasons = {
+    '人工智能': 'AI概念全民追捧,ETF规模暴增,基金经理超配严重。当所有人都在谈论AI，Alpha已经消失——你买的是共识,不是预期差',
+    'AI算力': '算力需求故事被充分定价,HBM/GPU概念股PE已透支2年业绩。市场在买"确定性"的最高点',
+    '大模型': '大模型应用落地不及预期,但估值已Price-in最乐观情景。一旦增速不达预期,将面临Davis双杀',
+    '机器人': '人形机器人尚在概念验证阶段,量产时间表不确定。温度82但实际商业化路径模糊,典型的"故事定价"',
+    '黄金': '央行购金+避险需求支撑,但已连涨多月,短期交易拥挤。止盈资金随时可能涌出',
+    '半导体': '国产替代逻辑持续但估值不低,需要业绩验证。板块内部分化加剧',
+    '有色金属': '全球新基建故事好听,但价格已反映乐观预期。供给端扰动消退后可能回调',
+    '军工': '事件驱动型板块,催化不可预测。军工赚钱效应差,大部分投资者"套在概念期"',
+  };
+  return reasons[h.tag] || '市场热度' + h.temperature + '，关注度高,预期充分,边际买入者减少';
+}
+
+function getSecondOrderShovels(tag) {
+  const map = {
+    '人工智能': ['电力设备(算力耗电)', '液冷/散热(数据中心降温)', '光模块(数据传输)', '铜缆线材(连接基建)'],
+    'AI算力': ['变压器(电力配套)', '储能(削峰填谷)', 'PCB/覆铜板(芯片载板)', '工业气体(芯片制造)'],
+    '大模型': ['数据标注(训练刚需)', 'IDC基建(算力承载)', '光通信(低延迟传输)', '电源设备(供电保障)'],
+    '机器人': ['精密减速器(核心零件)', '伺服电机(驱动系统)', '力矩传感器(触觉反馈)', 'CNC加工(精密制造)'],
+    '黄金': ['矿山开采设备', '贵金属冶炼', '金融科技(交易平台)'],
+    '半导体': ['半导体设备(光刻/刻蚀)', 'EDA软件(设计必备)', '光刻胶/特种气体(耗材)', '先进封装(Chiplet)'],
+  };
+  return map[tag] || [];
+}
+
+function getSecondOrderLogic(tag) {
+  const logics = {
+    '人工智能': '所有人在买"AI应用"和"大模型"，但AI运转需要电力和散热。数据中心用电量2025-2028年将翻倍，电力设备和液冷是确定性更高的"卖铲子"机会',
+    'AI算力': '算力芯片受关注，但芯片需要PCB承载、光模块传输、变压器供电。这些"配套基建"的预期差远大于芯片本身',
+    '大模型': '大模型的训练需要海量标注数据和IDC基建, 这些苦活累活反而是确定性最高的收入',
+    '机器人': '人形机器人量产的瓶颈不在AI，在精密减速器和伺服电机。日本谐波减速器供不应求，国产替代空间巨大',
+    '黄金': '金价上涨最大受益者不是黄金ETF持有者，而是矿山企业——成本不变但售价上涨，利润弹性极大',
+    '半导体': '半导体设备和材料是真正的"卖铲子"——无论哪家芯片公司胜出，都需要用设备和材料',
+  };
+  return logics[tag] || '';
+}
+
+function getMeanReversionLogic(tag) {
+  const logics = {
+    '光伏': '产能出清进入后半程，龙头企业市占率提升;全球光伏装机量仍在增长,估值处于历史分位<10%。出清结束=景气拐点',
+    '锂电': '碳酸锂价格企稳,产业链库存周期接近底部;固态电池技术迭代催化。龙头估值已反映最悲观预期',
+    '白酒': '库存去化6-8个季度后接近尾声;人口结构变化是长期问题,但短期估值已极度反映悲观;龙头品牌力不减',
+    '新能源车': '渗透率增长斜率放缓但仍在提升;智能化(NOA)带来新增量;估值处于历史底部区间',
+    '新能源': '政策扶持力度加大,碳达峰路径明确;板块估值触及3年低点,产能过剩问题逐步出清',
+    '港股科技': '估值处于全球对比极低位;南向资金持续流入;AI应用落地将率先利好互联网巨头变现能力',
+    '医药': '集采边际影响减弱,创新药出海进入兑现期;CXO订单恢复,医疗器械国产替代加速',
+    '消费': '消费降级预期充分定价,以旧换新政策加力;收入预期改善(减税+降息)可能触发估值修复',
+    '债券': '利率下行周期债券受益确定;但收益率已接近历史低位,需关注边际变化',
+  };
+  return logics[tag] || '该板块处于低关注度区域，如基本面出现积极信号，均值回归空间可观';
+}
+
+function getFundamentalStatus(tag) {
+  const status = {
+    '光伏': { reality: '产能出清50%+, 龙头利润率触底', trend: '修复中', score: 55 },
+    '锂电': { reality: '碳酸锂价格企稳, 库存去化中', trend: '即将修复', score: 50 },
+    '白酒': { reality: '库存高企但龙头品牌力在, 估值极低', trend: '磨底中', score: 45 },
+    '新能源车': { reality: '渗透率35%+, 智能化升级', trend: '稳定', score: 55 },
+    '新能源': { reality: '政策支持+出清推进', trend: '修复中', score: 50 },
+    '港股科技': { reality: '业绩稳健但资金流出', trend: '底部震荡', score: 48 },
+    '医药': { reality: '创新药出海+器械国产替代', trend: '结构性修复', score: 52 },
+    '消费': { reality: '以旧换新+结构调整', trend: '弱修复', score: 48 },
+  };
+  return status[tag] || { reality: '需进一步分析', trend: '不确定', score: 50 };
+}
+
+function generateMasterAdvice(crowded, deepValue) {
+  let advice = '🔸 Howard Marks第二层思维忠告：\n';
+  advice += '① 你赚的每一分钱都来自于"别人的错误"。当所有人都看好某个方向时，错误在你——因为你买的是共识，不是预期差。';
+  if (crowded.length > 0) {
+    advice += '\n② 当前最拥挤的交易：' + crowded.map(c => c.name).join('、') + '。这些方向的Expectation已极高，边际买入者越来越少，潜在卖出者越来越多。';
+  }
+  if (deepValue.length > 0) {
+    advice += '\n③ 恐惧中的机会：' + deepValue.map(d => d.name).join('、') + '处于情绪冰点。如果Reality(基本面)并未恶化，ΔP=Reality-Expectation为正——这才是真正的Alpha来源。';
+  }
+  advice += '\n④ 记住：风险不是波动率，风险是永久性资本损失的概率。低波动不等于安全——在高位买入"好资产"同样危险。';
+  return advice;
+}
+
+// 切换SOT面板
+function toggleSOT() {
+  const container = document.getElementById('sot-container');
+  const toggle = document.getElementById('sot-toggle');
+  if (container.style.display === 'none') {
+    container.style.display = 'block';
+    toggle.textContent = '▼';
+    renderSOTDashboard();
+  } else {
+    container.style.display = 'none';
+    toggle.textContent = '▶';
+  }
+}
+
+// 渲染SOT面板
+function renderSOTDashboard() {
+  const container = document.getElementById('sot-container');
+  const brief = document.getElementById('sot-brief');
+  if (!container) return;
+
+  const analysis = analyzeSecondOrderThinking();
+  const stressTest = howardMarksStressTest();
+  let html = '';
+
+  // ===== 1. 反拥挤Kelly仪表盘 =====
+  html += '<div class="kelly-adj-card">';
+  html += '<div class="kelly-adj-title">📐 反拥挤Kelly仓位引擎 <span style="font-size:9px;color:rgba(255,255,255,0.4)">ΔP = Reality - Expectation</span></div>';
+  html += '<div class="kelly-formula">f* = (b·p - q) / b × 反拥挤惩罚 × 逆向奖励</div>';
+
+  // 对用户持仓的基金计算调整后Kelly
+  const kellyItems = [];
+  (holdings || []).forEach(h => {
+    const fType = fundType(h.code) || '';
+    const heatEntry = (_hotEventsData?.heatmap || []).find(ht => {
+      return fType.includes(ht.tag.slice(0, 2)) || ht.tag.includes(fType.slice(0, 2));
+    });
+    const crowdingScore = heatEntry ? heatEntry.temperature : 50;
+    const rsiValue = btResults[h.code]?.lastRSI || 50;
+    const baseKelly = btResults[h.code]?.finalKelly || 0.05;
+    const kResult = calculateAdjustedKelly(
+      btResults[h.code]?.winRate || 0.55,
+      1.5, // 默认赔率
+      crowdingScore,
+      rsiValue
+    );
+    kellyItems.push({
+      code: h.code,
+      name: fundName(h.code),
+      type: fType,
+      crowdingScore,
+      rsiValue,
+      kellyBase: baseKelly,
+      kellyAdjusted: kResult.kellyAdjusted,
+      status: kResult.status,
+      warning: kResult.warning,
+      penalty: kResult.penalty,
+      bonus: kResult.bonus
+    });
+  });
+
+  if (kellyItems.length > 0) {
+    html += '<div style="margin-top:8px">';
+    kellyItems.forEach(k => {
+      const statusColor = k.status === 'crowded_warning' ? '#4ade80' : k.status === 'contrarian_opportunity' ? '#f87171' : 'rgba(255,255,255,0.7)';
+      const statusIcon = k.status === 'crowded_warning' ? '🟢' : k.status === 'contrarian_opportunity' ? '🔴' : '🔵';
+      const crowdCls = k.crowdingScore >= 80 ? 'extreme' : k.crowdingScore >= 60 ? 'high' : k.crowdingScore >= 40 ? 'mid' : k.crowdingScore >= 20 ? 'low' : 'desert';
+
+      html += '<div style="background:rgba(255,255,255,0.04);border-radius:8px;padding:8px 10px;margin-bottom:6px">';
+      html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">';
+      html += '<span style="font-size:11px;font-weight:600;color:#e2e8f0">' + statusIcon + ' ' + k.name.slice(0, 10) + '</span>';
+      html += '<span style="font-size:10px;color:' + statusColor + '">' + (k.kellyAdjusted * 100).toFixed(1) + '% 仓位</span>';
+      html += '</div>';
+      // 拥挤度条
+      html += '<div class="crowd-gauge">';
+      html += '<span style="font-size:8px;color:rgba(255,255,255,0.4);min-width:28px">拥挤度</span>';
+      html += '<div class="crowd-bar" style="background:rgba(255,255,255,0.08)"><div class="crowd-fill ' + crowdCls + '" style="width:' + k.crowdingScore + '%"></div></div>';
+      html += '<span class="crowd-label" style="color:' + statusColor + '">' + k.crowdingScore + '</span>';
+      html += '</div>';
+      // Kelly对比
+      html += '<div style="display:flex;gap:8px;font-size:9px;color:rgba(255,255,255,0.5)">';
+      html += '<span>原始Kelly: ' + (k.kellyBase * 100).toFixed(1) + '%</span>';
+      html += '<span>惩罚: ×' + k.penalty.toFixed(2) + '</span>';
+      html += '<span>逆向奖励: ×' + k.bonus.toFixed(2) + '</span>';
+      html += '<span>RSI: ' + k.rsiValue.toFixed(0) + '</span>';
+      html += '</div>';
+      if (k.warning) {
+        html += '<div style="font-size:9px;margin-top:3px;color:' + statusColor + '">' + k.warning + '</div>';
+      }
+      html += '</div>';
+    });
+    html += '</div>';
+  } else {
+    html += '<div style="text-align:center;font-size:10px;color:rgba(255,255,255,0.4);padding:12px 0">添加持仓后显示反拥挤Kelly分析</div>';
+  }
+  html += '</div>'; // end kelly-adj-card
+
+  // ===== 2. 拥挤交易警告 (What NOT to buy) =====
+  if (analysis.crowdedTrades.length > 0) {
+    html += '<div class="sot-card warning">';
+    html += '<div class="sot-card-title">🚨 拥挤交易预警 <span class="sot-tag hot">Expectation极高</span></div>';
+    analysis.crowdedTrades.forEach(ct => {
+      html += '<div style="padding:6px 0;border-bottom:1px solid var(--border)">';
+      html += '<div style="display:flex;justify-content:space-between;align-items:center">';
+      html += '<span style="font-size:12px;font-weight:700">' + ct.tag + '</span>';
+      html += '<span style="font-size:11px;font-weight:700;color:var(--red)">🔥 温度 ' + ct.temperature + '</span>';
+      html += '</div>';
+      html += '<div class="sot-event">' + ct.insight + '</div>';
+      // 第二层受益标的
+      if (ct.secondOrderTargets.length > 0) {
+        html += '<div style="font-size:10px;color:var(--primary);font-weight:600;margin-bottom:3px">💡 第二层受益(卖铲子)：</div>';
+        html += '<div class="sot-second-targets">';
+        ct.secondOrderTargets.forEach(t => {
+          html += '<span class="sot-target-chip">' + t + '</span>';
+        });
+        html += '</div>';
+      }
+      html += '</div>';
+    });
+    html += '</div>';
+  }
+
+  // ===== 3. 逆向机会发掘 (Where to look) =====
+  if (analysis.contrarianPicks.length > 0) {
+    html += '<div class="sot-card opportunity">';
+    html += '<div class="sot-card-title">🧊 逆向机会发掘 <span class="sot-tag cold">Expectation极低</span></div>';
+    analysis.contrarianPicks.forEach(cp => {
+      const fund = getFundamentalStatus(cp.tag);
+      html += '<div style="padding:6px 0;border-bottom:1px solid var(--border)">';
+      html += '<div style="display:flex;justify-content:space-between;align-items:center">';
+      html += '<span style="font-size:12px;font-weight:700">' + cp.tag + '</span>';
+      html += '<span style="font-size:11px;font-weight:700;color:var(--green)">❄️ 温度 ' + cp.temperature + '</span>';
+      html += '</div>';
+      html += '<div class="sot-event">' + cp.insight + '</div>';
+      // 预期差可视化
+      html += '<div class="expectation-bar">';
+      html += '<span class="exp-label">Expect</span>';
+      html += '<div class="exp-track">';
+      html += '<div class="exp-fill-expect" style="width:' + cp.temperature + '%"></div>';
+      html += '<div class="exp-fill-reality" style="width:' + fund.score + '%"></div>';
+      html += '<div class="exp-marker" style="left:' + cp.temperature + '%"></div>';
+      html += '</div>';
+      html += '<span class="exp-label" style="color:var(--green)">Reality</span>';
+      html += '</div>';
+      html += '<div style="font-size:10px;color:var(--sub);margin-top:2px">Reality: ' + fund.reality + ' | 趋势: ' + fund.trend + '</div>';
+      html += '</div>';
+    });
+    html += '</div>';
+  }
+
+  // ===== 4. Howard Marks 压力测试 =====
+  html += '<div class="contrarian-card">';
+  html += '<div class="contrarian-title">📖 Howard Marks 压力测试 <span style="font-size:9px;color:var(--sub);font-weight:400">"The most important thing is not to buy at the right price, but to not buy at the wrong price."</span></div>';
+
+  // 4.1 最拥挤交易
+  if (stressTest.mostCrowded.length > 0) {
+    html += '<div class="contrarian-section">';
+    html += '<div class="contrarian-section-title">� 预期差体检 — 最拥挤的交易方向</div>';
+    stressTest.mostCrowded.forEach(mc => {
+      html += '<div class="contrarian-item">';
+      html += '<div class="contrarian-item-name">' + mc.name + ' <span class="contrarian-badge danger">拥挤度 ' + mc.crowding + ' · 风险' + mc.risk + '</span></div>';
+      html += '<div class="contrarian-item-desc">' + mc.reason + '</div>';
+      html += '</div>';
+    });
+    html += '</div>';
+  }
+
+  // 4.2 第二层思维推演
+  if (stressTest.secondLayer.length > 0) {
+    html += '<div class="contrarian-section">';
+    html += '<div class="contrarian-section-title">🧠 第二层思维 — 被冷落的"卖铲子"行业</div>';
+    stressTest.secondLayer.forEach(sl => {
+      html += '<div class="contrarian-item">';
+      html += '<div class="contrarian-item-name">表面: ' + sl.hotTopic + ' → 实际: <span style="color:var(--primary)">' + sl.shovels.join('、') + '</span></div>';
+      html += '<div class="contrarian-item-desc">' + sl.logic + '</div>';
+      html += '</div>';
+    });
+    html += '</div>';
+  }
+
+  // 4.3 深水区明珠
+  if (stressTest.deepValuePicks.length > 0) {
+    html += '<div class="contrarian-section">';
+    html += '<div class="contrarian-section-title">� 深水区的明珠 — 情绪冰点 × 基本面修复</div>';
+    stressTest.deepValuePicks.forEach(dv => {
+      const fund = dv.fundamentals;
+      html += '<div class="contrarian-item">';
+      html += '<div class="contrarian-item-name">' + dv.name + ' <span class="contrarian-badge safe">温度' + dv.temperature + ' · ' + fund.trend + '</span></div>';
+      html += '<div class="contrarian-item-desc">' + dv.reversionLogic + '</div>';
+      // Reality vs Expectation bar
+      html += '<div class="expectation-bar" style="margin-top:4px">';
+      html += '<span class="exp-label" style="font-size:8px">预期</span>';
+      html += '<div class="exp-track">';
+      html += '<div class="exp-fill-expect" style="width:' + dv.temperature + '%"></div>';
+      html += '<div class="exp-fill-reality" style="width:' + fund.score + '%"></div>';
+      html += '</div>';
+      html += '<span class="exp-label" style="font-size:8px;color:var(--green)">现实</span>';
+      html += '</div>';
+      html += '</div>';
+    });
+    html += '</div>';
+  }
+
+  // 4.4 大师忠告
+  html += '<div class="sot-insight">' + stressTest.masterAdvice.replace(/\n/g, '<br>') + '</div>';
+  html += '</div>'; // end contrarian-card
+
+  container.innerHTML = html;
+
+  // 更新Brief
+  if (brief) {
+    const totalWarnings = analysis.crowdedTrades.length;
+    const totalOpps = analysis.contrarianPicks.length;
+    if (totalWarnings > 0 || totalOpps > 0) {
+      brief.innerHTML = '<span style="color:#f87171">' + totalWarnings + '拥挤</span> <span style="color:#4ade80">' + totalOpps + '逆向</span>';
+    } else {
+      brief.textContent = '均衡';
+    }
+  }
+}
+
+// 渲染SOT Brief (不展开面板时的简要状态)
+function renderSOTBrief() {
+  const brief = document.getElementById('sot-brief');
+  if (!brief) return;
+  if (!_hotEventsLoaded) { brief.textContent = '加载中'; return; }
+  const heatmap = _hotEventsData?.heatmap || [];
+  const crowded = heatmap.filter(h => h.temperature >= 70).length;
+  const cold = heatmap.filter(h => h.temperature <= 30 && (h.trend === 'down' || h.trend === 'stable')).length;
+  if (crowded > 0 || cold > 0) {
+    brief.innerHTML = '<span style="color:#f87171">' + crowded + '拥挤</span> <span style="color:#4ade80">' + cold + '逆向</span>';
+  } else {
+    brief.textContent = '均衡';
+  }
+}
 
 // ==================== 基金持仓分析引擎 (Fund Holdings Analysis Engine) ====================
 // 股票代码 → 行业板块映射 (覆盖A股/港股常见重仓股)
@@ -3355,10 +3969,10 @@ function buildDataIntelContext(){
     ctx += '\n■ 板块主力资金流向(今日):\n';
     ctx += `  全市场主力净流入: ${(capFlow.netTotal/1e8).toFixed(1)}亿\n`;
     capFlow.topInflow.slice(0,5).forEach(s=>{
-      ctx += `  🟢 ${s.name}: +${(s.mainNet/1e8).toFixed(1)}亿\n`;
+      ctx += `  � ${s.name}: +${(s.mainNet/1e8).toFixed(1)}亿\n`;
     });
     capFlow.topOutflow.slice(0,3).forEach(s=>{
-      ctx += `  🔴 ${s.name}: ${(s.mainNet/1e8).toFixed(1)}亿\n`;
+      ctx += `  🟢 ${s.name}: ${(s.mainNet/1e8).toFixed(1)}亿\n`;
     });
     // 匹配用户持仓的板块资金流
     const holdTypes = new Set([...holdings.map(h=>h.type||''), ...watchlist.map(w=>w.type||'')]);
@@ -3376,7 +3990,7 @@ function buildDataIntelContext(){
   if(newsHeadlines.length>0){
     ctx += '  [重要财经新闻]:\n';
     newsHeadlines.slice(0,8).forEach(n=>{
-      const tag = n.sentiment==='bull'?'🟢利好':n.sentiment==='bear'?'🔴利空':'⚪中性';
+      const tag = n.sentiment==='bull'?'�利好':n.sentiment==='bear'?'🟢利空':'⚪中性';
       ctx += `    ${tag} ${n.title}\n`;
     });
   }
@@ -3388,7 +4002,7 @@ function buildDataIntelContext(){
     ctx += `  国际舆情指数: ${gSent.score}/100 (${gSent.label}) 正面${gSent.bullCount}条/负面${gSent.bearCount}条/共${gSent.total}条\n`;
     ctx += '  [重要国际新闻]:\n';
     globalNews.slice(0,12).forEach(n=>{
-      const tag = n.sentiment==='bull'?'🟢正面':n.sentiment==='bear'?'🔴负面':'⚪中性';
+      const tag = n.sentiment==='bull'?'�正面':n.sentiment==='bear'?'🟢负面':'⚪中性';
       ctx += `    [${n.source}] ${tag} ${n.titleCN||n.title}\n`;
     });
     if(globalNewsSummary){
@@ -3462,6 +4076,39 @@ function buildDataIntelContext(){
   // 注入TOP50基金经理×社交热词耦合分析
   ctx += getFMSocialContextForAI();
 
+  // 注入第二层思维 & 反拥挤度分析
+  ctx += buildSecondOrderContext();
+
+  return ctx;
+}
+
+function buildSecondOrderContext(){
+  if(!_hotEventsLoaded) return '';
+  const analysis = analyzeSecondOrderThinking();
+  let ctx = '\n【🧊 第二层思维 & 反拥挤度分析 (Anti-Crowding · ΔP=Reality-Expectation)】\n';
+
+  // 拥挤交易预警
+  if(analysis.crowdedTrades.length > 0){
+    ctx += '\n■ 拥挤交易预警(Crowded Trades) — Expectation极高,买入风险大:\n';
+    analysis.crowdedTrades.forEach(ct => {
+      ctx += `  � ${ct.tag}(温度${ct.temperature}): ${ct.insight}\n`;
+      if(ct.secondOrderTargets.length > 0){
+        ctx += `    → 第二层受益(卖铲子): ${ct.secondOrderTargets.join('、')}\n`;
+      }
+    });
+  }
+
+  // 逆向机会
+  if(analysis.contrarianPicks.length > 0){
+    ctx += '\n■ 逆向机会发掘(Contrarian Picks) — Expectation极低,ΔP可能为正:\n';
+    analysis.contrarianPicks.forEach(cp => {
+      const fund = getFundamentalStatus(cp.tag);
+      ctx += `  � ${cp.tag}(温度${cp.temperature}): ${cp.insight}\n`;
+      ctx += `    Reality: ${fund.reality} | 趋势: ${fund.trend}\n`;
+    });
+  }
+
+  ctx += '\n⚠️ 第二层思维要求: 避开拥挤度>80且RSI>70的方向(Kelly仓位已惩罚至15-35%); 关注拥挤度<25且RSI<35的逆向机会(Kelly给予1.12-1.25倍流动性补偿)。不要追逐表面热点,寻找预期差。\n';
   return ctx;
 }
 
@@ -3476,6 +4123,7 @@ const SYSTEM_PROMPT = `你是一位擅长波段操作和趋势跟踪的基金投
 5. RL强化学习信号：基于Double DQN(18维状态空间含回测特征)训练的策略网络，直接输出买入/卖出/持有决策及Q值置信度，支持在线学习反馈
 6. 策略回测(Backtesting)：基于历史NAV的RSI策略回测结果，融合RL信号作为辅助条件，包括Sharpe Ratio、最大回撤、胜率、凯利仓位。回测Sharpe<0的品种需特别谨慎
 7. 三引擎投票共识：AI/RL/回测三系统加权投票决策，全票一致时加大仓位（×1.4），有分歧时缩减仓位（×0.4）
+8. 第二层思维(Second-Order Thinking)：反拥挤度惩罚机制 → 拥挤度>80且RSI>70的方向，Kelly仓位惩罚至15-35%，避免"买预期卖事实"陷阱；逆向奖励机制 → 拥挤度<25且RSI<35的方向，Kelly给予1.12-1.25倍流动性补偿，利用预期差ΔP=Reality-Expectation寻找Alpha
 
 ■ 核心投资逻辑（你必须遵守）：
 1. 趋势为王：先判断每个板块/基金的中期趋势（3个月维度）是上升、震荡还是下降
@@ -3484,6 +4132,7 @@ const SYSTEM_PROMPT = `你是一位擅长波段操作和趋势跟踪的基金投
 4. 波段思维：核心仓位(宽基/红利/黄金)长持不动，卫星仓位(行业主题)做波段——低吸高抛
 5. 仓位管理：建议将持仓分为核心仓(~60%稳健压舱石)和卫星仓(~40%弹性进攻)
 6. 趋势拐点：只有当中期趋势确认转向下行时，才建议减仓
+7. 反拥挤度：避免追逐拥挤度极高(>80)的表面热点，关注其上下游"卖铲子"产业。对情绪冰点但基本面修复中的板块，积极左侧布局。记住Howard Marks的忠告："风险不在波动率，在于你为之付出了过高的价格"
 
 ■ 操作决策框架：
 - 中期趋势↑ + 今日大跌 → buy(加仓/低吸) ✅
@@ -3729,6 +4378,7 @@ function renderAll(){
   renderStats();
   renderPortfolio();
   renderSimBrief();
+  renderSOTBrief();
   renderActionGuide();
   renderSignals();
   renderWatchlist();
@@ -4217,14 +4867,35 @@ function computeTriEngineVote(code, aiSig, rlSig, btR){
   const buyScoreThreshold = hasStrongGeo ? 0.1 : 0.2;
   const buyConfThreshold = hasStrongGeo ? 30 : 55;
   const sellScoreThreshold = geoBias < -0.15 ? -0.1 : -0.2;
-  if(finalScore > buyScoreThreshold && (effConf >= buyConfThreshold || hasStrongGeo)){ action = 'buy'; actionLabel = '🟢 建议加仓'; }
-  else if(finalScore < sellScoreThreshold && effConf >= 50){ action = 'sell'; actionLabel = '🔴 建议减仓'; }
+  if(finalScore > buyScoreThreshold && (effConf >= buyConfThreshold || hasStrongGeo)){ action = 'buy'; actionLabel = '� 建议加仓'; }
+  else if(finalScore < sellScoreThreshold && effConf >= 50){ action = 'sell'; actionLabel = '🟢 建议减仓'; }
   else if(finalScore > 0.08){ actionLabel = '🔵 偏多持有'; }
   else if(finalScore < -0.08){ actionLabel = '🔵 偏空持有'; }
 
-  // Kelly建议仓位(受组合风险调整)
+  // Kelly建议仓位(受组合风险调整 + 反拥挤度惩罚)
   const kelly = btR?.finalKelly || 0.05;
-  const adjKelly = Math.min(kelly * consensusMult * Math.max(0.3, 1 - portRisk.riskScore), 0.25);
+  let adjKelly = Math.min(kelly * consensusMult * Math.max(0.3, 1 - portRisk.riskScore), 0.25);
+
+  // === 9. 反拥挤度Kelly调整 (Second-Order Thinking) ===
+  let crowdingPenalty = 1.0, contrarianBonus = 1.0, sotStatus = 'normal';
+  if(typeof _hotEventsData !== 'undefined' && _hotEventsData?.heatmap){
+    const fType = (fundType(code) || '').toLowerCase();
+    const heatEntry = _hotEventsData.heatmap.find(h =>
+      fType.includes(h.tag.slice(0,2).toLowerCase()) || h.tag.toLowerCase().includes(fType.slice(0,2))
+    );
+    if(heatEntry){
+      const crowdScore = heatEntry.temperature;
+      const rsi = btR?.lastRSI || 50;
+      // 拥挤度惩罚: 极热+超买 → 大幅压缩仓位
+      if(crowdScore > 80 && rsi > 70){ crowdingPenalty = 0.2; sotStatus = 'crowded'; }
+      else if(crowdScore > 80){ crowdingPenalty = 0.4; sotStatus = 'crowded'; }
+      else if(crowdScore > 60 && rsi > 65){ crowdingPenalty = 0.65; }
+      // 逆向奖励: 极冷+超卖 → 给予流动性补偿
+      if(crowdScore < 20 && rsi < 30){ contrarianBonus = 1.25; sotStatus = 'contrarian'; }
+      else if(crowdScore < 25 && rsi < 35){ contrarianBonus = 1.12; sotStatus = 'contrarian'; }
+    }
+  }
+  adjKelly = Math.min(adjKelly * crowdingPenalty * contrarianBonus, 0.25);
 
   // 记录信号(用于时序一致性)
   _lastTriSignals[code] = { action, score: finalScore, date: todayStr(), confidence: effConf };
@@ -4234,6 +4905,7 @@ function computeTriEngineVote(code, aiSig, rlSig, btR){
     regime: _marketRegime, portRisk: portRisk.riskScore,
     geoBias, geoEvents: geoFundImpact?.events || [],
     buyVotes, sellVotes,
+    crowdingPenalty, contrarianBonus, sotStatus,
     ai: { vote: aiVote, conf: aiConf, reason: aiReason, accuracy: _engineAccuracy.ai, label: aiVote>0?'买入':aiVote<0?'卖出':'持有' },
     rl: { vote: rlVote, conf: rlConf, conviction: rlSig?.conviction||'--', uncertainty: rlSig?.uncertainty||0, accuracy: _engineAccuracy.rl, label: rlSig?.actionName||'--' },
     bt: { vote: btVote, conf: btConf, sharpe: btR?.sharpe||0, sortino: btR?.sortino||0, rsi: btR?.lastRSI||50, maxDD: btR?.maxDD||0, winRate: btR?.winRate||0, kelly: adjKelly, accuracy: _engineAccuracy.bt },
@@ -4419,6 +5091,10 @@ function generateSmartReason(p, capFlow, ds){
     else if(ds.score <= 35 && vote.action === 'sell') parts.push('宏观环境走弱');
   }
 
+  // 9. 反拥挤度 & 逆向信号
+  if(vote.sotStatus === 'crowded') parts.push('⚠️拥挤度惩罚(Kelly×' + vote.crowdingPenalty.toFixed(2) + ')');
+  else if(vote.sotStatus === 'contrarian') parts.push('�逆向奖励(Kelly×' + vote.contrarianBonus.toFixed(2) + ')');
+
   // 汇总
   let reason = parts.join('，');
   // 加入操作建议
@@ -4507,7 +5183,7 @@ function renderRadarSection(geoData){
       html += '<div style="margin-top:6px;padding-top:6px;border-top:1px solid rgba(255,255,255,0.06)">';
       html += '<div style="font-size:9px;color:rgba(255,255,255,0.4);margin-bottom:3px">📰 舆情焦点</div>';
       newsHeadlines.slice(0,3).forEach(function(n){
-        var ic = n.sentiment==='bull'?'🟢':n.sentiment==='bear'?'🔴':'⚪';
+        var ic = n.sentiment==='bull'?'�':n.sentiment==='bear'?'🟢':'⚪';
         html += '<div style="display:flex;gap:4px;padding:2px 0;font-size:9px;color:#e2e8f0;line-height:1.3"><span style="min-width:12px">' + ic + '</span><span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + n.title + '</span></div>';
       });
       html += '</div>';
@@ -4527,7 +5203,7 @@ function renderRadarSection(geoData){
     var barColor = temp >= 70 ? '#ef4444' : temp >= 50 ? '#f59e0b' : temp >= 30 ? '#3b82f6' : '#64748b';
     var tempIcon = temp >= 80 ? '🔥' : temp >= 60 ? '🌡️' : temp >= 40 ? '📊' : '❄️';
     var trendIcon = h.trend === 'up' ? '↑' : h.trend === 'down' ? '↓' : '';
-    var trendColor = h.trend === 'up' ? '#4ade80' : h.trend === 'down' ? '#f87171' : 'transparent';
+    var trendColor = h.trend === 'up' ? '#f87171' : h.trend === 'down' ? '#4ade80' : 'transparent';
     html += '<div class="heat-item">';
     html += '<span class="heat-tag">' + h.tag + '</span>';
     html += '<div class="heat-bar"><div class="heat-fill" style="width:' + temp + '%;background:' + barColor + '"></div></div>';
@@ -4596,9 +5272,9 @@ function renderRadarSection(geoData){
     if(relatedFunds.length > 0){
       var rf = relatedFunds[0];
       html += '<div class="strategy-item">';
-      html += '<div class="strategy-icon">🟢</div>';
+      html += '<div class="strategy-icon">�</div>';
       html += '<div class="strategy-body">';
-      html += '<div class="strategy-label" style="color:#4ade80">机会 · ' + ht.tag + ' 🔥' + ht.temperature + '</div>';
+      html += '<div class="strategy-label" style="color:#f87171">机会 · ' + ht.tag + ' 🔥' + ht.temperature + '</div>';
       html += '<div class="strategy-text">热度' + ht.temperature + '，情绪偏多。你未持有相关资产。</div>';
       html += '<div class="strategy-fund" onclick="addFromPortfolio(\'' + rf.code + '\',\'' + rf.name.replace(/'/g,"\\'") + '\',\'' + rf.type + '\',\'watch\')">💡 推荐关注: ' + rf.name + ' (' + rf.code + ')</div>';
       html += '</div></div>';
@@ -4615,11 +5291,11 @@ function renderRadarSection(geoData){
     });
     if(exposedHoldings.length > 0){
       html += '<div class="strategy-item">';
-      html += '<div class="strategy-icon">🔴</div>';
+      html += '<div class="strategy-icon">�</div>';
       html += '<div class="strategy-body">';
-      html += '<div class="strategy-label" style="color:#f87171">风险 · ' + ct.tag + ' ❄️' + ct.temperature + '</div>';
+      html += '<div class="strategy-label" style="color:#4ade80">风险 · ' + ct.tag + ' ❄️' + ct.temperature + '</div>';
       html += '<div class="strategy-text">热度仅' + ct.temperature + '，情绪偏空。你持有: ' + exposedHoldings.map(function(x){return fundName(x.code).slice(0,6);}).join('、') + '</div>';
-      html += '<div class="strategy-fund" style="color:#f87171">⚠️ 建议关注减仓时机</div>';
+      html += '<div class="strategy-fund" style="color:#4ade80">⚠️ 建议关注减仓时机</div>';
       html += '</div></div>';
       strategyCount++;
     }
@@ -4642,7 +5318,7 @@ function renderRadarSection(geoData){
   html += '<div class="radar-mod-title">📋 关键事件 (' + geoData.topEvents.length + ')</div>';
   html += '<div style="display:flex;flex-direction:column;gap:2px">';
   geoData.topEvents.forEach(function(e){
-    var ic = e.impact > 0 ? '#4ade80' : e.impact < 0 ? '#f87171' : '#fbbf24';
+    var ic = e.impact > 0 ? '#f87171' : e.impact < 0 ? '#4ade80' : '#fbbf24';
     var arrow = e.impact > 0 ? '↑' : e.impact < 0 ? '↓' : '→';
     html += '<div style="display:flex;align-items:center;gap:6px;padding:4px 6px;border-radius:6px;background:rgba(255,255,255,0.03);font-size:10px">';
     html += '<span style="font-size:13px;min-width:18px">' + e.icon + '</span>';
@@ -4955,7 +5631,7 @@ function renderActionGuide(){
   if(actionFunds.length > 0){
     html += `<b>📋 执行优先序：</b><br>`;
     actionFunds.forEach((p, i) => {
-      const emoji = p.vote.action === 'sell' ? '🔴' : '🟢';
+      const emoji = p.vote.action === 'sell' ? '�' : '🔴';
       const act = p.vote.action === 'sell' ? '减仓' : '加仓';
       const kellyStr = p.vote.action === 'buy' ? ` Kelly${(p.vote.bt.kelly*100).toFixed(0)}%` : ' 减30-50%';
       html += `${emoji} #${i+1} ${fundName(p.code).slice(0,8)} → ${act}${kellyStr}<br>`;
@@ -4969,7 +5645,7 @@ function renderActionGuide(){
     if(todayTrades.length > 0){
       html += `<b>模拟盘今日操作：</b>${todayTrades.length}笔 — `;
       todayTrades.slice(0,3).forEach(t => {
-        html += `${t.action==='buy'?'🟢买':'🔴卖'}${fundName(t.code).slice(0,4)} `;
+        html += `${t.action==='buy'?'�买':'🟢卖'}${fundName(t.code).slice(0,4)} `;
       });
       if(todayTrades.length > 3) html += `…等${todayTrades.length}笔`;
       html += '<br>';
@@ -5153,13 +5829,13 @@ function renderSignals(){
       return;
     }
 
-    const actionText = sig.action==='buy'?'🟢 加仓':sig.action==='sell'?'🔴 减仓':'⚪ 持有';
+    const actionText = sig.action==='buy'?'� 加仓':sig.action==='sell'?'🟢 减仓':'⚪ 持有';
     const urgencyText = sig.urgency==='today'?'今日操作':sig.urgency==='this_week'?'本周内':'不急';
     const confClass = sig.confidence>=75?'high':sig.confidence>=55?'mid':'low';
     const posLabel = sig.posType==='core'?'🛡️核心仓':'🚀卫星仓';
     const posColor = sig.posType==='core'?'background:#f0f4ff;color:#3b5998;border:1px solid #d6e0f5':'background:#fef9ee;color:#b8860b;border:1px solid #f0e4c4';
     const trendIcon = sig.trend==='up'?'📈趋势↑':sig.trend==='down'?'📉趋势↓':'📊震荡';
-    const trendColor = sig.trend==='up'?'color:var(--green)':sig.trend==='down'?'color:var(--red)':'color:var(--sub)';
+    const trendColor = sig.trend==='up'?'color:var(--red)':sig.trend==='down'?'color:var(--green)':'color:var(--sub)';
 
     // 构建趋势详情行（如果有真实历史数据）
     let trendDetailHtml = '';
@@ -6698,11 +7374,11 @@ function generateDataSignal(){
   }
 
   score = Math.max(0, Math.min(100, Math.round(score)));
-  if(score >= 70) return { score, label:'积极看多', icon:'🟢', color:'#ef4444', advice:'宏观+资金+舆情+国际四维共振偏多，可适当增配' };
+  if(score >= 70) return { score, label:'积极看多', icon:'�', color:'#ef4444', advice:'宏观+资金+舆情+国际四维共振偏多，可适当增配' };
   if(score >= 58) return { score, label:'谨慎偏多', icon:'🟡', color:'#f59e0b', advice:'多数指标偏正面，维持仓位、可低吸' };
   if(score >= 42) return { score, label:'中性观望', icon:'⚪', color:'rgba(255,255,255,0.7)', advice:'信号分歧较大，维持现有配置不宜激进' };
   if(score >= 30) return { score, label:'谨慎偏空', icon:'🟠', color:'#f59e0b', advice:'部分指标走弱，控制仓位、降低风险敞口' };
-  return { score, label:'防御为主', icon:'🔴', color:'#22c55e', advice:'多维度信号偏负面，建议降低仓位、增加现金' };
+  return { score, label:'防御为主', icon:'�', color:'#22c55e', advice:'多维度信号偏负面，建议降低仓位、增加现金' };
 }
 
 // ==================== RL BRAIN RENDERING ====================
@@ -7132,7 +7808,7 @@ function renderSimPortfolio(){
     html += `<div style="font-size:11px;font-weight:600;margin:10px 0 6px">📜 最近交易 <span style="font-weight:400;color:var(--sub)">(共${simPortfolio.history.length}笔)</span></div>`;
     recentTrades.forEach(t => {
       const actionColor = t.action==='buy'?'var(--red)':'var(--green)';
-      const actionIcon = t.action==='buy'?'🟢买':'🔴卖';
+      const actionIcon = t.action==='buy'?'�买':'🟢卖';
       html += `<div class="sim-trade-item">
         <span style="color:${actionColor};font-weight:600;min-width:36px">${actionIcon}</span>
         <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${t.name||t.code}</span>
@@ -7797,7 +8473,7 @@ function renderBacktest(){
   if(allTrades.length > 0){
     html += `<div class="bt-card"><div class="bt-card-title">📝 最近交易记录 <span style="font-size:9px;color:var(--sub);font-weight:400">${s.totalTrades}笔总交易</span></div>`;
     allTrades.slice(0, 10).forEach(t => {
-      const ac = t.action === 'buy' ? '🟢买' : '🔴卖';
+      const ac = t.action === 'buy' ? '�买' : '🟢卖';
       const extra = t.action === 'sell' ? ` ${t.pnl} ${t.reason||''}` : ` RSI:${t.rsi?.toFixed(0)} Kelly:${(t.kelly*100)?.toFixed(0)}%`;
       html += `<div class="bt-trade-row">`;
       html += `<span style="min-width:60px">${t.date?.slice(5)}</span>`;
