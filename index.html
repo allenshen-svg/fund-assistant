@@ -931,7 +931,7 @@ const MACRO_GEO_EVENTS = [
     impact: +18,
     sectors: {
       positive: ['AI', '算力', '光模块', '大模型', '机器人', 'AI应用', '传媒'],
-      negative: ['传统劳动密集型'],
+      negative: ['传统劳动密集型', '港股互联网'],
     },
     fundKeywords: ['人工智能','AI','科技','算力','机器人','传媒','TMT','信息技术','创新'],
     duration: '2026全年',
@@ -1089,7 +1089,7 @@ const MACRO_GEO_EVENTS = [
     impact: +15,
     sectors: {
       positive: ['AI', 'AI应用', '算力', '光模块', 'AI芯片', '大模型', '云计算', '数据中心'],
-      negative: ['港股互联网', '传统软件'],
+      negative: ['港股互联网', '港股科技', '传统软件'],
     },
     scenarios: [
       { name: 'AI创企持续融资扩张', probability: 0.55, impact: +18, benefitSectors: ['AI','算力','光模块','AI应用'], hurtSectors: ['港股互联网'], note: 'MiniMax/智谱/Kimi持续获大额融资→A股AI链狂欢，港股虹吸效应加剧' },
@@ -1326,7 +1326,8 @@ const FUND_SECTOR_KEYWORD_MAP = [
   { keywords: ['传媒','影视','游戏','文化'], sectors: {'传媒':0.80,'科技':0.20} },
   { keywords: ['汽车','车'], sectors: {'汽车':0.75,'新能源':0.15,'科技':0.10} },
   { keywords: ['航空','航运','交通','物流'], sectors: {'航空':0.60,'交通':0.40} },
-  { keywords: ['港股','恒生','H股'], sectors: {'科技':0.35,'金融':0.25,'消费':0.15,'能源':0.10,'医药':0.08,'通信':0.07} },
+  { keywords: ['恒生科技','港股科技','港股互联网'], sectors: {'港股互联网':0.90,'科技':0.10} },
+  { keywords: ['港股','恒生','H股'], sectors: {'港股互联网':0.30,'金融':0.25,'消费':0.15,'能源':0.10,'医药':0.08,'通信':0.07,'科技':0.05} },
   { keywords: ['纯债','债券','利率','信用'], sectors: {'债券':0.95,'金融':0.05} },
   { keywords: ['货币','现金管理'], sectors: {'现金':1.0} },
 ];
@@ -2219,6 +2220,32 @@ async function fetchAllFunds(){
       }catch(e){}
     }));
   }
+  // 回填缺失名称到 holdings/watchlist 并持久化，避免API不可用时无名称
+  backfillFundNames();
+}
+
+function backfillFundNames(){
+  let dirty = false;
+  const nameSource = (code) => {
+    return liveFundData[code]?.name || FUND_DB.find(x=>x.code===code)?.name
+      || RECO_FUND_POOL.find(x=>x.code===code)?.name
+      || MODEL_PORTFOLIO.core.funds.find(x=>x.code===code)?.name
+      || MODEL_PORTFOLIO.satellite.funds.find(x=>x.code===code)?.name
+      || _fundHoldingsCache[code]?.name || '';
+  };
+  holdings.forEach(h=>{
+    if(!h.name || h.name===h.code){
+      const n = nameSource(h.code);
+      if(n){ h.name = n; dirty = true; }
+    }
+  });
+  watchlist.forEach(w=>{
+    if(!w.name || w.name===w.code){
+      const n = nameSource(w.code);
+      if(n){ w.name = n; dirty = true; }
+    }
+  });
+  if(dirty){ saveHoldings(); saveWatchlist(); console.log('[backfill] 已回填缺失的基金名称'); }
 }
 
 // ==================== DATA INTELLIGENCE: MACRO + NEWS + SENTIMENT ====================
@@ -3513,7 +3540,8 @@ function fundName(code){
   const h = holdings.find(x=>x.code===code);
   const w = watchlist.find(x=>x.code===code);
   const live = liveFundData[code];
-  return info?.name || reco?.name || live?.name || h?.name || w?.name || code;
+  const cached = _fundHoldingsCache[code];
+  return info?.name || reco?.name || live?.name || cached?.name || h?.name || w?.name || code;
 }
 
 function fundType(code){
