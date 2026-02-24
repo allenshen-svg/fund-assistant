@@ -831,18 +831,18 @@ body { font-family:-apple-system,BlinkMacSystemFont,'SF Pro','PingFang SC','Helv
 <script>
 // ==================== FUND DATABASE ====================
 const FUND_DB = [
-  {code:'000216',name:'华安黄金ETF联接A',type:'黄金',baseNav:1.38},
-  {code:'012414',name:'华夏中证A500ETF联接A',type:'宽基',baseNav:1.25},
-  {code:'011852',name:'天弘中证云计算与大数据ETF联接A',type:'AI/科技',baseNav:0.91},
-  {code:'004814',name:'中欧红利优享混合A',type:'红利',baseNav:1.48},
-  {code:'257070',name:'国泰中证军工ETF联接A',type:'军工',baseNav:1.12},
-  {code:'003834',name:'华夏能源革新股票A',type:'新能源',baseNav:1.65},
-  {code:'161725',name:'招商中证白酒指数A',type:'白酒/消费',baseNav:1.28},
-  {code:'110011',name:'易方达中小盘混合',type:'中小盘',baseNav:5.52},
-  {code:'005827',name:'易方达蓝筹精选混合',type:'蓝筹',baseNav:2.05},
-  {code:'001156',name:'申万菱信中证半导体指数A',type:'半导体',baseNav:1.18},
-  {code:'320007',name:'诺安成长混合',type:'半导体/科技',baseNav:1.42},
-  {code:'160119',name:'南方中证500ETF联接A',type:'宽基',baseNav:1.55},
+  {code:'000216',name:'华安黄金ETF联接A',type:'黄金',baseNav:3.85},
+  {code:'022430',name:'华夏中证A500ETF联接A',type:'宽基',baseNav:1.24},
+  {code:'019868',name:'华夏云计算与大数据ETF联接A',type:'AI/科技',baseNav:1.82},
+  {code:'004814',name:'中欧红利优享混合A',type:'红利',baseNav:2.38},
+  {code:'003017',name:'广发中证军工ETF联接A',type:'军工',baseNav:1.43},
+  {code:'003834',name:'华夏能源革新股票A',type:'新能源',baseNav:3.45},
+  {code:'161725',name:'招商中证白酒指数(LOF)A',type:'白酒/消费',baseNav:0.70},
+  {code:'110011',name:'易方达优质精选混合(QDII)',type:'蓝筹/QDII',baseNav:5.33},
+  {code:'005827',name:'易方达蓝筹精选混合',type:'蓝筹',baseNav:1.91},
+  {code:'008887',name:'华夏国证半导体芯片ETF联接A',type:'半导体',baseNav:1.69},
+  {code:'320007',name:'诺安成长混合A',type:'半导体/科技',baseNav:2.05},
+  {code:'160119',name:'南方中证500ETF联接(LOF)A',type:'宽基',baseNav:2.32},
 ];
 
 // 推荐组合：核心仓(稳健长持) + 卫星仓(波段进攻)
@@ -851,45 +851,45 @@ const MODEL_PORTFOLIO = {
     label:'🛡️ 核心仓', ratio:'60%',
     desc:'压舱石配置，长期持有为主，追求稳健收益。宽基+黄金+红利三角组合，低相关性分散风险。',
     funds: [
-      {code:'012414',name:'华夏中证A500ETF联接A',type:'宽基',alloc:'20%',reason:'A股核心500资产，长期配置基石'},
+      {code:'022430',name:'华夏中证A500ETF联接A',type:'宽基',alloc:'20%',reason:'A股核心500资产，长期配置基石'},
       {code:'007339',name:'易方达沪深300ETF联接C',type:'宽基',alloc:'15%',reason:'沪深300核心蓝筹，费率低，流动性好'},
       {code:'000216',name:'华安黄金ETF联接A',type:'黄金',alloc:'15%',reason:'避险+抗通胀，与股市低相关，央行持续购金'},
-      {code:'012643',name:'天弘红利低波动C',type:'红利',alloc:'10%',reason:'高股息低波动，下行保护强，稳定分红'},
+      {code:'021418',name:'泰康红利低波ETF联接C',type:'红利',alloc:'10%',reason:'高股息低波动，下行保护强，稳定分红'},
     ]
   },
   satellite: {
     label:'🚀 卫星仓', ratio:'40%',
     desc:'弹性进攻仓位，积极做波段——逢跌买入、逢涨止盈。关注趋势向上且短期回调的品种。',
     funds: [
-      {code:'014832',name:'天弘中证有色金属ETF联接C',type:'有色金属',alloc:'10%',reason:'全球铜铝涨价+新基建需求，波动大波段空间足'},
-      {code:'015047',name:'广发人工智能ETF联接C',type:'AI/科技',alloc:'8%',reason:'AI产业爆发，算力需求旺盛，成长性强'},
-      {code:'001156',name:'申万菱信中证半导体指数A',type:'半导体',alloc:'8%',reason:'国产替代逻辑硬，估值弹性大'},
-      {code:'257070',name:'国泰中证军工ETF联接A',type:'军工',alloc:'7%',reason:'地缘催化+装备采购周期，事件驱动型波段'},
-      {code:'013308',name:'易方达中证全指证券公司C',type:'金融',alloc:'7%',reason:'牛市先锋，政策受益弹性品种，β属性强'},
+      {code:'016708',name:'华夏有色金属ETF联接C',type:'有色金属',alloc:'10%',reason:'全球铜铝涨价+新基建需求，波动大波段空间足'},
+      {code:'008586',name:'华夏人工智能ETF联接C',type:'AI/科技',alloc:'8%',reason:'AI产业爆发，算力需求旺盛，成长性强'},
+      {code:'008887',name:'华夏国证半导体芯片ETF联接A',type:'半导体',alloc:'8%',reason:'国产替代逻辑硬，估值弹性大'},
+      {code:'005693',name:'广发中证军工ETF联接C',type:'军工',alloc:'7%',reason:'地缘催化+装备采购周期，事件驱动型波段'},
+      {code:'007993',name:'华夏中证全指证券公司ETF联接C',type:'金融',alloc:'7%',reason:'牛市先锋，政策受益弹性品种，β属性强'},
     ]
   }
 };
 
 const RECO_FUND_POOL = [
-  {code:'002610',name:'博时黄金ETF联接C',type:'黄金',tags:['避险','贵金属']},
-  {code:'007929',name:'华安黄金ETF联接C',type:'黄金',tags:['避险','黄金']},
-  {code:'015047',name:'广发人工智能ETF联接C',type:'AI/科技',tags:['AI','产业趋势']},
-  {code:'017992',name:'易方达中证人工智能ETF联接C',type:'AI/科技',tags:['AI','算力']},
-  {code:'014557',name:'万家中证芯片产业指数C',type:'半导体',tags:['芯片','国产替代']},
-  {code:'013313',name:'华宝中证科技龙头ETF联接C',type:'科技',tags:['科技龙头','硬科技']},
-  {code:'012860',name:'长城军工成长ETF联接C',type:'军工',tags:['国防军工','战略']},
-  {code:'013010',name:'天弘中证新能源车ETF联接C',type:'新能源',tags:['新能源车','电池']},
-  {code:'012762',name:'天弘中证食品饮料ETF联接C',type:'消费',tags:['食品饮料','内需']},
+  {code:'002611',name:'博时黄金ETF联接C',type:'黄金',tags:['避险','贵金属']},
+  {code:'000217',name:'华安黄金ETF联接C',type:'黄金',tags:['避险','黄金']},
+  {code:'008586',name:'华夏人工智能ETF联接C',type:'AI/科技',tags:['AI','产业趋势']},
+  {code:'023565',name:'易方达科创人工智能ETF联接C',type:'AI/科技',tags:['AI','算力']},
+  {code:'012553',name:'天弘芯片产业ETF联接C',type:'半导体',tags:['芯片','国产替代']},
+  {code:'007874',name:'华宝科技ETF联接C',type:'科技',tags:['科技龙头','硬科技']},
+  {code:'005693',name:'广发中证军工ETF联接C',type:'军工',tags:['国防军工','战略']},
+  {code:'009068',name:'国泰中证新能源汽车ETF联接C',type:'新能源',tags:['新能源车','电池']},
+  {code:'001632',name:'天弘中证食品饮料ETF联接C',type:'消费',tags:['食品饮料','内需']},
   {code:'001550',name:'天弘中证医药100A',type:'医药',tags:['医药','创新药']},
-  {code:'012643',name:'天弘红利低波动C',type:'红利',tags:['红利','低波动']},
-  {code:'012070',name:'万家中证红利ETF联接C',type:'红利',tags:['高股息','稳健']},
+  {code:'021418',name:'泰康红利低波ETF联接C',type:'红利',tags:['红利','低波动']},
+  {code:'015558',name:'万家中证红利ETF联接C',type:'红利',tags:['高股息','稳健']},
   {code:'007339',name:'易方达沪深300ETF联接C',type:'宽基',tags:['沪深300','核心资产']},
-  {code:'006881',name:'天弘创业板ETF联接C',type:'宽基',tags:['创业板','成长']},
-  {code:'013601',name:'华安中证A500ETF联接C',type:'宽基',tags:['A500','核心']},
-  {code:'014832',name:'天弘中证有色金属ETF联接C',type:'有色金属',tags:['有色','铜铝']},
-  {code:'013308',name:'易方达中证全指证券公司C',type:'金融',tags:['券商','政策受益']},
-  {code:'012810',name:'鹏华国证钢铁行业指数C',type:'钢铁',tags:['钢铁','周期','资源']},
-  {code:'013403',name:'华夏恒生科技ETF联接C',type:'港股科技/QDII',tags:['港股','恒生科技','互联网','QDII']},
+  {code:'001593',name:'天弘创业板ETF联接C',type:'宽基',tags:['创业板','成长']},
+  {code:'022431',name:'华夏中证A500ETF联接C',type:'宽基',tags:['A500','核心']},
+  {code:'016708',name:'华夏有色金属ETF联接C',type:'有色金属',tags:['有色','铜铝']},
+  {code:'007993',name:'华夏中证全指证券公司ETF联接C',type:'金融',tags:['券商','政策受益']},
+  {code:'012810',name:'鹏华国证钢铁行业指数(LOF)C',type:'钢铁',tags:['钢铁','周期','资源']},
+  {code:'013403',name:'华夏恒生科技ETF发起式联接(QDII)C',type:'港股科技/QDII',tags:['港股','恒生科技','互联网','QDII']},
 ];
 
 const INDICES_CONFIG = [
