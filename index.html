@@ -3558,7 +3558,8 @@ class RLTrainer{
   generateSignals(){
     if(!this.agent)return{};
     const signals={};
-    const codes=[...holdings.map(h=>h.code),...watchlist.map(w=>w.code)];
+    const pCodes = getAllPortfolioCodes();
+    const codes=[...new Set([...holdings.map(h=>h.code),...watchlist.map(w=>w.code),...pCodes])];
     for(const code of codes){
       const hd=fundHistoryData[code];
       if(!hd||!hd.navs||hd.navs.length<65)continue;
