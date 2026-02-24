@@ -3475,7 +3475,7 @@ class RLTrainer{
     for(const code of Object.keys(fundHistoryData)){
       const hd=fundHistoryData[code];
       if(!hd||!hd.navs||hd.navs.length<80)continue;
-      const navArr=hd.navs.map(n=>({date:n[0],nav:parseFloat(n[1])})).filter(n=>!isNaN(n.nav)&&n.nav>0);
+      const navArr=hd.navs.map(n=>({date:n.date||n[0],nav:parseFloat(n.nav!==undefined?n.nav:n[1])})).filter(n=>!isNaN(n.nav)&&n.nav>0);
       if(navArr.length<80)continue;
       // Pre-compute volatility for curriculum sorting
       const rets=[];
@@ -3561,7 +3561,7 @@ class RLTrainer{
     for(const code of codes){
       const hd=fundHistoryData[code];
       if(!hd||!hd.navs||hd.navs.length<65)continue;
-      const navArr=hd.navs.map(n=>({date:n[0],nav:parseFloat(n[1])})).filter(n=>!isNaN(n.nav)&&n.nav>0);
+      const navArr=hd.navs.map(n=>({date:n.date||n[0],nav:parseFloat(n.nav!==undefined?n.nav:n[1])})).filter(n=>!isNaN(n.nav)&&n.nav>0);
       if(navArr.length<65)continue;
       const env=new MarketEnv(navArr,code);
       env.idx=navArr.length-1;
@@ -4639,7 +4639,7 @@ function detectMarketRegime(){
   for(const code of codes){
     const hd = fundHistoryData[code];
     if(!hd?.navs || hd.navs.length < 60) continue;
-    const navs = hd.navs.map(n => parseFloat(n[1]||n.nav)).filter(v=>v>0);
+    const navs = hd.navs.map(n => parseFloat(n.nav!==undefined?n.nav:n[1])).filter(v=>v>0);
     if(navs.length < 60) continue;
     const n = navs.length;
     const rets = [];
@@ -7134,7 +7134,7 @@ function rlOnlineLearning(){
     const code = trade.code;
     const hd = fundHistoryData[code];
     if(!hd?.navs || hd.navs.length < 65) continue;
-    const navArr = hd.navs.map(n=>({date:n[0],nav:parseFloat(n[1])})).filter(n=>!isNaN(n.nav)&&n.nav>0);
+    const navArr = hd.navs.map(n=>({date:n.date||n[0],nav:parseFloat(n.nav!==undefined?n.nav:n[1])})).filter(n=>!isNaN(n.nav)&&n.nav>0);
     if(navArr.length < 65) continue;
 
     // 构建当前状态
@@ -7247,7 +7247,7 @@ function settleDelayedRewards(){
     // 构建结算时的下一状态
     const hd = fundHistoryData[code];
     if(hd?.navs && hd.navs.length >= 65){
-      const navArr = hd.navs.map(n=>({date:n[0],nav:parseFloat(n[1])})).filter(n=>!isNaN(n.nav)&&n.nav>0);
+      const navArr = hd.navs.map(n=>({date:n.date||n[0],nav:parseFloat(n.nav!==undefined?n.nav:n[1])})).filter(n=>!isNaN(n.nav)&&n.nav>0);
       if(navArr.length >= 65){
         const env = new MarketEnv(navArr, code);
         env.idx = navArr.length - 1;
