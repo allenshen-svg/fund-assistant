@@ -2421,7 +2421,8 @@ function jsonpFetch(url, opts={}){
     function cleanup(){ clearTimeout(timer); if(!opts.fixedCb) delete window[cbName]; try{script.remove();}catch(e){} }
     window[cbName] = function(data){ cleanup(); resolve(data); };
     let finalUrl = url;
-    if(!opts.fixedCb) finalUrl += (url.includes('?')?'&':'?') + `cb=${cbName}`;
+    const cbParam = opts.callbackParam || 'cb';
+    if(!opts.fixedCb) finalUrl += (url.includes('?')?'&':'?') + `${cbParam}=${cbName}`;
     finalUrl += (finalUrl.includes('?')?'&':'?') + `_t=${Date.now()}`;
     script.src = finalUrl;
     script.onerror = ()=>{ cleanup(); reject(new Error('network')); };
@@ -3658,30 +3659,32 @@ class RLTrainer{
 // ==================== HISTORICAL DATA & TREND ANALYSIS ====================
 async function fetchFundHistory(code){
   // 获取基金历史净值（近1年，约250个交易日）
+  // 优先使用JSONP（浏览器CORS会阻止fetch请求到eastmoney API）
   try{
-    const url = `https://api.fund.eastmoney.com/f10/lsjz?fundCode=${code}&pageIndex=1&pageSize=250`;
-    const resp = await fetch(url, {headers:{'Referer':'https://fundf10.eastmoney.com/'}});
-    if(!resp.ok) throw new Error('fetch fail');
-    const json = await resp.json();
-    if(json?.Data?.LSJZList){
-      const navs = json.Data.LSJZList
+    const data = await jsonpFetch(
+      `https://api.fund.eastmoney.com/f10/lsjz?fundCode=${code}&pageIndex=1&pageSize=250`,
+      { callbackParam: 'callback', timeout: 12000 }
+    );
+    if(data?.Data?.LSJZList){
+      const navs = data.Data.LSJZList
         .map(d=>({date:d.FSRQ, nav:parseFloat(d.DWJZ)}))
         .filter(d=>!isNaN(d.nav))
         .reverse(); // 最早在前
-      return navs;
+      if(navs.length > 0) return navs;
     }
   }catch(e){
-    // 备用JSONP方式
-    try{
-      const data = await jsonpFetch(`https://push2his.eastmoney.com/api/qt/stock/kline/get?secid=${getSecidForFund(code)}&fields1=f1,f2,f3&fields2=f51,f52,f53&klt=101&fqt=1&beg=0&end=20500101&lmt=250`);
-      if(data?.data?.klines){
-        return data.data.klines.map(k=>{
-          const parts=k.split(',');
-          return {date:parts[0], nav:parseFloat(parts[1])};
-        }).filter(d=>!isNaN(d.nav));
-      }
-    }catch(e2){}
+    console.warn(`[History] JSONP主请求失败(${code}):`, e.message);
   }
+  // 备用: 交易所基金走kline接口
+  try{
+    const data = await jsonpFetch(`https://push2his.eastmoney.com/api/qt/stock/kline/get?secid=${getSecidForFund(code)}&fields1=f1,f2,f3&fields2=f51,f52,f53&klt=101&fqt=1&beg=0&end=20500101&lmt=250`);
+    if(data?.data?.klines){
+      return data.data.klines.map(k=>{
+        const parts=k.split(',');
+        return {date:parts[0], nav:parseFloat(parts[1])};
+      }).filter(d=>!isNaN(d.nav));
+    }
+  }catch(e2){ console.warn(`[History] JSONP备用请求失败(${code}):`, e2.message); }
   return null;
 }
 
@@ -7585,23 +7588,30 @@ function renderRLChart(data,label){
 async function startRLTraining(){
   if(_rlTraining)return;
   if(!rlTrainer)rlTrainer=new RLTrainer();
+  const hdCount = Object.keys(fundHistoryData).length;
+  console.log(`[RL] 开始准备训练数据, 已加载历史数据: ${hdCount}只基金`);
   const count=rlTrainer.prepare();
   if(count===0){
-    alert('没有足够的历史数据进行训练。需要≥80天NAV数据(60天回溯窗口+20天训练)。\n请先添加持仓基金并等待历史数据加载。\n\n当前已加载历史数据: '+Object.keys(fundHistoryData).length+' 只基金');
+    alert('没有足够的历史数据进行训练。需要≥80天NAV数据(60天回溯窗口+20天训练)。\n请先添加持仓基金并等待历史数据加载完成。\n\n当前已加载历史数据: '+hdCount+' 只基金\n\n提示: 如果基金数>0但训练数据=0，说明历史数据天数不足80天。');
     return;
   }
   _rlTraining=true;
   renderRLBrain();renderRLBrief();
-  console.log(`RL训练开始: ${count}只基金历史数据, ${rlTrainer.maxEpisodes}轮训练`);
-
-  await rlTrainer.train((ep,total,metrics)=>{
+  console.log(`[RL] 训练开始: ${count}只基金历史数据, ${rlTrainer.maxEpisodes}轮训练`);
+  try{
+    await rlTrainer.train((ep,total,metrics)=>{
+      renderRLBrain();renderRLBrief();
+    });
+    _rlModelLoaded=true;
+    rlTrainer.generateSignals();
+    console.log('[RL] 训练完成:',rlTrainer.metrics);
+  }catch(err){
+    console.error('[RL] 训练出错:', err);
+    alert('RL训练过程中出错: ' + err.message);
+  }finally{
+    _rlTraining=false;
     renderRLBrain();renderRLBrief();
-  });
-
-  _rlTraining=false;_rlModelLoaded=true;
-  rlTrainer.generateSignals();
-  renderRLBrain();renderRLBrief();
-  console.log('RL训练完成:',rlTrainer.metrics);
+  }
   // RL训练完成 → 自动重跑回测(RL信号已更新，回测结果需要同步)
   if(Object.keys(fundHistoryData).length > 0){
     console.log('RL训练后自动重跑回测(同步逐步RL信号)...');
