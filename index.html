@@ -2416,7 +2416,7 @@ function jsonpFetch(url, opts={}){
     const cbName = opts.fixedCb || `_jp${++_jcnt}_${Date.now()}`;
     const timeout = opts.timeout || 8000;
     const script = document.createElement('script');
-    script.referrerPolicy = 'no-referrer';
+    // 不设no-referrer: eastmoney API要求有Referer才返回数据
     const timer = setTimeout(()=>{ cleanup(); reject(new Error('timeout')); }, timeout);
     function cleanup(){ clearTimeout(timer); if(!opts.fixedCb) delete window[cbName]; try{script.remove();}catch(e){} }
     window[cbName] = function(data){ cleanup(); resolve(data); };
