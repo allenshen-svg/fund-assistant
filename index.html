@@ -947,6 +947,22 @@ let _aiProvider = AI_PROVIDERS.find(p=>p.id===_aiProviderId) || AI_PROVIDERS[0];
 let AI_ENGINES = _aiProvider.models;
 let _apiBase = _aiProvider.base;
 
+const AI_KEY_PRIMARY_STORAGE = 'fa_302ai_key';
+const AI_KEY_LEGACY_STORAGES = ['fa_ai_key', 'fa_api_key', 'fund_ai_key'];
+function getStoredApiKey(){
+  const primary = (localStorage.getItem(AI_KEY_PRIMARY_STORAGE)||'').trim();
+  if(primary) return primary;
+  for(const k of AI_KEY_LEGACY_STORAGES){
+    const legacy = (localStorage.getItem(k)||'').trim();
+    if(legacy){
+      localStorage.setItem(AI_KEY_PRIMARY_STORAGE, legacy);
+      console.log('[Init] API Key migrated from', k);
+      return legacy;
+    }
+  }
+  return '';
+}
+
 // ==================== STATE ====================
 let holdings = JSON.parse(localStorage.getItem('fa_holdings')||'[]');
 let watchlist = JSON.parse(localStorage.getItem('fa_watchlist')||'[]');
@@ -954,7 +970,7 @@ let liveIndices = {};
 let liveFundData = {};
 let liveSectors = [];
 let fundHistoryData = {}; // { code: { navs: [{date,nav}], trend:{} } }
-let _aiKey = localStorage.getItem('fa_302ai_key') || '';
+let _aiKey = getStoredApiKey();
 let _analyzing = false;
 let _analysisResult = null;
 let _addMode = 'holding';
@@ -2352,7 +2368,7 @@ const BT_RISK_FREE = 0.025; // 年化无风险利率
 
 function saveHoldings(){ localStorage.setItem('fa_holdings', JSON.stringify(holdings)); }
 function saveWatchlist(){ localStorage.setItem('fa_watchlist', JSON.stringify(watchlist)); }
-function saveKey(k){ _aiKey=k; localStorage.setItem('fa_302ai_key', k); }
+function saveKey(k){ _aiKey=k; localStorage.setItem(AI_KEY_PRIMARY_STORAGE, k); }
 function saveDailyLog(){ localStorage.setItem('fa_daily_log', JSON.stringify(dailyLog.slice(-30))); } // 最多保留30天
 function saveProvider(id){
   _aiProviderId=id;
@@ -2730,7 +2746,7 @@ async function translateGlobalNews(){
   if(!globalNews.length || _gnTranslating) return;
   if(globalNews[0].titleCN) return;
   // 实时读取key，因为页面初始化时可能还没设置
-  const key = _aiKey || localStorage.getItem('fa_302ai_key') || '';
+  const key = _aiKey || getStoredApiKey() || '';
   if(!key){ console.warn('[GlobalNews] 无API Key，跳过翻译'); return; }
   _gnTranslating = true;
   const titles = globalNews.slice(0,30).map((n,i)=>`${i+1}. ${n.title}`).join('\n');
@@ -2738,7 +2754,7 @@ async function translateGlobalNews(){
   try {
     console.log('[GlobalNews] 开始翻译', globalNews.length, '条新闻, model=', model, 'apiBase=', _apiBase);
     // 确保_aiKey有值
-    if(!_aiKey) _aiKey = localStorage.getItem('fa_302ai_key') || '';
+    if(!_aiKey) _aiKey = getStoredApiKey() || '';
     const resp = await callAI(model, '你是专业的新闻翻译员，请将英文新闻标题逐条翻译为简洁准确的中文，每条一行，保持编号。', `请将以下英文新闻标题逐条翻译为中文，保持编号格式(如 1. xxx)，每条一行，只输出翻译，不加解释：\n\n${titles}`, 0.3);
     console.log('[GlobalNews] 翻译API返回:', resp?.slice(0,200));
     if(resp){
@@ -2776,7 +2792,7 @@ async function summarizeGlobalNewsAI(){
   if(!globalNews.length) return;
   if(globalNewsSummary) return;
   // 实时读取key
-  if(!_aiKey) _aiKey = localStorage.getItem('fa_302ai_key') || '';
+  if(!_aiKey) _aiKey = getStoredApiKey() || '';
   if(!_aiKey){ console.warn('[GlobalNews] 无API Key，跳过AI摘要'); return; }
   const headlines = globalNews.slice(0,20).map((n,i)=>`${i+1}. [${n.source}] ${n.title}${n.description?' — '+n.description.slice(0,80):''}`).join('\n');
   const prompt = `你是一位资深国际政治经济分析师，专注于全球宏观形势对中国资本市场的影响分析。
@@ -6021,6 +6037,7 @@ function renderMarketSummary(){
 // ==================== UI ACTIONS ====================
 async function triggerAI(){
   if(_analyzing) return;
+  if(!_aiKey) _aiKey = getStoredApiKey();
   if(!_aiKey){ alert('请先在设置中配置API Key'); return; }
   if(holdings.length===0 && watchlist.length===0){ alert('请先添加持仓或自选基金'); return; }
 
@@ -7938,7 +7955,7 @@ function syncSimFromHoldings(){
   const urlKey = params.get('key') || hashParams.get('key');
   if(urlKey){
     _aiKey = urlKey;
-    localStorage.setItem('fa_302ai_key', urlKey);
+    localStorage.setItem(AI_KEY_PRIMARY_STORAGE, urlKey);
     console.log('[Init] API Key set from URL');
     // 清除URL中的key
     history.replaceState(null, '', location.pathname);
