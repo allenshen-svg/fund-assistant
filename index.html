@@ -721,6 +721,15 @@ body { font-family:-apple-system,BlinkMacSystemFont,'SF Pro','PingFang SC','Helv
   <div id="review-history" style="display:none"></div>
 </div>
 
+<!-- Prediction Tracker -->
+<div class="section" id="pred-tracker-section">
+  <div class="section-title" style="cursor:pointer" onclick="document.getElementById('pred-tracker-container').style.display=document.getElementById('pred-tracker-container').style.display==='none'?'':'none';this.querySelector('.toggle-arrow').textContent=document.getElementById('pred-tracker-container').style.display==='none'?'▶':'▼'">
+    📊 预测追踪 <span style="font-size:10px;color:var(--sub);font-weight:400">14:50快照 → 次日验证</span>
+    <span class="toggle-arrow" style="float:right;font-size:10px;color:var(--sub)">▼</span>
+  </div>
+  <div id="pred-tracker-container" style="padding:0 14px 10px"></div>
+</div>
+
 
 
 <!-- Watchlist Signals -->
@@ -963,6 +972,14 @@ let _refreshTimer = null;
 let _countdownTimer = null;
 let dailyLog = JSON.parse(localStorage.getItem('fa_daily_log')||'[]'); // [{date, predictions:{code:{action,confidence,trend,reason}}, pnl:{code:pct}, avgPnl, hs300Pct}]
 let simPortfolio = JSON.parse(localStorage.getItem('fa_sim_portfolio')||'null');
+
+// ==================== 预测追踪系统 (Prediction Tracker) ====================
+const PRED_TRACKER_KEY = 'fa_prediction_tracker';
+let predictionTracker = JSON.parse(localStorage.getItem(PRED_TRACKER_KEY)||'[]');
+// [{date, timestamp, holdings:{code:{name,type,action,actionLabel,score,confidence,
+//   aiVote,rlVote,btVote,buyVotes,sellVotes,gszzl,dwjz,gsz,rsi,geoBias,briefReason}},
+//   overallScore, overallLabel, verified, verification}]
+let _predSnapshotDoneToday = !!predictionTracker.find(p => p.date === new Date().toISOString().slice(0,10)); // 防止重复快照
 const SIM_INITIAL_CAPITAL = 500000;
 const SIM_TARGET_MONTHLY = 10000;
 const SIM_FEE_RATE = 0.0015;
@@ -6845,6 +6862,482 @@ function clearAllData(){
   location.reload();
 }
 
+function clearAllData(){
+  if(!confirm('确认清除所有数据？(持仓、自选、分析结果等)')) return;
+  localStorage.removeItem('fa_holdings');
+  localStorage.removeItem('fa_watchlist');
+  localStorage.removeItem('fa_lastAnalysis');
+  localStorage.removeItem('fa_lastReco');
+  localStorage.removeItem('fa_daily_log');
+  localStorage.removeItem('fa_sim_portfolio');
+  localStorage.removeItem(PRED_TRACKER_KEY);
+  location.reload();
+}
+
+// ==================== 预测追踪系统 (2:50 PM Snapshot + Next-Day Verification) ====================
+
+function savePredictionTracker(){ localStorage.setItem(PRED_TRACKER_KEY, JSON.stringify(predictionTracker.slice(-60))); }
+
+/** 获取前一个交易日 */
+function getPrevTradingDay(dateStr){
+  const d = new Date(dateStr + 'T12:00:00');
+  for(let i = 0; i < 10; i++){
+    d.setDate(d.getDate() - 1);
+    const s = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    if(isTradingDay(s)) return s;
+  }
+  return null;
+}
+
+/** 获取下一个交易日 */
+function getNextTradingDay(dateStr){
+  const d = new Date(dateStr + 'T12:00:00');
+  for(let i = 0; i < 10; i++){
+    d.setDate(d.getDate() + 1);
+    const s = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    if(isTradingDay(s)) return s;
+  }
+  return null;
+}
+
+/**
+ * 14:50 快照：记录每只持仓的三引擎建议
+ * @param {boolean} manual 是否手动触发(绕过时间检查)
+ */
+function snapshotPredictions(manual = false){
+  if(holdings.length === 0){ if(manual) alert('无持仓，无法记录'); return; }
+  const today = todayStr();
+  const now = new Date();
+  const hhmm = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+
+  // 不是交易日不记录
+  if(!isTradingDay(today) && !manual){ return; }
+
+  // 今日已记录过
+  if(predictionTracker.find(p => p.date === today)){
+    if(manual && !confirm('今日已有记录，覆盖？')) return;
+    predictionTracker = predictionTracker.filter(p => p.date !== today);
+  }
+
+  // 采集每只持仓快照
+  const holdingsSnap = {};
+  let totalScore = 0;
+  holdings.forEach(h => {
+    const vote = getTriEngineVote(h.code);
+    const fd = getFundData(h.code);
+    const btR = btResults[h.code];
+    holdingsSnap[h.code] = {
+      name: h.name || fundName(h.code),
+      type: h.type || fundType(h.code),
+      action: vote.action,                 // buy/sell/hold
+      actionLabel: vote.actionLabel,
+      score: +vote.score.toFixed(3),
+      confidence: Math.round(vote.effConf || 0),
+      aiVote: vote.ai.vote,
+      aiConf: vote.ai.conf,
+      rlVote: vote.rl.vote,
+      rlConf: vote.rl.conf,
+      btVote: vote.bt.vote,
+      btConf: vote.bt.conf,
+      buyVotes: vote.buyVotes,
+      sellVotes: vote.sellVotes,
+      consensusMult: +vote.consensusMult.toFixed(2),
+      gszzl: +(fd?.gszzl || 0).toFixed(2),   // 快照时今日估算涨幅
+      dwjz: fd?.dwjz || 0,                    // 昨收净值
+      gsz: fd?.gsz || 0,                      // 估算净值
+      rsi: btR?.lastRSI ? +btR.lastRSI.toFixed(1) : null,
+      geoBias: +vote.geoBias.toFixed(3),
+      sotStatus: vote.sotStatus || 'normal',
+      crowdingPenalty: vote.crowdingPenalty || 0,
+      contrarianBonus: vote.contrarianBonus || 0,
+    };
+    totalScore += vote.score;
+  });
+
+  const avgScore = totalScore / holdings.length;
+  const overallScore = Math.round(Math.max(0, Math.min(100, 50 + avgScore * 50)));
+  let overallLabel = '中性观望';
+  if(overallScore >= 70) overallLabel = '积极加仓';
+  else if(overallScore >= 58) overallLabel = '偏多持有';
+  else if(overallScore >= 42) overallLabel = '中性观望';
+  else if(overallScore >= 30) overallLabel = '偏空谨慎';
+  else overallLabel = '防御减仓';
+
+  const entry = {
+    date: today,
+    timestamp: hhmm,
+    holdings: holdingsSnap,
+    overallScore,
+    overallLabel,
+    verified: false,
+    verification: null
+  };
+
+  predictionTracker.push(entry);
+  savePredictionTracker();
+  _predSnapshotDoneToday = true;
+
+  console.log(`[预测追踪] ✅ ${today} ${hhmm} 快照完成: ${Object.keys(holdingsSnap).length}只基金, 综合${overallScore}(${overallLabel})`);
+  if(manual) renderPredictionTracker();
+  return entry;
+}
+
+/**
+ * 验证前一个交易日的预测：用今日收盘数据比对
+ */
+function verifyPredictions(){
+  const today = todayStr();
+  if(!isTradingDay(today)) return;
+
+  // 找到最近一个未验证的记录(应该是昨天/上一个交易日)
+  const prevDay = getPrevTradingDay(today);
+  if(!prevDay) return;
+  const entry = predictionTracker.find(p => p.date === prevDay && !p.verified);
+  if(!entry) return;
+
+  const results = {};
+  let correct = 0, wrong = 0, neutral = 0, total = 0;
+  let totalPredReturn = 0, countPred = 0;
+
+  Object.entries(entry.holdings).forEach(([code, pred]) => {
+    const fd = getFundData(code);
+    const nextDayPct = +(fd?.gszzl || 0).toFixed(2);
+    total++;
+
+    let verdict = 'neutral';
+    let lesson = '';
+    const predAction = pred.action;
+
+    if(predAction === 'buy'){
+      if(nextDayPct > 0.3){ verdict = 'correct'; correct++; }
+      else if(nextDayPct < -0.3){ verdict = 'wrong'; wrong++; lesson = `建议加仓但次日跌${nextDayPct}%`; }
+      else { verdict = 'neutral'; neutral++; }
+    } else if(predAction === 'sell'){
+      if(nextDayPct < -0.3){ verdict = 'correct'; correct++; }
+      else if(nextDayPct > 0.3){ verdict = 'wrong'; wrong++; lesson = `建议减仓但次日涨+${nextDayPct}%`; }
+      else { verdict = 'neutral'; neutral++; }
+    } else { // hold
+      if(Math.abs(nextDayPct) < 1){ verdict = 'correct'; correct++; }
+      else if(nextDayPct < -1.5){ verdict = 'wrong'; wrong++; lesson = `建议持有但次日跌${nextDayPct}%`; }
+      else if(nextDayPct > 2){ verdict = 'neutral'; neutral++; lesson = `持有中涨${nextDayPct}%，未建议加仓`; }
+      else { verdict = 'neutral'; neutral++; }
+    }
+
+    // 计算假设收益: buy→次日涨幅, sell→-次日涨幅, hold→0
+    const hypotheticalRet = predAction === 'buy' ? nextDayPct : predAction === 'sell' ? -nextDayPct : 0;
+    totalPredReturn += hypotheticalRet;
+    countPred += (predAction !== 'hold') ? 1 : 0;
+
+    results[code] = {
+      name: pred.name,
+      type: pred.type,
+      predAction,
+      predActionLabel: pred.actionLabel,
+      predScore: pred.score,
+      predAiVote: pred.aiVote,
+      predRlVote: pred.rlVote,
+      predBtVote: pred.btVote,
+      prevDayPct: pred.gszzl,        // 预测当天的涨幅
+      nextDayPct,                    // 次日实际涨幅
+      verdict,
+      lesson,
+      hypotheticalRet: +hypotheticalRet.toFixed(2),
+    };
+  });
+
+  const accuracy = total > 0 ? Math.round(correct / total * 100) : 0;
+  const avgPredReturn = countPred > 0 ? +(totalPredReturn / countPred).toFixed(2) : 0;
+
+  // HS300 作为基准
+  const hs300 = getIndexData(INDICES_CONFIG[3]);
+  const hs300Pct = +(hs300?.pct || 0).toFixed(2);
+
+  entry.verified = true;
+  entry.verification = {
+    verifyDate: today,
+    results,
+    accuracy,
+    correctCount: correct,
+    wrongCount: wrong,
+    neutralCount: neutral,
+    totalCount: total,
+    avgPredReturn,
+    hs300Pct,
+    beatBenchmark: avgPredReturn > hs300Pct,
+  };
+
+  savePredictionTracker();
+  console.log(`[预测追踪] 📊 验证完成: ${prevDay}预测 → ${today}验证, 准确率${accuracy}% (${correct}对/${wrong}错/${neutral}平)`);
+  return entry;
+}
+
+/**
+ * 获取追踪器汇总统计
+ */
+function getPredTrackerStats(){
+  const verified = predictionTracker.filter(p => p.verified && p.verification);
+  if(verified.length === 0) return null;
+
+  let totalCorrect = 0, totalWrong = 0, totalNeutral = 0, totalCount = 0;
+  let totalReturn = 0, returnDays = 0;
+  let aiCorrect = 0, aiTotal = 0, rlCorrect = 0, rlTotal = 0, btCorrect = 0, btTotal = 0;
+  const dailyAccuracies = [];
+
+  verified.forEach(entry => {
+    const v = entry.verification;
+    totalCorrect += v.correctCount;
+    totalWrong += v.wrongCount;
+    totalNeutral += v.neutralCount;
+    totalCount += v.totalCount;
+    if(v.avgPredReturn !== 0){ totalReturn += v.avgPredReturn; returnDays++; }
+    dailyAccuracies.push(v.accuracy);
+
+    // 分引擎统计
+    Object.entries(v.results).forEach(([code, r]) => {
+      const snap = entry.holdings[code];
+      if(!snap) return;
+      const dir = r.nextDayPct > 0.3 ? 1 : r.nextDayPct < -0.3 ? -1 : 0;
+      // AI
+      const aiDir = snap.aiVote > 0 ? 1 : snap.aiVote < 0 ? -1 : 0;
+      aiTotal++;
+      if(aiDir === dir || (aiDir === 0 && Math.abs(r.nextDayPct) < 1)) aiCorrect++;
+      // RL
+      const rlDir = snap.rlVote > 0 ? 1 : snap.rlVote < 0 ? -1 : 0;
+      rlTotal++;
+      if(rlDir === dir || (rlDir === 0 && Math.abs(r.nextDayPct) < 1)) rlCorrect++;
+      // BT
+      const btDir = snap.btVote > 0 ? 1 : snap.btVote < 0 ? -1 : 0;
+      btTotal++;
+      if(btDir === dir || (btDir === 0 && Math.abs(r.nextDayPct) < 1)) btCorrect++;
+    });
+  });
+
+  const overallAcc = totalCount > 0 ? Math.round(totalCorrect / totalCount * 100) : 0;
+  const avgDailyAcc = dailyAccuracies.length > 0 ? Math.round(dailyAccuracies.reduce((s,v)=>s+v,0) / dailyAccuracies.length) : 0;
+  const avgReturn = returnDays > 0 ? +(totalReturn / returnDays).toFixed(2) : 0;
+
+  return {
+    totalDays: verified.length,
+    overallAccuracy: overallAcc,
+    avgDailyAccuracy: avgDailyAcc,
+    totalCorrect, totalWrong, totalNeutral, totalCount,
+    avgReturn,
+    aiAccuracy: aiTotal > 0 ? Math.round(aiCorrect / aiTotal * 100) : null,
+    rlAccuracy: rlTotal > 0 ? Math.round(rlCorrect / rlTotal * 100) : null,
+    btAccuracy: btTotal > 0 ? Math.round(btCorrect / btTotal * 100) : null,
+    recentAccuracies: dailyAccuracies.slice(-10),
+  };
+}
+
+/**
+ * 渲染预测追踪 UI
+ */
+function renderPredictionTracker(){
+  const container = document.getElementById('pred-tracker-container');
+  if(!container) return;
+
+  const stats = getPredTrackerStats();
+  const today = todayStr();
+  const todayEntry = predictionTracker.find(p => p.date === today);
+  const latestVerified = [...predictionTracker].reverse().find(p => p.verified && p.verification);
+
+  let html = '';
+
+  // === 操作栏 ===
+  html += `<div style="display:flex;gap:6px;align-items:center;margin-bottom:8px;flex-wrap:wrap">`;
+  html += `<button onclick="snapshotPredictions(true)" style="padding:4px 10px;border-radius:6px;border:1px solid var(--border);background:rgba(59,130,246,0.15);color:#60a5fa;font-size:11px;cursor:pointer">📸 手动快照</button>`;
+  html += `<button onclick="verifyAndRender()" style="padding:4px 10px;border-radius:6px;border:1px solid var(--border);background:rgba(34,197,94,0.15);color:#4ade80;font-size:11px;cursor:pointer">✅ 手动验证</button>`;
+  if(todayEntry) html += `<span style="font-size:10px;color:#4ade80">✓ 今日已记录 (${todayEntry.timestamp})</span>`;
+  else html += `<span style="font-size:10px;color:var(--sub)">今日未记录 (14:50自动)</span>`;
+  html += `</div>`;
+
+  // === 汇总统计 ===
+  if(stats){
+    const accColor = stats.overallAccuracy >= 65 ? '#4ade80' : stats.overallAccuracy >= 45 ? '#fbbf24' : '#f87171';
+    const retColor = stats.avgReturn >= 0 ? '#f87171' : '#4ade80';
+    html += `<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px">`;
+    html += `<div style="text-align:center;padding:8px 4px;background:rgba(255,255,255,0.03);border-radius:8px">`;
+    html += `<div style="font-size:20px;font-weight:800;color:${accColor}">${stats.overallAccuracy}%</div>`;
+    html += `<div style="font-size:9px;color:var(--sub)">总准确率</div></div>`;
+    html += `<div style="text-align:center;padding:8px 4px;background:rgba(255,255,255,0.03);border-radius:8px">`;
+    html += `<div style="font-size:20px;font-weight:800;color:${retColor}">${stats.avgReturn >= 0?'+':''}${stats.avgReturn}%</div>`;
+    html += `<div style="font-size:9px;color:var(--sub)">日均收益</div></div>`;
+    html += `<div style="text-align:center;padding:8px 4px;background:rgba(255,255,255,0.03);border-radius:8px">`;
+    html += `<div style="font-size:20px;font-weight:800;color:var(--text)">${stats.totalDays}</div>`;
+    html += `<div style="font-size:9px;color:var(--sub)">追踪天数</div></div>`;
+    html += `<div style="text-align:center;padding:8px 4px;background:rgba(255,255,255,0.03);border-radius:8px">`;
+    html += `<div style="font-size:16px;font-weight:700;color:var(--text)">${stats.totalCorrect}<span style="font-size:10px;color:var(--sub)">/${stats.totalCount}</span></div>`;
+    html += `<div style="font-size:9px;color:var(--sub)">正确/总数</div></div>`;
+    html += `</div>`;
+
+    // 三引擎分别准确率
+    html += `<div style="display:flex;gap:6px;margin-bottom:10px">`;
+    [{name:'🤖AI', acc:stats.aiAccuracy}, {name:'🧠RL', acc:stats.rlAccuracy}, {name:'📈BT', acc:stats.btAccuracy}].forEach(eng => {
+      const c = eng.acc === null ? 'var(--sub)' : eng.acc >= 60 ? '#4ade80' : eng.acc >= 40 ? '#fbbf24' : '#f87171';
+      html += `<div style="flex:1;text-align:center;padding:4px;background:rgba(255,255,255,0.03);border-radius:6px">`;
+      html += `<span style="font-size:10px">${eng.name}</span> `;
+      html += `<span style="font-size:13px;font-weight:700;color:${c}">${eng.acc !== null ? eng.acc+'%' : '--'}</span>`;
+      html += `</div>`;
+    });
+    html += `</div>`;
+
+    // 准确率趋势小图
+    if(stats.recentAccuracies.length >= 2){
+      html += renderAccuracyTrendChart(stats.recentAccuracies);
+    }
+  } else {
+    html += `<div style="text-align:center;padding:16px;color:var(--sub);font-size:11px">暂无验证数据<br>每个交易日14:50自动记录，次日收盘后自动验证</div>`;
+  }
+
+  // === 最新验证详情 ===
+  if(latestVerified){
+    const v = latestVerified.verification;
+    const accColor = v.accuracy >= 65 ? '#4ade80' : v.accuracy >= 45 ? '#fbbf24' : '#f87171';
+    html += `<div style="margin-top:8px;padding:8px 10px;background:rgba(255,255,255,0.02);border-radius:8px;border:1px solid var(--border)">`;
+    html += `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">`;
+    html += `<span style="font-size:11px;font-weight:600;color:var(--text)">📋 最近验证: ${latestVerified.date} → ${v.verifyDate}</span>`;
+    html += `<span style="font-size:12px;font-weight:700;color:${accColor}">${v.accuracy}%</span>`;
+    html += `</div>`;
+
+    // 逐基金结果
+    const sortedResults = Object.entries(v.results).sort((a,b) => {
+      const o = {wrong:0, correct:1, neutral:2};
+      return (o[a[1].verdict]||2) - (o[b[1].verdict]||2);
+    });
+    sortedResults.forEach(([code, r]) => {
+      const verdictIcon = r.verdict === 'correct' ? '✅' : r.verdict === 'wrong' ? '❌' : '➖';
+      const predIcon = r.predAction === 'buy' ? '🔴加仓' : r.predAction === 'sell' ? '🟢减仓' : '⚪持有';
+      const actColor = r.nextDayPct >= 0 ? '#f87171' : '#4ade80';
+      html += `<div style="display:flex;align-items:center;gap:4px;padding:3px 0;border-bottom:1px solid rgba(255,255,255,0.04);font-size:10px">`;
+      html += `<span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0">${r.name}</span>`;
+      html += `<span style="min-width:50px;text-align:center">${predIcon}</span>`;
+      html += `<span style="min-width:45px;text-align:right;color:${actColor};font-weight:600">${r.nextDayPct>=0?'+':''}${r.nextDayPct}%</span>`;
+      html += `<span style="min-width:20px;text-align:center">${verdictIcon}</span>`;
+      html += `</div>`;
+      if(r.lesson){
+        html += `<div style="font-size:9px;color:#f59e0b;padding:1px 0 3px 8px">💡 ${r.lesson}</div>`;
+      }
+    });
+
+    // 假设收益 vs 基准
+    if(v.avgPredReturn !== 0 || v.hs300Pct !== 0){
+      const rColor = v.avgPredReturn >= 0 ? '#f87171' : '#4ade80';
+      const hColor = v.hs300Pct >= 0 ? '#f87171' : '#4ade80';
+      html += `<div style="display:flex;gap:8px;margin-top:6px;font-size:10px;color:var(--sub)">`;
+      html += `<span>策略收益: <b style="color:${rColor}">${v.avgPredReturn>=0?'+':''}${v.avgPredReturn}%</b></span>`;
+      html += `<span>沪深300: <b style="color:${hColor}">${v.hs300Pct>=0?'+':''}${v.hs300Pct}%</b></span>`;
+      html += `<span>${v.beatBenchmark ? '🏆跑赢' : '📉跑输'}基准</span>`;
+      html += `</div>`;
+    }
+    html += `</div>`;
+  }
+
+  // === 历史记录(最近10条) ===
+  const recentEntries = predictionTracker.slice().reverse().slice(0, 10);
+  if(recentEntries.length > 0){
+    html += `<div style="margin-top:10px">`;
+    html += `<div style="font-size:11px;font-weight:600;color:var(--text);margin-bottom:4px;cursor:pointer" onclick="document.getElementById('pred-history-list').style.display=document.getElementById('pred-history-list').style.display==='none'?'':'none'">📅 历史记录 (${predictionTracker.length}天) ▾</div>`;
+    html += `<div id="pred-history-list" style="display:none">`;
+    recentEntries.forEach(entry => {
+      const isVerified = entry.verified && entry.verification;
+      const acc = isVerified ? entry.verification.accuracy : null;
+      const accColor = acc !== null ? (acc >= 65 ? '#4ade80' : acc >= 45 ? '#fbbf24' : '#f87171') : 'var(--sub)';
+      const fundCount = Object.keys(entry.holdings).length;
+      const buys = Object.values(entry.holdings).filter(h => h.action === 'buy').length;
+      const sells = Object.values(entry.holdings).filter(h => h.action === 'sell').length;
+      html += `<div style="display:flex;align-items:center;gap:4px;padding:5px 2px;border-bottom:1px solid var(--border);font-size:10px">`;
+      html += `<span style="min-width:70px;color:var(--sub)">${entry.date}</span>`;
+      html += `<span style="min-width:35px">${entry.timestamp}</span>`;
+      html += `<span style="min-width:30px;font-weight:600">${entry.overallScore}</span>`;
+      html += `<span style="min-width:50px;font-size:9px">${buys}买${sells}卖</span>`;
+      html += `<span style="flex:1;text-align:right;font-weight:600;color:${accColor}">${isVerified ? acc+'%' : '⏳待验证'}</span>`;
+      html += `</div>`;
+    });
+    html += `</div></div>`;
+  }
+
+  container.innerHTML = html;
+}
+
+/** 准确率趋势小图 */
+function renderAccuracyTrendChart(accuracies){
+  if(!accuracies || accuracies.length < 2) return '';
+  const h = 40, w = 100;
+  const max = 100, min = 0;
+  let pts = '';
+  for(let i = 0; i < accuracies.length; i++){
+    const x = (i / (accuracies.length - 1)) * w;
+    const y = h - (accuracies[i] / 100) * h;
+    pts += `${x.toFixed(1)},${y.toFixed(1)} `;
+  }
+  // 50% baseline
+  const baseY = h * 0.5;
+  let s = `<div style="position:relative;height:${h+8}px;margin-bottom:6px">`;
+  s += `<svg viewBox="0 0 ${w} ${h+4}" preserveAspectRatio="none" style="width:100%;height:100%">`;
+  s += `<line x1="0" y1="${baseY}" x2="${w}" y2="${baseY}" stroke="rgba(255,255,255,0.1)" stroke-dasharray="2,2"/>`;
+  s += `<defs><linearGradient id="accGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#4ade80" stop-opacity="0.2"/><stop offset="100%" stop-color="#4ade80" stop-opacity="0.02"/></linearGradient></defs>`;
+  s += `<polygon points="0,${h+2} ${pts.trim()} ${w},${h+2}" fill="url(#accGrad)"/>`;
+  s += `<polyline points="${pts.trim()}" fill="none" stroke="#4ade80" stroke-width="1.5"/>`;
+  // dots
+  for(let i = 0; i < accuracies.length; i++){
+    const x = (i / (accuracies.length - 1)) * w;
+    const y = h - (accuracies[i] / 100) * h;
+    const c = accuracies[i] >= 60 ? '#4ade80' : accuracies[i] >= 40 ? '#fbbf24' : '#f87171';
+    s += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="2" fill="${c}"/>`;
+  }
+  s += `</svg>`;
+  s += `<div style="position:absolute;top:1px;left:4px;font-size:8px;color:var(--sub)">准确率趋势</div>`;
+  s += `<div style="position:absolute;bottom:1px;right:4px;font-size:8px;color:#4ade80">${accuracies[accuracies.length-1]}%</div>`;
+  s += `</div>`;
+  return s;
+}
+
+/** 手动验证 + 渲染 */
+function verifyAndRender(){
+  const result = verifyPredictions();
+  renderPredictionTracker();
+  if(result) alert(`验证完成: ${result.date}预测 → 准确率${result.verification.accuracy}%`);
+  else alert('没有需要验证的记录 (需要前一交易日有快照 + 今日为交易日)');
+}
+
+/** 14:50 自动快照检查 (由30s定时器调用) */
+function checkAutoSnapshot(){
+  const now = new Date();
+  const h = now.getHours(), m = now.getMinutes();
+  const today = todayStr();
+
+  // 仅在交易日14:49~14:52之间自动快照
+  if(!isTradingDay(today)) return;
+  if(h !== 14 || m < 49 || m > 52) return;
+  if(_predSnapshotDoneToday) return;
+  if(predictionTracker.find(p => p.date === today)) return;
+  if(holdings.length === 0) return;
+
+  console.log('[预测追踪] ⏰ 14:50 自动快照触发');
+  snapshotPredictions(false);
+  renderPredictionTracker();
+}
+
+/** 自动验证检查 (页面加载 + 定时器14:55后调用) */
+function checkAutoVerify(){
+  const now = new Date();
+  const h = now.getHours(), m = now.getMinutes();
+  const today = todayStr();
+
+  if(!isTradingDay(today)) return;
+  // 14:55后 (收盘前或收盘后) 进行验证
+  if(h * 60 + m < 895) return; // 14:55 = 895
+
+  const prevDay = getPrevTradingDay(today);
+  if(!prevDay) return;
+  const entry = predictionTracker.find(p => p.date === prevDay && !p.verified);
+  if(!entry) return;
+
+  console.log(`[预测追踪] 🔄 自动验证: ${prevDay} → ${today}`);
+  verifyPredictions();
+  renderPredictionTracker();
+}
+
 // ==================== DAILY REVIEW SYSTEM ====================
 // 保存今日AI预测快照
 function saveTodayPredictions(){
@@ -8402,6 +8895,9 @@ function startTimers(){
       // 刷新宏观数据（资金流和新闻每30s更新）
       fetchSectorCapFlow().catch(()=>{});
       fetchNewsHeadlines().catch(()=>{});
+      // 预测追踪: 14:50自动快照 + 14:55后自动验证
+      checkAutoSnapshot();
+      checkAutoVerify();
     }
   }, 30000);
 }
@@ -8425,6 +8921,11 @@ function startTimers(){
 
   generateDailyReview();
   renderReview();
+
+  // 预测追踪: 页面加载时渲染 + 自动验证
+  renderPredictionTracker();
+  // 延迟3s后自动验证(等待数据就绪)
+  setTimeout(()=>{ checkAutoVerify(); renderPredictionTracker(); }, 3000);
 
   // 初始化RL训练器（尝试加载已保存模型）
   rlTrainer = new RLTrainer();
