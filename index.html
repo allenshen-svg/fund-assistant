@@ -5179,12 +5179,11 @@ function generateSmartReason(p, capFlow, ds){
     engineSection += `，历史准确率${(vote.rl.accuracy * 100).toFixed(0)}%，权重${vote.engineWeights.rl}`;
     engineSection += '<br>';
   }
-  // 回测引擎详述 — 仅在有实质数据时展示
+  // 回测引擎详述 — 仅在有明确方向性信号(买/卖)时展示，中性/无信号隐藏
   {
     const bt = vote.bt;
     const rsi = bt.rsi;
-    const hasMeaningfulBT = bt.vote !== 0 || bt.sharpe !== 0 || bt.winRate > 0 || rsi < 30 || rsi > 70 || bt.kelly > 0.01;
-    if(hasMeaningfulBT){
+    if(bt.vote !== 0){
       const btDir = bt.vote > 0 ? '看多' : bt.vote < 0 ? '看空' : '中性';
       const rsiZone = rsi > 80 ? '极度超买🔴' : rsi > 70 ? '超买区⚠️' : rsi > 55 ? '偏强' : rsi > 45 ? '中性' : rsi > 30 ? '偏弱' : rsi > 20 ? '超卖区⚡' : '极度超卖💎';
       const sharpeDesc = bt.sharpe > 1.5 ? '优秀' : bt.sharpe > 0.8 ? '良好' : bt.sharpe > 0.3 ? '尚可' : bt.sharpe > 0 ? '偏弱' : '为负';
