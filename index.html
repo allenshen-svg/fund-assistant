@@ -5179,18 +5179,22 @@ function generateSmartReason(p, capFlow, ds){
     engineSection += `，历史准确率${(vote.rl.accuracy * 100).toFixed(0)}%，权重${vote.engineWeights.rl}`;
     engineSection += '<br>';
   }
-  // 回测引擎详述
+  // 回测引擎详述 — 仅在有实质数据时展示
   {
-    const btDir = vote.bt.vote > 0 ? '看多' : vote.bt.vote < 0 ? '看空' : '中性';
-    const rsi = vote.bt.rsi;
-    const rsiZone = rsi > 80 ? '极度超买🔴' : rsi > 70 ? '超买区⚠️' : rsi > 55 ? '偏强' : rsi > 45 ? '中性' : rsi > 30 ? '偏弱' : rsi > 20 ? '超卖区⚡' : '极度超卖💎';
-    const sharpeDesc = vote.bt.sharpe > 1.5 ? '优秀' : vote.bt.sharpe > 0.8 ? '良好' : vote.bt.sharpe > 0.3 ? '尚可' : vote.bt.sharpe > 0 ? '偏弱' : '为负';
-    engineSection += `<b>📈回测引擎</b>: ${btDir}，RSI=${rsi.toFixed(0)}(${rsiZone})，Sharpe=${vote.bt.sharpe.toFixed(2)}(${sharpeDesc})，Sortino=${vote.bt.sortino.toFixed(2)}`;
-    if(vote.bt.winRate > 0) engineSection += `，历史胜率${(vote.bt.winRate * 100).toFixed(0)}%`;
-    if(vote.bt.maxDD < 0) engineSection += `，最大回撤${(vote.bt.maxDD * 100).toFixed(1)}%`;
-    engineSection += `，Kelly建议仓位${(vote.bt.kelly * 100).toFixed(1)}%`;
-    engineSection += `，权重${vote.engineWeights.bt}`;
-    engineSection += '<br>';
+    const bt = vote.bt;
+    const rsi = bt.rsi;
+    const hasMeaningfulBT = bt.vote !== 0 || bt.sharpe !== 0 || bt.winRate > 0 || rsi < 30 || rsi > 70 || bt.kelly > 0.01;
+    if(hasMeaningfulBT){
+      const btDir = bt.vote > 0 ? '看多' : bt.vote < 0 ? '看空' : '中性';
+      const rsiZone = rsi > 80 ? '极度超买🔴' : rsi > 70 ? '超买区⚠️' : rsi > 55 ? '偏强' : rsi > 45 ? '中性' : rsi > 30 ? '偏弱' : rsi > 20 ? '超卖区⚡' : '极度超卖💎';
+      const sharpeDesc = bt.sharpe > 1.5 ? '优秀' : bt.sharpe > 0.8 ? '良好' : bt.sharpe > 0.3 ? '尚可' : bt.sharpe > 0 ? '偏弱' : '为负';
+      engineSection += `<b>📈回测引擎</b>: ${btDir}，RSI=${rsi.toFixed(0)}(${rsiZone})，Sharpe=${bt.sharpe.toFixed(2)}(${sharpeDesc})，Sortino=${bt.sortino.toFixed(2)}`;
+      if(bt.winRate > 0) engineSection += `，历史胜率${(bt.winRate * 100).toFixed(0)}%`;
+      if(bt.maxDD < 0) engineSection += `，最大回撤${(bt.maxDD * 100).toFixed(1)}%`;
+      engineSection += `，Kelly建议仓位${(bt.kelly * 100).toFixed(1)}%`;
+      engineSection += `，权重${vote.engineWeights.bt}`;
+      engineSection += '<br>';
+    }
   }
   // 共识判定
   const totalVotes = vote.buyVotes + vote.sellVotes;
@@ -5278,14 +5282,71 @@ function generateSmartReason(p, capFlow, ds){
   else if(vote.geoBias < -0.25) macroSection += (macroSection?'。':'') + `⚠️地缘事件形成强利空(偏置${vote.geoBias.toFixed(2)})，可能引发超预期下跌`;
   else if(vote.geoBias < -0.1) macroSection += (macroSection?'。':'') + `地缘事件偏利空(偏置${vote.geoBias.toFixed(2)})，需关注风险传导`;
 
-  // ========== Section 5: 拥挤度 & 逆向 ==========
+  // ========== Section 5: 拥挤度 & 逆向 (仅在触发时展示) ==========
   let crowdSection = '';
   if(vote.sotStatus === 'crowded') crowdSection = `⚠️该品种当前交易拥挤度较高，市场关注度过热，短期追涨风险大。Kelly仓位已按拥挤度因子(×${vote.crowdingPenalty.toFixed(2)})下调，减少过热板块暴露`;
   else if(vote.sotStatus === 'contrarian') crowdSection = `🎯该品种当前处于市场冷门区域，关注度低迷，具备逆向投资价值。Kelly仓位获得逆向奖励(×${vote.contrarianBonus.toFixed(2)})`;
 
-  // ========== Section 6: 风控约束 ==========
+  // ========== Section 6: 风控约束 (仅在约束生效时展示) ==========
   let riskSection = '';
   if(vote.riskMult < 0.8) riskSection += `⚠️组合风险约束生效: 当前组合整体风险偏高(风险评分${(vote.portRisk*100).toFixed(0)})，买入信号已被风控系统压缩(×${vote.riskMult.toFixed(2)})`;
+
+  // ========== Section 7: 顶级基金经理同赛道动向 ==========
+  let mgrSection = '';
+  {
+    // 匹配当前基金赛道与TOP50基金经理的投资方向
+    const fSectors = [];
+    if(fType) fSectors.push(...fType.split(/[/\/·、,，]/).map(s => s.trim()).filter(Boolean));
+    // 从持仓推断的行业也纳入匹配
+    const holdInfo = _fundHoldingsCache[code];
+    if(holdInfo?.sectorExposure){
+      Object.entries(holdInfo.sectorExposure).filter(([,w]) => w >= 0.1).forEach(([sec]) => {
+        if(!fSectors.includes(sec)) fSectors.push(sec);
+      });
+    }
+    if(fSectors.length > 0){
+      const relatedMgrs = [];
+      TOP50_FM_DIRECTIONS.forEach(function(m){
+        // 经理的sectors与基金赛道是否有交集
+        const overlap = m.sectors.filter(function(ms){
+          return fSectors.some(function(fs){
+            return ms.includes(fs) || fs.includes(ms)
+              || (fs === 'AI' && (ms === '计算机' || ms === '人工智能'))
+              || (fs === '科技' && (ms === '计算机' || ms === '电子' || ms === 'AI' || ms === '软件' || ms === '云计算'))
+              || (fs === '宽基' && (ms === '科技' || ms === '消费' || ms === '制造'))
+              || (fs === '蓝筹' && (ms === '消费' || ms === '白酒' || ms === '互联网' || ms === '金融'))
+              || (fs === 'QDII' && (ms === '港股' || ms === '互联网'))
+              || (fs === '金融' && (ms === '银行' || ms === '金融'))
+              || (fs === '消费' && (ms === '食品饮料' || ms === '家电' || ms === '消费'))
+              || (fs === '有色金属' && (ms === '有色金属' || ms === '资源' || ms === '周期'))
+              || (fs === '黄金' && (ms === '有色金属' || ms === '贵金属'))
+              || (fs === '红利' && (ms === '红利' || ms === '公用事业' || ms === '银行' || ms === '高股息'));
+          });
+        });
+        if(overlap.length > 0){
+          relatedMgrs.push({
+            name: m.name,
+            firm: m.firm,
+            aum: m.aum,
+            style: m.style,
+            recent: m.recent,
+            conviction: m.conviction,
+            overlapSectors: overlap
+          });
+        }
+      });
+      // 按conviction排序: 极高>高>中>低
+      const convOrder = {'极高':4,'高':3,'中':2,'低':1};
+      relatedMgrs.sort((a,b) => (convOrder[b.conviction]||0) - (convOrder[a.conviction]||0));
+      if(relatedMgrs.length > 0){
+        const top = relatedMgrs.slice(0, 4);
+        mgrSection = top.map(function(m){
+          const convIcon = m.conviction === '极高' ? '🔥' : m.conviction === '高' ? '💪' : '📌';
+          return `${convIcon}<b>${m.name}</b>(${m.firm}·${m.aum}·${m.style}): ${m.recent} [信心:${m.conviction}]`;
+        }).join('<br>');
+      }
+    }
+  }
 
   // ========== 汇总输出 ==========
   let reason = '';
@@ -5311,19 +5372,22 @@ function generateSmartReason(p, capFlow, ds){
   reason += '<br>';
 
   // 各分析维度(带clear标签)
-  reason += `<div style="margin-top:4px;padding:4px 8px;background:rgba(79,110,247,0.06);border-radius:6px;border-left:3px solid var(--primary);font-size:10px;line-height:1.6">`;
-  reason += engineSection;
-  if(techSection) reason += `<br><b>📉技术面</b>: ${techSection}`;
-  if(fundFlowSection) reason += `<br><b>💰资金面</b>: ${fundFlowSection}`;
-  if(macroSection) reason += `<br><b>🌐宏观&地缘</b>: ${macroSection}`;
-  if(crowdSection) reason += `<br><b>🎭拥挤度</b>: ${crowdSection}`;
-  if(riskSection) reason += `<br><b>🛡️风控</b>: ${riskSection}`;
+  // 组装分析维度 — 只展示有实质内容的模块
+  const sections = [];
+  if(engineSection.trim()) sections.push(engineSection);
+  if(techSection) sections.push(`<b>📉技术面</b>: ${techSection}`);
+  if(fundFlowSection) sections.push(`<b>💰资金面</b>: ${fundFlowSection}`);
+  if(macroSection) sections.push(`<b>🌐宏观&地缘</b>: ${macroSection}`);
+  if(mgrSection) sections.push(`<b>👔同赛道顶级经理</b>: ${mgrSection}`);
+  if(crowdSection) sections.push(`<b>🎭拥挤度</b>: ${crowdSection}`);
+  if(riskSection) sections.push(`<b>🛡️风控</b>: ${riskSection}`);
+  if(vote.ai.reason && vote.ai.conf > 0) sections.push(`<b>💬AI原文</b>: "${vote.ai.reason.slice(0, 200)}"`);
 
-  // AI原始分析引用
-  if(vote.ai.reason && vote.ai.conf > 0){
-    reason += `<br><b>💬AI原文</b>: "${vote.ai.reason.slice(0, 200)}"`;
+  if(sections.length > 0){
+    reason += `<div style="margin-top:4px;padding:4px 8px;background:rgba(79,110,247,0.06);border-radius:6px;border-left:3px solid var(--primary);font-size:10px;line-height:1.6">`;
+    reason += sections.join('<br>');
+    reason += '</div>';
   }
-  reason += '</div>';
 
   return reason;
 }
