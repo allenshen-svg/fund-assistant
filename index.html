@@ -733,13 +733,7 @@ body { font-family:-apple-system,BlinkMacSystemFont,'SF Pro','PingFang SC','Helv
   <div id="review-history" style="display:none"></div>
 </div>
 
-<!-- Action Signals -->
-<div class="section">
-  <div class="section-title">📋 今日操作信号 <span class="section-badge" id="signal-badge">等待分析</span></div>
-  <div id="signals-container">
-    <div class="empty"><div class="empty-icon">📥</div>添加持仓后，AI会给出今日操作建议</div>
-  </div>
-</div>
+
 
 <!-- Watchlist Signals -->
 <div class="section" id="watchlist-section" style="display:none">
@@ -4517,7 +4511,6 @@ function renderAll(){
   renderSimBrief();
   renderSOTBrief();
   renderActionGuide();
-  renderSignals();
   renderWatchlist();
   renderRecos();
   renderReview();
@@ -4627,7 +4620,7 @@ function addFromPortfolio(code, name, type, mode){
     saveWatchlist();
   }
   renderPortfolio();
-  renderSignals();
+  renderActionGuide();
   renderWatchlist();
 }
 
@@ -5880,11 +5873,11 @@ function renderActionGuide(){
   // 为每个持仓计算三引擎投票
   const plans = [];
   let totalBuy = 0, totalSell = 0, totalHold = 0;
-  holdings.forEach(h => {
+  holdings.forEach((h, hIdx) => {
     const vote = getTriEngineVote(h.code);
     const fd = getFundData(h.code);
     const td = fundHistoryData[h.code]?.trend;
-    plans.push({ code: h.code, fd, td, vote });
+    plans.push({ code: h.code, fd, td, vote, hIdx });
     if(vote.action === 'buy') totalBuy++;
     else if(vote.action === 'sell') totalSell++;
     else totalHold++;
@@ -6028,10 +6021,11 @@ function renderActionGuide(){
     const capFlow = getRelevantCapFlow(code);
     const trendInfo = getTrendLabel(td);
 
+    const holdIdx = p.hIdx;
     html += `<div class="ag-fund-card action-${vote.action}">`;
-    // 顶部: 基金名+动作+优先级
+    // 顶部: 基金名+动作+优先级+删除
     html += `<div class="ag-fund-top">`;
-    html += `<div><div class="ag-fund-name">${fundName(code)}</div><div class="ag-fund-code">${code} · ${fundType(code)} · 今日 <span style="color:${pctColor}">${todayPct>=0?'+':''}${fmt(todayPct)}%</span></div></div>`;
+    html += `<div><div class="ag-fund-name">${fundName(code)} <button class="hold-del" onclick="removeHolding(${holdIdx})" title="删除持仓">✕</button></div><div class="ag-fund-code">${code} · ${fundType(code)} · 今日 <span style="color:${pctColor}">${todayPct>=0?'+':''}${fmt(todayPct)}%</span></div></div>`;
     html += `<div style="display:flex;align-items:center;gap:6px">`;
     // 优先级标记
     if(vote.action !== 'hold'){
@@ -6286,122 +6280,7 @@ function buildNavDisplay(f, compact){
   </div>`;
 }
 
-function renderSignals(){
-  const container = document.getElementById('signals-container');
-  const badge = document.getElementById('signal-badge');
-
-  if(holdings.length===0){
-    container.innerHTML = '<div class="empty"><div class="empty-icon">📥</div>添加持仓后，AI会给出今日操作建议</div>';
-    badge.textContent = '无持仓';
-    return;
-  }
-
-  if(!_analysisResult){
-    let html = '';
-    holdings.forEach((h,i)=>{
-      const f = getFundData(h.code);
-      const navHtml = buildNavDisplay(f);
-      html += `<div class="signal-card hold">
-        <div class="signal-top">
-          <div class="signal-fund">
-            <div class="signal-name">${fundName(h.code)} <button class="hold-del" onclick="removeHolding(${i})" title="删除">✕</button></div>
-            <div class="signal-code">${h.code} · ${fundType(h.code)}</div>
-          </div>
-          <div style="text-align:right">
-            <div class="signal-pct" style="color:${f.gszzl>=0?'var(--red)':'var(--green)'}">${sign(f.gszzl)}${fmt(f.gszzl)}%</div>
-            ${navHtml}
-          </div>
-        </div>
-        <div style="font-size:11px;color:var(--sub)">点击「一键AI分析」获取操作建议</div>
-      </div>`;
-    });
-    container.innerHTML = html;
-    badge.textContent = '等待分析';
-    return;
-  }
-
-  const r = _analysisResult;
-  badge.textContent = `${r.engineCount}引擎 · ${r.timestamp}`;
-
-  let html = '';
-  holdings.forEach((h,i)=>{
-    const f = getFundData(h.code);
-    const sig = r.signals[h.code];
-    if(!sig){
-      const navHtml2 = buildNavDisplay(f);
-      html += `<div class="signal-card hold">
-        <div class="signal-top">
-          <div class="signal-fund">
-            <div class="signal-name">${fundName(h.code)} <button class="hold-del" onclick="removeHolding(${i})" title="删除">✕</button></div>
-            <div class="signal-code">${h.code}</div>
-          </div>
-          <div style="text-align:right">
-            <div class="signal-pct" style="color:${f.gszzl>=0?'var(--red)':'var(--green)'}">${sign(f.gszzl)}${fmt(f.gszzl)}%</div>
-            ${navHtml2}
-          </div>
-        </div>
-        <div style="font-size:11px;color:var(--sub)">AI未返回该基金分析</div>
-      </div>`;
-      return;
-    }
-
-    const actionText = sig.action==='buy'?'� 加仓':sig.action==='sell'?'🟢 减仓':'⚪ 持有';
-    const urgencyText = sig.urgency==='today'?'今日操作':sig.urgency==='this_week'?'本周内':'不急';
-    const confClass = sig.confidence>=75?'high':sig.confidence>=55?'mid':'low';
-    const posLabel = sig.posType==='core'?'🛡️核心仓':'🚀卫星仓';
-    const posColor = sig.posType==='core'?'background:#f0f4ff;color:#3b5998;border:1px solid #d6e0f5':'background:#fef9ee;color:#b8860b;border:1px solid #f0e4c4';
-    const trendIcon = sig.trend==='up'?'📈趋势↑':sig.trend==='down'?'📉趋势↓':'📊震荡';
-    const trendColor = sig.trend==='up'?'color:var(--red)':sig.trend==='down'?'color:var(--green)':'color:var(--sub)';
-
-    // 构建趋势详情行（如果有真实历史数据）
-    let trendDetailHtml = '';
-    const td = sig.trendDetail;
-    if(td){
-      const mkSpan = (label, val, suffix='%') => {
-        const c = val > 0 ? 'var(--red)' : val < 0 ? 'var(--green)' : 'var(--sub)';
-        return `<span style="color:${c}">${label}${val>0?'+':''}${val}${suffix}</span>`;
-      };
-      trendDetailHtml = `<div style="display:flex;gap:8px;flex-wrap:wrap;font-size:10px;padding:4px 0;border-top:1px solid var(--border);margin-top:4px">
-        ${mkSpan('5日:', td.chg5d)} ${mkSpan('20日:', td.chg20d)} ${mkSpan('60日:', td.chg60d)} ${mkSpan('年:', td.chg250d)}
-        <span style="color:var(--sub)">距高点:${td.drawdownFromHigh}%</span>
-      </div>`;
-      if(td.swingAdvice){
-        const advColor = td.swingAdvice.includes('买入') ? 'var(--red)' : td.swingAdvice.includes('减仓') ? 'var(--green)' : 'var(--sub)';
-        trendDetailHtml += `<div style="font-size:10px;color:${advColor};padding:2px 0">⚡ ${td.swingAdvice}</div>`;
-      }
-    }
-
-    const navHtml3 = buildNavDisplay(f);
-    html += `<div class="signal-card ${sig.action}">
-      <div class="signal-top">
-        <div class="signal-fund">
-          <div class="signal-name">${fundName(h.code)} <button class="hold-del" onclick="removeHolding(${i})" title="删除">✕</button></div>
-          <div class="signal-code">${h.code} · ${fundType(h.code)}${sig.target3m?' · 3月预期:'+sig.target3m:''}</div>
-        </div>
-        <div style="text-align:right">
-          <div class="signal-pct" style="color:${f.gszzl>=0?'var(--red)':'var(--green)'}">${sign(f.gszzl)}${fmt(f.gszzl)}%</div>
-          ${navHtml3}
-        </div>
-      </div>
-      <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:4px">
-        <span class="signal-action ${sig.action}">${actionText}</span>
-        <span class="signal-urgency ${sig.urgency==='today'?'high':sig.urgency==='this_week'?'medium':'low'}">${urgencyText}</span>
-        <span style="font-size:10px;padding:1px 6px;border-radius:4px;${posColor}">${posLabel}</span>
-        <span style="font-size:10px;${trendColor}">${trendIcon}</span>
-      </div>
-      <div class="conf-bar">
-        <span class="conf-text">置信度</span>
-        <div class="conf-track"><div class="conf-fill ${confClass}" style="width:${sig.confidence}%"></div></div>
-        <span class="conf-text" style="text-align:right;font-weight:600">${sig.confidence}%</span>
-      </div>
-      <div class="signal-reason">${sig.reason}</div>
-      ${trendDetailHtml}
-      <div class="signal-engines">${sig.breakdown}</div>
-    </div>`;
-  });
-
-  container.innerHTML = html;
-}
+function renderSignals(){ /* removed – action guide now covers all signals */ }
 
 function renderWatchlist(){
   const section = document.getElementById('watchlist-section');
@@ -6505,7 +6384,6 @@ async function triggerAI(){
     updateSimDaily();
     renderMarketSummary();
     renderActionGuide();
-    renderSignals();
     renderWatchlist();
     renderRecos();
     renderReview();
@@ -8472,7 +8350,7 @@ function startTimers(){
       if(_rt){ const _n=new Date(); _rt.textContent='净值 '+String(_n.getHours()).padStart(2,'0')+':'+String(_n.getMinutes()).padStart(2,'0')+':'+String(_n.getSeconds()).padStart(2,'0'); _rt.style.display=''; }
       renderIndices();
       renderStats();
-      renderSignals();
+      renderActionGuide();
       renderWatchlist();
       renderPortfolio();
       // 刷新模拟盘数据（用最新市场数据更新）
