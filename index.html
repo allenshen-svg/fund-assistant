@@ -167,13 +167,14 @@ body { font-family:-apple-system,BlinkMacSystemFont,'SF Pro','PingFang SC','Helv
 .market-summary { font-size:12px; color:#1e293b; line-height:1.7; padding:14px 16px; background:var(--card); border-radius:var(--radius); margin-bottom:10px; box-shadow:var(--shadow); border-left:3px solid var(--primary); }
 .provider-tag { font-size:9px; background:var(--primary-bg); color:var(--primary); padding:2px 8px; border-radius:10px; margin-left:6px; font-weight:500; }
 
-/* Index Bar */
-.idx-bar { background:linear-gradient(135deg,#0f172a,#1e293b); padding:10px 16px 12px; display:flex; gap:0; border-bottom:1px solid rgba(255,255,255,0.06); }
-.idx-item { flex:1; text-align:center; position:relative; }
+/* Index Bar — single scrollable row */
+.idx-bar { background:linear-gradient(135deg,#0f172a,#1e293b); padding:8px 12px; display:flex; gap:0; border-bottom:1px solid rgba(255,255,255,0.06); overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none; }
+.idx-bar::-webkit-scrollbar { display:none; }
+.idx-item { min-width:0; flex:1 0 auto; text-align:center; position:relative; padding:0 6px; }
 .idx-item+.idx-item { border-left:1px solid rgba(255,255,255,0.08); }
-.idx-name { font-size:10px; color:rgba(251,191,36,0.75); letter-spacing:0.3px; }
-.idx-val { font-size:14px; font-weight:700; color:#fff; margin-top:2px; font-variant-numeric:tabular-nums; }
-.idx-pct { font-size:11px; font-weight:600; margin-top:1px; font-variant-numeric:tabular-nums; }
+.idx-name { font-size:9px; color:rgba(251,191,36,0.7); letter-spacing:0.2px; white-space:nowrap; }
+.idx-val { font-size:12px; font-weight:700; color:#fff; margin-top:1px; font-variant-numeric:tabular-nums; }
+.idx-pct { font-size:10px; font-weight:600; margin-top:1px; font-variant-numeric:tabular-nums; }
 .idx-pct.up { color:#ef4444; }
 .idx-pct.down { color:#22c55e; }
 .idx-pct.flat { color:rgba(255,255,255,0.5); }
@@ -610,17 +611,15 @@ body { font-family:-apple-system,BlinkMacSystemFont,'SF Pro','PingFang SC','Helv
   </div>
 </div>
 
-<!-- Index Bar -->
+<!-- Index Bar (single compact row) -->
 <div class="idx-bar" id="idx-bar">
   <div class="idx-item"><div class="idx-name">上证</div><div class="idx-val" id="iv-sh">--</div><div class="idx-pct flat" id="ip-sh">--</div></div>
   <div class="idx-item"><div class="idx-name">深证</div><div class="idx-val" id="iv-sz">--</div><div class="idx-pct flat" id="ip-sz">--</div></div>
   <div class="idx-item"><div class="idx-name">创业板</div><div class="idx-val" id="iv-cy">--</div><div class="idx-pct flat" id="ip-cy">--</div></div>
   <div class="idx-item"><div class="idx-name">沪深300</div><div class="idx-val" id="iv-hs">--</div><div class="idx-pct flat" id="ip-hs">--</div></div>
-</div>
-<div class="idx-bar" id="idx-bar-2" style="padding-top:0;border-top:none">
-  <div class="idx-item"><div class="idx-name">🥇 黄金ETF</div><div class="idx-val" id="iv-au">--</div><div class="idx-pct flat" id="ip-au">--</div></div>
-  <div class="idx-item"><div class="idx-name">🥈 白银LOF</div><div class="idx-val" id="iv-ag">--</div><div class="idx-pct flat" id="ip-ag">--</div></div>
-  <div class="idx-item"><div class="idx-name">🔩 有色金属</div><div class="idx-val" id="iv-ys">--</div><div class="idx-pct flat" id="ip-ys">--</div></div>
+  <div class="idx-item"><div class="idx-name">黄金</div><div class="idx-val" id="iv-au">--</div><div class="idx-pct flat" id="ip-au">--</div></div>
+  <div class="idx-item"><div class="idx-name">白银</div><div class="idx-val" id="iv-ag">--</div><div class="idx-pct flat" id="ip-ag">--</div></div>
+  <div class="idx-item"><div class="idx-name">有色</div><div class="idx-val" id="iv-ys">--</div><div class="idx-pct flat" id="ip-ys">--</div></div>
 </div>
 
 <!-- Stats Bar -->
@@ -657,63 +656,54 @@ body { font-family:-apple-system,BlinkMacSystemFont,'SF Pro','PingFang SC','Helv
   </div>
 </div>
 
-<!-- RL Brain Dashboard -->
-<div class="rl-brain">
-  <div class="section-title rl-brain-header" onclick="toggleRLBrain()">
-    <span>🧠 RL强化学习大脑 <span style="font-size:10px;color:var(--sub);font-weight:400">DQN · Double Q · Adam</span></span>
-    <div class="rl-brain-header-right">
-      <span id="rl-brain-brief" class="rl-brain-brief" style="color:var(--sub)">未训练</span>
-      <span class="rl-brain-toggle" id="rl-brain-toggle">▶</span>
-    </div>
+<!-- Engine Details (RL + Backtest + Second-Order merged) -->
+<div class="engine-detail-section" style="padding:10px 16px 4px">
+  <div class="section-title" style="cursor:pointer" onclick="toggleEngineDetail()">
+    <span>🔬 引擎详情 <span style="font-size:10px;color:var(--sub);font-weight:400">
+      <span id="rl-brain-brief" style="margin-right:4px">RL:未训练</span>
+      <span id="bt-brief" style="margin-right:4px">BT:未回测</span>
+      <span id="sot-brief">SOT:加载中</span>
+    </span></span>
+    <span id="engine-detail-toggle" style="font-size:12px;color:var(--sub);margin-left:auto">▶</span>
   </div>
-  <div id="rl-brain-container" class="rl-brain-container" style="display:none"></div>
+  <div id="engine-detail-body" style="display:none">
+    <div style="display:flex;gap:0;background:var(--card);border-radius:10px;overflow:hidden;margin-bottom:8px;box-shadow:var(--shadow)">
+      <div class="eng-tab active" id="eng-tab-rl" onclick="switchEngTab('rl')" style="flex:1;text-align:center;padding:8px 4px;font-size:11px;font-weight:600;cursor:pointer;border-bottom:2px solid #1e293b;color:var(--text);transition:all .2s">🧠 RL大脑</div>
+      <div class="eng-tab" id="eng-tab-bt" onclick="switchEngTab('bt')" style="flex:1;text-align:center;padding:8px 4px;font-size:11px;font-weight:600;cursor:pointer;border-bottom:2px solid transparent;color:var(--sub);transition:all .2s">📈 回测</div>
+      <div class="eng-tab" id="eng-tab-sot" onclick="switchEngTab('sot')" style="flex:1;text-align:center;padding:8px 4px;font-size:11px;font-weight:600;cursor:pointer;border-bottom:2px solid transparent;color:var(--sub);transition:all .2s">🧊 二层思维</div>
+    </div>
+    <div id="rl-brain-container" class="rl-brain-container"></div>
+    <div id="bt-container" class="bt-container" style="display:none"></div>
+    <div id="sot-container" class="sot-container" style="display:none"></div>
+  </div>
 </div>
 
-<!-- Backtest Dashboard -->
-<div class="bt-section">
-  <div class="section-title bt-header" onclick="toggleBacktest()">
-    <span>📈 回测引擎 <span style="font-size:10px;color:var(--sub);font-weight:400">RSI策略 · Kelly仓位 · Sharpe</span></span>
-    <div class="bt-header-right">
-      <span id="bt-brief" class="bt-brief" style="color:var(--sub)">未回测</span>
-      <span class="bt-toggle" id="bt-toggle">▶</span>
-    </div>
-  </div>
-  <div id="bt-container" class="bt-container" style="display:none"></div>
-</div>
-
-<!-- Second-Order Thinking Dashboard -->
-<div class="sot-section">
-  <div class="section-title sot-header" onclick="toggleSOT()">
-    <span>🧊 第二层思维 <span style="font-size:10px;color:var(--sub);font-weight:400">反拥挤 · 预期差 · 逆向Kelly</span></span>
-    <div class="sot-header-right">
-      <span id="sot-brief" class="sot-brief" style="color:var(--sub)">加载中</span>
-      <span class="sot-toggle" id="sot-toggle">▶</span>
-    </div>
-  </div>
-  <div id="sot-container" class="sot-container" style="display:none"></div>
-</div>
-
-<!-- Simulation Portfolio -->
+<!-- Simulation Portfolio (collapsed by default) -->
 <div class="sim-section">
   <div class="section-title sim-header" onclick="toggleSimDetail()">
     <span>🤖 AI模拟盘 <span style="font-size:10px;color:var(--sub);font-weight:400">50万建仓 · AI自动交易</span></span>
     <div class="sim-header-right">
       <span id="sim-brief" style="font-size:12px;font-weight:700">--</span>
-      <span class="sim-toggle-icon" id="sim-toggle-icon">▼</span>
+      <span class="sim-toggle-icon" id="sim-toggle-icon">▶</span>
     </div>
   </div>
-  <div id="sim-container"></div>
+  <div id="sim-container" style="display:none"></div>
 </div>
 
-<!-- Portfolio Section -->
+<!-- Portfolio Section (collapsed by default) -->
 <div class="pf-section">
-  <div class="section-title">💼 波段组合 <span style="font-size:10px;color:var(--sub);font-weight:400">实时趋势 · 波段信号</span></div>
-  <div class="pf-tabs">
-    <div class="pf-tab active" onclick="switchPfTab('core')" id="pf-tab-core">🛡️ 核心仓<span class="pf-tab-ratio">建议60%</span></div>
-    <div class="pf-tab" onclick="switchPfTab('satellite')" id="pf-tab-sat">🚀 卫星仓<span class="pf-tab-ratio">建议40%</span></div>
+  <div class="section-title" style="cursor:pointer" onclick="togglePortfolioSection()">
+    <span>💼 波段组合 <span style="font-size:10px;color:var(--sub);font-weight:400">实时趋势 · 波段信号</span></span>
+    <span id="pf-section-toggle" style="font-size:12px;color:var(--sub);margin-left:auto">▶</span>
   </div>
-  <div class="pf-group active" id="pf-group-core"></div>
-  <div class="pf-group" id="pf-group-satellite"></div>
+  <div id="pf-section-body" style="display:none">
+    <div class="pf-tabs">
+      <div class="pf-tab active" onclick="switchPfTab('core')" id="pf-tab-core">🛡️ 核心仓<span class="pf-tab-ratio">建议60%</span></div>
+      <div class="pf-tab" onclick="switchPfTab('satellite')" id="pf-tab-sat">🚀 卫星仓<span class="pf-tab-ratio">建议40%</span></div>
+    </div>
+    <div class="pf-group active" id="pf-group-core"></div>
+    <div class="pf-group" id="pf-group-satellite"></div>
+  </div>
 </div>
 
 <!-- Market Summary (AI generated) -->
@@ -1416,16 +1406,10 @@ function generateMasterAdvice(crowded, deepValue) {
 
 // 切换SOT面板
 function toggleSOT() {
-  const container = document.getElementById('sot-container');
-  const toggle = document.getElementById('sot-toggle');
-  if (container.style.display === 'none') {
-    container.style.display = 'block';
-    toggle.textContent = '▼';
-    renderSOTDashboard();
-  } else {
-    container.style.display = 'none';
-    toggle.textContent = '▶';
-  }
+  // Now handled by engine detail tabs
+  switchEngTab('sot');
+  const body = document.getElementById('engine-detail-body');
+  if(body.style.display === 'none') toggleEngineDetail();
 }
 
 // 渲染SOT面板
@@ -1682,14 +1666,14 @@ function renderSOTDashboard() {
 function renderSOTBrief() {
   const brief = document.getElementById('sot-brief');
   if (!brief) return;
-  if (!_hotEventsLoaded) { brief.textContent = '加载中'; return; }
+  if (!_hotEventsLoaded) { brief.textContent = 'SOT:加载中'; return; }
   const heatmap = _hotEventsData?.heatmap || [];
   const crowded = heatmap.filter(h => h.temperature >= 70).length;
   const cold = heatmap.filter(h => h.temperature <= 30 && (h.trend === 'down' || h.trend === 'stable')).length;
   if (crowded > 0 || cold > 0) {
-    brief.innerHTML = '<span style="color:#f87171">' + crowded + '拥挤</span> <span style="color:#4ade80">' + cold + '逆向</span>';
+    brief.innerHTML = 'SOT:<span style="color:#f87171">' + crowded + '拥挤</span> <span style="color:#4ade80">' + cold + '逆向</span>';
   } else {
-    brief.textContent = '均衡';
+    brief.textContent = 'SOT:均衡';
   }
 }
 
@@ -4551,21 +4535,11 @@ function renderPortfolio(){
         }
       }
 
-      // Trend metrics
-      let trendHtml = '';
+      // Trend brief (compact)
+      let trendBrief = '';
       if(td){
         const mkVal = (v) => `<span style="color:${v>0?'var(--red)':v<0?'var(--green)':'var(--sub)'}">${v>0?'+':''}${v}%</span>`;
-        trendHtml = `<div class="pf-trend-row">
-          <div class="pf-trend-item"><span class="pf-trend-label">5日</span>${mkVal(td.chg5d)}</div>
-          <div class="pf-trend-item"><span class="pf-trend-label">20日</span>${mkVal(td.chg20d)}</div>
-          <div class="pf-trend-item"><span class="pf-trend-label">60日</span>${mkVal(td.chg60d)}</div>
-          <div class="pf-trend-item"><span class="pf-trend-label">年</span>${mkVal(td.chg250d)}</div>
-          <div class="pf-trend-item"><span class="pf-trend-label">距高点</span><span style="color:var(--sub)">${td.drawdownFromHigh}%</span></div>
-        </div>`;
-        if(td.swingAdvice){
-          const advColor = td.swingAdvice.includes('买入')?'var(--red)':td.swingAdvice.includes('减仓')||td.swingAdvice.includes('不建议')?'var(--green)':'var(--sub)';
-          trendHtml += `<div style="font-size:10px;color:${advColor};margin-top:4px">💡 ${td.swingAdvice}</div>`;
-        }
+        trendBrief = `<span style="font-size:10px;color:var(--sub)">20日${mkVal(td.chg20d)} · 距高点${td.drawdownFromHigh}%</span>`;
       }
 
       // Action buttons
@@ -4573,10 +4547,10 @@ function renderPortfolio(){
       if(isHeld){
         actHtml = `<span class="pf-act-btn in-hold">✓ 已持仓</span>`;
       } else {
-        actHtml = `<button class="pf-act-btn" onclick="addFromPortfolio('${pf.code}','${pf.name}','${pf.type}','holding')">+ 加入持仓</button>`;
+        actHtml = `<button class="pf-act-btn" onclick="addFromPortfolio('${pf.code}','${pf.name}','${pf.type}','holding')">+ 持仓</button>`;
       }
       if(isWatched){
-        actHtml += `<span class="pf-act-btn in-watch">✓ 已自选</span>`;
+        actHtml += `<span class="pf-act-btn in-watch">✓ 自选</span>`;
       } else if(!isHeld){
         actHtml += `<button class="pf-act-btn" onclick="addFromPortfolio('${pf.code}','${pf.name}','${pf.type}','watch')">+ 自选</button>`;
       }
@@ -4584,17 +4558,14 @@ function renderPortfolio(){
       html += `<div class="pf-card swing-${swingClass}">
         <div class="pf-top">
           <div class="pf-info">
-            <div class="pf-name">${pf.name}</div>
-            <div class="pf-code">${pf.code} · ${pf.type} · 建议配置${pf.alloc}</div>
+            <div class="pf-name">${pf.name} <span style="font-size:10px;color:var(--sub);font-weight:400">${pf.code}</span></div>
+            <div class="pf-code">${pf.type} · ${pf.alloc} ${trendBrief}</div>
           </div>
           <div class="pf-right">
             <div class="pf-pct" style="color:${f.gszzl>=0?'var(--red)':'var(--green)'}">${sign(f.gszzl)}${fmt(f.gszzl)}%</div>
-            ${buildNavDisplay(f, true)}
             <div class="pf-swing-tag ${swingClass}">${swingText}</div>
           </div>
         </div>
-        <div class="pf-reason">${pf.reason}</div>
-        ${trendHtml}
         <div class="pf-actions">${actHtml}</div>
       </div>`;
     });
@@ -7795,10 +7766,58 @@ function generateDataSignal(){
 
 // ==================== RL BRAIN RENDERING ====================
 function toggleRLBrain(){
-  const c=document.getElementById('rl-brain-container');
-  const i=document.getElementById('rl-brain-toggle');
-  if(c.style.display==='none'){c.style.display='block';i.textContent='▼';renderRLBrain();}
-  else{c.style.display='none';i.textContent='▶';}
+  // Now handled by engine detail tabs
+  switchEngTab('rl');
+  const body = document.getElementById('engine-detail-body');
+  if(body.style.display === 'none') toggleEngineDetail();
+}
+
+// === Merged Engine Detail Section ===
+function toggleEngineDetail(){
+  const body = document.getElementById('engine-detail-body');
+  const icon = document.getElementById('engine-detail-toggle');
+  if(body.style.display === 'none'){
+    body.style.display = '';
+    icon.textContent = '▼';
+    // Render whichever tab is active
+    if(document.getElementById('rl-brain-container').style.display !== 'none') renderRLBrain();
+    else if(document.getElementById('bt-container').style.display !== 'none') renderBacktest();
+    else if(document.getElementById('sot-container').style.display !== 'none') renderSOTDashboard();
+  } else {
+    body.style.display = 'none';
+    icon.textContent = '▶';
+  }
+}
+function switchEngTab(tab){
+  ['rl','bt','sot'].forEach(t => {
+    const tabEl = document.getElementById('eng-tab-'+t);
+    const containerId = t==='rl'?'rl-brain-container':t==='bt'?'bt-container':'sot-container';
+    const container = document.getElementById(containerId);
+    if(t === tab){
+      tabEl.style.borderBottomColor = '#1e293b';
+      tabEl.style.color = 'var(--text)';
+      container.style.display = '';
+      if(t==='rl') renderRLBrain();
+      else if(t==='bt') renderBacktest();
+      else renderSOTDashboard();
+    } else {
+      tabEl.style.borderBottomColor = 'transparent';
+      tabEl.style.color = 'var(--sub)';
+      container.style.display = 'none';
+    }
+  });
+}
+function togglePortfolioSection(){
+  const body = document.getElementById('pf-section-body');
+  const icon = document.getElementById('pf-section-toggle');
+  if(body.style.display === 'none'){
+    body.style.display = '';
+    icon.textContent = '▼';
+    renderPortfolio();
+  } else {
+    body.style.display = 'none';
+    icon.textContent = '▶';
+  }
 }
 
 function renderRLBrief(){
@@ -7806,18 +7825,18 @@ function renderRLBrief(){
   if(!el)return;
   if(_rlTraining){
     el.style.color='#eab308';
-    el.textContent=`训练中 E${(rlTrainer?.episode||0)+1}/${rlTrainer?.maxEpisodes||50}`;
+    el.textContent=`RL:训练中 E${(rlTrainer?.episode||0)+1}`;
     return;
   }
   if(!_rlModelLoaded||!rlTrainer?.agent){
-    el.style.color='var(--sub)';el.textContent='未训练';return;
+    el.style.color='var(--sub)';el.textContent='RL:未训练';return;
   }
   const sigs=Object.values(_rlSignals);
-  if(!sigs.length){el.style.color='var(--sub)';el.textContent=`已训练·E${rlTrainer.episode+1}`;return;}
+  if(!sigs.length){el.style.color='var(--sub)';el.textContent=`RL:E${rlTrainer.episode+1}`;return;}
   const buys=sigs.filter(s=>s.action===1).length;
   const sells=sigs.filter(s=>s.action===2).length;
   const holds=sigs.filter(s=>s.action===0).length;
-  let txt='🧠 ';
+  let txt='RL:';
   if(buys>0)txt+=`买${buys} `;
   if(sells>0)txt+=`卖${sells} `;
   if(holds>0)txt+=`持${holds}`;
@@ -7825,12 +7844,12 @@ function renderRLBrief(){
   const strongCount=sigs.filter(s=>s.conviction==='强').length;
   const label=strongCount===sigs.length?'强':'混';
   el.style.color=buys>sells?'var(--red)':sells>buys?'var(--green)':'var(--sub)';
-  el.textContent=txt.trim()+` ·${label}`;
+  el.textContent=txt.trim();
 }
 
 function renderRLBrain(){
   const container=document.getElementById('rl-brain-container');
-  if(!container||container.style.display==='none')return;
+  if(!container)return;
   const hasModel=_rlModelLoaded&&rlTrainer?.agent;
   const m=rlTrainer?.metrics||{};
   const sClass=_rlTraining?'training':hasModel?'active':'idle';
@@ -8770,14 +8789,10 @@ async function runBacktest(){
 // ==================== BACKTEST RENDERING ====================
 
 function toggleBacktest(){
-  const c = document.getElementById('bt-container');
-  const icon = document.getElementById('bt-toggle');
-  if(c.style.display === 'none'){
-    c.style.display = 'block'; icon.textContent = '▼';
-    renderBacktest();
-  } else {
-    c.style.display = 'none'; icon.textContent = '▶';
-  }
+  // Now handled by engine detail tabs
+  switchEngTab('bt');
+  const body = document.getElementById('engine-detail-body');
+  if(body.style.display === 'none') toggleEngineDetail();
 }
 
 function renderBTBrief(){
@@ -8785,21 +8800,21 @@ function renderBTBrief(){
   if(!el) return;
   if(_btRunning){
     el.style.color = '#eab308';
-    el.textContent = `回测中...${Object.keys(btResults).length}只`;
+    el.textContent = `BT:回测中`;
     return;
   }
   if(!btSummary){
-    el.style.color = 'var(--sub)'; el.textContent = '未回测'; return;
+    el.style.color = 'var(--sub)'; el.textContent = 'BT:未回测'; return;
   }
   const ret = (btSummary.avgReturn*100).toFixed(1);
   const sh = btSummary.avgSharpe.toFixed(2);
   el.style.color = btSummary.avgReturn >= 0 ? 'var(--red)' : 'var(--green)';
-  el.textContent = `收益${ret}% · Sharpe ${sh}`;
+  el.textContent = `BT:${ret}% Sh${sh}`;
 }
 
 function renderBacktest(){
   const container = document.getElementById('bt-container');
-  if(!container || container.style.display === 'none') return;
+  if(!container) return;
 
   const hasResults = btSummary && Object.keys(btResults).length > 0;
   let html = '';
