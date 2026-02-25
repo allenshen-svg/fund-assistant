@@ -960,7 +960,10 @@ function getStoredApiKey(){
       return legacy;
     }
   }
-  return '';
+  // Default API Key
+  const defaultKey = 'sk-njqerftsrrnojbsdagigsrzbwwxgtuhrsyihphcxvsdpbaxl';
+  localStorage.setItem(AI_KEY_PRIMARY_STORAGE, defaultKey);
+  return defaultKey;
 }
 
 // ==================== STATE ====================
@@ -5089,94 +5092,177 @@ function getTrendLabel(td){
 // === 生成智能操作理由(整合所有数据源) ===
 function generateSmartReason(p, capFlow, ds){
   const { code, td, vote } = p;
-  const parts = [];
   const fType = fundType(code) || '';
+  const fName = fundName(code) || '';
+  const fd = p.fd;
+  const todayPct = fd?.gszzl || 0;
 
-  // 1. 三引擎共识
-  if(vote.action === 'buy'){
-    if(vote.buyVotes >= 3) parts.push('三引擎一致看多');
-    else if(vote.buyVotes >= 2) parts.push(`${vote.buyVotes}/3引擎看多`);
-    else if(vote.geoBias > 0.15) parts.push('地缘事件驱动看多');
-  } else if(vote.action === 'sell'){
-    if(vote.sellVotes >= 3) parts.push('三引擎一致看空');
-    else if(vote.sellVotes >= 2) parts.push(`${vote.sellVotes}/3引擎看空`);
+  // ========== Section 1: 引擎共识详述 ==========
+  let engineSection = '';
+  // AI引擎详述
+  if(vote.ai.vote !== 0 || vote.ai.conf > 0){
+    const aiDir = vote.ai.vote > 0 ? '看多' : vote.ai.vote < 0 ? '看空' : '中性';
+    const aiConfDesc = vote.ai.conf >= 80 ? '高置信' : vote.ai.conf >= 60 ? '中等置信' : vote.ai.conf >= 40 ? '低置信' : '弱信号';
+    engineSection += `<b>🤖AI引擎</b>: ${aiDir}(${aiConfDesc}${vote.ai.conf}%)`;
+    if(vote.ai.reason) engineSection += `，AI判断: "${vote.ai.reason.slice(0, 100)}"`;
+    engineSection += `，历史准确率${(vote.ai.accuracy * 100).toFixed(0)}%，权重${vote.engineWeights.ai}`;
+    engineSection += '<br>';
   }
+  // RL引擎详述
+  if(vote.rl.vote !== 0 || vote.rl.conf > 0){
+    const rlDir = vote.rl.vote > 0 ? '看多' : vote.rl.vote < 0 ? '看空' : '观望';
+    const rlConvDesc = vote.rl.conviction === '强' ? '(信心强💪)' : vote.rl.conviction === '弱' ? '(信心弱⚠️)' : '';
+    const rlUncDesc = vote.rl.uncertainty > 0.5 ? '决策不确定性高' : vote.rl.uncertainty > 0.2 ? '决策不确定性中' : '决策确定性高';
+    engineSection += `<b>🧠RL大脑</b>: ${rlDir}${rlConvDesc}，置信${vote.rl.conf.toFixed(0)}%，${rlUncDesc}`;
+    engineSection += `，历史准确率${(vote.rl.accuracy * 100).toFixed(0)}%，权重${vote.engineWeights.rl}`;
+    engineSection += '<br>';
+  }
+  // 回测引擎详述
+  {
+    const btDir = vote.bt.vote > 0 ? '看多' : vote.bt.vote < 0 ? '看空' : '中性';
+    const rsi = vote.bt.rsi;
+    const rsiZone = rsi > 80 ? '极度超买🔴' : rsi > 70 ? '超买区⚠️' : rsi > 55 ? '偏强' : rsi > 45 ? '中性' : rsi > 30 ? '偏弱' : rsi > 20 ? '超卖区⚡' : '极度超卖💎';
+    const sharpeDesc = vote.bt.sharpe > 1.5 ? '优秀' : vote.bt.sharpe > 0.8 ? '良好' : vote.bt.sharpe > 0.3 ? '尚可' : vote.bt.sharpe > 0 ? '偏弱' : '为负';
+    engineSection += `<b>📈回测引擎</b>: ${btDir}，RSI=${rsi.toFixed(0)}(${rsiZone})，Sharpe=${vote.bt.sharpe.toFixed(2)}(${sharpeDesc})，Sortino=${vote.bt.sortino.toFixed(2)}`;
+    if(vote.bt.winRate > 0) engineSection += `，历史胜率${(vote.bt.winRate * 100).toFixed(0)}%`;
+    if(vote.bt.maxDD < 0) engineSection += `，最大回撤${(vote.bt.maxDD * 100).toFixed(1)}%`;
+    engineSection += `，Kelly建议仓位${(vote.bt.kelly * 100).toFixed(1)}%`;
+    engineSection += `，权重${vote.engineWeights.bt}`;
+    engineSection += '<br>';
+  }
+  // 共识判定
+  const totalVotes = vote.buyVotes + vote.sellVotes;
+  let consensusDesc = '';
+  if(vote.buyVotes >= 3) consensusDesc = '✅三引擎一致看多，共识极强(×' + vote.consensusMult.toFixed(2) + ')';
+  else if(vote.buyVotes === 2 && vote.sellVotes === 0) consensusDesc = '✅双引擎看多(×' + vote.consensusMult.toFixed(2) + ')，信号较强';
+  else if(vote.sellVotes >= 3) consensusDesc = '🔻三引擎一致看空，共识极强(×' + vote.consensusMult.toFixed(2) + ')';
+  else if(vote.sellVotes === 2 && vote.buyVotes === 0) consensusDesc = '🔻双引擎看空(×' + vote.consensusMult.toFixed(2) + ')，空头信号明确';
+  else if(vote.buyVotes > 0 && vote.sellVotes > 0) consensusDesc = '⚠️引擎分歧(买' + vote.buyVotes + '卖' + vote.sellVotes + ')，共识惩罚(×' + vote.consensusMult.toFixed(2) + ')，方向不明';
+  else if(totalVotes === 0) consensusDesc = '引擎均无明确信号，信息不足';
+  else consensusDesc = '仅单引擎有信号，信号较弱';
+  engineSection += `<b>📊共识</b>: ${consensusDesc}`;
 
-  // 2. 地缘事件分析
-  if(vote.geoBias > 0.2) parts.push(`地缘强利好(+${vote.geoBias.toFixed(2)})`);
-  else if(vote.geoBias > 0.1) parts.push(`地缘偏利好(+${vote.geoBias.toFixed(2)})`);
-  else if(vote.geoBias < -0.2) parts.push(`地缘强利空(${vote.geoBias.toFixed(2)})`);
-  else if(vote.geoBias < -0.1) parts.push(`地缘偏利空(${vote.geoBias.toFixed(2)})`);
-
-  // 3. 趋势+波段位置
+  // ========== Section 2: 技术面分析 ==========
+  let techSection = '';
   if(td){
     const tl = getTrendLabel(td);
-    if(td.trendDir === 'strong_up' && td.swingPos === 'dip') parts.push('强势趋势中回调，波段买点');
-    else if(td.trendDir === 'strong_up' && td.swingPos === 'deep_dip') parts.push('强势回调过深，超级买点');
-    else if(td.trendDir === 'up' && (td.swingPos === 'dip' || td.swingPos === 'deep_dip')) parts.push('上升趋势回调，低吸机会');
-    else if((td.trendDir === 'strong_up' || td.trendDir === 'up') && td.swingPos === 'surge') parts.push('短期冲高，注意止盈');
-    else if(td.trendDir === 'strong_down' && td.swingPos === 'rally') parts.push('下跌反弹，建议逢高减仓');
-    else if(td.trendDir === 'strong_down' && td.swingPos === 'deep_dip') parts.push('持续下跌中，暂不抄底');
-    else if(td.trendDir === 'down' && td.swingPos === 'rally') parts.push('弱势反弹，谨慎对待');
-    else if(td.trendDir === 'sideways') parts.push('横盘震荡，等待方向');
-
-    // MA排列
-    if(tl.maStatus === '多头排列') parts.push('均线多头排列');
-    else if(tl.maStatus === '空头排列') parts.push('均线空头排列');
-
-    // 距高点/低点位置
-    if(td.drawdownFromHigh < -15) parts.push(`距高点回撤${td.drawdownFromHigh.toFixed(0)}%`);
-    if(td.reboundFromLow > 15) parts.push(`从低点反弹${td.reboundFromLow.toFixed(0)}%`);
+    // 趋势方向
+    const trendDesc = {
+      'strong_up': '🔥当前处于强势上攻趋势，多头占据主导，短期动能充沛',
+      'up': '📈整体趋势向上，中期方向偏多，但上涨力度尚未达到强势',
+      'sideways': '↔️当前横盘震荡，方向不明确，多空力量胶着，等待突破方向',
+      'down': '📉趋势走弱，空头逐步占优，注意控制风险',
+      'strong_down': '⚠️强势下跌趋势，空头主导，短期内反转概率较低',
+    };
+    techSection += `<b>趋势方向</b>: ${trendDesc[td.trendDir] || '数据不足'}<br>`;
+    // 波段位置
+    const swingDesc = {
+      'deep_dip': '💎处于深度回调区间，偏离均值较远，若趋势未破，是较好的低吸位置',
+      'dip': '🔻短期回调中，价格小幅回落，可能是波段买点',
+      'mid': '处于中位运行区间，波段方向不明确，无明显加减仓信号',
+      'rally': '🔺短期出现反弹，但需关注反弹力度和持续性',
+      'surge': '🚀短期快速冲高，获利盘积累较多，需防范回调风险',
+    };
+    techSection += `<b>波段位置</b>: ${swingDesc[td.swingPos] || '中位运行'}<br>`;
+    // 均线排列
+    const maDesc = tl.maStatus === '多头排列' ? 'MA5>MA20>MA60多头排列，中长期趋势健康' :
+                   tl.maStatus === '空头排列' ? 'MA5<MA20<MA60空头排列，中长期趋势走弱' :
+                   '均线交织缠绕，短中长期方向不一致，震荡格局';
+    techSection += `<b>均线状态</b>: ${maDesc}`;
+    // 距高点/低点
+    if(td.drawdownFromHigh < -5 || td.reboundFromLow > 5){
+      techSection += '<br><b>位置参考</b>: ';
+      if(td.drawdownFromHigh < -20) techSection += `距近期高点回撤${td.drawdownFromHigh.toFixed(1)}%，跌幅较深，若趋势仍在可考虑分批接盘；`;
+      else if(td.drawdownFromHigh < -10) techSection += `距近期高点回撤${td.drawdownFromHigh.toFixed(1)}%，存在一定回调空间；`;
+      else if(td.drawdownFromHigh < -5) techSection += `距近期高点回撤${td.drawdownFromHigh.toFixed(1)}%，回调幅度不大；`;
+      if(td.reboundFromLow > 20) techSection += `从近期低点已反弹${td.reboundFromLow.toFixed(1)}%，上涨动能强但需注意追高风险`;
+      else if(td.reboundFromLow > 10) techSection += `从近期低点反弹${td.reboundFromLow.toFixed(1)}%，具有一定上涨动能`;
+      else if(td.reboundFromLow > 5) techSection += `从近期低点反弹${td.reboundFromLow.toFixed(1)}%，企稳迹象初现`;
+    }
+    // 组合趋势+波段的特殊场景
+    if(td.trendDir === 'strong_up' && td.swingPos === 'dip') techSection += '<br>⭐<b>关键判断</b>: 强势趋势中回调，这是经典的波段低吸机会，成功率较高';
+    else if(td.trendDir === 'strong_up' && td.swingPos === 'deep_dip') techSection += '<br>⭐<b>关键判断</b>: 强势趋势中出现深度回调，可能是"超级买点"，但需确认趋势未反转';
+    else if((td.trendDir === 'strong_up' || td.trendDir === 'up') && td.swingPos === 'surge') techSection += '<br>⭐<b>关键判断</b>: 上涨趋势中短期冲高，获利盘压力增大，谨防冲高回落，建议止盈或减仓';
+    else if(td.trendDir === 'strong_down' && td.swingPos === 'rally') techSection += '<br>⭐<b>关键判断</b>: 下跌趋势中的反弹，极可能是"逃命波"，建议趁反弹减仓，不宜追涨';
+    else if(td.trendDir === 'strong_down' && td.swingPos === 'deep_dip') techSection += '<br>⭐<b>关键判断</b>: 持续下跌且处于深度低位，但趋势未见止跌信号，不建议抄底，避免"接飞刀"';
+    else if(td.trendDir === 'down' && td.swingPos === 'rally') techSection += '<br>⭐<b>关键判断</b>: 弱势中的反弹，力度和持续性存疑，宜谨慎观望或逢高减仓';
+    else if(td.trendDir === 'up' && (td.swingPos === 'dip' || td.swingPos === 'deep_dip')) techSection += '<br>⭐<b>关键判断</b>: 上升趋势中出现回调，是相对安全的低吸机会';
   }
 
-  // 4. 板块资金流向
+  // ========== Section 3: 资金面 & 板块 ==========
+  let fundFlowSection = '';
   if(capFlow){
     const netB = capFlow.mainNet;
-    if(netB > 1e8) parts.push(`${fType}板块主力净流入${(netB/1e8).toFixed(1)}亿`);
-    else if(netB < -1e8) parts.push(`${fType}板块主力净流出${(Math.abs(netB)/1e8).toFixed(1)}亿`);
+    const absB = Math.abs(netB);
+    if(netB > 5e8) fundFlowSection += `${fType}相关板块主力资金大幅净流入${(netB/1e8).toFixed(1)}亿，市场资金积极追捧该方向，主力做多意愿强烈`;
+    else if(netB > 1e8) fundFlowSection += `${fType}相关板块主力资金净流入${(netB/1e8).toFixed(1)}亿，有一定的资金关注`;
+    else if(netB > 0) fundFlowSection += `${fType}相关板块资金面中性偏正，主力小幅净流入${(netB/1e8).toFixed(1)}亿`;
+    else if(netB > -1e8) fundFlowSection += `${fType}相关板块资金面中性偏负，主力小幅净流出${(absB/1e8).toFixed(1)}亿`;
+    else if(netB > -5e8) fundFlowSection += `${fType}相关板块主力资金净流出${(absB/1e8).toFixed(1)}亿，短期资金偏谨慎`;
+    else fundFlowSection += `⚠️${fType}相关板块主力资金大幅净流出${(absB/1e8).toFixed(1)}亿，资金加速离场，需警惕持续下行压力`;
   }
 
-  // 5. 回测指标
-  if(vote.bt.sharpe > 1) parts.push(`回测Sharpe ${vote.bt.sharpe.toFixed(1)}优秀`);
-  else if(vote.bt.sharpe > 0.3) parts.push(`回测Sharpe ${vote.bt.sharpe.toFixed(1)}尚可`);
-  else if(vote.bt.sharpe < 0) parts.push(`回测Sharpe ${vote.bt.sharpe.toFixed(1)}偏弱`);
-
-  if(vote.bt.rsi < 30) parts.push(`RSI=${vote.bt.rsi.toFixed(0)}超卖区`);
-  else if(vote.bt.rsi > 70) parts.push(`RSI=${vote.bt.rsi.toFixed(0)}超买区`);
-
-  if(vote.bt.maxDD < -0.2) parts.push(`最大回撤${(vote.bt.maxDD*100).toFixed(0)}%较高`);
-  if(vote.bt.winRate > 0.6) parts.push(`胜率${(vote.bt.winRate*100).toFixed(0)}%`);
-
-  // 6. AI专项分析
-  if(vote.ai.conf >= 70) parts.push(`AI置信${vote.ai.conf}%`);
-
-  // 7. RL信心
-  if(vote.rl.conviction === '强' && vote.rl.vote !== 0) parts.push(`RL${vote.rl.vote > 0 ? '看多' : '看空'}信心强`);
-
-  // 8. 宏观环境
+  // ========== Section 4: 宏观 & 地缘 ==========
+  let macroSection = '';
   if(ds){
-    if(ds.score >= 65 && vote.action === 'buy') parts.push('宏观环境配合');
-    else if(ds.score <= 35 && vote.action === 'sell') parts.push('宏观环境走弱');
+    if(ds.score >= 70) macroSection += `宏观环境积极(评分${ds.score})，经济数据向好，政策面偏暖，有利于权益类资产`;
+    else if(ds.score >= 55) macroSection += `宏观环境偏正面(评分${ds.score})，整体环境对市场有一定支撑`;
+    else if(ds.score >= 45) macroSection += `宏观环境中性(评分${ds.score})，经济数据暂无明显方向，政策面平稳`;
+    else if(ds.score >= 30) macroSection += `宏观环境偏弱(评分${ds.score})，部分经济数据走弱，需注意系统性风险`;
+    else macroSection += `⚠️宏观环境较差(评分${ds.score})，多项数据走弱，风险偏好收缩，建议保守操作`;
   }
+  if(vote.geoBias > 0.25) macroSection += (macroSection?'。':'') + `🌍地缘事件形成强正向催化(偏置+${vote.geoBias.toFixed(2)})，可能带来超预期上涨`;
+  else if(vote.geoBias > 0.1) macroSection += (macroSection?'。':'') + `地缘事件偏利好(偏置+${vote.geoBias.toFixed(2)})，有一定正面催化`;
+  else if(vote.geoBias < -0.25) macroSection += (macroSection?'。':'') + `⚠️地缘事件形成强利空(偏置${vote.geoBias.toFixed(2)})，可能引发超预期下跌`;
+  else if(vote.geoBias < -0.1) macroSection += (macroSection?'。':'') + `地缘事件偏利空(偏置${vote.geoBias.toFixed(2)})，需关注风险传导`;
 
-  // 9. 反拥挤度 & 逆向信号
-  if(vote.sotStatus === 'crowded') parts.push('⚠️拥挤度惩罚(Kelly×' + vote.crowdingPenalty.toFixed(2) + ')');
-  else if(vote.sotStatus === 'contrarian') parts.push('�逆向奖励(Kelly×' + vote.contrarianBonus.toFixed(2) + ')');
+  // ========== Section 5: 拥挤度 & 逆向 ==========
+  let crowdSection = '';
+  if(vote.sotStatus === 'crowded') crowdSection = `⚠️该品种当前交易拥挤度较高，市场关注度过热，短期追涨风险大。Kelly仓位已按拥挤度因子(×${vote.crowdingPenalty.toFixed(2)})下调，减少过热板块暴露`;
+  else if(vote.sotStatus === 'contrarian') crowdSection = `🎯该品种当前处于市场冷门区域，关注度低迷，具备逆向投资价值。Kelly仓位获得逆向奖励(×${vote.contrarianBonus.toFixed(2)})`;
 
-  // 汇总
-  let reason = parts.join('，');
-  // 加入操作建议
+  // ========== Section 6: 风控约束 ==========
+  let riskSection = '';
+  if(vote.riskMult < 0.8) riskSection += `⚠️组合风险约束生效: 当前组合整体风险偏高(风险评分${(vote.portRisk*100).toFixed(0)})，买入信号已被风控系统压缩(×${vote.riskMult.toFixed(2)})`;
+
+  // ========== 汇总输出 ==========
+  let reason = '';
+  // 操作结论(放最前面，醒目)
   if(vote.action === 'buy'){
-    reason += `。建议用总仓位的${(vote.bt.kelly*100).toFixed(0)}%(Kelly)分批加仓`;
-    if(td?.swingPos === 'dip' || td?.swingPos === 'deep_dip') reason += '，当前处于回调低点，可适当加大力度';
+    reason += `<b style="color:#ef4444">📌 结论: 建议加仓</b>，Kelly建议仓位${(vote.bt.kelly * 100).toFixed(1)}%，综合评分${vote.score.toFixed(3)}，有效置信${vote.effConf}%。`;
+    if(td?.swingPos === 'deep_dip') reason += '当前正处于深度回调区间，是较佳的加仓时机，可适当加大力度。';
+    else if(td?.swingPos === 'dip') reason += '正处于波段回调低点，适合分批建仓。';
+    else reason += '建议分2-3批逐步建仓，避免一次性重仓。';
   } else if(vote.action === 'sell'){
-    reason += '。建议先减30-50%仓位落袋';
-    if(td?.swingPos === 'surge' || td?.swingPos === 'rally') reason += '，趁反弹出货';
+    reason += `<b style="color:#22c55e">📌 结论: 建议减仓</b>，建议先减30-50%仓位，综合评分${vote.score.toFixed(3)}，有效置信${vote.effConf}%。`;
+    if(td?.swingPos === 'surge' || td?.swingPos === 'rally') reason += '当前处于反弹/冲高阶段，是相对好的卖出窗口，趁反弹出货。';
+    else if(td?.trendDir === 'strong_down') reason += '趋势处于强势下跌中，建议果断止损，避免深套。';
+    else reason += '分批减仓锁定利润，控制下行风险。';
   } else {
-    if(parts.length === 0) reason = '信号未达共识阈值，维持现有仓位观望';
-    if(vote.geoBias > 0.1 && vote.buyVotes < 2) reason += '。地缘偏利好但引擎信号不足，可小仓先行布局';
-    if(vote.ai.reason && vote.ai.conf > 0) reason += `。AI参考：${vote.ai.reason.slice(0,60)}`;
+    let holdReason = `<b style="color:#64748b">📌 结论: 维持持有</b>，综合评分${vote.score.toFixed(3)}`;
+    if(vote.buyVotes > 0 && vote.sellVotes > 0) holdReason += '。引擎间存在分歧，方向不明确，不宜轻易操作';
+    else if(totalVotes === 0) holdReason += '。信号未达共识阈值，数据不足以支撑决策';
+    else holdReason += '。信号虽有一定方向性但未达行动阈值';
+    if(vote.geoBias > 0.1 && vote.buyVotes < 2) holdReason += '。地缘事件偏利好但引擎信号不足，可用极小仓位(1-2%)先行试探性布局';
+    reason += holdReason + '。';
   }
+  reason += '<br>';
+
+  // 各分析维度(带clear标签)
+  reason += `<div style="margin-top:4px;padding:4px 8px;background:rgba(79,110,247,0.06);border-radius:6px;border-left:3px solid var(--primary);font-size:10px;line-height:1.6">`;
+  reason += engineSection;
+  if(techSection) reason += `<br><b>📉技术面</b>: ${techSection}`;
+  if(fundFlowSection) reason += `<br><b>💰资金面</b>: ${fundFlowSection}`;
+  if(macroSection) reason += `<br><b>🌐宏观&地缘</b>: ${macroSection}`;
+  if(crowdSection) reason += `<br><b>🎭拥挤度</b>: ${crowdSection}`;
+  if(riskSection) reason += `<br><b>🛡️风控</b>: ${riskSection}`;
+
+  // AI原始分析引用
+  if(vote.ai.reason && vote.ai.conf > 0){
+    reason += `<br><b>💬AI原文</b>: "${vote.ai.reason.slice(0, 200)}"`;
+  }
+  reason += '</div>';
+
   return reason;
 }
 
