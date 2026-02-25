@@ -5409,21 +5409,37 @@ function renderRadarSection(geoData){
     html += '</div>';
   }
 
-  // ===== 模块A: 热点温度计 =====
+  // ===== 模块A: 热点温度计 (实时行情修正) =====
   html += '<div class="radar-module">';
-  html += '<div class="radar-mod-title">🔥 热点温度计</div>';
+  html += '<div class="radar-mod-title">🔥 热点温度计 <span style="font-size:9px;font-weight:400;color:rgba(255,255,255,0.3)">新闻热度 × 实时行情修正</span></div>';
   html += '<div class="heatmap-grid">';
-  var displayHeatmap = heatmap.length > 0 ? heatmap : _buildFallbackHeatmap(geoData);
+  var displayHeatmap = heatmap.length > 0 ? heatmap.map(function(h){ return Object.assign({}, h); }) : _buildFallbackHeatmap(geoData);
+  // === 实时行情修正: 用今日板块涨跌幅 + 指数涨跌幅动态调整温度 ===
+  displayHeatmap = _adjustHeatmapWithLiveData(displayHeatmap);
+  // 按调整后温度重排序
+  displayHeatmap.sort(function(a,b){ return b.temperature - a.temperature; });
   displayHeatmap.slice(0, 14).forEach(function(h){
     var temp = h.temperature;
     var barColor = temp >= 70 ? '#ef4444' : temp >= 50 ? '#f59e0b' : temp >= 30 ? '#3b82f6' : '#64748b';
     var tempIcon = temp >= 80 ? '🔥' : temp >= 60 ? '🌡️' : temp >= 40 ? '📊' : '❄️';
     var trendIcon = h.trend === 'up' ? '↑' : h.trend === 'down' ? '↓' : '';
     var trendColor = h.trend === 'up' ? '#f87171' : h.trend === 'down' ? '#4ade80' : 'transparent';
+    // 实时行情修正标记
+    var liveTag = '';
+    if(h._liveAdj && Math.abs(h._liveAdj) >= 3){
+      var adjSign = h._liveAdj > 0 ? '+' : '';
+      var adjColor = h._liveAdj > 0 ? '#f87171' : '#4ade80';
+      liveTag = '<span style="font-size:8px;color:' + adjColor + ';margin-left:2px" title="实时行情修正">' + adjSign + h._liveAdj + '</span>';
+    }
+    var livePctTag = '';
+    if(h._livePct !== undefined && h._livePct !== null){
+      var livePctColor = h._livePct >= 0 ? '#f87171' : '#4ade80';
+      livePctTag = '<span style="font-size:8px;color:' + livePctColor + ';margin-left:3px">' + (h._livePct>=0?'+':'') + h._livePct.toFixed(2) + '%</span>';
+    }
     html += '<div class="heat-item">';
-    html += '<span class="heat-tag">' + h.tag + '</span>';
+    html += '<span class="heat-tag">' + h.tag + livePctTag + '</span>';
     html += '<div class="heat-bar"><div class="heat-fill" style="width:' + temp + '%;background:' + barColor + '"></div></div>';
-    html += '<span class="heat-temp" style="color:' + barColor + '">' + tempIcon + temp + '</span>';
+    html += '<span class="heat-temp" style="color:' + barColor + '">' + tempIcon + temp + liveTag + '</span>';
     html += '<span class="heat-trend" style="color:' + trendColor + '">' + trendIcon + '</span>';
     html += '</div>';
   });
@@ -5550,6 +5566,147 @@ function renderRadarSection(geoData){
 }
 
 // 回退热度图 (当hot_events.json未加载时, 从事件推导)
+// ==================== 实时行情修正热点温度 ====================
+// 核心思路: 新闻热度(LLM from hot_events.json)是"预期"，实时涨跌幅是"现实"
+// 当现实大幅偏离预期时(如有色金属暴涨但温度偏低)，用实时数据修正温度
+function _adjustHeatmapWithLiveData(heatmap){
+  if(!heatmap || heatmap.length === 0) return heatmap;
+
+  // === 1. 从实时板块涨跌幅(liveSectors)获取板块表现 ===
+  // liveSectors 格式: [{name:'有色金属', pct:4.71}, ...]
+  const sectorPctMap = {};
+  (liveSectors || []).forEach(function(s){
+    sectorPctMap[s.name] = s.pct;
+  });
+
+  // === 2. 从实时指数(liveIndices)获取商品指数表现 ===
+  // 黄金ETF(518880), 白银LOF(161226), 有色金属指数(000819)
+  const idxPctMap = {};
+  INDICES_CONFIG.forEach(function(cfg){
+    var d = liveIndices[cfg.secid];
+    if(d && !isNaN(d.pct)){
+      idxPctMap[cfg.name] = parseFloat(d.pct);
+    }
+  });
+
+  // === 3. 从实时板块资金流向获取主力资金信号 ===
+  const capFlowMap = {};
+  (sectorCapFlow || []).forEach(function(s){
+    capFlowMap[s.name] = s;
+  });
+
+  // === 4. 标签 → 实时信号来源映射 ===
+  // 每个heatmap标签对应哪些实时数据源
+  const TAG_LIVE_MAP = {
+    '人工智能': { sectors:['计算机','电子','通信'], idx:[], capKeys:['计算机','电子'] },
+    'AI算力':   { sectors:['计算机','电子','通信'], idx:[], capKeys:['计算机','电子'] },
+    '半导体':   { sectors:['电子','半导体'], idx:[], capKeys:['电子'] },
+    '大模型':   { sectors:['计算机','传媒'], idx:[], capKeys:['计算机'] },
+    '机器人':   { sectors:['电子','机械设备','计算机'], idx:[], capKeys:['机械设备','电子'] },
+    '新能源':   { sectors:['电力设备','电气设备'], idx:[], capKeys:['电力设备'] },
+    '光伏':     { sectors:['电力设备','电气设备'], idx:[], capKeys:['电力设备'] },
+    '锂电':     { sectors:['电力设备','汽车','电气设备'], idx:[], capKeys:['电力设备'] },
+    '新能源车': { sectors:['汽车','电力设备'], idx:[], capKeys:['汽车'] },
+    '消费':     { sectors:['食品饮料','家用电器','商贸零售','社会服务'], idx:[], capKeys:['食品饮料','家用电器'] },
+    '白酒':     { sectors:['食品饮料'], idx:[], capKeys:['食品饮料'] },
+    '医药':     { sectors:['医药生物','生物医药'], idx:[], capKeys:['医药生物'] },
+    '军工':     { sectors:['国防军工'], idx:[], capKeys:['国防军工'] },
+    '红利':     { sectors:['银行','煤炭','公用事业','石油石化'], idx:[], capKeys:['银行','煤炭'] },
+    '债券':     { sectors:[], idx:[], capKeys:[] },
+    '宽基':     { sectors:[], idx:['上证','沪深300','创业板'], capKeys:[] },
+    '港股科技': { sectors:[], idx:[], capKeys:[] },
+    '黄金':     { sectors:['有色金属','贵金属'], idx:['黄金ETF'], capKeys:['有色金属'] },
+    '有色金属': { sectors:['有色金属','有色','矿业','基础化工'], idx:['有色金属','白银LOF'], capKeys:['有色金属'] },
+    '原油':     { sectors:['石油石化','煤炭','采掘'], idx:[], capKeys:['石油石化','煤炭'] },
+  };
+
+  // === 5. 逐标签计算实时修正值 ===
+  heatmap.forEach(function(h){
+    var mapping = TAG_LIVE_MAP[h.tag];
+    if(!mapping) return;
+
+    var livePcts = []; // 收集所有相关的实时涨跌幅
+    var mainNetTotal = 0; // 主力资金净流入
+    var hasCapData = false;
+
+    // 5a: 板块涨跌幅
+    mapping.sectors.forEach(function(sec){
+      // 模糊匹配(liveSectors的name可能是"有色金属"也可能是"SW有色金属")
+      Object.keys(sectorPctMap).forEach(function(key){
+        if(key.includes(sec) || sec.includes(key)){
+          livePcts.push(sectorPctMap[key]);
+        }
+      });
+    });
+
+    // 5b: 指数涨跌幅(商品类)
+    mapping.idx.forEach(function(idxName){
+      if(idxPctMap[idxName] !== undefined){
+        livePcts.push(idxPctMap[idxName]);
+      }
+    });
+
+    // 5c: 板块资金流向
+    mapping.capKeys.forEach(function(ck){
+      Object.keys(capFlowMap).forEach(function(key){
+        if(key.includes(ck) || ck.includes(key)){
+          mainNetTotal += (capFlowMap[key].mainNet || 0);
+          hasCapData = true;
+        }
+      });
+    });
+
+    if(livePcts.length === 0) return; // 无实时数据，保持原值
+
+    // 5d: 计算平均涨幅
+    var avgPct = livePcts.reduce(function(a,b){return a+b;}, 0) / livePcts.length;
+    var maxPct = Math.max.apply(null, livePcts);
+
+    // === 6. 修正算法 ===
+    // 核心: 涨跌幅越大，修正力度越强
+    // 基线: ±1% → ±5度, ±3% → ±15度, ±5% → ±25度, ±10% → ±35度
+    var pctAdj = 0;
+    if(Math.abs(avgPct) > 0.5){
+      pctAdj = avgPct * 5; // 每1%涨幅 = 5度
+      // 极端行情放大(>3%涨幅额外加权)
+      if(Math.abs(avgPct) > 3) pctAdj += (avgPct - Math.sign(avgPct) * 3) * 3;
+      // 单标的暴涨额外加权(如白银+9%)
+      if(Math.abs(maxPct) > 5) pctAdj += (maxPct - Math.sign(maxPct) * 5) * 2;
+    }
+
+    // 资金流修正: 主力大幅流入/流出 ±5度
+    var capAdj = 0;
+    if(hasCapData){
+      if(mainNetTotal > 5e8) capAdj = 5;        // >5亿净流入
+      else if(mainNetTotal > 2e8) capAdj = 3;   // >2亿
+      else if(mainNetTotal < -5e8) capAdj = -5;  // <-5亿净流出
+      else if(mainNetTotal < -2e8) capAdj = -3;
+    }
+
+    var totalAdj = Math.round(pctAdj + capAdj);
+    // 限制单次修正幅度 [-30, +35]
+    totalAdj = Math.max(-30, Math.min(35, totalAdj));
+
+    if(totalAdj !== 0){
+      h.temperature = Math.max(0, Math.min(100, h.temperature + totalAdj));
+      h._liveAdj = totalAdj; // 记录修正值(用于UI展示)
+
+      // 修正趋势方向
+      if(avgPct > 2 && h.trend !== 'up') h.trend = 'up';
+      else if(avgPct < -2 && h.trend !== 'down') h.trend = 'down';
+
+      // 修正情绪
+      if(avgPct > 1) h.sentiment = Math.min(1, (h.sentiment || 0) + avgPct * 0.1);
+      else if(avgPct < -1) h.sentiment = Math.max(-1, (h.sentiment || 0) + avgPct * 0.1);
+    }
+
+    // 记录实时涨幅(用于UI展示)
+    h._livePct = avgPct;
+  });
+
+  return heatmap;
+}
+
 function _buildFallbackHeatmap(geoData){
   var tagScores = {};
   (geoData.allEvents || []).forEach(function(e){
@@ -7588,6 +7745,25 @@ function generateDataSignal(){
     const pmi = macroData.pmi[0].MAKE_INDEX;
     if(pmi >= 51) score += 5;
     else if(pmi < 49) score -= 5;
+  }
+  // === 实时大盘动量 ±10 ===
+  // 沪深300实时涨跌幅作为当日市场情绪信号
+  const hs300 = liveIndices['1.000300'];
+  if(hs300 && !isNaN(hs300.pct)){
+    const mkPct = parseFloat(hs300.pct);
+    if(mkPct > 2) score += 10;
+    else if(mkPct > 1) score += 6;
+    else if(mkPct > 0.3) score += 3;
+    else if(mkPct < -2) score -= 10;
+    else if(mkPct < -1) score -= 6;
+    else if(mkPct < -0.3) score -= 3;
+  }
+  // 板块涨跌幅广度: 涨幅板块数远多于跌幅板块数 → 市场情绪偏多
+  if(liveSectors && liveSectors.length > 5){
+    const upCount = liveSectors.filter(s => s.pct > 0).length;
+    const downCount = liveSectors.filter(s => s.pct < 0).length;
+    const breadth = (upCount - downCount) / liveSectors.length; // -1 to +1
+    score += Math.round(breadth * 5); // ±5
   }
 
   score = Math.max(0, Math.min(100, Math.round(score)));
