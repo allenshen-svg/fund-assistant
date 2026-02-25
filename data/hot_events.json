@@ -1,29 +1,41 @@
 {
-  "updated_at": "2026-02-24T22:40:38.853005+08:00",
+  "updated_at": "2026-02-25T13:17:31.546375+08:00",
   "heatmap": [
     {
-      "tag": "AI算力",
-      "temperature": 88,
+      "tag": "半导体",
+      "temperature": 85,
+      "sentiment": 0.9,
+      "trend": "stable"
+    },
+    {
+      "tag": "新能源车",
+      "temperature": 85,
       "sentiment": 0.9,
       "trend": "up"
     },
     {
-      "tag": "人工智能",
+      "tag": "有色金属",
       "temperature": 85,
+      "sentiment": 0.9,
+      "trend": "up"
+    },
+    {
+      "tag": "新能源",
+      "temperature": 80,
       "sentiment": 0.8,
       "trend": "up"
     },
     {
-      "tag": "半导体",
-      "temperature": 82,
-      "sentiment": 0.85,
-      "trend": "stable"
+      "tag": "锂电",
+      "temperature": 80,
+      "sentiment": 0.8,
+      "trend": "up"
     },
     {
-      "tag": "大模型",
-      "temperature": 78,
+      "tag": "人工智能",
+      "temperature": 75,
       "sentiment": 0.7,
-      "trend": "up"
+      "trend": "down"
     },
     {
       "tag": "光伏",
@@ -32,221 +44,220 @@
       "trend": "stable"
     },
     {
-      "tag": "新能源",
-      "temperature": 72,
-      "sentiment": 0.6,
-      "trend": "stable"
+      "tag": "军工",
+      "temperature": 75,
+      "sentiment": 0.7,
+      "trend": "up"
     },
     {
-      "tag": "新能源车",
+      "tag": "AI算力",
       "temperature": 70,
-      "sentiment": 0.55,
-      "trend": "stable"
+      "sentiment": 0.6,
+      "trend": "down"
     },
     {
-      "tag": "锂电",
-      "temperature": 68,
-      "sentiment": 0.5,
-      "trend": "stable"
+      "tag": "港股科技",
+      "temperature": 70,
+      "sentiment": 0.6,
+      "trend": "up"
+    },
+    {
+      "tag": "原油",
+      "temperature": 70,
+      "sentiment": 0.6,
+      "trend": "up"
     },
     {
       "tag": "机器人",
       "temperature": 65,
-      "sentiment": 0.4,
+      "sentiment": 0.5,
       "trend": "stable"
     },
     {
       "tag": "黄金",
       "temperature": 65,
-      "sentiment": 0.45,
+      "sentiment": 0.5,
       "trend": "stable"
     },
     {
-      "tag": "原油",
-      "temperature": 62,
-      "sentiment": 0.35,
-      "trend": "down"
-    },
-    {
-      "tag": "港股科技",
+      "tag": "大模型",
       "temperature": 60,
-      "sentiment": 0.5,
-      "trend": "down"
-    },
-    {
-      "tag": "有色金属",
-      "temperature": 58,
       "sentiment": 0.4,
       "trend": "down"
+    },
+    {
+      "tag": "消费",
+      "temperature": 60,
+      "sentiment": 0.5,
+      "trend": "up"
+    },
+    {
+      "tag": "红利",
+      "temperature": 60,
+      "sentiment": 0.5,
+      "trend": "up"
     },
     {
       "tag": "医药",
       "temperature": 55,
       "sentiment": 0.4,
-      "trend": "down"
-    },
-    {
-      "tag": "军工",
-      "temperature": 55,
-      "sentiment": 0.3,
-      "trend": "down"
-    },
-    {
-      "tag": "红利",
-      "temperature": 52,
-      "sentiment": 0.25,
-      "trend": "down"
-    },
-    {
-      "tag": "消费",
-      "temperature": 50,
-      "sentiment": 0.3,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "tag": "债券",
-      "temperature": 48,
-      "sentiment": -0.1,
-      "trend": "down"
+      "temperature": 55,
+      "sentiment": 0.4,
+      "trend": "up"
     },
     {
       "tag": "白酒",
-      "temperature": 45,
-      "sentiment": 0.2,
-      "trend": "down"
+      "temperature": 50,
+      "sentiment": 0.3,
+      "trend": "stable"
     },
     {
       "tag": "宽基",
-      "temperature": 40,
-      "sentiment": 0.1,
-      "trend": "down"
+      "temperature": 50,
+      "sentiment": 0.3,
+      "trend": "up"
     }
   ],
   "events": [
     {
-      "id": "evt_20260224_001",
-      "title": "美联储古尔斯比呼吁暂停降息",
-      "category": "monetary",
+      "id": "evt_20260225_001",
+      "title": "镍业股普涨",
+      "category": "commodity",
       "concepts": [
-        "债券"
+        "有色金属"
       ],
-      "sentiment": -0.5,
-      "impact": -8,
-      "confidence": 0.73,
+      "sentiment": 0.7,
+      "impact": 8,
+      "confidence": 0.71,
       "sectors_positive": [
-        "债券",
-        "固收",
-        "纯债"
-      ],
-      "sectors_negative": [
-        "债券"
-      ],
-      "fund_keywords": [
-        "债券"
-      ],
-      "reason": "美联储官员表态偏鹰派",
-      "advice": "谨慎对待债券投资",
-      "source": "AI综合分析",
-      "time": "2026-02-24T22:40:38.853005+08:00"
-    },
-    {
-      "id": "evt_20260224_002",
-      "title": "欧盟准备对美动用反胁迫工具",
-      "category": "geopolitics",
-      "concepts": [
-        "贸易政策"
-      ],
-      "sentiment": -0.7,
-      "impact": -11,
-      "confidence": 0.83,
-      "sectors_positive": [],
-      "sectors_negative": [
-        "贸易相关"
-      ],
-      "fund_keywords": [
-        "贸易"
-      ],
-      "reason": "美欧贸易摩擦升级",
-      "advice": "规避贸易敏感板块",
-      "source": "AI综合分析",
-      "time": "2026-02-24T22:40:38.853005+08:00"
-    },
-    {
-      "id": "evt_20260224_003",
-      "title": "AMD获Meta千亿芯片订单",
-      "category": "technology",
-      "concepts": [
-        "半导体",
-        "AI算力"
-      ],
-      "sentiment": 0.9,
-      "impact": 18,
-      "confidence": 1.0,
-      "sectors_positive": [
-        "半导体",
-        "AI"
+        "有色金属"
       ],
       "sectors_negative": [],
       "fund_keywords": [
-        "半导体",
-        "AI"
+        "有色金属"
       ],
-      "reason": "大额订单确认AI算力需求",
-      "advice": "关注半导体龙头",
+      "reason": "镍价上涨带动相关股票",
+      "advice": "关注有色金属板块",
       "source": "AI综合分析",
-      "time": "2026-02-24T22:40:38.853005+08:00"
+      "time": "2026-02-25T13:17:31.546375+08:00"
     },
     {
-      "id": "evt_20260224_004",
-      "title": "光伏龙头拟并购行业独角兽",
+      "id": "evt_20260225_002",
+      "title": "锂矿股上扬",
+      "category": "commodity",
+      "concepts": [
+        "锂电"
+      ],
+      "sentiment": 0.6,
+      "impact": 7,
+      "confidence": 0.66,
+      "sectors_positive": [
+        "锂电"
+      ],
+      "sectors_negative": [],
+      "fund_keywords": [
+        "锂电"
+      ],
+      "reason": "锂价上涨推动股价",
+      "advice": "关注锂电板块",
+      "source": "AI综合分析",
+      "time": "2026-02-25T13:17:31.546375+08:00"
+    },
+    {
+      "id": "evt_20260225_003",
+      "title": "香港延长新能源车税优",
       "category": "policy",
       "concepts": [
-        "光伏"
+        "新能源车"
       ],
       "sentiment": 0.8,
       "impact": 12,
       "confidence": 0.88,
       "sectors_positive": [
-        "光伏"
+        "新能源车"
       ],
       "sectors_negative": [],
       "fund_keywords": [
-        "光伏"
+        "新能源车"
       ],
-      "reason": "行业整合加速",
-      "advice": "布局光伏产业链",
+      "reason": "政策支持新能源车发展",
+      "advice": "增持新能源车",
       "source": "AI综合分析",
-      "time": "2026-02-24T22:40:38.853005+08:00"
+      "time": "2026-02-25T13:17:31.546375+08:00"
     },
     {
-      "id": "evt_20260224_005",
-      "title": "美联储警告AI或致失业",
+      "id": "evt_20260225_004",
+      "title": "上海放宽楼市限购",
       "category": "policy",
       "concepts": [
-        "人工智能"
+        "地产"
       ],
-      "sentiment": -0.3,
-      "impact": -3,
-      "confidence": 0.51,
+      "sentiment": 0.7,
+      "impact": 11,
+      "confidence": 0.83,
       "sectors_positive": [
-        "AI/科技",
-        "科技",
-        "AIGC"
+        "地产"
       ],
-      "sectors_negative": [
-        "AI应用"
-      ],
+      "sectors_negative": [],
       "fund_keywords": [
-        "AI"
+        "地产"
       ],
-      "reason": "政策风险显现",
-      "advice": "甄别AI标的",
+      "reason": "政策放松刺激楼市",
+      "advice": "关注地产板块",
       "source": "AI综合分析",
-      "time": "2026-02-24T22:40:38.853005+08:00"
+      "time": "2026-02-25T13:17:31.546375+08:00"
     },
     {
-      "id": "evt_20260224_006",
-      "title": "英国央行暗示继续宽松",
+      "id": "evt_20260225_005",
+      "title": "半导体产业链大涨",
+      "category": "technology",
+      "concepts": [
+        "半导体"
+      ],
+      "sentiment": 0.9,
+      "impact": 14,
+      "confidence": 0.93,
+      "sectors_positive": [
+        "半导体"
+      ],
+      "sectors_negative": [],
+      "fund_keywords": [
+        "半导体"
+      ],
+      "reason": "行业景气度提升",
+      "advice": "增持半导体",
+      "source": "AI综合分析",
+      "time": "2026-02-25T13:17:31.546375+08:00"
+    },
+    {
+      "id": "evt_20260225_006",
+      "title": "韩美联合军演",
+      "category": "geopolitics",
+      "concepts": [
+        "军工"
+      ],
+      "sentiment": 0.5,
+      "impact": 6,
+      "confidence": 0.61,
+      "sectors_positive": [
+        "军工"
+      ],
+      "sectors_negative": [],
+      "fund_keywords": [
+        "军工"
+      ],
+      "reason": "地缘政治紧张",
+      "advice": "关注军工板块",
+      "source": "AI综合分析",
+      "time": "2026-02-25T13:17:31.546375+08:00"
+    },
+    {
+      "id": "evt_20260225_007",
+      "title": "央行在港发人民币票据",
       "category": "monetary",
       "concepts": [
         "债券"
@@ -261,111 +272,142 @@
       "fund_keywords": [
         "债券"
       ],
-      "reason": "货币政策分化",
-      "advice": "关注英债机会",
+      "reason": "流动性管理措施",
+      "advice": "关注固收产品",
       "source": "AI综合分析",
-      "time": "2026-02-24T22:40:38.853005+08:00"
+      "time": "2026-02-25T13:17:31.546375+08:00"
     },
     {
-      "id": "evt_20260224_007",
-      "title": "AI预测基金71%交易",
-      "category": "technology",
+      "id": "evt_20260225_008",
+      "title": "铝业股走高",
+      "category": "commodity",
       "concepts": [
-        "人工智能"
+        "有色金属"
       ],
       "sentiment": 0.7,
       "impact": 8,
       "confidence": 0.71,
       "sectors_positive": [
-        "AI"
-      ],
-      "sectors_negative": [
-        "传统金融"
-      ],
-      "fund_keywords": [
-        "AI"
-      ],
-      "reason": "技术颠覆传统行业",
-      "advice": "增配AI主题",
-      "source": "AI综合分析",
-      "time": "2026-02-24T22:40:38.853005+08:00"
-    },
-    {
-      "id": "evt_20260224_008",
-      "title": "美独户住宅价格增长放缓",
-      "category": "market",
-      "concepts": [
-        "房地产"
-      ],
-      "sentiment": -0.4,
-      "impact": -4,
-      "confidence": 0.56,
-      "sectors_positive": [],
-      "sectors_negative": [
-        "房地产"
-      ],
-      "fund_keywords": [
-        "房地产"
-      ],
-      "reason": "房市降温信号",
-      "advice": "规避地产板块",
-      "source": "AI综合分析",
-      "time": "2026-02-24T22:40:38.853005+08:00"
-    },
-    {
-      "id": "evt_20260224_009",
-      "title": "谷歌签署20年电力协议",
-      "category": "commodity",
-      "concepts": [
-        "新能源"
-      ],
-      "sentiment": 0.5,
-      "impact": 6,
-      "confidence": 0.61,
-      "sectors_positive": [
-        "新能源"
+        "有色金属"
       ],
       "sectors_negative": [],
       "fund_keywords": [
-        "新能源"
+        "有色金属"
       ],
-      "reason": "绿电需求长期化",
-      "advice": "布局新能源",
+      "reason": "铝价上涨推动股价",
+      "advice": "关注有色金属",
       "source": "AI综合分析",
-      "time": "2026-02-24T22:40:38.853005+08:00"
+      "time": "2026-02-25T13:17:31.546375+08:00"
     },
     {
-      "id": "evt_20260224_010",
-      "title": "美元受降息押注减弱提振",
-      "category": "market",
+      "id": "evt_20260225_009",
+      "title": "香港提高豪宅印花税",
+      "category": "policy",
       "concepts": [
-        "外汇"
+        "地产"
+      ],
+      "sentiment": -0.5,
+      "impact": -6,
+      "confidence": 0.61,
+      "sectors_positive": [],
+      "sectors_negative": [
+        "地产"
+      ],
+      "fund_keywords": [
+        "地产"
+      ],
+      "reason": "政策抑制高端楼市",
+      "advice": "谨慎对待地产",
+      "source": "AI综合分析",
+      "time": "2026-02-25T13:17:31.546375+08:00"
+    },
+    {
+      "id": "evt_20260225_010",
+      "title": "稀土板块估值提升",
+      "category": "commodity",
+      "concepts": [
+        "有色金属"
+      ],
+      "sentiment": 0.8,
+      "impact": 12,
+      "confidence": 0.88,
+      "sectors_positive": [
+        "有色金属"
+      ],
+      "sectors_negative": [],
+      "fund_keywords": [
+        "有色金属"
+      ],
+      "reason": "稀土需求增长",
+      "advice": "增持稀土板块",
+      "source": "AI综合分析",
+      "time": "2026-02-25T13:17:31.546375+08:00"
+    },
+    {
+      "title": "避险资产受青睐",
+      "category": "commodity",
+      "concepts": [
+        "黄金"
       ],
       "sentiment": 0.3,
       "impact": 3,
-      "confidence": 0.51,
       "sectors_positive": [
-        "美元资产"
+        "黄金",
+        "贵金属",
+        "有色金属"
       ],
-      "sectors_negative": [
-        "新兴市场"
-      ],
+      "sectors_negative": [],
       "fund_keywords": [
-        "外汇"
+        "黄金",
+        "贵金属",
+        "避险",
+        "白银",
+        "有色金属"
       ],
-      "reason": "货币政策预期变化",
-      "advice": "增持美元资产",
-      "source": "AI综合分析",
-      "time": "2026-02-24T22:40:38.853005+08:00"
+      "reason": "地缘不确定性+央行购金，黄金作为避险资产维持关注",
+      "advice": "黄金ETF作底仓配置",
+      "id": "evt_20260225_base_011",
+      "confidence": 0.6,
+      "source": "常驻基础事件",
+      "time": "2026-02-25T13:17:31.546375+08:00"
+    },
+    {
+      "title": "国际油价波动加剧",
+      "category": "commodity",
+      "concepts": [
+        "原油"
+      ],
+      "sentiment": 0.1,
+      "impact": 2,
+      "sectors_positive": [
+        "能源",
+        "原油",
+        "油气",
+        "大宗商品"
+      ],
+      "sectors_negative": [],
+      "fund_keywords": [
+        "原油",
+        "油气",
+        "石油",
+        "天然气",
+        "能源"
+      ],
+      "reason": "OPEC减产预期+地缘冲突，油气价格波动信号",
+      "advice": "油气ETF关注供给端变化",
+      "id": "evt_20260225_base_012",
+      "confidence": 0.6,
+      "source": "常驻基础事件",
+      "time": "2026-02-25T13:17:31.546375+08:00"
     }
   ],
   "outlook": {
     "period": "2026年2月",
-    "summary": "AI算力需求爆发推动半导体板块领涨，美联储政策分歧引发市场波动，新能源与光伏受产业整合提振，需警惕美欧贸易摩擦升级风险。",
-    "score": 57
+    "summary": "市场整体乐观，半导体、新能源车和有色金属板块表现强劲，政策利好推动相关行业，地缘政治因素提升军工关注度。",
+    "score": 65
   },
   "meta": {
-    "news_count": 84,
+    "news_count": 85,
     "sources": [
       "新浪财经",
       "财联社",
