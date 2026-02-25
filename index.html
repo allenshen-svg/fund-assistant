@@ -1801,7 +1801,7 @@ const STOCK_SECTOR_DB = {
 // 当无法获取持仓明细时，通过基金名称关键词推断行业分布
 const FUND_SECTOR_KEYWORD_MAP = [
   // 精确匹配优先（越长的关键词越先匹配）
-  { keywords: ['中证油气产业','油气产业'], sectors: {'能源':0.75,'化工':0.25} },
+  { keywords: ['中证油气产业','油气产业'], sectors: {'能源':0.85,'化工':0.15} },
   { keywords: ['原油','石油'], sectors: {'能源':0.85,'化工':0.15} },
   { keywords: ['油气','天然气'], sectors: {'能源':0.80,'化工':0.20} },
   { keywords: ['黄金','Gold'], sectors: {'黄金':0.95,'有色金属':0.05} },
@@ -5334,7 +5334,7 @@ function generateSmartReason(p, capFlow, ds){
       '黄金':['贵金属','有色金属'],
       '红利':['红利','公用事业','银行','高股息'],
       '钢铁':['周期','资源','钢铁'],
-      '油气':['石油石化','能源','煤炭'],
+      '油气':['石油石化','能源'],
       '原油':['石油石化','能源'],
       '能源':['石油石化','能源','煤炭'],
       '化工':['化工','基础化工','周期'],
@@ -5379,7 +5379,29 @@ function generateSmartReason(p, capFlow, ds){
         const overlap = m.sectors.filter(function(ms){
           return allowedMgrSectors.has(ms);
         });
-        if(overlap.length > 0){
+        if(overlap.length === 0) return;
+        // 相关性检查: 经理的最新动向不应与基金赛道明显矛盾
+        // 例: 油气ETF不应匹配"看好有色金属"的经理
+        const recentText = m.recent || '';
+        const CONFLICT_PAIRS = [
+          {sectors:['石油石化','能源','煤炭'], conflicts:['有色金属','贵金属','黄金','银']},
+          {sectors:['有色金属','贵金属'], conflicts:['石油','油气','原油','天然气']},
+          {sectors:['医药','创新药','CXO'], conflicts:['半导体','芯片','光伏','军工']},
+          {sectors:['白酒','食品饮料'], conflicts:['半导体','芯片','军工','光伏']},
+        ];
+        const fundSectorSet = allowedMgrSectors;
+        let isConflict = false;
+        CONFLICT_PAIRS.forEach(function(pair){
+          // 基金属于 pair.sectors 方向
+          const fundInGroup = pair.sectors.some(function(s){ return fundSectorSet.has(s); });
+          if(fundInGroup){
+            // 经理的最新动向提到了冲突方向
+            const recentConflict = pair.conflicts.some(function(c){ return recentText.includes(c); });
+            if(recentConflict) isConflict = true;
+          }
+        });
+        if(isConflict) return;
+        {
           relatedMgrs.push({
             name: m.name,
             firm: m.firm,
