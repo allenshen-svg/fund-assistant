@@ -2227,6 +2227,10 @@ const TOP50_FM_DIRECTIONS = [
   { name:'刘畅畅', firm:'华安', aum:'150亿', style:'轮动择时', sectors:['周期','金融','消费'], recent:'看好顺周期修复', conviction:'中' },
   { name:'归凯', firm:'嘉实', aum:'145亿', style:'科技成长', sectors:['半导体','AI','新能源'], recent:'AI+半导体双主线', conviction:'高' },
   { name:'王崇', firm:'交银施罗德', aum:'140亿', style:'价值抄底', sectors:['地产','银行','基建'], recent:'低估值价值修复', conviction:'中' },
+  { name:'李晓星', firm:'银华', aum:'350亿', style:'均衡配置', sectors:['消费','科技','新能源车'], recent:'消费+科技双主线均衡', conviction:'中' },
+  { name:'曲扬', firm:'前海开源', aum:'200亿', style:'资源周期', sectors:['石油石化','煤炭','有色金属'], recent:'看好全球能源转型中的传统能源价值重估', conviction:'高' },
+  { name:'姜诚', firm:'中泰资管', aum:'180亿', style:'深度价值', sectors:['石油石化','能源','公用事业'], recent:'能源股长期价值被低估，加仓石油石化', conviction:'高' },
+  { name:'韩创', firm:'大成', aum:'160亿', style:'周期成长', sectors:['煤炭','石油石化','化工'], recent:'周期品供给侧逻辑仍在，能源链盈利韧性强', conviction:'高' },
 ];
 
 // 社交媒体热词数据(模拟来自微博/雪球/东财股吧/同花顺圈子实时爬取)
@@ -5293,34 +5297,74 @@ function generateSmartReason(p, capFlow, ds){
   // ========== Section 7: 顶级基金经理同赛道动向 ==========
   let mgrSection = '';
   {
-    // 匹配当前基金赛道与TOP50基金经理的投资方向
-    const fSectors = [];
-    if(fType) fSectors.push(...fType.split(/[/\/·、,，]/).map(s => s.trim()).filter(Boolean));
-    // 从持仓推断的行业也纳入匹配
+    // 精确赛道匹配映射: fundType/sectorExposure → 经理sectors的等价集
+    // 只用精确匹配，杜绝子串误匹配(如"有色金属"不应匹配到油气ETF)
+    const SECTOR_EQUIV = {
+      // 基金type → 允许匹配的经理sector集合
+      'AI':['AI','人工智能','计算机','AI芯片','软件','云计算','算力'],
+      '科技':['科技','计算机','电子','AI','软件','云计算','通信'],
+      '半导体':['半导体','AI芯片','电子'],
+      '宽基':['科技','消费','制造','金融'],
+      '蓝筹':['消费','白酒','互联网','金融','港股'],
+      'QDII':['港股','互联网'],
+      '港股科技':['港股','互联网','AI'],
+      '金融':['金融','银行'],
+      '消费':['消费','食品饮料','家电','商贸零售'],
+      '白酒':['白酒','食品饮料','消费'],
+      '医药':['创新药','医疗器械','CXO','医药'],
+      '军工':['军工','国防','航空航天'],
+      '新能源':['新能源','光伏','储能','锂电','充电桩'],
+      '光伏':['光伏','新能源','储能'],
+      '锂电':['锂电','新能源车','储能'],
+      '新能源车':['新能源车','锂电','智能驾驶','充电桩'],
+      '有色金属':['有色金属','资源','周期','矿业'],
+      '黄金':['贵金属','有色金属'],
+      '红利':['红利','公用事业','银行','高股息'],
+      '钢铁':['周期','资源','钢铁'],
+      '油气':['石油石化','能源','煤炭'],
+      '原油':['石油石化','能源'],
+      '能源':['石油石化','能源','煤炭'],
+      '化工':['化工','基础化工','周期'],
+      '地产':['地产','基建','建材'],
+      '机器人':['AI','机器人','制造','电子'],
+    };
+
+    // 1. 从fundType提取主赛道标签
+    const fTypeTags = fType ? fType.split(/[/\/·、,，]/).map(s => s.trim()).filter(Boolean) : [];
+    // 2. 从基金名称补充赛道关键词
+    const fnLower = fName.toLowerCase();
+    if(fnLower.includes('油气') || fnLower.includes('石油') || fnLower.includes('原油')){
+      if(!fTypeTags.includes('油气')) fTypeTags.push('油气');
+    }
+    if(fnLower.includes('能源') && !fnLower.includes('新能源')){
+      if(!fTypeTags.includes('能源')) fTypeTags.push('能源');
+    }
+
+    // 3. 构建允许匹配的经理sector精确集合
+    const allowedMgrSectors = new Set();
+    fTypeTags.forEach(function(tag){
+      const equivs = SECTOR_EQUIV[tag];
+      if(equivs) equivs.forEach(function(s){ allowedMgrSectors.add(s); });
+      // 如果tag本身就是经理sector常用词，也加入
+      allowedMgrSectors.add(tag);
+    });
+
+    // 4. 从持仓推断的行业(仅高权重≥20%的才纳入，避免10%的噪声)
     const holdInfo = _fundHoldingsCache[code];
     if(holdInfo?.sectorExposure){
-      Object.entries(holdInfo.sectorExposure).filter(([,w]) => w >= 0.1).forEach(([sec]) => {
-        if(!fSectors.includes(sec)) fSectors.push(sec);
+      Object.entries(holdInfo.sectorExposure).filter(([,w]) => w >= 0.20).forEach(([sec]) => {
+        const equivs = SECTOR_EQUIV[sec];
+        if(equivs) equivs.forEach(function(s){ allowedMgrSectors.add(s); });
+        allowedMgrSectors.add(sec);
       });
     }
-    if(fSectors.length > 0){
+
+    if(allowedMgrSectors.size > 0){
       const relatedMgrs = [];
       TOP50_FM_DIRECTIONS.forEach(function(m){
-        // 经理的sectors与基金赛道是否有交集
+        // 精确匹配: 经理的每个sector必须在允许集合中
         const overlap = m.sectors.filter(function(ms){
-          return fSectors.some(function(fs){
-            return ms.includes(fs) || fs.includes(ms)
-              || (fs === 'AI' && (ms === '计算机' || ms === '人工智能'))
-              || (fs === '科技' && (ms === '计算机' || ms === '电子' || ms === 'AI' || ms === '软件' || ms === '云计算'))
-              || (fs === '宽基' && (ms === '科技' || ms === '消费' || ms === '制造'))
-              || (fs === '蓝筹' && (ms === '消费' || ms === '白酒' || ms === '互联网' || ms === '金融'))
-              || (fs === 'QDII' && (ms === '港股' || ms === '互联网'))
-              || (fs === '金融' && (ms === '银行' || ms === '金融'))
-              || (fs === '消费' && (ms === '食品饮料' || ms === '家电' || ms === '消费'))
-              || (fs === '有色金属' && (ms === '有色金属' || ms === '资源' || ms === '周期'))
-              || (fs === '黄金' && (ms === '有色金属' || ms === '贵金属'))
-              || (fs === '红利' && (ms === '红利' || ms === '公用事业' || ms === '银行' || ms === '高股息'));
-          });
+          return allowedMgrSectors.has(ms);
         });
         if(overlap.length > 0){
           relatedMgrs.push({
@@ -5341,7 +5385,8 @@ function generateSmartReason(p, capFlow, ds){
         const top = relatedMgrs.slice(0, 4);
         mgrSection = top.map(function(m){
           const convIcon = m.conviction === '极高' ? '🔥' : m.conviction === '高' ? '💪' : '📌';
-          return `${convIcon}<b>${m.name}</b>(${m.firm}·${m.aum}·${m.style}): ${m.recent} [信心:${m.conviction}]`;
+          const overlapStr = m.overlapSectors.slice(0,2).join('/');
+          return `${convIcon}<b>${m.name}</b>(${m.firm}·${m.aum}·${m.style}) <span style="color:rgba(255,255,255,0.35);font-size:9px">[匹配:${overlapStr}]</span>: ${m.recent} [信心:${m.conviction}]`;
         }).join('<br>');
       }
     }
