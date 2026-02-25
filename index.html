@@ -649,6 +649,12 @@ body { font-family:-apple-system,BlinkMacSystemFont,'SF Pro','PingFang SC','Helv
     </div>
   </div>
   <div id="action-guide-container" class="action-guide-container"></div>
+  <div class="ai-btn-wrap" style="padding:10px 0 2px">
+    <button class="ai-btn" id="ai-btn" onclick="triggerAI()">
+      🧠 一键AI分析 · 4引擎研判
+    </button>
+    <div class="ai-progress" id="ai-progress"></div>
+  </div>
 </div>
 
 <!-- RL Brain Dashboard -->
@@ -708,14 +714,6 @@ body { font-family:-apple-system,BlinkMacSystemFont,'SF Pro','PingFang SC','Helv
   </div>
   <div class="pf-group active" id="pf-group-core"></div>
   <div class="pf-group" id="pf-group-satellite"></div>
-</div>
-
-<!-- AI Button -->
-<div class="ai-btn-wrap">
-  <button class="ai-btn" id="ai-btn" onclick="triggerAI()">
-    🧠 一键AI分析 · 4引擎研判
-  </button>
-  <div class="ai-progress" id="ai-progress"></div>
 </div>
 
 <!-- Market Summary (AI generated) -->
