@@ -324,11 +324,90 @@ def enrich_event(evt, idx, now):
     }
 
 
+# 大宗商品/资源常驻事件模板 (LLM未覆盖时自动注入)
+_COMMODITY_FALLBACKS = [
+    {
+        "key_sectors": {'黄金', '贵金属'},
+        "template": {
+            "title": "避险资产受青睐",
+            "category": "commodity",
+            "concepts": ["黄金"],
+            "sentiment": 0.3,
+            "impact": 3,
+            "sectors_positive": ["黄金", "贵金属", "有色金属"],
+            "sectors_negative": [],
+            "fund_keywords": ["黄金", "贵金属", "避险", "白银", "有色金属"],
+            "reason": "地缘不确定性+央行购金，黄金作为避险资产维持关注",
+            "advice": "黄金ETF作底仓配置",
+        },
+    },
+    {
+        "key_sectors": {'有色金属', '铜铝', '大宗商品'},
+        "template": {
+            "title": "全球有色金属需求旺盛",
+            "category": "commodity",
+            "concepts": ["有色金属"],
+            "sentiment": 0.3,
+            "impact": 3,
+            "sectors_positive": ["有色金属", "铜铝", "大宗商品", "资源"],
+            "sectors_negative": [],
+            "fund_keywords": ["有色金属", "铜", "铝", "资源", "矿业"],
+            "reason": "新基建+新能源车带动铜铝需求，有色金属维持结构性行情",
+            "advice": "有色金属ETF波段操作",
+        },
+    },
+    {
+        "key_sectors": {'能源', '原油', '油气'},
+        "template": {
+            "title": "国际油价波动加剧",
+            "category": "commodity",
+            "concepts": ["原油"],
+            "sentiment": 0.1,
+            "impact": 2,
+            "sectors_positive": ["能源", "原油", "油气", "大宗商品"],
+            "sectors_negative": [],
+            "fund_keywords": ["原油", "油气", "石油", "天然气", "能源"],
+            "reason": "OPEC减产预期+地缘冲突，油气价格波动信号",
+            "advice": "油气ETF关注供给端变化",
+        },
+    },
+]
+
+
+def _ensure_commodity_events(events, now):
+    """确保大宗商品核心板块始终有事件覆盖 (LLM可能遗漏)"""
+    all_sectors = set()
+    for e in events:
+        all_sectors.update(e.get('sectors_positive', []))
+        all_sectors.update(e.get('sectors_negative', []))
+
+    added = 0
+    for fb in _COMMODITY_FALLBACKS:
+        if not fb['key_sectors'] & all_sectors:
+            # 该板块未被任何动态事件覆盖 → 注入常驻事件
+            idx = len(events)
+            evt = dict(fb['template'])
+            evt['id'] = f"evt_{now.strftime('%Y%m%d')}_base_{idx+1:03d}"
+            evt['confidence'] = 0.6
+            evt['source'] = "常驻基础事件"
+            evt['time'] = now.isoformat()
+            events.append(evt)
+            added += 1
+            print(f"  📌 补充常驻事件: {evt['title']} (动态事件未覆盖 {fb['key_sectors']})")
+
+    if added:
+        print(f"  共补充 {added} 个大宗商品常驻事件")
+    return events
+
+
 def build_output(llm_result, prev_data, now):
     """组装最终JSON输出"""
     events = []
     for i, e in enumerate(llm_result.get('events', [])[:12]):
         events.append(enrich_event(e, i, now))
+
+    # === 补充大宗商品常驻事件 (确保油气/有色/黄金持仓始终可被归因) ===
+    events = _ensure_commodity_events(events, now)
 
     # 热度图: 补充趋势
     heatmap = []

@@ -997,6 +997,34 @@ const CATEGORY_ICONS = {
 };
 
 // 动态事件数组 (从JSON加载后填充, 兼容原getMacroGeoAnalysis接口)
+// === 大宗商品/资源常驻基础事件 (永远保留, 确保油气/有色/黄金等持仓可被归因) ===
+const _COMMODITY_BASE_EVENTS = [
+  {
+    id: 'fallback_gold', name: '避险资产受青睐', category: 'commodity', icon: '🥇',
+    description: '地缘不确定性+央行购金→黄金走强',
+    impact: 8, confidence: 0.8,
+    sectors: { positive: ['黄金','贵金属','有色金属'], negative: [] },
+    fundKeywords: ['黄金','贵金属','避险','白银','有色金属'], duration: 'medium', advice: '黄金ETF作底仓配置',
+    _baseSectors: ['黄金','贵金属'],  // 判断动态事件是否已覆盖的关键词
+  },
+  {
+    id: 'fallback_metals', name: '全球有色金属需求旺盛', category: 'commodity', icon: '🔩',
+    description: '新基建+新能源车带动铜铝需求，有色金属价格高位运行',
+    impact: 10, confidence: 0.75,
+    sectors: { positive: ['有色金属','铜铝','大宗商品','资源'], negative: [] },
+    fundKeywords: ['有色金属','铜','铝','资源','矿业'], duration: 'medium', advice: '有色金属ETF波段操作',
+    _baseSectors: ['有色金属','铜铝'],
+  },
+  {
+    id: 'fallback_oil', name: '国际油价波动加剧', category: 'commodity', icon: '🛢️',
+    description: 'OPEC减产+地缘冲突→油气价格波动信号',
+    impact: 6, confidence: 0.7,
+    sectors: { positive: ['能源','原油','油气','大宗商品'], negative: [] },
+    fundKeywords: ['原油','油气','石油','天然气','能源'], duration: 'medium', advice: '油气ETF关注供给端变化',
+    _baseSectors: ['能源','原油','油气'],
+  },
+];
+
 let MACRO_GEO_EVENTS = [
   // === 最小回退集 (JSON加载失败时使用) ===
   {
@@ -1006,33 +1034,13 @@ let MACRO_GEO_EVENTS = [
     sectors: { positive: ['AI/科技','半导体','算力','AIGC'], negative: ['传统劳动密集型','港股互联网'] },
     fundKeywords: ['人工智能','AI','算力','科技'], duration: 'long', advice: 'AI/算力逢回调加仓',
   },
-  {
-    id: 'fallback_gold', name: '避险资产受青睐', category: 'commodity', icon: '🥇',
-    description: '地缘不确定性+央行购金→黄金走强',
-    impact: 8, confidence: 0.8,
-    sectors: { positive: ['黄金','贵金属','有色金属'], negative: [] },
-    fundKeywords: ['黄金','贵金属','避险','白银','有色金属'], duration: 'medium', advice: '黄金ETF作底仓配置',
-  },
+  ..._COMMODITY_BASE_EVENTS,
   {
     id: 'fallback_hktech', name: '港股科技承压', category: 'market', icon: '📉',
     description: '外资流出+AI创企虹吸→恒生科技回调',
     impact: -10, confidence: 0.85,
     sectors: { positive: [], negative: ['港股科技','港股互联网','恒生科技','QDII科技'] },
     fundKeywords: ['恒生科技','港股','互联网','QDII'], duration: 'medium', advice: '恒生科技ETF建议减仓',
-  },
-  {
-    id: 'fallback_metals', name: '全球有色金属需求旺盛', category: 'commodity', icon: '🔩',
-    description: '新基建+新能源车带动铜铝需求，有色金属价格高位运行',
-    impact: 10, confidence: 0.75,
-    sectors: { positive: ['有色金属','铜铝','大宗商品','资源'], negative: [] },
-    fundKeywords: ['有色金属','铜','铝','资源','矿业'], duration: 'medium', advice: '有色金属ETF波段操作',
-  },
-  {
-    id: 'fallback_oil', name: '国际油价波动加剧', category: 'commodity', icon: '🛢️',
-    description: 'OPEC减产+地缘冲突→油气价格波动信号',
-    impact: 6, confidence: 0.7,
-    sectors: { positive: ['能源','原油','油气','大宗商品'], negative: [] },
-    fundKeywords: ['原油','油气','石油','天然气','能源'], duration: 'medium', advice: '油气ETF关注供给端变化',
   },
 ];
 
@@ -1079,6 +1087,21 @@ async function fetchHotEvents(){
       concepts: e.concepts || [],    // 新增: 关联标签
       sentiment: e.sentiment || 0,   // 新增: 情绪分数
     }));
+
+    // === 合并大宗商品常驻事件 (确保油气/有色/黄金持仓始终可被归因) ===
+    const allDynSectors = new Set();
+    MACRO_GEO_EVENTS.forEach(ev => {
+      (ev.sectors.positive || []).forEach(s => allDynSectors.add(s));
+      (ev.sectors.negative || []).forEach(s => allDynSectors.add(s));
+    });
+    _COMMODITY_BASE_EVENTS.forEach(fb => {
+      const covered = fb._baseSectors.some(s => allDynSectors.has(s));
+      if(!covered){
+        // 未被动态事件覆盖 → 追加常驻基础事件
+        MACRO_GEO_EVENTS.push({...fb});
+        console.log(`[HotEvents] 补充常驻事件: ${fb.name} (动态事件未覆盖 ${fb._baseSectors.join('/')})`);
+      }
+    });
 
     // 更新展望
     if(data.outlook){
