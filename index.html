@@ -1029,7 +1029,7 @@ let MACRO_GEO_EVENTS = [
     description: '地缘不确定性+央行购金→黄金走强',
     impact: 8, confidence: 0.8,
     sectors: { positive: ['黄金','贵金属','有色金属'], negative: [] },
-    fundKeywords: ['黄金','贵金属','避险'], duration: 'medium', advice: '黄金ETF作底仓配置',
+    fundKeywords: ['黄金','贵金属','避险','白银','有色金属'], duration: 'medium', advice: '黄金ETF作底仓配置',
   },
   {
     id: 'fallback_hktech', name: '港股科技承压', category: 'market', icon: '📉',
@@ -1037,6 +1037,20 @@ let MACRO_GEO_EVENTS = [
     impact: -10, confidence: 0.85,
     sectors: { positive: [], negative: ['港股科技','港股互联网','恒生科技','QDII科技'] },
     fundKeywords: ['恒生科技','港股','互联网','QDII'], duration: 'medium', advice: '恒生科技ETF建议减仓',
+  },
+  {
+    id: 'fallback_metals', name: '全球有色金属需求旺盛', category: 'commodity', icon: '🔩',
+    description: '新基建+新能源车带动铜铝需求，有色金属价格高位运行',
+    impact: 10, confidence: 0.75,
+    sectors: { positive: ['有色金属','铜铝','大宗商品','资源'], negative: [] },
+    fundKeywords: ['有色金属','铜','铝','资源','矿业'], duration: 'medium', advice: '有色金属ETF波段操作',
+  },
+  {
+    id: 'fallback_oil', name: '国际油价波动加剧', category: 'commodity', icon: '🛢️',
+    description: 'OPEC减产+地缘冲突→油气价格波动信号',
+    impact: 6, confidence: 0.7,
+    sectors: { positive: ['能源','原油','油气','大宗商品'], negative: [] },
+    fundKeywords: ['原油','油气','石油','天然气','能源'], duration: 'medium', advice: '油气ETF关注供给端变化',
   },
 ];
 
@@ -2032,6 +2046,50 @@ function getMacroGeoAnalysis(){
     if(!added) break;
   }
   
+  // 板块同义词映射: 事件板块名 → 可能匹配的基金板块名(双向扩展)
+  const SECTOR_SYNONYMS = {
+    '能源':['原油','油气','石油','天然气','煤炭','中证油气'],
+    '原油':['能源','油气','石油','天然气','大宗商品'],
+    '油气':['能源','原油','石油','天然气'],
+    '有色金属':['铜铝','铜','铝','资源','大宗商品','矿业','金属','锌','镍','稀土'],
+    '铜铝':['有色金属','资源','金属'],
+    '大宗商品':['有色金属','能源','原油','油气','黄金','白银','铜铝'],
+    '黄金':['贵金属','避险','gold'],
+    '贵金属':['黄金','白银'],
+    '白银':['贵金属','有色金属'],
+    '科技':['AI/科技','人工智能','信息技术','计算机'],
+    'AI/科技':['科技','人工智能','算力','AIGC'],
+    'AI':['AI/科技','科技','人工智能','算力'],
+    '半导体':['芯片','集成电路','科技'],
+    '芯片':['半导体','集成电路'],
+    '新能源':['光伏','风电','锂电','储能','碳中和'],
+    '光伏':['新能源','太阳能'],
+    '锂电':['新能源','电池','储能'],
+    '消费':['食品饮料','白酒','家电','内需'],
+    '食品饮料':['消费','白酒'],
+    '白酒':['消费','食品饮料'],
+    '医药':['创新药','生物医药','医疗器械','CXO'],
+    '金融':['银行','券商','保险','非银金融'],
+    '银行':['金融'],
+    '券商':['金融','非银金融'],
+    '军工':['国防','航天','航空'],
+    '债券':['固收','纯债','利率'],
+    '港股科技':['港股互联网','恒生科技','QDII科技'],
+    '港股互联网':['港股科技','恒生科技'],
+    '红利':['高股息','低波动'],
+  };
+  // 判断两个板块名是否语义相关
+  function _sectorsRelated(secA, secB){
+    const a = secA.toLowerCase(), b = secB.toLowerCase();
+    if(a.includes(b) || b.includes(a)) return true;
+    // 同义词扩展
+    const synsA = SECTOR_SYNONYMS[secA] || SECTOR_SYNONYMS[a] || [];
+    const synsB = SECTOR_SYNONYMS[secB] || SECTOR_SYNONYMS[b] || [];
+    if(synsA.some(s => s.toLowerCase() === b || b.includes(s.toLowerCase()))) return true;
+    if(synsB.some(s => s.toLowerCase() === a || a.includes(s.toLowerCase()))) return true;
+    return false;
+  }
+
   // 对每只持仓基金计算事件影响（基于持仓行业分布，而非仅名称匹配）
   const fundImpacts = {};
   const allCodes = [...holdings.map(h=>h.code), ...watchlist.map(w=>w.code)];
@@ -2052,36 +2110,40 @@ function getMacroGeoAnalysis(){
       let posScore = 0, negScore = 0, kwScore = 0;
       
       if(hasSectorData){
-        // === 基于持仓行业分布的精确匹配 ===
+        // === 基于持仓行业分布的精确匹配 + 同义词扩展 ===
         // 计算与利好板块的重叠度
         (e.sectors.positive||[]).forEach(sec => {
-          const secLow = sec.toLowerCase();
           Object.entries(sectorExposure).forEach(([fundSec, weight]) => {
-            if(fundSec.toLowerCase().includes(secLow) || secLow.includes(fundSec.toLowerCase())){
+            if(_sectorsRelated(sec, fundSec)){
               posScore += weight; // 按实际持仓权重计算影响
             }
           });
         });
         // 计算与利空板块的重叠度
         (e.sectors.negative||[]).forEach(sec => {
-          const secLow = sec.toLowerCase();
           Object.entries(sectorExposure).forEach(([fundSec, weight]) => {
-            if(fundSec.toLowerCase().includes(secLow) || secLow.includes(fundSec.toLowerCase())){
+            if(_sectorsRelated(sec, fundSec)){
               negScore += weight;
             }
           });
         });
       }
       
-      // 名称关键词匹配作为补充(降低权重)
+      // 名称关键词匹配作为补充
       const kwMatchList = (e.fundKeywords||[]).filter(kw => nameAndType.includes(kw.toLowerCase()));
-      if(kwMatchList.length > 0) kwScore = 0.3; // 名称匹配基础分
+      // 额外: 事件concepts/sectors也尝试匹配基金名称和类型
+      const conceptMatch = (e.concepts||[]).some(c => nameAndType.includes(c.toLowerCase()));
+      const sectorNameMatch = [...(e.sectors.positive||[]), ...(e.sectors.negative||[])].some(s =>
+        nameAndType.includes(s.toLowerCase()) || (fType && _sectorsRelated(s, fType))
+      );
+      if(kwMatchList.length > 0) kwScore = 0.4;
+      else if(conceptMatch || sectorNameMatch) kwScore = 0.3;
       
       // 旧式板块名称匹配也作为补充
-      const posNameMatch = (e.sectors.positive||[]).some(sec => nameAndType.includes(sec.toLowerCase()));
-      const negNameMatch = (e.sectors.negative||[]).some(sec => nameAndType.includes(sec.toLowerCase()));
-      if(posNameMatch && posScore === 0) posScore = 0.2;
-      if(negNameMatch && negScore === 0) negScore = 0.2;
+      const posNameMatch = (e.sectors.positive||[]).some(sec => nameAndType.includes(sec.toLowerCase()) || (fType && _sectorsRelated(sec, fType)));
+      const negNameMatch = (e.sectors.negative||[]).some(sec => nameAndType.includes(sec.toLowerCase()) || (fType && _sectorsRelated(sec, fType)));
+      if(posNameMatch && posScore === 0) posScore = 0.25;
+      if(negNameMatch && negScore === 0) negScore = 0.25;
       
       const totalMatch = posScore + negScore + kwScore;
       if(totalMatch > 0 || posNameMatch || negNameMatch || kwMatchList.length > 0){
@@ -2097,7 +2159,7 @@ function getMacroGeoAnalysis(){
           fundScore -= Math.abs(e.impact) * e.confidence * effectiveWeight;
         } else if(kwScore > 0 || posNameMatch || negNameMatch){
           direction = e.impact > 0 ? 'positive' : 'negative';
-          fundScore += e.impact * e.confidence * 0.08;
+          fundScore += e.impact * e.confidence * 0.15;
         } else {
           direction = 'neutral';
         }
@@ -2108,8 +2170,8 @@ function getMacroGeoAnalysis(){
         matchedEvents.push({
           id: e.id, name: e.name, icon: e.icon,
           impact: direction, eventImpact: e.impact, confidence: e.confidence, advice: e.advice,
-          matchSource, // 新增: 标记匹配来源
-          sectorOverlap: hasSectorData ? Math.max(posScore, negScore) : 0, // 新增: 板块重叠度
+          matchSource, // 标记匹配来源
+          sectorOverlap: hasSectorData ? Math.max(posScore, negScore) : 0, // 板块重叠度
         });
       }
     });
@@ -2118,7 +2180,7 @@ function getMacroGeoAnalysis(){
       fundImpacts[code] = {
         score: fundScore,
         events: matchedEvents,
-        sectorExposure: hasSectorData ? sectorExposure : null, // 新增: 附带板块暴露数据
+        sectorExposure: hasSectorData ? sectorExposure : null, // 附带板块暴露数据
         analysisSource: hasSectorData ? (_fundHoldingsCache[code]?.source || 'inferred') : 'name-only',
       };
     }
@@ -5372,7 +5434,7 @@ function renderRadarSection(geoData){
   html += '<div class="radar-mod-title">⚡ 持仓异动归因</div>';
   html += '<div class="impact-list">';
   var impactEntries = Object.entries(geoData.fundImpacts || {})
-    .filter(function(pair){ return pair[1].events.length > 0 && Math.abs(pair[1].score) > 0.5; })
+    .filter(function(pair){ return pair[1].events.length > 0 && Math.abs(pair[1].score) > 0.15; })
     .sort(function(a,b){ return Math.abs(b[1].score) - Math.abs(a[1].score); });
 
   if(impactEntries.length > 0){
