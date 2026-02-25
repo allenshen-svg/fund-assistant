@@ -1801,7 +1801,7 @@ const STOCK_SECTOR_DB = {
 // 当无法获取持仓明细时，通过基金名称关键词推断行业分布
 const FUND_SECTOR_KEYWORD_MAP = [
   // 精确匹配优先（越长的关键词越先匹配）
-  { keywords: ['中证油气产业','油气产业'], sectors: {'能源':0.70,'化工':0.20,'有色金属':0.10} },
+  { keywords: ['中证油气产业','油气产业'], sectors: {'能源':0.75,'化工':0.25} },
   { keywords: ['原油','石油'], sectors: {'能源':0.85,'化工':0.15} },
   { keywords: ['油气','天然气'], sectors: {'能源':0.80,'化工':0.20} },
   { keywords: ['黄金','Gold'], sectors: {'黄金':0.95,'有色金属':0.05} },
@@ -5072,6 +5072,15 @@ function getRelevantCapFlow(code){
     '红利':['银行','煤炭','公用事业'],
     '金融':['券商','银行','保险','金融','非银金融'],
     '宽基':[], // 宽基不匹配单一板块
+    '油气':['石油石化','能源','煤炭','化工'],
+    '原油':['石油石化','能源'],
+    '能源':['石油石化','能源','煤炭'],
+    '化工':['化工','基础化工'],
+    '白酒/消费':['食品饮料','消费','白酒'],
+    '蓝筹':['银行','食品饮料','金融'],
+    '蓝筹/QDII':[], // QDII不匹配A股板块
+    '钢铁':['钢铁','金属'],
+    '港股科技/QDII':[], // 港股不匹配A股板块
   };
   const matchSectors = typeMap[fType] || [];
   // 额外从基金名称提取关键词
@@ -5081,6 +5090,10 @@ function getRelevantCapFlow(code){
   if(fName.includes('医药')||fName.includes('医疗')) extraKw.push('医药','生物');
   if(fName.includes('消费')||fName.includes('食品')) extraKw.push('食品饮料','消费');
   if(fName.includes('科技')||fName.includes('ai')||fName.includes('人工智能')) extraKw.push('计算机','电子');
+  if(fName.includes('油气')||fName.includes('原油')||fName.includes('石油')) extraKw.push('石油石化','能源','化工');
+  if(fName.includes('能源')&&!fName.includes('新能源')) extraKw.push('石油石化','能源','煤炭');
+  if(fName.includes('煤炭')) extraKw.push('煤炭','能源');
+  if(fName.includes('化工')) extraKw.push('化工','基础化工');
   const allKw = [...new Set([...matchSectors, ...extraKw])];
   for(const sec of allKw){
     const found = sectorCapFlow.find(s => s.name.includes(sec) || sec.includes(s.name));
