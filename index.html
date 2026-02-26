@@ -2649,6 +2649,7 @@ let _rlPendingRewards = {}; // 延迟奖励: { code: { action, state, date, entr
 
 // ==================== 三引擎联动元状态 ====================
 const ENGINE_ACCURACY_KEY = 'fa_engine_accuracy';
+const ENGINE_ACCURACY_LAST_UPDATE_KEY = 'fa_engine_accuracy_last_update';
 const ENGINE_ACCURACY_EMA = 0.15; // EMA系数(越大越重视近期)
 let _engineAccuracy = { ai: 0.5, rl: 0.5, bt: 0.5 }; // 各引擎滚动准确率
 let _lastTriSignals = {}; // 上一次三引擎信号 { code: { action, score, date, confidence } }
@@ -5215,42 +5216,42 @@ function saveEngineAccuracy(){
   try{ localStorage.setItem(ENGINE_ACCURACY_KEY, JSON.stringify(_engineAccuracy)); }catch(e){}
 }
 function updateEngineAccuracy(){
-  // 在每日复盘时调用: 比较昨日各引擎的个体预测vs实际
-  const review = generateDailyReview();
-  if(!review || review.reviews.length === 0) return;
+  // 在每日复盘时调用: 基于“已验证”的预测快照更新引擎准确率
+  const latestVerified = [...predictionTracker].reverse().find(p => p.verified && p.verification);
+  if(!latestVerified) return;
+  const verifyDate = latestVerified.verification?.verifyDate;
+  if(!verifyDate) return;
+  const lastUpdated = localStorage.getItem(ENGINE_ACCURACY_LAST_UPDATE_KEY) || '';
+  if(lastUpdated === verifyDate) return;
+
   let aiCorrect=0,aiTotal=0,rlCorrect=0,rlTotal=0,btCorrect=0,btTotal=0;
-  review.reviews.forEach(r => {
-    const code = r.code;
-    const actualPct = r.actualPct;
+  Object.entries(latestVerified.verification.results || {}).forEach(([code, r]) => {
+    const snap = latestVerified.holdings?.[code];
+    if(!snap) return;
+    const actualPct = r.nextDayPct;
     const direction = actualPct > 0.3 ? 1 : actualPct < -0.3 ? -1 : 0;
+
     // AI引擎
-    const aiSig = _analysisResult?.signals?.[code];
-    if(aiSig){
-      const aiDir = aiSig.action === 'buy' ? 1 : aiSig.action === 'sell' ? -1 : 0;
-      aiTotal++;
-      if(aiDir === direction || (aiDir === 0 && Math.abs(actualPct) < 1)) aiCorrect++;
-    }
+    const aiDir = snap.aiVote > 0 ? 1 : snap.aiVote < 0 ? -1 : 0;
+    aiTotal++;
+    if(aiDir === direction || (aiDir === 0 && Math.abs(actualPct) < 1)) aiCorrect++;
+
     // RL引擎
-    const rlSig = _rlSignals[code];
-    if(rlSig){
-      const rlDir = rlSig.action === 1 ? 1 : rlSig.action === 2 ? -1 : 0;
-      rlTotal++;
-      if(rlDir === direction || (rlDir === 0 && Math.abs(actualPct) < 1)) rlCorrect++;
-    }
+    const rlDir = snap.rlVote > 0 ? 1 : snap.rlVote < 0 ? -1 : 0;
+    rlTotal++;
+    if(rlDir === direction || (rlDir === 0 && Math.abs(actualPct) < 1)) rlCorrect++;
+
     // BT引擎
-    const btR = btResults[code];
-    if(btR){
-      const rsi = btR.lastRSI || 50;
-      const btDir = rsi < 40 ? 1 : rsi > 75 ? -1 : 0;
-      btTotal++;
-      if(btDir === direction || (btDir === 0 && Math.abs(actualPct) < 1)) btCorrect++;
-    }
+    const btDir = snap.btVote > 0 ? 1 : snap.btVote < 0 ? -1 : 0;
+    btTotal++;
+    if(btDir === direction || (btDir === 0 && Math.abs(actualPct) < 1)) btCorrect++;
   });
   // EMA更新
   if(aiTotal > 0) _engineAccuracy.ai = _engineAccuracy.ai * (1-ENGINE_ACCURACY_EMA) + (aiCorrect/aiTotal) * ENGINE_ACCURACY_EMA;
   if(rlTotal > 0) _engineAccuracy.rl = _engineAccuracy.rl * (1-ENGINE_ACCURACY_EMA) + (rlCorrect/rlTotal) * ENGINE_ACCURACY_EMA;
   if(btTotal > 0) _engineAccuracy.bt = _engineAccuracy.bt * (1-ENGINE_ACCURACY_EMA) + (btCorrect/btTotal) * ENGINE_ACCURACY_EMA;
   saveEngineAccuracy();
+  localStorage.setItem(ENGINE_ACCURACY_LAST_UPDATE_KEY, verifyDate);
   console.log(`引擎准确率更新: AI=${(_engineAccuracy.ai*100).toFixed(0)}% RL=${(_engineAccuracy.rl*100).toFixed(0)}% BT=${(_engineAccuracy.bt*100).toFixed(0)}%`);
 }
 
@@ -8292,16 +8293,25 @@ function saveTodayPredictions(){
 // 生成每日复盘（将昨天的预测与今日实际表现对比）
 function generateDailyReview(){
   const today = todayStr();
-  // 找昨天（或最近一个有记录的交易日）的记录
+  if(!isTradingDay(today)) return null;
+
+  // 优先使用前一交易日记录；若缺失则回退到最近有记录日
+  const prevDay = getPrevTradingDay(today);
   const pastEntries = dailyLog.filter(d=>d.date < today && d.predictions && Object.keys(d.predictions).length>0);
   if(pastEntries.length===0) return null;
 
-  const yesterday = pastEntries[pastEntries.length-1];
+  let yesterday = prevDay ? dailyLog.find(d => d.date === prevDay && d.predictions && Object.keys(d.predictions).length>0) : null;
+  if(!yesterday){
+    yesterday = pastEntries.slice().sort((a,b)=>a.date.localeCompare(b.date)).pop();
+  }
+  if(!yesterday) return null;
+
   // 今日实际盈亏（用live数据）
   const reviews = [];
   Object.keys(yesterday.predictions).forEach(code=>{
     const pred = yesterday.predictions[code];
     const todayData = getFundData(code);
+    if(!todayData || todayData._noData) return;
     const actualPct = +(todayData?.gszzl||0).toFixed(2);
 
     // 预测是否正确
@@ -8332,6 +8342,8 @@ function generateDailyReview(){
       lesson
     });
   });
+
+  if(reviews.length===0) return null;
 
   // 汇总
   const correct = reviews.filter(r=>r.verdict==='correct').length;
