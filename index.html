@@ -663,6 +663,15 @@ body { font-family:-apple-system,BlinkMacSystemFont,'SF Pro','PingFang SC','Helv
   </div>
 </div>
 
+<!-- Plain-Language Institutional Analysis -->
+<div class="section" id="plain-advisor-section">
+  <div class="section-title" style="cursor:pointer" onclick="togglePlainAdvisor()">
+    🧭 白话研判 <span style="font-size:10px;color:var(--sub);font-weight:400">机构逻辑 · 小白可懂</span>
+    <span id="plain-advisor-toggle" style="margin-left:auto;font-size:12px;color:var(--sub)">▼</span>
+  </div>
+  <div id="plain-advisor-container"></div>
+</div>
+
 <!-- Engine Details (RL + Backtest + Second-Order merged) -->
 <div class="engine-detail-section" style="padding:10px 16px 4px">
   <div class="section-title" style="cursor:pointer" onclick="toggleEngineDetail()">
@@ -4930,6 +4939,7 @@ function renderAll(){
   renderSimBrief();
   renderSOTBrief();
   renderActionGuide();
+  renderPlainAdvisor();
   renderWatchlist();
   renderRecos();
   renderReview();
@@ -7146,6 +7156,293 @@ function renderActionGuide(){
   html += `</div></div>`;
 
   html += `<div class="ag-disclaimer">⚠️ 以上建议基于AI/回测双引擎量化分析，仅供参考，不构成投资建议。投资有风险，决策需谨慎。</div>`;
+
+  container.innerHTML = html;
+}
+
+// ==================== PLAIN-LANGUAGE INSTITUTIONAL ANALYSIS ====================
+function togglePlainAdvisor(){
+  const container = document.getElementById('plain-advisor-container');
+  const icon = document.getElementById('plain-advisor-toggle');
+  if(!container || !icon) return;
+  if(container.style.display === 'none'){
+    container.style.display = '';
+    icon.textContent = '▼';
+    renderPlainAdvisor();
+  }else{
+    container.style.display = 'none';
+    icon.textContent = '▶';
+  }
+}
+
+function _calcVolatility(code, windowDays = 20){
+  const navs = fundHistoryData[code]?.navs;
+  if(!navs || navs.length < windowDays + 1) return null;
+  const prices = navs.slice(-(windowDays + 1)).map(n => parseFloat(n.nav!==undefined?n.nav:n[1])).filter(v => !isNaN(v) && v > 0);
+  if(prices.length < windowDays + 1) return null;
+  const rets = [];
+  for(let i=1;i<prices.length;i++) rets.push((prices[i]-prices[i-1])/prices[i-1]);
+  const mean = rets.reduce((s,v)=>s+v,0)/rets.length;
+  const variance = rets.reduce((s,v)=>s+Math.pow(v-mean,2),0)/Math.max(1,rets.length-1);
+  return Math.sqrt(variance) * 100;
+}
+
+function _fundHeatScore(code, type, name){
+  const heatmap = _hotEventsData?.heatmap || [];
+  const exposure = getFundSectorExposure(code) || {};
+  const tags = new Set(Object.keys(exposure));
+  const text = `${type||''} ${name||''}`;
+  const kwToTag = [
+    ['黄金','黄金'],['有色','有色金属'],['军工','军工'],['新能源','新能源'],['锂电','锂电'],
+    ['半导体','半导体'],['芯片','半导体'],['人工智能','人工智能'],['AI','AI算力'],['红利','红利'],
+    ['宽基','宽基'],['白酒','白酒'],['消费','消费']
+  ];
+  kwToTag.forEach(([kw, tag])=>{ if(text.includes(kw)) tags.add(tag); });
+
+  const picked = heatmap.filter(h => [...tags].some(t => h.tag.includes(t) || t.includes(h.tag)));
+  if(picked.length === 0){
+    const avgHeat = heatmap.length ? Math.round(heatmap.reduce((s,h)=>s+(h.temperature||50),0)/heatmap.length) : 50;
+    return { heat: avgHeat, trend: 'stable' };
+  }
+  const heat = Math.round(picked.reduce((s,h)=>s+(h.temperature||50),0)/picked.length);
+  let up = 0, down = 0;
+  picked.forEach(h=>{ if(h.trend==='up') up++; else if(h.trend==='down') down++; });
+  const trend = up>down ? 'up' : down>up ? 'down' : 'stable';
+  return { heat, trend };
+}
+
+function _valuationBucket(td, heat){
+  const dd = td?.drawdownFromHigh ?? -8;
+  if(dd <= -25 && heat <= 60) return '极度低估';
+  if(dd >= -8 || heat >= 75) return '估值偏高';
+  return '估值合理';
+}
+
+function _trendBucket(td){
+  if(!td) return '筑底震荡';
+  if(td.trendDir === 'strong_down' || td.trendDir === 'down') return '跌跌不休';
+  if(td.trendDir === 'strong_up' || td.trendDir === 'up') return '强势上涨';
+  return '筑底震荡';
+}
+
+function _newsPackForFund(code, type, name){
+  const keyWords = [...new Set([type, name, '基金', 'A股', '流动性', '政策'].filter(Boolean))];
+  const allNews = [];
+  (newsHeadlines || []).slice(0, 8).forEach(n => allNews.push({src:'财经', title:n.title || n.text || '', time:n.time || ''}));
+  (_hotEventsData?.events || []).slice(0, 8).forEach(e => allNews.push({src:'事件', title:e.title || '', time:e.time || '', impact:e.impact || 0}));
+  (globalNews || []).slice(0, 6).forEach(n => allNews.push({src:n.source || '国际', title:n.title || '', time:n.time || ''}));
+
+  const related = allNews.filter(n => keyWords.some(k => (n.title || '').includes(k))).slice(0, 6);
+  const noisy = allNews.filter(n => !keyWords.some(k => (n.title || '').includes(k))).slice(0, 5);
+  return { related, noisy };
+}
+
+function _renderPlainRadarChart(radarScores, riskScore = 0){
+  const entries = Object.entries(radarScores || {});
+  if(entries.length < 3) return '';
+
+  const score = Math.max(0, Math.min(100, Number(riskScore)||0));
+  const strokeColor = score >= 55 ? '#ef4444' : score >= 35 ? '#f59e0b' : '#10b981';
+  const fillColor = score >= 55 ? 'rgba(239,68,68,0.20)' : score >= 35 ? 'rgba(245,158,11,0.20)' : 'rgba(16,185,129,0.20)';
+  const labelColor = score >= 55 ? '#b91c1c' : score >= 35 ? '#b45309' : '#047857';
+
+  const W = 260, H = 220;
+  const cx = 130, cy = 108;
+  const R = 72;
+  const rings = [20, 40, 60, 80, 100];
+  const N = entries.length;
+
+  const axisPoint = (idx, valPct=100) => {
+    const ang = -Math.PI/2 + (Math.PI*2*idx/N);
+    const r = (Math.max(0, Math.min(100, valPct)) / 100) * R;
+    return { x: cx + Math.cos(ang)*r, y: cy + Math.sin(ang)*r };
+  };
+
+  let svg = `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet" style="width:100%;max-width:320px;height:auto;display:block;margin:0 auto">`;
+
+  rings.forEach(rv => {
+    const pts = entries.map((_, i) => {
+      const p = axisPoint(i, rv);
+      return `${p.x.toFixed(1)},${p.y.toFixed(1)}`;
+    }).join(' ');
+    svg += `<polygon points="${pts}" fill="none" stroke="rgba(148,163,184,0.35)" stroke-width="0.8"/>`;
+  });
+
+  entries.forEach((_, i) => {
+    const p = axisPoint(i, 100);
+    svg += `<line x1="${cx}" y1="${cy}" x2="${p.x.toFixed(1)}" y2="${p.y.toFixed(1)}" stroke="rgba(148,163,184,0.35)" stroke-width="0.8"/>`;
+  });
+
+  const valuePts = entries.map(([_, v], i) => {
+    const p = axisPoint(i, Number(v)||0);
+    return `${p.x.toFixed(1)},${p.y.toFixed(1)}`;
+  }).join(' ');
+  svg += `<polygon points="${valuePts}" fill="${fillColor}" stroke="${strokeColor}" stroke-width="2"/>`;
+
+  entries.forEach(([k, v], i) => {
+    const p = axisPoint(i, Number(v)||0);
+    svg += `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="2.8" fill="${strokeColor}"/>`;
+
+    const lp = axisPoint(i, 112);
+    const anchor = lp.x < cx - 8 ? 'end' : lp.x > cx + 8 ? 'start' : 'middle';
+    const dy = lp.y > cy + R*0.55 ? 12 : -2;
+    svg += `<text x="${lp.x.toFixed(1)}" y="${(lp.y+dy).toFixed(1)}" font-size="10" fill="#334155" text-anchor="${anchor}">${k}</text>`;
+    svg += `<text x="${lp.x.toFixed(1)}" y="${(lp.y+dy+12).toFixed(1)}" font-size="10" fill="${labelColor}" text-anchor="${anchor}">${Math.round(Number(v)||0)}</text>`;
+  });
+
+  svg += `</svg>`;
+  return `<div style="background:#f8fafc;border:1px solid var(--border);border-radius:10px;padding:8px 6px">${svg}</div>`;
+}
+
+function renderPlainAdvisor(){
+  const section = document.getElementById('plain-advisor-section');
+  const container = document.getElementById('plain-advisor-container');
+  if(!section || !container) return;
+
+  if(holdings.length === 0){
+    section.style.display = '';
+    container.innerHTML = '<div class="empty" style="padding:20px">先添加持仓后，这里会自动生成“说人话”的机构级研判。</div>';
+    return;
+  }
+  section.style.display = '';
+
+  let html = '';
+  const geo = getMacroGeoAnalysis();
+
+  const riskRankOf = (item) => {
+    const code = item.code;
+    const name = item.name || fundName(code);
+    const type = item.type || fundType(code);
+    const td = fundHistoryData[code]?.trend || null;
+    const vol20 = _calcVolatility(code, 20) || 1.0;
+    const heatInfo = _fundHeatScore(code, type, name);
+    const valuation = _valuationBucket(td, heatInfo.heat);
+    const trend = _trendBucket(td);
+    const geoImpact = geo?.fundImpacts?.[code]?.score || 0;
+    const drawdown = td?.drawdownFromHigh ?? -8;
+    const hot = heatInfo.heat;
+
+    let score = 0;
+    if(valuation === '估值偏高') score += 20;
+    if(trend === '跌跌不休') score += 28;
+    if(geoImpact < -8) score += 20;
+    if(hot >= 80) score += 18;
+    if(vol20 > 1.8) score += 12;
+    if(drawdown <= -20) score += 10;
+    return score;
+  };
+
+  const orderedHoldings = holdings.slice().sort((a, b) => riskRankOf(b) - riskRankOf(a));
+
+  orderedHoldings.forEach(item => {
+    const code = item.code;
+    const name = item.name || fundName(code);
+    const type = item.type || fundType(code);
+    const fd = getFundData(code);
+    const td = fundHistoryData[code]?.trend || null;
+    const vol20 = _calcVolatility(code, 20);
+    const heatInfo = _fundHeatScore(code, type, name);
+    const valuation = _valuationBucket(td, heatInfo.heat);
+    const trend = _trendBucket(td);
+    const geoImpact = geo?.fundImpacts?.[code]?.score || 0;
+    const wind = geoImpact > 8 ? '顺风' : geoImpact < -8 ? '逆风' : '混乱';
+    const newsPack = _newsPackForFund(code, type, name);
+
+    const drawdown = td?.drawdownFromHigh ?? -8;
+    const momentum = td?.chg20d ?? 0;
+    const hot = heatInfo.heat;
+
+    let tldr = '暂不追高，分批观察';
+    if(valuation === '极度低估' && trend !== '跌跌不休') tldr = '便宜区间，可慢慢买';
+    else if(valuation === '估值偏高' && trend === '强势上涨') tldr = '热度偏高，防回调';
+    else if(trend === '跌跌不休' && wind === '逆风') tldr = '下行未止，先观望';
+
+    let riskPoint = '短期情绪可能反复，容易来回震荡。';
+    if(hot >= 80) riskPoint = '拥挤交易过热，容易出现快速回撤。';
+    else if(wind === '逆风') riskPoint = '宏观逆风未解除，反弹持续性可能不足。';
+    else if(vol20 !== null && vol20 > 1.8) riskPoint = '波动放大，短线大起大落风险上升。';
+
+    let op = '适合底仓持有';
+    let tactic = '分成6-10份，小跌小买，不一次性梭哈。';
+    if(valuation === '极度低估' && wind !== '逆风' && trend !== '跌跌不休'){
+      op = '强烈推荐定投';
+      tactic = '把计划资金分10份，每跌2%加1份；反弹时不追。';
+    } else if(valuation === '估值偏高' && hot >= 75){
+      op = '逢高减仓';
+      tactic = '先减20%-30%浮盈仓位，保留底仓等待回落。';
+    } else if(trend === '跌跌不休' && wind === '逆风'){
+      op = '坚决观望';
+      tactic = '先不加仓，等趋势止跌再评估。';
+    }
+
+    const ma20 = td?.ma20;
+    const stopLine = ma20
+      ? `若连续2日跌破 MA20(${ma20.toFixed(4)}) 且资金面转弱，暂停加仓。`
+      : '若从当前再跌超5%且无利好催化，暂停加仓。';
+
+    const valScoreBase = valuation === '极度低估' ? 85 : valuation === '估值合理' ? 65 : 42;
+    const momentumScore = Math.max(15, Math.min(95, Math.round(50 + momentum * 2.2)));
+    const macroScore = Math.max(20, Math.min(90, Math.round(55 + geoImpact * 1.8)));
+    const defenseScore = Math.max(20, Math.min(92, Math.round(72 + drawdown * 1.2 - (vol20||1)*6)));
+    const crowdPenalty = hot >= 80 ? -15 : hot >= 70 ? -8 : hot <= 35 ? 8 : 0;
+    const sentimentScore = Math.max(20, Math.min(95, 70 + crowdPenalty));
+
+    const radar = {
+      radar_scores: {
+        '估值吸引力': Math.round(Math.max(0, Math.min(100, valScoreBase))),
+        '上涨爆发力': Math.round(Math.max(0, Math.min(100, momentumScore))),
+        '宏观顺风度': Math.round(Math.max(0, Math.min(100, macroScore))),
+        '抗跌防御力': Math.round(Math.max(0, Math.min(100, defenseScore))),
+        '情绪健康度': Math.round(Math.max(0, Math.min(100, sentimentScore)))
+      }
+    };
+
+    const relTxt = newsPack.related.slice(0,3).map(n => `【${n.src}】${n.title}`).join('；') || '暂无强相关要闻';
+    const noiseTxt = newsPack.noisy.slice(0,2).map(n => `【${n.src}】${n.title}`).join('；') || '暂无噪音样本';
+
+    html += `<div style="background:var(--card);border-radius:12px;padding:12px 14px;box-shadow:var(--shadow);margin-bottom:10px">`;
+    const riskScore = riskRankOf(item);
+    const riskLabel = riskScore >= 55 ? '高风险' : riskScore >= 35 ? '中风险' : '低风险';
+    const riskStyle = riskScore >= 55
+      ? 'background:#fef2f2;color:#dc2626;border:1px solid #fecaca;'
+      : riskScore >= 35
+        ? 'background:#fffbeb;color:#d97706;border:1px solid #fde68a;'
+        : 'background:#ecfdf5;color:#059669;border:1px solid #a7f3d0;';
+
+    html += `<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px">`;
+    html += `<div style="font-size:13px;font-weight:800">${name} (${code})</div>`;
+    html += `<span style="font-size:10px;padding:2px 8px;border-radius:999px;font-weight:700;${riskStyle}">${riskLabel} · ${riskScore}</span>`;
+    html += `</div>`;
+    html += `<div style="font-size:11px;color:var(--sub);line-height:1.6">`;
+    html += `<b>技术面与交易数据</b>：今日${(fd?.gszzl||0)>=0?'+':''}${(fd?.gszzl||0).toFixed(2)}%，20日动量${momentum>=0?'+':''}${momentum.toFixed(2)}%，回撤${drawdown.toFixed(2)}%，20日波动${vol20!==null?vol20.toFixed(2)+'%':'--'}<br>`;
+    html += `<b>基本面与估值数据</b>：类型${type||'--'}，行业热度${hot}，估值温度判定${valuation}<br>`;
+    html += `<b>近期相关宏观/行业资讯（含噪音）</b>：${relTxt}<br>`;
+    html += `<span style="opacity:0.8">噪音样本：${noiseTxt}</span>`;
+    html += `</div>`;
+
+    html += `<div style="margin-top:10px">`;
+    html += `<div style="font-size:14px;font-weight:800;margin-bottom:8px">🎯 一句话诊断 (TL;DR)</div>`;
+    html += `<div style="font-size:13px;font-weight:700;color:#1e293b;margin-bottom:10px">${tldr}</div>`;
+
+    html += `<div style="font-size:14px;font-weight:800;margin-bottom:8px">🩺 多维体检报告</div>`;
+    html += `<div style="font-size:12px;line-height:1.7;color:#1e293b">`;
+    html += `- 🌡️ <b>当前温度 (估值与位置)</b>：${valuation}。${valuation==='极度低估'?'现在买更像打折区。':valuation==='估值偏高'?'现在买偏贵，容易买在情绪高点。':'价格不算便宜也不算贵，适合分批。'}<br>`;
+    html += `- 📈 <b>动量趋势 (技术面状态)</b>：${trend}。${trend==='强势上涨'?'趋势在上，但别追高。':trend==='跌跌不休'?'下坡还没走完，先等止跌。':'正在磨底，适合慢慢布局。'}<br>`;
+    html += `- 📰 <b>风向判定 (宏观与基本面)</b>：${wind}。${wind==='顺风'?'政策/流动性对该方向更友好。':wind==='逆风'?'宏观压力还在，反弹容易被压制。':'利好和利空并存，容易来回打脸。'}<br>`;
+    html += `- ⚠️ <b>最大隐患 (排雷)</b>：${riskPoint}`;
+    html += `</div>`;
+
+    html += `<div style="font-size:14px;font-weight:800;margin:12px 0 8px">💡 行动指南 (Action Plan)</div>`;
+    html += `<div style="font-size:12px;line-height:1.7;color:#1e293b">`;
+    html += `- <b>操作建议</b>：${op}<br>`;
+    html += `- <b>战术安排</b>：${tactic}<br>`;
+    html += `- <b>止损/观察线</b>：${stopLine}`;
+    html += `</div>`;
+
+    html += `<div style="font-size:14px;font-weight:800;margin:12px 0 8px">📊 雷达图数据</div>`;
+    html += _renderPlainRadarChart(radar.radar_scores, riskScore);
+    html += `</div></div>`;
+  });
 
   container.innerHTML = html;
 }
