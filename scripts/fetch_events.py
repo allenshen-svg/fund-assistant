@@ -1048,9 +1048,15 @@ def main():
 
     output = build_output(llm_result, prev_data, now, all_news=deduped, xueqiu_data=xueqiu_data)
     output['meta']['news_count'] = len(deduped)
-    output['meta']['sources'] = sources_ok
-    if is_valid_xueqiu_data(xueqiu_data):
-        output['meta']['sources'].append('雪球')
+    output['meta']['sources'] = list(sources_ok)
+
+    # 保持来源标记与雪球数据一致：仅在有有效雪球热词/热股时保留“雪球”
+    has_valid_xq = is_valid_xueqiu_data(output.get('xueqiu_hotwords'))
+    if has_valid_xq:
+        if '雪球' not in output['meta']['sources']:
+            output['meta']['sources'].append('雪球')
+    else:
+        output['meta']['sources'] = [s for s in output['meta']['sources'] if s != '雪球']
 
     # 写入文件
     os.makedirs(os.path.dirname(OUTPUT_PATH), exist_ok=True)
