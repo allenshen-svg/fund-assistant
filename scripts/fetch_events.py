@@ -9,6 +9,8 @@ GitHub Actions 每2小时运行: 抓取财经新闻 → LLM结构化提取 → �
 import json, os, re, sys, ssl, time
 from datetime import datetime, timezone, timedelta
 from urllib.request import urlopen, Request
+from http.cookiejar import CookieJar
+from urllib.request import build_opener, HTTPCookieProcessor, HTTPSHandler
 
 # ==================== .env 自动加载 ====================
 def _load_dotenv():
@@ -33,6 +35,7 @@ API_KEY = os.environ.get('AI_API_KEY', '')
 API_BASE = os.environ.get('AI_API_BASE', 'https://api.siliconflow.cn/v1')
 MODEL = os.environ.get('AI_MODEL', 'deepseek-ai/DeepSeek-V3')
 OUTPUT_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data', 'hot_events.json')
+XUEQIU_COOKIE = os.environ.get('XUEQIU_COOKIE', '').strip()
 
 # 20个核心市场标签 (前端fund标签体系对齐)
 MARKET_TAGS = [
@@ -260,6 +263,277 @@ def fetch_guancha_news():
     except Exception as e:
         print(f"  [WARN] 观察者网: {e}", file=sys.stderr)
     return items
+
+
+# ==================== 雪球实时热词抓取 ====================
+
+# 股票名 → 板块映射 (用于把雪球热股映射到基金板块体系)
+_XQ_STOCK_SECTOR_MAP = {
+    # 关键词 → 板块列表 (按股票名/行业名模糊匹配)
+    '宁德': ['锂电', '新能源'], '比亚迪': ['新能源车', '新能源'], '特斯拉': ['新能源车', '新能源'],
+    '隆基': ['光伏', '新能源'], '通威': ['光伏', '新能源'], '阳光电源': ['光伏', '新能源'],
+    '贵州茅台': ['白酒', '消费'], '五粮液': ['白酒', '消费'], '泸州老窖': ['白酒', '消费'], '茅台': ['白酒', '消费'],
+    '中芯': ['半导体', 'AI'], '韦尔': ['半导体', 'AI'], '北方华创': ['半导体', 'AI'], '海光': ['半导体', 'AI'],
+    '紫光': ['半导体', 'AI'], '中微': ['半导体', 'AI'], '寒武纪': ['AI', '半导体'],
+    '腾讯': ['港股科技', 'AI'], '阿里': ['港股科技', 'AI'], '美团': ['港股科技', '消费'], '小米': ['港股科技', '消费'],
+    '字节': ['AI', '港股科技'], '百度': ['AI', '港股科技'],
+    '药明': ['医药', '创新药'], '恒瑞': ['医药', '创新药'], '迈瑞': ['医药', '医疗器械'],
+    '中国中免': ['消费'], '海天': ['消费', '食品饮料'],
+    '紫金矿业': ['有色金属', '黄金'], '山东黄金': ['黄金', '有色金属'], '中金黄金': ['黄金'],
+    '洛阳钼业': ['有色金属'], '江西铜业': ['有色金属'],
+    '中国石油': ['能源', '原油'], '中国石化': ['能源', '原油'], '中国海油': ['能源', '原油'],
+    '中国神华': ['能源', '煤炭'],
+    '中航': ['军工'], '航天': ['军工'], '北方导航': ['军工'],
+    '招商银行': ['红利', '金融'], '工商银行': ['红利', '金融'], '建设银行': ['红利', '金融'],
+    '长江电力': ['红利', '电力'], '中国移动': ['红利', '通信'],
+    '科大讯飞': ['AI', '科技'], '浪潮': ['AI', '算力'], '中际旭创': ['AI', '算力'], '光模块': ['AI', '算力'],
+    '机器人': ['AI', '机器人'], '汇川': ['机器人', '制造'], '绿的谐波': ['机器人'],
+    '英伟达': ['AI', '半导体', '算力'], 'NVIDIA': ['AI', '半导体', '算力'],
+    'DeepSeek': ['AI', '大模型'], 'GPT': ['AI', '大模型'], 'AI': ['AI', '科技'],
+}
+
+# 话题关键词 → 板块映射
+_XQ_TOPIC_SECTOR_MAP = {
+    '人工智能': ['AI', '科技'], '芯片': ['半导体', 'AI'], '半导体': ['半导体'], '算力': ['AI', '算力'],
+    '大模型': ['AI', '大模型'], '机器人': ['AI', '机器人'], '智能驾驶': ['新能源车', 'AI'],
+    '光伏': ['光伏', '新能源'], '新能源': ['新能源'], '锂电': ['锂电', '新能源'], '储能': ['新能源', '储能'],
+    '白酒': ['白酒', '消费'], '消费': ['消费'], '食品': ['消费', '食品饮料'],
+    '医药': ['医药'], '创新药': ['医药', '创新药'], '中药': ['医药'],
+    '军工': ['军工'], '国防': ['军工'], '航天': ['军工'],
+    '黄金': ['黄金'], '铜': ['有色金属'], '有色': ['有色金属'], '稀土': ['有色金属'],
+    '原油': ['能源', '原油'], '石油': ['能源', '原油'], '煤炭': ['能源'],
+    '港股': ['港股科技'], '恒生': ['港股科技'], '科技': ['科技', 'AI'],
+    '银行': ['红利', '金融'], '红利': ['红利'], '高股息': ['红利'],
+    '债券': ['债券'], '利率': ['债券', '金融'],
+    '地产': ['地产'], '房地产': ['地产'], '基建': ['基建'],
+    '光模块': ['AI', '算力'], '数据中心': ['AI', '算力'], '云计算': ['AI', '科技'],
+    'ETF': ['宽基'], '沪深300': ['宽基'], '中证500': ['宽基'],
+}
+
+
+def _get_xueqiu_opener():
+    """创建带cookie的请求器(雪球API需要先获取cookie)"""
+    cj = CookieJar()
+    opener = build_opener(HTTPCookieProcessor(cj), HTTPSHandler(context=_ssl_ctx()))
+    opener.addheaders = [
+        ('User-Agent', 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'),
+        ('Accept', 'application/json, text/plain, */*'),
+        ('Origin', 'https://xueqiu.com'),
+        ('Referer', 'https://xueqiu.com/'),
+    ]
+    if XUEQIU_COOKIE:
+        opener.addheaders.append(('Cookie', XUEQIU_COOKIE))
+    # 先访问主页获取cookie
+    try:
+        resp = opener.open(Request('https://xueqiu.com/', headers={
+            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        }), timeout=10)
+        resp.read()
+    except Exception as e:
+        print(f"  [WARN] 雪球cookie获取失败: {e}", file=sys.stderr)
+    return opener
+
+
+def fetch_xueqiu_hot_stocks(opener=None):
+    """雪球热股榜 → [{name, code, percent, heat, current}]"""
+    if not opener:
+        opener = _get_xueqiu_opener()
+    items = []
+    # 热度排行 (关注度排行)
+    urls = [
+        'https://stock.xueqiu.com/v5/stock/hot_stock/list.json?size=30&_type=10&type=10',
+        'https://stock.xueqiu.com/v5/stock/hot_stock/list.json?size=30&_type=12&type=12',
+    ]
+    for url in urls:
+        try:
+            resp = opener.open(Request(url, headers={
+                'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36',
+                'Referer': 'https://xueqiu.com/',
+            }), timeout=12)
+            body = resp.read().decode('utf-8', errors='replace')
+            data = json.loads(body)
+            for stock in (data.get('data', {}).get('items', []) or []):
+                name = stock.get('name', '')
+                code = stock.get('code', stock.get('symbol', ''))
+                percent = stock.get('percent', stock.get('current_year_percent', 0)) or 0
+                value = stock.get('value', stock.get('current', 0)) or 0
+                if name:
+                    items.append({
+                        'name': name,
+                        'code': str(code),
+                        'percent': round(float(percent), 2) if percent else 0,
+                        'heat': int(value) if value else 0,
+                    })
+        except Exception as e:
+            print(f"  [WARN] 雪球热股: {e}", file=sys.stderr)
+    # 去重
+    seen = set()
+    unique = []
+    for it in items:
+        if it['name'] not in seen:
+            seen.add(it['name'])
+            unique.append(it)
+    return unique[:30]
+
+
+def fetch_xueqiu_hot_topics(opener=None):
+    """雪球热帖/热议话题 → [{text, retweet_count, reply_count, like_count}]"""
+    if not opener:
+        opener = _get_xueqiu_opener()
+    items = []
+    urls = [
+        'https://xueqiu.com/statuses/hot/listV2.json?since_id=-1&max_id=-1&size=20',
+    ]
+    for url in urls:
+        try:
+            resp = opener.open(Request(url, headers={
+                'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36',
+                'Referer': 'https://xueqiu.com/',
+            }), timeout=12)
+            body = resp.read().decode('utf-8', errors='replace')
+            data = json.loads(body)
+            for item in (data.get('items', []) or []):
+                og = item.get('original_status', item)
+                text = (og.get('text') or og.get('title') or og.get('description') or '')
+                text = re.sub(r'<[^>]+>', '', text).strip()[:200]
+                if not text or len(text) < 6:
+                    continue
+                items.append({
+                    'text': text,
+                    'retweet_count': og.get('retweet_count', 0) or 0,
+                    'reply_count': og.get('reply_count', 0) or 0,
+                    'like_count': og.get('like_count', 0) or 0,
+                })
+        except Exception as e:
+            print(f"  [WARN] 雪球热帖: {e}", file=sys.stderr)
+    return items[:20]
+
+
+def _map_stock_to_sectors(name):
+    """将股票名映射到板块列表"""
+    sectors = set()
+    for kw, sector_list in _XQ_STOCK_SECTOR_MAP.items():
+        if kw in name:
+            sectors.update(sector_list)
+    return list(sectors) if sectors else ['其他']
+
+
+def _extract_topic_sectors(text):
+    """从话题文本提取相关板块"""
+    sectors = set()
+    for kw, sector_list in _XQ_TOPIC_SECTOR_MAP.items():
+        if kw in text:
+            sectors.update(sector_list)
+    # 也尝试用股票名映射
+    for kw, sector_list in _XQ_STOCK_SECTOR_MAP.items():
+        if kw in text:
+            sectors.update(sector_list)
+    return list(sectors)
+
+
+def process_xueqiu_to_hotwords(hot_stocks, hot_topics):
+    """
+    将雪球热股+热帖数据转换为标准热词格式:
+    [{word, heat, trend, sources:['雪球'], relatedSectors:[...]}]
+    """
+    hotwords = []
+
+    # 1. 热股 → 热词
+    if hot_stocks:
+        max_heat = max(s.get('heat', 1) for s in hot_stocks) or 1
+        for s in hot_stocks:
+            name = s['name']
+            sectors = _map_stock_to_sectors(name)
+            if '其他' in sectors and len(sectors) == 1:
+                continue  # 跳过无法映射的
+            raw_heat = s.get('heat', 0)
+            normalized_heat = int(5000 + (raw_heat / max_heat) * 5000) if max_heat > 0 else 5000
+            trend = 'up' if s.get('percent', 0) > 1 else ('down' if s.get('percent', 0) < -1 else 'stable')
+            hotwords.append({
+                'word': name,
+                'heat': normalized_heat,
+                'trend': trend,
+                'sources': ['雪球'],
+                'relatedSectors': sectors,
+                'type': 'stock',
+                'percent': s.get('percent', 0),
+            })
+
+    # 2. 热帖 → 话题热词 (提取关键词)
+    topic_sector_count = {}  # 板块 → 出现次数 + 热度
+    if hot_topics:
+        for t in hot_topics:
+            text = t.get('text', '')
+            sectors = _extract_topic_sectors(text)
+            engagement = (t.get('retweet_count', 0) + t.get('reply_count', 0) + t.get('like_count', 0))
+            for s in sectors:
+                if s not in topic_sector_count:
+                    topic_sector_count[s] = {'count': 0, 'engagement': 0, 'texts': []}
+                topic_sector_count[s]['count'] += 1
+                topic_sector_count[s]['engagement'] += engagement
+                if len(topic_sector_count[s]['texts']) < 2:
+                    # 截取标题级摘要
+                    short = text[:30].replace('\n', ' ')
+                    topic_sector_count[s]['texts'].append(short)
+
+    # 把话题聚合为板块热词
+    for sector, info in topic_sector_count.items():
+        if info['count'] < 1:
+            continue
+        heat = min(10000, 3000 + info['count'] * 1500 + info['engagement'] // 100)
+        # 检查是否已有同板块的热股词
+        exists = any(sector in hw['relatedSectors'] for hw in hotwords)
+        if exists:
+            # 追加到已有同板块热词的热度
+            for hw in hotwords:
+                if sector in hw['relatedSectors']:
+                    hw['heat'] = min(10000, hw['heat'] + info['count'] * 300)
+                    break
+        else:
+            hotwords.append({
+                'word': f"{sector}(雪球热议)",
+                'heat': heat,
+                'trend': 'up' if info['count'] >= 3 else 'stable',
+                'sources': ['雪球'],
+                'relatedSectors': [sector],
+                'type': 'topic',
+            })
+
+    # 排序 & 去重
+    hotwords.sort(key=lambda x: x.get('heat', 0), reverse=True)
+    return hotwords[:25]
+
+
+def fetch_xueqiu_hotwords():
+    """完整雪球热词抓取流程: cookie → 热股 + 热帖 → 标准热词格式"""
+    print("  🔥 雪球热词抓取...")
+    try:
+        opener = _get_xueqiu_opener()
+        stocks = fetch_xueqiu_hot_stocks(opener)
+        print(f"    热股: {len(stocks)} 条")
+        topics = fetch_xueqiu_hot_topics(opener)
+        print(f"    热帖: {len(topics)} 条")
+        hotwords = process_xueqiu_to_hotwords(stocks, topics)
+        print(f"    热词: {len(hotwords)} 条")
+        return {
+            'hotwords': hotwords,
+            'hot_stocks': stocks[:15],  # 保留原始数据供前端直接展示
+            'hot_topics': [{'text': t['text'][:100], 'engagement': t.get('retweet_count',0)+t.get('reply_count',0)+t.get('like_count',0)} for t in topics[:10]],
+            'fetched_at': datetime.now(timezone(timedelta(hours=8))).isoformat(),
+        }
+    except Exception as e:
+        print(f"  ❌ 雪球热词抓取失败: {e}", file=sys.stderr)
+        return None
+
+
+def is_valid_xueqiu_data(data):
+    """雪球数据是否有效（至少有热词或热股）"""
+    if not isinstance(data, dict):
+        return False
+    hotwords = data.get('hotwords') or []
+    hot_stocks = data.get('hot_stocks') or []
+    return len(hotwords) > 0 or len(hot_stocks) > 0
 
 
 # ==================== LLM 结构化提取 ====================
@@ -634,7 +908,7 @@ def _ensure_geopolitical_events(events, all_news, now):
     return events
 
 
-def build_output(llm_result, prev_data, now, all_news=None):
+def build_output(llm_result, prev_data, now, all_news=None, xueqiu_data=None):
     """组装最终JSON输出"""
     events = []
     for i, e in enumerate(llm_result.get('events', [])[:12]):
@@ -684,6 +958,7 @@ def build_output(llm_result, prev_data, now, all_news=None):
             "summary": llm_result.get('outlook_summary', '市场结构性行情延续'),
             "score": outlook_score,
         },
+        "xueqiu_hotwords": xueqiu_data if xueqiu_data else None,
         "meta": {
             "news_count": 0,  # filled by main
             "sources": [],
@@ -701,6 +976,15 @@ def main():
     print(f"时间: {now.strftime('%Y-%m-%d %H:%M:%S')} CST")
     print(f"模型: {MODEL}")
     print(f"{'='*50}")
+
+    # 0. 雪球实时热词 (独立于LLM流程, 先行抓取)
+    print("\n❄️ [0/3] 雪球实时热词...")
+    xueqiu_data = fetch_xueqiu_hotwords()
+    if is_valid_xueqiu_data(xueqiu_data):
+        xq_count = len(xueqiu_data.get('hotwords', []))
+        print(f"  ✅ 雪球热词: {xq_count} 条")
+    else:
+        print("  ⚠️ 雪球热词: 抓取失败或为空, 将在输出阶段尝试回退缓存")
 
     # 1. 多源抓取新闻
     print("\n📡 [1/3] 抓取财经新闻...")
@@ -756,9 +1040,17 @@ def main():
     # 3. 组装输出
     print("\n📦 [3/3] 组装输出...")
     prev_data = load_previous()
-    output = build_output(llm_result, prev_data, now, all_news=deduped)
+    if not is_valid_xueqiu_data(xueqiu_data):
+        prev_xq = prev_data.get('xueqiu_hotwords') if isinstance(prev_data, dict) else None
+        if is_valid_xueqiu_data(prev_xq):
+            xueqiu_data = prev_xq
+            print(f"  ♻️ 使用上次雪球缓存: {len(xueqiu_data.get('hotwords', []))} 热词")
+
+    output = build_output(llm_result, prev_data, now, all_news=deduped, xueqiu_data=xueqiu_data)
     output['meta']['news_count'] = len(deduped)
     output['meta']['sources'] = sources_ok
+    if is_valid_xueqiu_data(xueqiu_data):
+        output['meta']['sources'].append('雪球')
 
     # 写入文件
     os.makedirs(os.path.dirname(OUTPUT_PATH), exist_ok=True)
@@ -771,6 +1063,8 @@ def main():
     print(f"   热度: {len(output['heatmap'])} 标签")
     print(f"   总览: {output['outlook']['summary']}")
     print(f"   分数: {output['outlook']['score']}")
+    if is_valid_xueqiu_data(xueqiu_data):
+        print(f"   雪球: {len(xueqiu_data.get('hotwords', []))} 热词 / {len(xueqiu_data.get('hot_stocks', []))} 热股")
     print(f"{'='*50}")
 
 

@@ -2292,9 +2292,8 @@ const TOP50_FM_DIRECTIONS = [
   { name:'韩创', firm:'大成', aum:'160亿', style:'周期成长', sectors:['煤炭','石油石化','化工'], recent:'周期品供给侧逻辑仍在，能源链盈利韧性强', conviction:'高' },
 ];
 
-// 社交媒体热词数据(模拟来自微博/雪球/东财股吧/同花顺圈子实时爬取)
-function getSocialMediaHotwords(){
-  const hotwords = [
+// 社交媒体热词数据(优先使用雪球实时API数据, 回退静态数据)
+const _STATIC_HOTWORDS = [
     { word:'AI', heat:9800, trend:'up', sources:['微博','雪球','东财'], relatedSectors:['AI','半导体','云计算','软件'] },
     { word:'DeepSeek', heat:9200, trend:'up', sources:['微博','雪球'], relatedSectors:['AI','算力','半导体'] },
     { word:'机器人', heat:8500, trend:'up', sources:['微博','雪球','同花顺'], relatedSectors:['AI','机器人','制造'] },
@@ -2316,8 +2315,31 @@ function getSocialMediaHotwords(){
     { word:'白酒去库存', heat:6800, trend:'up', sources:['东财','雪球','同花顺'], relatedSectors:['白酒','食品饮料','消费'] },
     { word:'光伏产能过剩', heat:5800, trend:'stable', sources:['雪球','东财'], relatedSectors:['光伏','新能源','锂电'] },
     { word:'张坤重仓股承压', heat:5500, trend:'up', sources:['东财','雪球'], relatedSectors:['港股互联网','白酒','蓝筹'] },
-  ];
-  return hotwords.sort((a,b) => b.heat - a.heat);
+];
+function getSocialMediaHotwords(){
+  // 优先使用后端雪球实时数据
+  const xqData = _hotEventsData?.xueqiu_hotwords;
+  if(xqData?.hotwords?.length > 0){
+    return xqData.hotwords.map(hw => ({
+      word: hw.word,
+      heat: hw.heat || 5000,
+      trend: hw.trend || 'stable',
+      sources: hw.sources || ['雪球'],
+      relatedSectors: hw.relatedSectors || [],
+    })).sort((a,b) => b.heat - a.heat);
+  }
+  // 回退: 静态数据
+  return [..._STATIC_HOTWORDS].sort((a,b) => b.heat - a.heat);
+}
+
+// 获取雪球热股原始数据 (供UI直接展示)
+function getXueqiuHotStocks(){
+  return _hotEventsData?.xueqiu_hotwords?.hot_stocks || [];
+}
+
+// 获取雪球热帖摘要 (供UI直接展示)
+function getXueqiuHotTopics(){
+  return _hotEventsData?.xueqiu_hotwords?.hot_topics || [];
 }
 
 // 核心耦合分析: 基金经理投资方向 × 社交热词 → 趋势共振信号
@@ -2443,6 +2465,141 @@ function getFMSocialContextForAI(){
   ctx += '  ⚠️ 请特别关注「强共振」板块(基金经理集中配置+社交热度飙升)，这些方向往往代表中期趋势拐点。同时警惕纯舆情主导但经理未参与的方向(可能是散户追涨)。\n';
 
   return ctx;
+}
+
+function normalizeFundCategoryName(raw){
+  if(!raw) return '';
+  const s = String(raw).trim();
+  const map = {
+    'AI芯片':'半导体', '芯片':'半导体', '算力':'AI', '大模型':'AI', '人工智能':'AI', '云计算':'AI', '软件':'AI',
+    '港股':'港股科技', '港股互联网':'港股科技', '互联网':'港股科技',
+    '食品饮料':'消费', '家电':'消费', '商贸零售':'消费',
+    '创新药':'医药', '医疗器械':'医药', 'CXO':'医药',
+    '国防':'军工', '航空航天':'军工',
+    '储能':'新能源', '电池':'新能源', '充电桩':'新能源', '新能源车':'新能源',
+    '贵金属':'黄金', '避险':'黄金',
+    '铜':'有色金属', '铝':'有色金属', '资源':'有色金属', '矿业':'有色金属',
+    '石油石化':'能源', '油气':'能源', '原油':'能源', '煤炭':'能源',
+    '高股息':'红利', '公用事业':'红利', '银行':'红利',
+  };
+  return map[s] || s;
+}
+
+function _extractFundHoldingCategories(code, fType, fName){
+  const profile = {};
+  const holdInfo = _fundHoldingsCache[code];
+  if(holdInfo?.sectorExposure){
+    Object.entries(holdInfo.sectorExposure).forEach(([sec, w]) => {
+      if(w < 0.08) return;
+      const k = normalizeFundCategoryName(sec);
+      profile[k] = Math.max(profile[k] || 0, w);
+    });
+  }
+
+  if(Object.keys(profile).length === 0 && fType){
+    fType.split(/[/／·、,，]/).map(s=>s.trim()).filter(Boolean).forEach(tag => {
+      const k = normalizeFundCategoryName(tag);
+      profile[k] = Math.max(profile[k] || 0, 0.2);
+    });
+  }
+
+  const lowerName = (fName || '').toLowerCase();
+  const pushByName = (kw, sector, w=0.2) => {
+    if(lowerName.includes(kw)) profile[sector] = Math.max(profile[sector] || 0, w);
+  };
+  pushByName('半导体', '半导体');
+  pushByName('芯片', '半导体');
+  pushByName('军工', '军工');
+  pushByName('医药', '医药');
+  pushByName('白酒', '白酒');
+  pushByName('消费', '消费');
+  pushByName('新能源', '新能源');
+  pushByName('光伏', '新能源');
+  pushByName('锂电', '新能源');
+  pushByName('港股', '港股科技');
+  pushByName('科技', '港股科技');
+  pushByName('黄金', '黄金');
+  pushByName('有色', '有色金属');
+  pushByName('油气', '能源');
+  pushByName('原油', '能源');
+  pushByName('石油', '能源');
+
+  return profile;
+}
+
+function analyzeXueqiuHoldingCategories(code, fType, fName){
+  const profile = _extractFundHoldingCategories(code, fType, fName);
+  const categories = Object.keys(profile);
+  if(categories.length === 0) return null;
+
+  // 使用实时雪球热词(优先) 或 静态数据
+  const allWords = getSocialMediaHotwords();
+  const xqWords = allWords.filter(hw => (hw.sources || []).includes('雪球'));
+  if(xqWords.length === 0) return null;
+
+  // 是否使用了实时数据
+  const isLive = !!(_hotEventsData?.xueqiu_hotwords?.hotwords?.length > 0);
+
+  const stats = {};
+  categories.forEach(c => {
+    stats[c] = { category:c, weight: profile[c], heat:0, up:0, down:0, stable:0, words:[], stocks:[] };
+  });
+
+  xqWords.forEach(hw => {
+    const rel = (hw.relatedSectors || []).map(normalizeFundCategoryName);
+    categories.forEach(c => {
+      if(!rel.includes(c)) return;
+      const s = stats[c];
+      s.heat += hw.heat;
+      if(hw.trend === 'up') s.up++;
+      else if(hw.trend === 'down') s.down++;
+      else s.stable++;
+      s.words.push(hw.word);
+      // 如果是热股类型, 记录涨跌幅
+      if(hw.type === 'stock' && hw.percent !== undefined){
+        s.stocks.push({ name: hw.word, pct: hw.percent });
+      }
+    });
+  });
+
+  const matched = Object.values(stats)
+    .filter(s => s.heat > 0)
+    .map(s => ({
+      ...s,
+      weightedHeat: s.heat * (0.5 + Math.min(0.5, s.weight || 0)),
+      trend: s.up > s.down ? 'up' : s.down > s.up ? 'down' : 'stable',
+    }))
+    .sort((a,b) => b.weightedHeat - a.weightedHeat);
+
+  if(matched.length === 0) return null;
+
+  const totalHeat = matched.reduce((acc, it) => acc + it.heat, 0);
+  const topWords = [...new Set(matched.flatMap(it => it.words))].slice(0, 6);
+  const trendScore = matched.reduce((acc, it) => acc + (it.trend === 'up' ? 1 : it.trend === 'down' ? -1 : 0), 0);
+  const sentiment = trendScore > 0 ? '升温' : trendScore < 0 ? '降温' : '分化';
+  const matchScore = Math.min(100, Math.round((matched.length / Math.max(1, categories.length)) * 60 + Math.min(40, totalHeat / 1500)));
+
+  // 汇总相关热股涨跌
+  const relatedStocks = matched.flatMap(it => it.stocks).filter(Boolean);
+  const topStocks = relatedStocks.sort((a,b) => Math.abs(b.pct) - Math.abs(a.pct)).slice(0, 5);
+
+  // 雪球热帖相关摘要
+  const hotTopics = getXueqiuHotTopics();
+  const relatedTopics = hotTopics.filter(t => {
+    const txt = t.text || '';
+    return categories.some(c => txt.includes(c)) || topWords.some(w => txt.includes(w));
+  }).slice(0, 2);
+
+  return {
+    matchScore,
+    sentiment,
+    categories: matched.slice(0, 3),
+    topWords,
+    isLive,
+    topStocks,
+    relatedTopics,
+    fetchedAt: _hotEventsData?.xueqiu_hotwords?.fetched_at || null,
+  };
 }
 
 // ==================== 地缘事件加载 (v2: 从 data/hot_events.json 加载) ====================
@@ -6004,6 +6161,40 @@ function generateSmartReason(p, capFlow, ds){
     }
   }
 
+  // ========== Section 8: 雪球持仓类目分析 ==========
+  let xqSection = '';
+  {
+    const xq = analyzeXueqiuHoldingCategories(code, fType, fName);
+    if(xq){
+      const liveTag = xq.isLive ? '<span style="color:#22c55e;font-size:9px">● 实时</span>' : '<span style="color:#94a3b8;font-size:9px">○ 静态</span>';
+      const catStr = xq.categories.map(c => {
+        const t = c.trend === 'up' ? '🔥升温' : c.trend === 'down' ? '❄️降温' : '➡️持平';
+        return `${c.category}(持仓${(c.weight*100).toFixed(0)}%·热度${Math.round(c.heat/1000)}k·${t})`;
+      }).join('、');
+      const wordStr = xq.topWords.slice(0, 4).join(' / ');
+      xqSection = `${liveTag} 匹配度${xq.matchScore}分，整体<b>${xq.sentiment}</b>。重点类目: ${catStr}`;
+      if(wordStr) xqSection += `。雪球热词: ${wordStr}`;
+      // 添加相关热股涨跌
+      if(xq.topStocks && xq.topStocks.length > 0){
+        const stockStr = xq.topStocks.slice(0, 3).map(s => {
+          const pctStr = s.pct >= 0 ? `<span style="color:var(--red)">+${s.pct.toFixed(1)}%</span>` : `<span style="color:var(--green)">${s.pct.toFixed(1)}%</span>`;
+          return `${s.name}${pctStr}`;
+        }).join(' ');
+        xqSection += `。<b>相关热股</b>: ${stockStr}`;
+      }
+      // 添加相关热帖
+      if(xq.relatedTopics && xq.relatedTopics.length > 0){
+        const topicStr = xq.relatedTopics.map(t => `"${t.text.slice(0, 25)}…"`).join(' ');
+        xqSection += `。<b>热议</b>: ${topicStr}`;
+      }
+      // 时间标注
+      if(xq.fetchedAt){
+        const t = new Date(xq.fetchedAt);
+        xqSection += ` <span style="font-size:8px;color:var(--sub)">(${t.getMonth()+1}/${t.getDate()} ${t.getHours()}:${String(t.getMinutes()).padStart(2,'0')})</span>`;
+      }
+    }
+  }
+
   // ========== 汇总输出 ==========
   let reason = '';
   // 操作结论(放最前面，醒目)
@@ -6050,6 +6241,7 @@ function generateSmartReason(p, capFlow, ds){
   if(fundFlowSection) sections.push(`<b>💰资金面</b>: ${fundFlowSection}`);
   if(macroSection) sections.push(`<b>🌐宏观&地缘</b>: ${macroSection}`);
   if(mgrSection) sections.push(`<b>👔同赛道顶级经理</b>: ${mgrSection}`);
+  if(xqSection) sections.push(`<b>❄️雪球持仓类目</b>: ${xqSection}`);
   if(crowdSection) sections.push(`<b>🎭拥挤度</b>: ${crowdSection}`);
   if(riskSection) sections.push(`<b>🛡️风控</b>: ${riskSection}`);
   if(vote.ai.reason && vote.ai.conf > 0) sections.push(`<b>💬AI原文</b>: "${vote.ai.reason.slice(0, 200)}"`);
