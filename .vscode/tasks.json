@@ -1,0 +1,16 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Run fund-assistant",
+			"type": "shell",
+			"command": "python3",
+			"args": [
+				"-m",
+				"http.server",
+				"8000"
+			],
+			"isBackground": true
+		}
+	]
+}

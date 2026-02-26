@@ -10,9 +10,27 @@ import json, os, re, sys, ssl, time
 from datetime import datetime, timezone, timedelta
 from urllib.request import urlopen, Request
 
+# ==================== .env 自动加载 ====================
+def _load_dotenv():
+    """从项目根目录 .env 文件加载环境变量（不覆盖已有变量）"""
+    env_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), '.env')
+    if not os.path.exists(env_path):
+        return
+    with open(env_path, 'r', encoding='utf-8') as f:
+        for line in f:
+            line = line.strip()
+            if not line or line.startswith('#') or '=' not in line:
+                continue
+            key, _, value = line.partition('=')
+            key, value = key.strip(), value.strip()
+            if key and key not in os.environ:
+                os.environ[key] = value
+
+_load_dotenv()
+
 # ==================== 配置 ====================
 API_KEY = os.environ.get('AI_API_KEY', '')
-API_BASE = os.environ.get('AI_API_BASE', 'https://api.302.ai/v1')
+API_BASE = os.environ.get('AI_API_BASE', 'https://api.siliconflow.cn/v1')
 MODEL = os.environ.get('AI_MODEL', 'deepseek-ai/DeepSeek-V3')
 OUTPUT_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data', 'hot_events.json')
 
@@ -152,6 +170,98 @@ def fetch_rss_bbc():
     return items
 
 
+def fetch_rss_reuters():
+    """Reuters World/Business News via Google News RSS (地缘政治核心源)"""
+    import xml.etree.ElementTree as ET
+    items = []
+    # Reuters自有RSS已关闭，改用Google News搜索Reuters来源
+    rss_urls = [
+        'https://news.google.com/rss/search?q=site:reuters.com+when:1d&hl=en&gl=US&ceid=US:en',
+        'https://news.google.com/rss/search?q=geopolitics+OR+sanctions+OR+OPEC+OR+Iran+OR+tariff+when:1d&hl=en&gl=US&ceid=US:en',
+    ]
+    for url in rss_urls:
+        raw = fetch_http(url)
+        if not raw:
+            continue
+        try:
+            root = ET.fromstring(raw)
+            for item in root.findall('.//item')[:15]:
+                title = (item.findtext('title') or '').strip()
+                if title:
+                    items.append({'title': title, 'source': 'Reuters/Google', 'time': item.findtext('pubDate', '')})
+        except Exception as e:
+            print(f"  [WARN] Reuters/Google RSS: {e}", file=sys.stderr)
+    # 去重
+    seen = set()
+    unique = []
+    for it in items:
+        if it['title'] not in seen:
+            seen.add(it['title'])
+            unique.append(it)
+    return unique[:20]
+
+
+def fetch_rss_aljazeera():
+    """Al Jazeera RSS (中东/非洲/地缘视角)"""
+    import xml.etree.ElementTree as ET
+    items = []
+    raw = fetch_http('https://www.aljazeera.com/xml/rss/all.xml')
+    if not raw:
+        return items
+    try:
+        root = ET.fromstring(raw)
+        for item in root.findall('.//item')[:12]:
+            title = (item.findtext('title') or '').strip()
+            if title:
+                items.append({'title': title, 'source': 'AlJazeera', 'time': item.findtext('pubDate', '')})
+    except Exception as e:
+        print(f"  [WARN] AlJazeera RSS: {e}", file=sys.stderr)
+    return items
+
+
+def fetch_rss_ft():
+    """Financial Times RSS (国际财经+地缘)"""
+    import xml.etree.ElementTree as ET
+    items = []
+    rss_urls = [
+        'https://www.ft.com/rss/home',
+        'https://www.ft.com/world?format=rss',
+    ]
+    for url in rss_urls:
+        raw = fetch_http(url)
+        if not raw:
+            continue
+        try:
+            root = ET.fromstring(raw)
+            for item in root.findall('.//item')[:10]:
+                title = (item.findtext('title') or '').strip()
+                if title:
+                    items.append({'title': title, 'source': 'FT', 'time': item.findtext('pubDate', '')})
+            if items:
+                break
+        except Exception as e:
+            print(f"  [WARN] FT RSS: {e}", file=sys.stderr)
+    return items
+
+
+def fetch_guancha_news():
+    """观察者网国际新闻 (中文地缘视角)"""
+    items = []
+    raw = fetch_http('https://www.guancha.cn/internationalNews')
+    if not raw:
+        return items
+    try:
+        # 简单提取标题 (HTML解析)
+        titles = re.findall(r'<h4[^>]*>\s*<a[^>]*>([^<]+)</a>\s*</h4>', raw)
+        for title in titles[:15]:
+            title = title.strip()
+            if title and len(title) > 6:
+                items.append({'title': title, 'source': '观察者网', 'time': ''})
+    except Exception as e:
+        print(f"  [WARN] 观察者网: {e}", file=sys.stderr)
+    return items
+
+
 # ==================== LLM 结构化提取 ====================
 
 def call_llm(news_items):
@@ -184,12 +294,14 @@ def call_llm(news_items):
 每个事件必须标注影响的行业板块(正面/负面)。最多输出12条事件。
 
 **重要：确保事件覆盖尽可能多的行业板块。** 除了AI/科技、债券等热门板块以外，必须特别关注以下板块的相关新闻并提取事件：
-- **大宗商品**: 原油/油气价格变动、OPEC决策、铜铝等有色金属涨跌、黄金白银走势
-- **能源与资源**: 能源政策、矿产资源供需、碳排放政策
+- **地缘政治(最高优先级!)**: 美伊关系、俄乌冲突、中美博弈、中东局势、红海航运、非洲资源国政策(锂矿/钴矿出口禁令)、OPEC减产、关税战、制裁措施等。地缘事件对油气、有色金属、黄金、军工板块影响极大，必须提取！
+- **大宗商品**: 原油/油气价格变动、OPEC决策、铜铝等有色金属涨跌、黄金白银走势、锂矿/稀土供应链
+- **能源与资源**: 能源政策、矿产资源供需、碳排放政策、非洲/南美资源国出口限制
 - **消费与内需**: 社零数据、消费政策、白酒/食品行业动态
 - **医药健康**: 医药政策、集采、创新药审批
-- **军工国防**: 军费预算、装备采购、地缘冲突
-如果新闻中有涉及有色金属(铜、铝、锌、稀土等)、原油/油气、黄金白银等大宗商品的内容，务必单独提取为事件。
+- **军工国防**: 军费预算、装备采购、地缘冲突驱动的军工需求
+如果新闻中有涉及有色金属(铜、铝、锌、稀土、锂等)、原油/油气、黄金白银等大宗商品的内容，务必单独提取为事件。
+如果新闻中有涉及国际地缘冲突(美伊、俄乌、中美、红海等)的内容，务必单独提取为事件并标注影响的板块(如油气、军工、黄金等)。
 
 sectors_positive 和 sectors_negative 字段应使用以下标准板块名：
 AI/科技、半导体、算力、AIGC、新能源、光伏、锂电、新能源车、消费、食品饮料、白酒、医药、创新药、
@@ -400,14 +512,140 @@ def _ensure_commodity_events(events, now):
     return events
 
 
-def build_output(llm_result, prev_data, now):
+# 地缘政治常驻事件模板 (持续性地缘风险，即使LLM未单独提取也应追踪)
+_GEOPOLITICAL_FALLBACKS = [
+    {
+        "key_keywords": ['伊朗', 'iran', '中东', '霍尔木兹', '红海', '胡塞', 'houthi'],
+        "key_sectors": {'能源', '原油', '油气'},
+        "template": {
+            "title": "中东地缘局势紧张",
+            "category": "geopolitics",
+            "concepts": ["原油", "黄金"],
+            "sentiment": -0.3,
+            "impact": 3,
+            "sectors_positive": ["原油", "能源", "油气", "大宗商品", "黄金", "贵金属"],
+            "sectors_negative": ["航空", "消费"],
+            "fund_keywords": ["原油", "油气", "石油", "天然气", "能源", "黄金", "避险"],
+            "reason": "美伊关系紧张+红海航运受阻，推升油价和避险资产",
+            "advice": "油气+黄金对冲配置",
+        },
+    },
+    {
+        'key_keywords': ['美俄', '乌克兰', '俄乌', 'russia', 'ukraine', 'nato', 'NATO'],
+        "key_sectors": {'军工', '国防'},
+        "template": {
+            "title": "俄乌冲突与制裁影响延续",
+            "category": "geopolitics",
+            "concepts": ["军工", "原油"],
+            "sentiment": -0.2,
+            "impact": 3,
+            "sectors_positive": ["军工", "国防", "能源", "黄金", "贵金属"],
+            "sectors_negative": ["消费", "航空"],
+            "fund_keywords": ["军工", "国防", "航天", "黄金", "原油", "能源"],
+            "reason": "俄乌冲突持续，推升军工+能源需求，避险情绪受益黄金",
+            "advice": "军工ETF+黄金底仓",
+        },
+    },
+    {
+        "key_keywords": ['美中', '中美', '制裁', '关税', 'tariff', 'sanction', '芯片禁令', '科技战'],
+        "key_sectors": {'半导体', 'AI/科技'},
+        "template": {
+            "title": "中美科技博弈延续",
+            "category": "geopolitics",
+            "concepts": ["半导体", "AI算力"],
+            "sentiment": -0.3,
+            "impact": 3,
+            "sectors_positive": ["半导体", "军工", "AI/科技"],
+            "sectors_negative": ["消费", "贸易相关"],
+            "fund_keywords": ["半导体", "芯片", "科技", "AI", "军工"],
+            "reason": "中美科技脱钩加速，半导体国产替代+军工自主攻关受益",
+            "advice": "半导体+军工国产替代主线",
+        },
+    },
+    {
+        'key_keywords': ['锂矿', '稀土', '出口禁', '矿产', '非洲', '智利', '刚果', 'lithium', 'rare earth', 'cobalt'],
+        "key_sectors": {'有色金属', '新能源'},
+        "template": {
+            "title": "全球关键矿产供应链紧张",
+            "category": "geopolitics",
+            "concepts": ["有色金属", "锂电"],
+            "sentiment": 0.3,
+            "impact": 3,
+            "sectors_positive": ["有色金属", "铜铝", "大宗商品", "锂电", "新能源"],
+            "sectors_negative": [],
+            "fund_keywords": ["有色金属", "铜", "铝", "锂", "稀土", "资源", "矿业", "新能源"],
+            "reason": "非洲国家锂矿出口限制+全球稀土供应紧张，推升有色金属价格",
+            "advice": "有色金属+锂电ETF关注供给端",
+        },
+    },
+    {
+        "key_keywords": ['OPEC', 'opec', '减产', '油价', '英伦特', '布伦特原油', 'oil price', 'crude'],
+        "key_sectors": {'原油', '油气', '能源'},
+        "template": {
+            "title": "OPEC+产量政策影响油价",
+            "category": "commodity",
+            "concepts": ["原油"],
+            "sentiment": 0.2,
+            "impact": 3,
+            "sectors_positive": ["原油", "能源", "油气", "大宗商品"],
+            "sectors_negative": ["航空", "交通"],
+            "fund_keywords": ["原油", "油气", "石油", "能源"],
+            "reason": "OPEC+减产政策延续，油价中枢上移，能源股受益",
+            "advice": "油气基金关注供给端变化",
+        },
+    },
+]
+
+
+def _ensure_geopolitical_events(events, all_news, now):
+    """确保重大地缘事件始终被追踪(即使LLM未单独提取)"""
+    # 汇总所有新闻标题文本用于关键词检测
+    all_text = ' '.join(n.get('title', '') for n in all_news).lower()
+    
+    # 汇总已有事件覆盖的板块
+    all_sectors = set()
+    for e in events:
+        all_sectors.update(e.get('sectors_positive', []))
+        all_sectors.update(e.get('sectors_negative', []))
+    
+    added = 0
+    for fb in _GEOPOLITICAL_FALLBACKS:
+        # 检查该地缘主题是否已被动态事件完全覆盖(所有关键板块都有对应事件才跳过)
+        uncovered = fb['key_sectors'] - all_sectors
+        if not uncovered:
+            continue
+        
+        # 检查新闻中是否有相关关键词(即使LLM没提取，新闻中有提及就补充)
+        kw_found = any(kw.lower() in all_text for kw in fb['key_keywords'])
+        
+        if kw_found:
+            idx = len(events)
+            evt = dict(fb['template'])
+            evt['id'] = f"evt_{now.strftime('%Y%m%d')}_geo_{idx+1:03d}"
+            evt['confidence'] = 0.65
+            evt['source'] = "地缘事件追踪"
+            evt['time'] = now.isoformat()
+            events.append(evt)
+            added += 1
+            print(f"  🌍 补充地缘事件: {evt['title']} (新闻中检测到关键词)")
+    
+    if added:
+        print(f"  共补充 {added} 个地缘政治事件")
+    return events
+
+
+def build_output(llm_result, prev_data, now, all_news=None):
     """组装最终JSON输出"""
     events = []
     for i, e in enumerate(llm_result.get('events', [])[:12]):
         events.append(enrich_event(e, i, now))
 
-    # === 补充大宗商品常驻事件 (确保油气/有色/黄金持仓始终可被归因) ===
+    # === 补充大宗商品常驻事件 ===
     events = _ensure_commodity_events(events, now)
+
+    # === 补充地缘政治事件(新闻中有关键词but LLM未提取的) ===
+    if all_news:
+        events = _ensure_geopolitical_events(events, all_news, now)
 
     # 热度图: 补充趋势
     heatmap = []
@@ -474,6 +712,10 @@ def main():
         ('东方财富', fetch_eastmoney_news),
         ('财联社', fetch_cls_news),
         ('BBC', fetch_rss_bbc),
+        ('Reuters', fetch_rss_reuters),
+        ('AlJazeera', fetch_rss_aljazeera),
+        ('FT', fetch_rss_ft),
+        ('观察者网', fetch_guancha_news),
     ]:
         try:
             items = fetcher()
@@ -514,7 +756,7 @@ def main():
     # 3. 组装输出
     print("\n📦 [3/3] 组装输出...")
     prev_data = load_previous()
-    output = build_output(llm_result, prev_data, now)
+    output = build_output(llm_result, prev_data, now, all_news=deduped)
     output['meta']['news_count'] = len(deduped)
     output['meta']['sources'] = sources_ok
 
