@@ -16,6 +16,7 @@ sys.path.insert(0, ROOT_DIR)
 
 from flask import Flask, jsonify, send_from_directory, request
 from scripts.collector import collect_and_save, load_cache, CACHE_FILE
+from scripts.analyzer import load_analysis_cache, analyze_and_save, ANALYSIS_CACHE
 
 app = Flask(__name__, static_folder=None)
 
@@ -67,14 +68,44 @@ def api_refresh():
 def api_status():
     """服务状态"""
     cache = load_cache()
+    analysis = load_analysis_cache()
     return jsonify({
         'server': 'running',
         'collecting': _collecting,
         'cache_exists': cache is not None,
+        'analysis_exists': analysis is not None,
         'last_fetch': cache.get('fetch_time') if cache else None,
+        'last_analysis': analysis.get('analysis_time') if analysis else None,
         'total_items': cache.get('total', 0) if cache else 0,
         'interval_sec': COLLECT_INTERVAL,
     })
+
+
+@app.route('/api/analysis')
+def api_analysis():
+    """返回 AI 分析结果（缓存）"""
+    analysis = load_analysis_cache()
+    if analysis is None:
+        return jsonify({'status': 'no_data', 'message': '暂无分析结果，请等待采集+分析完成'}), 200
+    age = int(time.time()) - analysis.get('analysis_ts', 0)
+    analysis['analysis_age_seconds'] = age
+    analysis['stale'] = age > COLLECT_INTERVAL * 2
+    return jsonify(analysis)
+
+
+@app.route('/api/reanalyze', methods=['POST'])
+def api_reanalyze():
+    """手动触发重新分析（使用已缓存的采集数据）"""
+    cache = load_cache()
+    if not cache or not cache.get('items'):
+        return jsonify({'status': 'error', 'message': '无采集数据，请先刷新采集'}), 400
+
+    def do_analyze():
+        analyze_and_save(cache['items'])
+
+    t = threading.Thread(target=do_analyze, daemon=True)
+    t.start()
+    return jsonify({'status': 'started', 'message': 'AI 分析已启动'})
 
 # ==================== 静态文件 ====================
 
@@ -123,7 +154,9 @@ if __name__ == '__main__':
 ║  采集间隔: {COLLECT_INTERVAL}秒 ({COLLECT_INTERVAL//60}分钟)                       ║
 ║  API:                                            ║
 ║    GET  /api/sentiment  → 舆情数据               ║
+║    GET  /api/analysis   → AI分析结果             ║
 ║    POST /api/refresh    → 手动刷新               ║
+║    POST /api/reanalyze  → 重新AI分析             ║
 ║    GET  /api/status     → 服务状态               ║
 ╚══════════════════════════════════════════════════╝
 ''')

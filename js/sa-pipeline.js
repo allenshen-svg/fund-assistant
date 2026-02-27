@@ -109,31 +109,70 @@ async function runFullPipeline() {
       return;
     }
 
-    // Phase 2: AI 分析
+    // Phase 2: 读取后端 AI 分析结果
     markSource('ai', 'active');
-    setProgress(60, '🧠 调用 AI 引擎进行逆向分析...');
-    progress.textContent = '正在与 AI 对话，预计需要 15-30 秒...';
+    setProgress(60, '🧠 读取 AI 分析结果...');
+    progress.textContent = '正在获取后端 AI 分析结果...';
 
-    const prompts = buildAnalysisPrompt(JSON.stringify(allItems, null, 2));
-    const result = await callAI(_modelId, prompts.systemPrompt, prompts.userPrompt, 0.6);
-    _analysisResult = result;
-    markSource('ai', 'done');
+    let analysisData = await fetchAnalysisData();
 
-    setProgress(85, '解析情绪因子...');
-    _sentimentFactors = extractJSON(result);
+    // 如果后端还没有分析结果或已过期，等待一下
+    if (!analysisData || analysisData.status === 'no_data' || analysisData.stale) {
+      setProgress(65, '🧠 等待后端 AI 分析完成...');
+      progress.textContent = 'AI 正在分析中，预计需要 15-30 秒...';
+      // 轮询等待分析完成
+      for (let i = 0; i < 20; i++) {
+        await sleep(3000);
+        analysisData = await fetchAnalysisData();
+        setProgress(65 + i * 1, `🧠 等待 AI 分析... (${(i+1)*3}s)`);
+        if (analysisData && analysisData.raw_text) break;
+      }
+    }
 
-    setProgress(92, '渲染仪表盘...');
-    renderDashboard(allItems, result, _sentimentFactors);
+    if (analysisData && analysisData.raw_text) {
+      const result = analysisData.raw_text;
+      _analysisResult = result;
+      _sentimentFactors = analysisData.dashboard || extractJSON(result);
+      markSource('ai', 'done');
 
-    setProgress(100, '✅ 分析完成！');
-    await sleep(400);
-    overlay.classList.add('hide');
+      setProgress(92, '渲染仪表盘...');
+      renderDashboard(allItems, result, _sentimentFactors);
 
-    // 更新 header
-    document.getElementById('live-dot').className = 'ph-dot live';
-    document.getElementById('header-status').textContent = `已分析 ${allItems.length} 条数据`;
-    document.getElementById('header-time').textContent = new Date().toLocaleTimeString('zh-CN');
-    progress.textContent = '✅ 分析完成 · ' + new Date().toLocaleTimeString('zh-CN');
+      setProgress(100, '✅ 分析完成！');
+      await sleep(400);
+      overlay.classList.add('hide');
+
+      document.getElementById('live-dot').className = 'ph-dot live';
+      document.getElementById('header-status').textContent = `已分析 ${allItems.length} 条数据`;
+      document.getElementById('header-time').textContent = new Date().toLocaleTimeString('zh-CN');
+      progress.textContent = '✅ 分析完成 · ' + new Date().toLocaleTimeString('zh-CN')
+        + (analysisData.analysis_time ? ' (分析于 ' + analysisData.analysis_time + ')' : '');
+    } else {
+      // 后端分析不可用 — 用前端兜底
+      markSource('ai', 'active');
+      setProgress(65, '🧠 后端分析不可用，使用前端 AI 引擎...');
+      progress.textContent = '正在与 AI 对话，预计需要 15-30 秒...';
+
+      const prompts = buildAnalysisPrompt(JSON.stringify(allItems, null, 2));
+      const result = await callAI(_modelId, prompts.systemPrompt, prompts.userPrompt, 0.6);
+      _analysisResult = result;
+      markSource('ai', 'done');
+
+      setProgress(85, '解析情绪因子...');
+      _sentimentFactors = extractJSON(result);
+
+      setProgress(92, '渲染仪表盘...');
+      renderDashboard(allItems, result, _sentimentFactors);
+
+      setProgress(100, '✅ 分析完成！(前端兜底)');
+      await sleep(400);
+      overlay.classList.add('hide');
+
+      document.getElementById('live-dot').className = 'ph-dot live';
+      document.getElementById('header-status').textContent = `已分析 ${allItems.length} 条数据`;
+      document.getElementById('header-time').textContent = new Date().toLocaleTimeString('zh-CN');
+      progress.textContent = '✅ 分析完成 · ' + new Date().toLocaleTimeString('zh-CN');
+    }
 
     document.getElementById('sec-gauge').scrollIntoView({behavior:'smooth', block:'start'});
 

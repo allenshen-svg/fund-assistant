@@ -14,12 +14,33 @@ async function fetchSentimentData() {
   }
 }
 
+async function fetchAnalysisData() {
+  try {
+    const resp = await fetch('/api/analysis?t=' + Date.now());
+    if (!resp.ok) throw new Error('API error: ' + resp.status);
+    return await resp.json();
+  } catch (e) {
+    console.error('Fetch analysis failed:', e);
+    return null;
+  }
+}
+
 async function triggerRefresh() {
   try {
     const resp = await fetch('/api/refresh', { method: 'POST' });
     return await resp.json();
   } catch (e) {
     console.error('Trigger refresh failed:', e);
+    return { status: 'error', message: e.message };
+  }
+}
+
+async function triggerReanalyze() {
+  try {
+    const resp = await fetch('/api/reanalyze', { method: 'POST' });
+    return await resp.json();
+  } catch (e) {
+    console.error('Trigger reanalyze failed:', e);
     return { status: 'error', message: e.message };
   }
 }
@@ -34,7 +55,7 @@ async function fetchServerStatus() {
 }
 
 async function waitForRefresh(onProgress) {
-  const maxWait = 90, interval = 3;
+  const maxWait = 120, interval = 3;
   for (let elapsed = 0; elapsed < maxWait; elapsed += interval) {
     await new Promise(r => setTimeout(r, interval * 1000));
     const status = await fetchServerStatus();

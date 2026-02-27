@@ -6,3 +6,4 @@
 .venv/
 __pycache__/
 data/sentiment_cache.json
+data/analysis_cache.json

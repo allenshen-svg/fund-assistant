@@ -389,10 +389,21 @@ def load_cache():
     except Exception:
         return None
 
-def collect_and_save():
-    """采集并保存 — 供 cron 或 server 调用"""
+def collect_and_save(run_analysis=True):
+    """采集并保存，可选自动运行 AI 分析 — 供 cron 或 server 调用"""
     data = collect_all()
     save_cache(data)
+    if run_analysis and data.get('items'):
+        try:
+            import importlib, sys
+            # Ensure scripts dir is on path for sibling import
+            scripts_dir = os.path.dirname(os.path.abspath(__file__))
+            if scripts_dir not in sys.path:
+                sys.path.insert(0, scripts_dir)
+            from analyzer import analyze_and_save
+            analyze_and_save(data['items'])
+        except Exception as e:
+            print(f'  ⚠️ AI 分析阶段出错: {e}')
     return data
 
 # ==================== CLI ====================
