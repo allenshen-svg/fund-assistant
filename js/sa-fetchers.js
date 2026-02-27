@@ -3,19 +3,31 @@
 // 2026-02 verified working APIs
 // =============================================
 
+const CORS_PROXIES = [
+  url => url,  // direct first
+  url => 'https://api.allorigins.win/raw?url=' + encodeURIComponent(url),
+  url => 'https://corsproxy.io/?' + encodeURIComponent(url),
+];
+
 async function fetchJSON(url, opts={}) {
-  try {
-    const resp = await fetch(url, {
-      signal: AbortSignal.timeout(15000),
-      headers: { 'User-Agent': 'Mozilla/5.0' },
-      ...opts,
-    });
-    if(!resp.ok) return null;
-    return await resp.json();
-  } catch(e) {
-    console.warn('Fetch failed:', url, e.message);
-    return null;
+  // Try direct first, then CORS proxies
+  for(const proxy of CORS_PROXIES) {
+    try {
+      const pUrl = proxy(url);
+      const resp = await fetch(pUrl, {
+        signal: AbortSignal.timeout(12000),
+        mode: pUrl === url ? 'cors' : undefined,
+        ...opts,
+      });
+      if(!resp.ok) continue;
+      const data = await resp.json();
+      if(data) return data;
+    } catch(e) {
+      // try next proxy
+    }
   }
+  console.warn('All fetch attempts failed:', url);
+  return null;
 }
 
 // ==================== 抖音热搜 ====================
@@ -124,7 +136,7 @@ async function fetchEastmoney() {
         const title = (item.title || '').trim();
         const content = (item.content || '').trim();
         const text = title || content.slice(0,100);
-        if(text && text.length >= 4 && isFinance(text + ' ' + content)) {
+        if(text && text.length >= 4) {
           items.push({
             title: text.slice(0,80),
             summary: content.slice(0,200) || text,
@@ -156,7 +168,7 @@ async function fetchCailian() {
         const title = (item.title || '').trim();
         const content = (item.content || '').replace(/<[^>]+>/g,'').trim();
         const text = title || content.slice(0,100);
-        if(text && text.length >= 4 && isFinance(text + ' ' + content)) {
+        if(text && text.length >= 4) {
           items.push({
             title: text.slice(0,80),
             summary: content.slice(0,200) || text,
@@ -302,7 +314,6 @@ async function fetchAggHotlists() {
     fetchZhihu(),
     fetchBaidu(),
     fetchBilibili(),
-    fetchCailian(),
   ]);
   for(const r of results) {
     if(r.status === 'fulfilled' && r.value.length > 0) {
