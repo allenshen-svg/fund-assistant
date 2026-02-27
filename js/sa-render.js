@@ -144,9 +144,47 @@ function renderHeatbar(videoData) {
 
 // ==================== VIDEO TABLE ====================
 function renderVideoTable(videoData) {
-  document.getElementById('video-count').textContent = videoData.length + '条';
+  // Client-side finance keyword filter — matches backend FINANCE_KW
+  var financeKW = [
+    'A股','股市','大盘','沪指','上证','深成','创业板','科创板','沪深300','恒生','港股','美股','纳斯达克',
+    'AI','人工智能','算力','芯片','半导体','光模块','CPO','大模型','DeepSeek',
+    '机器人','自动驾驶','新能源','光伏','锂电','碳酸锂','储能',
+    '军工','国防','航天','白酒','消费','医药','创新药','CXO',
+    '黄金','金价','原油','油价','有色金属','铜','铝','稀土',
+    '红利','高股息','银行','保险','券商','地产','房价','楼市','房地产',
+    '央行','降息','降准','LPR','利率','通胀','CPI','GDP','PMI',
+    '美联储','加息','国债','债券','汇率','人民币',
+    '关税','贸易战','制裁',
+    '基金','ETF','牛市','熊市','涨停','跌停','抄底','追高',
+    '仓位','加仓','减仓','定投','主力','资金流','北向资金',
+    '茅台','比亚迪','宁德','英伟达','NVIDIA','特斯拉','格力','万达',
+    'IPO','分红','回购','并购','重组','减持','增持',
+    '板块','指数','概念股','题材','龙头股','主线','赛道',
+    '净利润','营收','业绩','净值','估值','市盈率','市值',
+    '电力','农业','春耕',
+    '私募','公募','期货','期权','基民','股民','散户',
+    '目标价','评级','买入','卖出','持有','看多','看空',
+    '投资者','融资','融券','杠杆','做空','做多','止损',
+    '证券','上市','港交所','外汇','利润','亏损','盈利','资产','负债',
+    '经济','金融'
+  ];
+  function isFinance(text) {
+    if (!text) return false;
+    var t = text.toLowerCase();
+    for (var i = 0; i < financeKW.length; i++) {
+      if (t.includes(financeKW[i].toLowerCase())) return true;
+    }
+    return false;
+  }
+
+  // Filter: only show finance-related items
+  var filtered = videoData.filter(function(v) {
+    return isFinance((v.title || '') + (v.summary || ''));
+  });
+
+  document.getElementById('video-count').textContent = filtered.length + '条';
   var tbody = document.getElementById('video-tbody');
-  tbody.innerHTML = videoData.slice(0, 40).map(function(v) {
+  tbody.innerHTML = filtered.slice(0, 50).map(function(v) {
     var s = v.sentiment || '';
     var sentCls = /看多|乐观|追多|贪婪|狂热|偏多/.test(s) ? 'pos' : /悲观|恐慌|谨慎|看空|偏空/.test(s) ? 'neg' : 'neu';
     var noiseFlag = v.noise_flag || /震惊|全仓梭哈|赶紧|速看|神秘主力/.test(v.title || '');

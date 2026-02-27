@@ -23,15 +23,22 @@ FINANCE_KW = [
     '机器人','自动驾驶','新能源','光伏','锂电','碳酸锂','储能',
     '军工','国防','航天','白酒','消费','医药','创新药','CXO',
     '黄金','金价','原油','油价','有色金属','铜','铝','稀土',
-    '红利','高股息','银行','保险','券商','地产',
+    '红利','高股息','银行','保险','券商','地产','房价','楼市','房地产',
     '央行','降息','降准','LPR','利率','通胀','CPI','GDP','PMI',
     '美联储','加息','国债','债券','汇率','人民币',
-    '关税','贸易战','制裁','地缘','中东','俄乌',
+    '关税','贸易战','制裁',
     '基金','ETF','牛市','熊市','涨停','跌停','抄底','追高',
-    '仓位','加仓','减仓','定投','主力','资金','北向',
-    '茅台','比亚迪','宁德','英伟达','NVIDIA','特斯拉',
-    'IPO','分红','回购','并购','重组','股','基','市场','经济','投资','收益','行情',
-    '板块','指数','概念','题材','龙头','主线','赛道',
+    '仓位','加仓','减仓','定投','主力','资金流','北向资金',
+    '茅台','比亚迪','宁德','英伟达','NVIDIA','特斯拉','格力','万达',
+    'IPO','分红','回购','并购','重组','减持','增持',
+    '板块','指数','概念股','题材','龙头股','主线','赛道',
+    '净利润','营收','业绩','净值','估值','市盈率','市值',
+    '电力','农业','春耕',
+    '私募','公募','期货','期权','基民','股民','散户',
+    '目标价','评级','买入','卖出','持有','看多','看空',
+    '投资者','融资','融券','杠杆','做空','做多','止损',
+    '证券','上市','港交所','外汇','利润','亏损','盈利','资产','负债',
+    '经济','金融',
 ]
 _kw_lower = [kw.lower() for kw in FINANCE_KW]
 
@@ -156,7 +163,7 @@ def fetch_douyin():
     return items
 
 def fetch_weibo():
-    """微博热搜 — 通过 Tophub 聚合 API + 官方 API（全量采集，不过滤）— 目标 30+"""
+    """微博热搜 — 通过 Tophub 聚合 API + 官方 API（财经过滤）— 目标 30+"""
     items = []
     seen = set()
 
@@ -175,7 +182,7 @@ def fetch_weibo():
                 hot = int(float(m.group(1)) * 10000)
             else:
                 hot = safe_int(re.sub(r'[^\d]', '', hot_str))
-            if word and word not in seen:
+            if word and is_finance(word) and word not in seen:
                 seen.add(word)
                 items.append({
                     'title': word[:80],
@@ -199,7 +206,7 @@ def fetch_weibo():
             for item in (data.get('data') or {}).get('realtime') or []:
                 word = item.get('word') or item.get('note') or ''
                 hot = safe_int(item.get('raw_hot') or item.get('num'))
-                if word and word not in seen:
+                if word and is_finance(word) and word not in seen:
                     seen.add(word)
                     items.append({
                         'title': word[:80],
@@ -300,7 +307,7 @@ def fetch_cailian():
     return items
 
 def fetch_zhihu():
-    """知乎热榜 — 全量采集（不过滤），目标 50 条"""
+    """知乎热榜 — 财经过滤，目标 50 条"""
     items = []
     try:
         r = requests.get('https://api.zhihu.com/topstory/hot-lists/total?limit=50',
@@ -312,7 +319,7 @@ def fetch_zhihu():
             excerpt = target.get('excerpt') or ''
             detail = item.get('detail_text') or ''
             hot = safe_int(re.sub(r'[^\d]', '', detail))
-            if title:
+            if title and is_finance(title + ' ' + excerpt):
                 items.append({
                     'title': title[:80],
                     'summary': (excerpt[:200] or title),
@@ -328,7 +335,7 @@ def fetch_zhihu():
     return items
 
 def fetch_baidu():
-    """百度热搜 (realtime 全量) — 目标 30+"""
+    """百度热搜 (realtime 财经过滤 + 财经频道) — 目标 30+"""
     items = []
     seen = set()
 
@@ -342,7 +349,7 @@ def fetch_baidu():
                     flat.append(c)
         return flat
 
-    # Source 1: 实时热搜（全量，不过滤）
+    # Source 1: 实时热搜（财经过滤）
     try:
         r = requests.get('https://top.baidu.com/api/board?platform=wise&tab=realtime',
                          headers=HEADERS, timeout=TIMEOUT)
@@ -351,7 +358,7 @@ def fetch_baidu():
             word = item.get('word') or ''
             desc = item.get('desc') or ''
             hot = safe_int(item.get('hotScore'))
-            if word and word not in seen:
+            if word and is_finance(word + ' ' + desc) and word not in seen:
                 seen.add(word)
                 items.append({
                     'title': word[:80],
@@ -398,7 +405,7 @@ def fetch_bilibili():
     items = []
     seen = set()
 
-    # Source 1: 财经频道动态（rid=207, 已是财经内容，无需过滤）~50条
+    # Source 1: 财经频道动态（rid=207, 二次过滤确保财经相关）~50条
     try:
         r = requests.get('https://api.bilibili.com/x/web-interface/dynamic/region?rid=207&ps=50',
                          headers=HEADERS, timeout=TIMEOUT)
@@ -407,7 +414,7 @@ def fetch_bilibili():
             title = (item.get('title') or '').strip()
             desc = (item.get('desc') or '').strip()
             views = (item.get('stat') or {}).get('view') or 0
-            if title and title not in seen:
+            if title and is_finance(title + ' ' + desc) and title not in seen:
                 seen.add(title)
                 items.append({
                     'title': title[:80],
@@ -422,14 +429,14 @@ def fetch_bilibili():
     except Exception as e:
         print(f'[B站-财经频道] {e}')
 
-    # Source 2: 热搜词（全量，不过滤）
+    # Source 2: 热搜词（财经过滤）
     try:
         r = requests.get('https://s.search.bilibili.com/main/hotword',
                          headers=HEADERS, timeout=TIMEOUT)
         data = r.json()
         for item in data.get('list') or []:
             kw = item.get('keyword') or ''
-            if kw and kw not in seen:
+            if kw and is_finance(kw) and kw not in seen:
                 seen.add(kw)
                 items.append({
                     'title': kw[:80],
@@ -444,7 +451,7 @@ def fetch_bilibili():
     except Exception as e:
         print(f'[B站-热搜] {e}')
 
-    # Source 3: 全站排行榜（全量，不过滤）
+    # Source 3: 全站排行榜（财经过滤）
     try:
         r = requests.get('https://api.bilibili.com/x/web-interface/ranking/v2?rid=0&type=all',
                          headers=HEADERS, timeout=TIMEOUT)
@@ -453,7 +460,7 @@ def fetch_bilibili():
             title = item.get('title') or ''
             desc = item.get('desc') or ''
             views = (item.get('stat') or {}).get('view') or 0
-            if title and title not in seen:
+            if title and is_finance(title + ' ' + desc) and title not in seen:
                 seen.add(title)
                 items.append({
                     'title': title[:80],
