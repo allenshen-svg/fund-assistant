@@ -1,0 +1,40 @@
+{
+  "updated_at": "2026-02-27T14:48:09.575498+08:00",
+  "total_fetched": 2,
+  "total_processed": 2,
+  "sources": [
+    "微博"
+  ],
+  "videos": [
+    {
+      "id": "sm_ac884a54a88f",
+      "platform": "微博",
+      "title": "丈夫准备给诞下5胞胎老婆送黄金",
+      "summary": "新",
+      "likes": 808065,
+      "shares": 0,
+      "comments_count": 0,
+      "sentiment": "中性偏多",
+      "main_opinion": "新",
+      "creator_type": "社交媒体热搜",
+      "source_type": "热搜",
+      "publish_time": "2026-02-27T14:48:09.575498+08:00",
+      "noise_flag": false
+    },
+    {
+      "id": "sm_297d813941d9",
+      "platform": "微博",
+      "title": "手机存储芯片3个月暴涨超300%",
+      "summary": "新",
+      "likes": 85286,
+      "shares": 0,
+      "comments_count": 0,
+      "sentiment": "极度看多",
+      "main_opinion": "新",
+      "creator_type": "社交媒体热搜",
+      "source_type": "热搜",
+      "publish_time": "2026-02-27T14:48:09.575498+08:00",
+      "noise_flag": false
+    }
+  ]
+}

@@ -1,0 +1,26 @@
+<view class="container">
+  <view class="card">
+    <view class="title">数据源设置</view>
+    <view class="row switch-row">
+      <text>优先使用远程数据</text>
+      <switch checked="{{useRemote}}" bindchange="onSwitchRemote" color="#2563eb" />
+    </view>
+
+    <view class="sub" style="margin: 8rpx 0 10rpx;">远程基地址（示例）</view>
+    <input class="input" value="{{apiBase}}" bindinput="onApiInput" placeholder="https://allenshen-svg.github.io/fund-assistant" />
+
+    <view class="btn-row">
+      <button class="btn" size="mini" bindtap="save">保存</button>
+      <button class="btn ghost" size="mini" bindtap="testConnection">测试连接</button>
+    </view>
+
+    <view class="sub" style="margin-top: 12rpx;">{{status}}</view>
+  </view>
+
+  <view class="card">
+    <view class="title">上线前检查</view>
+    <view class="sub line">1. 在微信公众平台配置 request 合法域名。</view>
+    <view class="sub line">2. 域名必须 HTTPS 且证书有效。</view>
+    <view class="sub line">3. 若远程失败，小程序会自动回退本地样本。</view>
+  </view>
+</view>

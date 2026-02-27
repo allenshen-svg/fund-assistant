@@ -16,28 +16,37 @@ async function runFullPipeline() {
   setProgress(5, '启动数据抓取管道...');
 
   try {
-    // Phase 1: 并行抓取所有数据源
-    setProgress(10, '📡 并行抓取多个社交/财经数据源...');
+    // Phase 1: 从后端 API 获取舆情数据
+    setProgress(10, '📡 读取后端舆情数据...');
+    markSource('douyin', 'active');
+    markSource('weibo', 'active');
+    markSource('eastmoney', 'active');
+    markSource('tophub', 'active');
 
-    const results = await Promise.allSettled([
-      fetchDouyin(),
-      fetchWeibo(),
-      fetchEastmoney(),
-      fetchCailian(),
-      fetchAggHotlists(),
-      fetchPrebuiltData(),
-    ]);
+    let apiData = await fetchSentimentData();
+
+    // 如果缓存为空或过期，触发后端采集并等待
+    if (!apiData.items || apiData.items.length === 0 || apiData.stale) {
+      setProgress(15, '📡 触发后端数据采集...');
+      await triggerRefresh();
+      apiData = await waitForRefresh((elapsed, max, status) => {
+        const pct = 15 + Math.round((elapsed / max) * 35);
+        setProgress(pct, `⏳ 后端采集中... (${elapsed}s/${max}s)`);
+      });
+    }
 
     setProgress(50, '📊 汇总数据...');
 
-    let allItems = [];
-    const srcCounts = { '抖音':0, '微博':0, '东方财富':0, '财联社':0, '聚合':0 };
+    let allItems = apiData.items || [];
+    const srcCounts = apiData.source_counts || {};
 
-    results.forEach((r, i) => {
-      if(r.status === 'fulfilled' && r.value.length > 0) {
-        allItems = allItems.concat(r.value);
-      }
-    });
+    // 标记数据源状态
+    markSource('douyin', (srcCounts['抖音'] || 0) > 0 ? 'done' : '');
+    markSource('weibo', (srcCounts['微博'] || 0) > 0 ? 'done' : '');
+    markSource('eastmoney', (srcCounts['东方财富'] || 0) > 0 ? 'done' : '');
+    markSource('tophub',
+      ((srcCounts['知乎']||0) + (srcCounts['百度']||0) + (srcCounts['B站']||0) + (srcCounts['财联社']||0)) > 0
+      ? 'done' : '');
 
     // 合并手动输入数据
     const manualInput = document.getElementById('manual-input').value.trim();
@@ -55,23 +64,29 @@ async function runFullPipeline() {
 
     _allVideoData = allItems;
 
-    // 统计各来源
+    // 统计各来源 (从后端数据的 platform 字段)
+    const uiCounts = { '抖音':0, '微博':0, '东方财富':0, '财联社':0, '聚合':0 };
     for(const item of allItems) {
       const p = item.platform || '';
-      if(p === '抖音') srcCounts['抖音']++;
-      else if(p === '微博') srcCounts['微博']++;
-      else if(p === '东方财富') srcCounts['东方财富']++;
-      else if(p === '财联社') srcCounts['财联社']++;
-      else srcCounts['聚合']++;
+      if(p === '抖音') uiCounts['抖音']++;
+      else if(p === '微博') uiCounts['微博']++;
+      else if(p === '东方财富') uiCounts['东方财富']++;
+      else if(p === '财联社') uiCounts['财联社']++;
+      else uiCounts['聚合']++;
     }
 
     // 更新来源统计UI
-    document.getElementById('src-douyin').textContent = srcCounts['抖音'] || '0';
-    document.getElementById('src-weibo').textContent = srcCounts['微博'] || '0';
-    document.getElementById('src-em').textContent = srcCounts['东方财富'] || '0';
-    document.getElementById('src-cls').textContent = srcCounts['财联社'] || '0';
-    document.getElementById('src-agg').textContent = srcCounts['聚合'] || '0';
+    document.getElementById('src-douyin').textContent = uiCounts['抖音'] || '0';
+    document.getElementById('src-weibo').textContent = uiCounts['微博'] || '0';
+    document.getElementById('src-em').textContent = uiCounts['东方财富'] || '0';
+    document.getElementById('src-cls').textContent = uiCounts['财联社'] || '0';
+    document.getElementById('src-agg').textContent = uiCounts['聚合'] || '0';
     document.getElementById('total-badge').textContent = `共 ${allItems.length} 条`;
+
+    // 显示数据采集时间
+    if(apiData.fetch_time) {
+      progress.textContent = `数据来自后端: ${apiData.fetch_time}`;
+    }
 
     // 渲染视频表格
     renderVideoTable(allItems);
@@ -79,7 +94,7 @@ async function runFullPipeline() {
     // 渲染热度条
     renderHeatbar(allItems);
 
-    setProgress(55, `✅ 抓取到 ${allItems.length} 条财经舆情数据`);
+    setProgress(55, `✅ 获取到 ${allItems.length} 条财经舆情数据`);
 
     if(allItems.length === 0) {
       setProgress(100, '⚠️ 没有抓取到数据，请检查网络或稍后重试');

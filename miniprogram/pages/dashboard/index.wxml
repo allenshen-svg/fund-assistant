@@ -1,0 +1,65 @@
+<view class="container">
+  <view class="card">
+    <view class="row">
+      <text class="title">基金助手小程序</text>
+      <text class="chip {{sourceLabel === '远程数据' ? 'up' : 'flat'}}">{{sourceLabel}}</text>
+    </view>
+    <view class="sub">更新时间：{{updatedAt}}</view>
+    <view class="sub" style="margin-top: 8rpx;">持仓数量：{{holdingsCount}}</view>
+    <view class="actions">
+      <button class="btn" size="mini" bindtap="goHoldings">管理持仓</button>
+      <button class="btn ghost" size="mini" bindtap="goSettings">数据设置</button>
+    </view>
+  </view>
+
+  <view class="card">
+    <view class="title">实盘行动指南（MVP）</view>
+    <view class="overview">
+      <view class="metric">
+        <text class="m-label">综合评分</text>
+        <text class="m-val">{{overview.score}}</text>
+      </view>
+      <view class="metric">
+        <text class="m-label">状态</text>
+        <text class="m-val">{{overview.label}}</text>
+      </view>
+    </view>
+    <view class="sub">加仓 {{overview.buy}} · 减仓 {{overview.sell}} · 持有 {{overview.hold}}</view>
+  </view>
+
+  <view class="card" wx:if="{{plans.length > 0}}">
+    <view class="title">白话研判</view>
+    <block wx:for="{{plans}}" wx:key="code">
+      <view class="plan-item">
+        <view class="row">
+          <view>
+            <text class="p-name">{{item.name}}</text>
+            <text class="sub">（{{item.code}} · {{item.type}}）</text>
+          </view>
+          <text class="chip {{item.action === 'buy' ? 'up' : item.action === 'sell' ? 'down' : 'flat'}}">{{item.actionLabel}}</text>
+        </view>
+        <view class="sub">热点：{{item.tag}} · 温度 {{item.temperature}} · 趋势 {{item.trend}}</view>
+        <view class="sub">风险：{{item.riskLevel}}（{{item.riskScore}}）</view>
+        <view class="reason">{{item.reason}}</view>
+      </view>
+    </block>
+  </view>
+
+  <view class="card" wx:if="{{plans.length === 0 && !loading}}">
+    <view class="title">白话研判</view>
+    <view class="sub">你还没有持仓，先去“持仓”页添加基金。</view>
+  </view>
+
+  <view class="card" wx:if="{{topEvents.length > 0}}">
+    <view class="title">热点事件（前5）</view>
+    <block wx:for="{{topEvents}}" wx:key="id">
+      <view class="event-item">
+        <view class="row">
+          <text class="e-title">{{item.title}}</text>
+          <text class="chip {{item.impact >= 0 ? 'up' : 'down'}}">{{item.impact >= 0 ? '+' : ''}}{{item.impact}}</text>
+        </view>
+        <view class="sub">建议：{{item.advice}}</view>
+      </view>
+    </block>
+  </view>
+</view>

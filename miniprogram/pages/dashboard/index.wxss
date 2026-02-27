@@ -1,0 +1,67 @@
+.actions {
+  margin-top: 16rpx;
+  display: flex;
+  gap: 14rpx;
+}
+
+.overview {
+  display: flex;
+  gap: 20rpx;
+  margin-bottom: 12rpx;
+}
+
+.metric {
+  flex: 1;
+  background: #f8fafc;
+  border-radius: 12rpx;
+  padding: 14rpx;
+}
+
+.m-label {
+  color: #64748b;
+  font-size: 22rpx;
+  display: block;
+}
+
+.m-val {
+  font-size: 34rpx;
+  font-weight: 700;
+}
+
+.plan-item {
+  border-top: 1rpx solid #edf2f7;
+  padding: 16rpx 0;
+}
+
+.plan-item:first-child {
+  border-top: 0;
+  padding-top: 4rpx;
+}
+
+.p-name {
+  font-size: 28rpx;
+  font-weight: 700;
+}
+
+.reason {
+  margin-top: 8rpx;
+  color: #0f172a;
+  font-size: 24rpx;
+  line-height: 1.6;
+}
+
+.event-item {
+  border-top: 1rpx solid #edf2f7;
+  padding: 16rpx 0;
+}
+
+.event-item:first-child {
+  border-top: 0;
+  padding-top: 4rpx;
+}
+
+.e-title {
+  font-size: 26rpx;
+  font-weight: 600;
+  max-width: 520rpx;
+}

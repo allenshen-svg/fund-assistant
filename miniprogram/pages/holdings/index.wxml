@@ -1,0 +1,37 @@
+<view class="container">
+  <view class="card">
+    <view class="title">添加持仓</view>
+    <view class="form-item">
+      <text class="label">基金代码</text>
+      <input class="input" placeholder="例如 000216" value="{{code}}" bindinput="onCodeInput" />
+    </view>
+    <view class="form-item">
+      <text class="label">基金名称</text>
+      <input class="input" placeholder="例如 华安黄金ETF联接A" value="{{name}}" bindinput="onNameInput" />
+    </view>
+    <view class="form-item">
+      <text class="label">基金类型</text>
+      <picker mode="selector" range="{{typeOptions}}" value="{{typeIndex}}" bindchange="onTypeChange">
+        <view class="input">{{typeOptions[typeIndex]}}</view>
+      </picker>
+    </view>
+    <button class="btn" bindtap="addHolding">添加</button>
+  </view>
+
+  <view class="card">
+    <view class="row" style="margin-bottom: 10rpx;">
+      <text class="title">当前持仓</text>
+      <text class="sub">共 {{list.length}} 只</text>
+    </view>
+    <view wx:if="{{list.length === 0}}" class="sub">暂无持仓，请先添加。</view>
+    <block wx:for="{{list}}" wx:key="code">
+      <view class="holding-item">
+        <view>
+          <view class="h-name">{{item.name}}</view>
+          <view class="sub">{{item.code}} · {{item.type}}</view>
+        </view>
+        <text class="danger" bindtap="removeHolding" data-code="{{item.code}}">删除</text>
+      </view>
+    </block>
+  </view>
+</view>
