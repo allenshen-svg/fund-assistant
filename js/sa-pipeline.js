@@ -54,8 +54,9 @@ async function runFullPipeline() {
     document.getElementById('src-em').textContent = srcCounts['东方财富'] || '0';
     document.getElementById('src-cls').textContent = srcCounts['财联社'] || '0';
     document.getElementById('src-sina').textContent = srcCounts['新浪财经'] || '0';
-    document.getElementById('src-agg').textContent =
-      (srcCounts['知乎']||0) + (srcCounts['百度']||0) + (srcCounts['B站']||0) || '0';
+    document.getElementById('src-zhihu').textContent = srcCounts['知乎'] || '0';
+    document.getElementById('src-baidu').textContent = srcCounts['百度'] || '0';
+    document.getElementById('src-bili').textContent = srcCounts['B站'] || '0';
     document.getElementById('total-badge').textContent = `共 ${apiData.total || allItems.length} 条`;
 
     // 合并手动输入数据
@@ -70,7 +71,7 @@ async function runFullPipeline() {
     // 去重 + 按热度排序
     allItems = dedup(allItems);
     allItems.sort((a,b) => (b.likes||0) - (a.likes||0));
-    allItems = allItems.slice(0, 50);
+    allItems = allItems.slice(0, 100);
 
     _allVideoData = allItems;
 

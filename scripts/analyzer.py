@@ -98,7 +98,7 @@ def call_ai(items, provider_id=None, api_key=None, model=None, temperature=0.6):
         raise ValueError(f'Unknown AI provider: {provider_id}')
 
     base_url = provider['base']
-    video_data_str = json.dumps(items[:50], ensure_ascii=False, indent=2)
+    video_data_str = json.dumps(items[:100], ensure_ascii=False, indent=2)
     user_prompt = build_user_prompt(video_data_str)
 
     print(f'  🧠 调用 AI: {provider["name"]} / {model}')

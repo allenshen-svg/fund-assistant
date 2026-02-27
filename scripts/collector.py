@@ -68,11 +68,11 @@ def safe_int(v, default=0):
 # ==================== 各数据源采集 ====================
 
 def fetch_douyin():
-    """抖音热搜 + 头条热搜（同属字节跳动）"""
+    """抖音热搜 + 头条热搜 + 头条财经频道（同属字节跳动）— 目标 30+"""
     items = []
     seen = set()
 
-    # Source 1: 抖音热搜 API
+    # Source 1: 抖音热搜 API (finance filtered)
     try:
         r = requests.get('https://aweme.snssdk.com/aweme/v1/hot/search/list/',
                          headers=HEADERS, timeout=TIMEOUT)
@@ -96,7 +96,7 @@ def fetch_douyin():
     except Exception as e:
         print(f'[抖音] {e}')
 
-    # Source 2: 头条热搜 API（字节跳动旗下，内容重合度高）
+    # Source 2: 头条热搜 API（字节跳动旗下）(finance filtered)
     try:
         r = requests.get('https://www.toutiao.com/hot-event/hot-board/?origin=toutiao_pc',
                          headers=HEADERS, timeout=TIMEOUT)
@@ -119,14 +119,48 @@ def fetch_douyin():
     except Exception as e:
         print(f'[头条] {e}')
 
+    # Source 3: 头条财经频道信息流（分页获取，每页10条，取3页=30条）
+    max_behot = 0
+    for page_idx in range(3):
+        try:
+            r = requests.get(
+                f'https://www.toutiao.com/api/pc/feed/?category=news_finance&max_behot_time={max_behot}&widen=1&tadrequire=true',
+                headers=HEADERS, timeout=TIMEOUT)
+            data = r.json()
+            feed_items = data.get('data') or []
+            for item in feed_items:
+                if not isinstance(item, dict):
+                    continue
+                title = (item.get('title') or '').strip()
+                abstract = (item.get('abstract') or '').strip()
+                if not title or title in seen:
+                    continue
+                seen.add(title)
+                items.append({
+                    'title': title[:80],
+                    'summary': (abstract[:200] or title),
+                    'likes': safe_int(item.get('hot', 0)),
+                    'platform': '抖音',
+                    'source_type': '头条财经',
+                    'sentiment': estimate_sentiment(title + ' ' + abstract),
+                    'creator_type': '财经资讯平台',
+                    'publish_time': now_iso(),
+                })
+                bt = item.get('behot_time', 0)
+                if bt:
+                    max_behot = bt
+        except Exception as e:
+            print(f'[头条财经-page{page_idx+1}] {e}')
+            break
+
     return items
 
 def fetch_weibo():
-    """微博热搜 — 通过 Tophub 聚合 API + 官方 API 兜底"""
+    """微博热搜 — 通过 Tophub 聚合 API + 官方 API（全量采集，不过滤）— 目标 30+"""
     items = []
     seen = set()
 
-    # Approach 1: Tophub 聚合 API（稳定可用）
+    # Approach 1: Tophub 聚合 API（稳定可用，全量采集 ~51条）
     try:
         r = requests.get('https://api.codelife.cc/api/top/list?lang=cn&id=KqndgxeLl9',
                          headers=HEADERS, timeout=TIMEOUT)
@@ -141,7 +175,7 @@ def fetch_weibo():
                 hot = int(float(m.group(1)) * 10000)
             else:
                 hot = safe_int(re.sub(r'[^\d]', '', hot_str))
-            if word and is_finance(word) and word not in seen:
+            if word and word not in seen:
                 seen.add(word)
                 items.append({
                     'title': word[:80],
@@ -157,7 +191,7 @@ def fetch_weibo():
         print(f'[微博-tophub] {e}')
 
     # Approach 2: 官方 ajax API 兜底
-    if not items:
+    if len(items) < 30:
         try:
             r = requests.get('https://weibo.com/ajax/side/hotSearch',
                              headers=HEADERS, timeout=TIMEOUT)
@@ -165,7 +199,7 @@ def fetch_weibo():
             for item in (data.get('data') or {}).get('realtime') or []:
                 word = item.get('word') or item.get('note') or ''
                 hot = safe_int(item.get('raw_hot') or item.get('num'))
-                if word and is_finance(word) and word not in seen:
+                if word and word not in seen:
                     seen.add(word)
                     items.append({
                         'title': word[:80],
@@ -183,8 +217,11 @@ def fetch_weibo():
     return items
 
 def fetch_eastmoney():
-    """东方财富 7x24 快讯"""
+    """东方财富 7x24 快讯 + Tophub 东方财富热榜 — 目标 30+"""
     items = []
+    seen = set()
+
+    # Source 1: 7x24 快讯 API (finance focused, ~10 items)
     try:
         url = f'https://np-listapi.eastmoney.com/comm/web/getNewsByColumns?client=web&biz=web_724&column=350&pageSize=50&maxNewsId=0&type=0&req_trace=sa_{int(time.time())}'
         r = requests.get(url, headers=HEADERS, timeout=TIMEOUT)
@@ -193,7 +230,8 @@ def fetch_eastmoney():
             title = (item.get('title') or '').strip()
             content = (item.get('content') or '').strip()
             text = title or content[:100]
-            if text and len(text) >= 4:
+            if text and len(text) >= 4 and text not in seen:
+                seen.add(text)
                 items.append({
                     'title': text[:80],
                     'summary': (content[:200] or text),
@@ -205,15 +243,38 @@ def fetch_eastmoney():
                     'publish_time': item.get('showTime') or now_iso(),
                 })
     except Exception as e:
-        print(f'[东方财富] 采集失败: {e}')
+        print(f'[东方财富-7x24] {e}')
+
+    # Source 2: Tophub 东方财富热榜 (~20 items)
+    try:
+        r = requests.get('https://api.codelife.cc/api/top/list?lang=cn&id=Y2KeDGQdNP',
+                         headers=HEADERS, timeout=TIMEOUT)
+        data = r.json()
+        for item in data.get('data') or []:
+            title = (item.get('title') or '').strip()
+            if title and title not in seen:
+                seen.add(title)
+                items.append({
+                    'title': title[:80],
+                    'summary': title,
+                    'likes': 0,
+                    'platform': '东方财富',
+                    'source_type': '热榜',
+                    'sentiment': estimate_sentiment(title),
+                    'creator_type': '财经资讯平台',
+                    'publish_time': now_iso(),
+                })
+    except Exception as e:
+        print(f'[东方财富-tophub] {e}')
+
     return items
 
 def fetch_cailian():
-    """财联社电报"""
+    """财联社电报 — 目标 50 条"""
     items = []
     try:
         r = requests.get(
-            'https://www.cls.cn/nodeapi/updateTelegraphList?app=CailianpressWeb&os=web&sv=8.4.6&rn=30',
+            'https://www.cls.cn/nodeapi/updateTelegraphList?app=CailianpressWeb&os=web&sv=8.4.6&rn=50',
             headers=HEADERS, timeout=TIMEOUT)
         data = r.json()
         for item in (data.get('data') or {}).get('roll_data') or []:
@@ -239,7 +300,7 @@ def fetch_cailian():
     return items
 
 def fetch_zhihu():
-    """知乎热榜"""
+    """知乎热榜 — 全量采集（不过滤），目标 50 条"""
     items = []
     try:
         r = requests.get('https://api.zhihu.com/topstory/hot-lists/total?limit=50',
@@ -251,7 +312,7 @@ def fetch_zhihu():
             excerpt = target.get('excerpt') or ''
             detail = item.get('detail_text') or ''
             hot = safe_int(re.sub(r'[^\d]', '', detail))
-            if title and is_finance(title + ' ' + excerpt):
+            if title:
                 items.append({
                     'title': title[:80],
                     'summary': (excerpt[:200] or title),
@@ -267,24 +328,31 @@ def fetch_zhihu():
     return items
 
 def fetch_baidu():
-    """百度热搜"""
+    """百度热搜 (realtime 全量) — 目标 30+"""
     items = []
+    seen = set()
+
+    def _parse_baidu(data):
+        flat = []
+        for card in (data.get('data') or {}).get('cards') or []:
+            for c in card.get('content') or []:
+                if isinstance(c.get('content'), list):
+                    flat.extend(c['content'])
+                elif c.get('word'):
+                    flat.append(c)
+        return flat
+
+    # Source 1: 实时热搜（全量，不过滤）
     try:
         r = requests.get('https://top.baidu.com/api/board?platform=wise&tab=realtime',
                          headers=HEADERS, timeout=TIMEOUT)
         data = r.json()
-        flat_list = []
-        for card in (data.get('data') or {}).get('cards') or []:
-            for c in card.get('content') or []:
-                if isinstance(c.get('content'), list):
-                    flat_list.extend(c['content'])
-                elif c.get('word'):
-                    flat_list.append(c)
-        for item in flat_list:
+        for item in _parse_baidu(data):
             word = item.get('word') or ''
             desc = item.get('desc') or ''
             hot = safe_int(item.get('hotScore'))
-            if word and is_finance(word + ' ' + desc):
+            if word and word not in seen:
+                seen.add(word)
                 items.append({
                     'title': word[:80],
                     'summary': (desc[:200] or word),
@@ -296,20 +364,73 @@ def fetch_baidu():
                     'publish_time': now_iso(),
                 })
     except Exception as e:
-        print(f'[百度] 采集失败: {e}')
+        print(f'[百度-realtime] {e}')
+
+    # Source 2: 财经热搜（补充财经专题）
+    if len(items) < 30:
+        try:
+            r = requests.get('https://top.baidu.com/api/board?platform=wise&tab=finance',
+                             headers=HEADERS, timeout=TIMEOUT)
+            data = r.json()
+            for item in _parse_baidu(data):
+                word = item.get('word') or ''
+                desc = item.get('desc') or ''
+                hot = safe_int(item.get('hotScore'))
+                if word and word not in seen:
+                    seen.add(word)
+                    items.append({
+                        'title': word[:80],
+                        'summary': (desc[:200] or word),
+                        'likes': hot,
+                        'platform': '百度',
+                        'source_type': '财经热搜',
+                        'sentiment': estimate_sentiment(word + ' ' + desc),
+                        'creator_type': '聚合热榜',
+                        'publish_time': now_iso(),
+                    })
+        except Exception as e:
+            print(f'[百度-finance] {e}')
+
     return items
 
 def fetch_bilibili():
-    """B站热搜 + 排行"""
+    """B站财经频道 + 热搜 + 排行 — 目标 30+"""
     items = []
+    seen = set()
+
+    # Source 1: 财经频道动态（rid=207, 已是财经内容，无需过滤）~50条
     try:
-        # 热搜词
+        r = requests.get('https://api.bilibili.com/x/web-interface/dynamic/region?rid=207&ps=50',
+                         headers=HEADERS, timeout=TIMEOUT)
+        data = r.json()
+        for item in (data.get('data') or {}).get('archives') or []:
+            title = (item.get('title') or '').strip()
+            desc = (item.get('desc') or '').strip()
+            views = (item.get('stat') or {}).get('view') or 0
+            if title and title not in seen:
+                seen.add(title)
+                items.append({
+                    'title': title[:80],
+                    'summary': (desc[:200] or title),
+                    'likes': safe_int(views),
+                    'platform': 'B站',
+                    'source_type': '财经频道',
+                    'sentiment': estimate_sentiment(title + ' ' + desc),
+                    'creator_type': '视频社区',
+                    'publish_time': now_iso(),
+                })
+    except Exception as e:
+        print(f'[B站-财经频道] {e}')
+
+    # Source 2: 热搜词（全量，不过滤）
+    try:
         r = requests.get('https://s.search.bilibili.com/main/hotword',
                          headers=HEADERS, timeout=TIMEOUT)
         data = r.json()
         for item in data.get('list') or []:
             kw = item.get('keyword') or ''
-            if kw and is_finance(kw):
+            if kw and kw not in seen:
+                seen.add(kw)
                 items.append({
                     'title': kw[:80],
                     'summary': kw,
@@ -323,8 +444,8 @@ def fetch_bilibili():
     except Exception as e:
         print(f'[B站-热搜] {e}')
 
+    # Source 3: 全站排行榜（全量，不过滤）
     try:
-        # 排行榜
         r = requests.get('https://api.bilibili.com/x/web-interface/ranking/v2?rid=0&type=all',
                          headers=HEADERS, timeout=TIMEOUT)
         data = r.json()
@@ -332,7 +453,8 @@ def fetch_bilibili():
             title = item.get('title') or ''
             desc = item.get('desc') or ''
             views = (item.get('stat') or {}).get('view') or 0
-            if title and is_finance(title + ' ' + desc):
+            if title and title not in seen:
+                seen.add(title)
                 items.append({
                     'title': title[:80],
                     'summary': (desc[:200] or title),
@@ -349,11 +471,11 @@ def fetch_bilibili():
     return items
 
 def fetch_sina_finance():
-    """新浪财经热点新闻"""
+    """新浪财经热点新闻 — 目标 50 条"""
     items = []
     try:
         r = requests.get(
-            'https://feed.mix.sina.com.cn/api/roll/get?pageid=153&lid=2516&k=&num=30&page=1',
+            'https://feed.mix.sina.com.cn/api/roll/get?pageid=153&lid=2516&k=&num=50&page=1',
             headers=HEADERS, timeout=TIMEOUT)
         data = r.json()
         for item in (data.get('result') or {}).get('data') or []:
