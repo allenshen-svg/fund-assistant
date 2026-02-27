@@ -97,10 +97,17 @@ body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro","PingFang SC","Helvet
 .hotspot-card.panic{border-left-color:#22c55e}
 .hotspot-card.neutral{border-left-color:#94a3b8}
 .hs-title{font-size:13px;font-weight:700;margin-bottom:6px}
-.hs-row{display:flex;align-items:flex-start;gap:5px;margin-bottom:4px;font-size:11px;line-height:1.6}
-.hs-icon{flex-shrink:0;width:18px;text-align:center}
-.hs-label{font-weight:600;color:var(--sub);min-width:60px;flex-shrink:0}
+.hs-row{display:flex;align-items:flex-start;gap:5px;margin-bottom:6px;font-size:11px;line-height:1.7}
+.hs-icon{flex-shrink:0;width:18px;text-align:center;margin-top:2px}
+.hs-label{font-weight:600;color:var(--sub);min-width:60px;flex-shrink:0;margin-top:2px}
 .hs-text{color:#374151;flex:1}
+.hs-text .hs-para{margin:0}
+.hs-text .hs-list{margin:0;padding-left:16px;list-style:disc}
+.hs-text .hs-list li{margin-bottom:4px}
+.hs-text .hs-list li:last-child{margin-bottom:0}
+.hs-text .hs-cite{color:#4338ca;font-weight:600}
+.hs-text .hs-stat{color:#0d9488;font-weight:600;font-size:10px}
+.hs-conclusion .hs-text{font-weight:700;color:#1e1b4b}
 
 /* ===== Action Cards ===== */
 .action-card{border-radius:10px;padding:12px;margin-bottom:8px}

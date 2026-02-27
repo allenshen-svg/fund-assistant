@@ -58,9 +58,9 @@ function renderDashboard(videoData, report, factors) {
       var divCls = classifyDivergence(s.conclusion);
       return '<div class="hotspot-card ' + divCls + '">' +
         '<div class="hs-title">🎯 ' + s.target + '</div>' +
-        '<div class="hs-row"><span class="hs-icon">🎙️</span><span class="hs-label">KOL观点</span><span class="hs-text">' + s.kol + '</span></div>' +
-        '<div class="hs-row"><span class="hs-icon">🐑</span><span class="hs-label">散户情绪</span><span class="hs-text">' + s.retail + '</span></div>' +
-        '<div class="hs-row"><span class="hs-icon">⚡</span><span class="hs-label">预期差</span><span class="hs-text" style="font-weight:700;color:#1e1b4b">' + s.conclusion + '</span></div>' +
+        '<div class="hs-row"><span class="hs-icon">🎙️</span><span class="hs-label">KOL观点</span><div class="hs-text">' + formatKolText(s.kol) + '</div></div>' +
+        '<div class="hs-row"><span class="hs-icon">🐑</span><span class="hs-label">散户情绪</span><div class="hs-text">' + formatKolText(s.retail) + '</div></div>' +
+        '<div class="hs-row hs-conclusion"><span class="hs-icon">⚡</span><span class="hs-label">预期差</span><div class="hs-text">' + formatKolText(s.conclusion) + '</div></div>' +
         '</div>';
     }).join('');
   } else {
@@ -202,6 +202,27 @@ function formatNum(n) {
   if (n >= 10000) return (n / 10000).toFixed(1) + '万';
   if (n >= 1000) return (n / 1000).toFixed(1) + 'k';
   return String(n);
+}
+
+function formatKolText(text) {
+  if (!text) return '';
+  // Split on '- ' at the start or after whitespace to find bullet items
+  var parts = text.split(/(?:^|\s)- /).filter(function(p) { return p.trim(); });
+  if (parts.length <= 1) {
+    // No bullet structure, render as paragraph with highlighted citations
+    return '<p class="hs-para">' + highlightCitations(text) + '</p>';
+  }
+  return '<ul class="hs-list">' + parts.map(function(p) {
+    return '<li>' + highlightCitations(p.trim()) + '</li>';
+  }).join('') + '</ul>';
+}
+
+function highlightCitations(text) {
+  // Highlight 《title》 citations
+  text = text.replace(/《([^》]+)》/g, '<span class="hs-cite">《$1》</span>');
+  // Highlight (数字万/k点赞) patterns
+  text = text.replace(/[\(\uff08]([\d.]+万?[\u70b9\u8d5e\u64ad\u653e]*)[\)\uff09]/g, '<span class="hs-stat">($1)</span>');
+  return text;
 }
 
 function classifyDivergence(t) {
