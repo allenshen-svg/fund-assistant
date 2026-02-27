@@ -501,6 +501,89 @@ def fetch_sina_finance():
         print(f'[新浪财经] 采集失败: {e}')
     return items
 
+def _parse_xhs_ssr(html):
+    """从小红书 HTML 中提取 __INITIAL_STATE__ SSR 数据."""
+    m = re.search(r'window\.__INITIAL_STATE__\s*=\s*(.+?)</script>', html, re.DOTALL)
+    if not m:
+        return []
+    raw = m.group(1).strip().rstrip(';').replace('undefined', 'null')
+    try:
+        data = json.loads(raw)
+    except json.JSONDecodeError:
+        return []
+    feeds = data.get('feed', {}).get('feeds', [])
+    if not feeds:
+        feeds = data.get('homeFeed', {}).get('feeds', [])
+    results = []
+    for f in feeds:
+        card = f.get('noteCard') or {}
+        title = (card.get('displayTitle') or '').strip()
+        if not title:
+            continue
+        interact = card.get('interactInfo', {})
+        liked_str = interact.get('likedCount', '0')
+        if isinstance(liked_str, str) and '万' in liked_str:
+            liked = int(float(liked_str.replace('万', '')) * 10000)
+        else:
+            liked = safe_int(liked_str)
+        results.append({'title': title, 'likes': liked})
+    return results
+
+
+def fetch_xiaohongshu():
+    """小红书热门 — explore SSR + 频道页，间歇性可用 — 目标 30+"""
+    items = []
+    seen = set()
+
+    def _add(notes, source_type):
+        for n in notes:
+            t = n['title']
+            if t in seen:
+                continue
+            seen.add(t)
+            items.append({
+                'title': t[:80],
+                'summary': t,
+                'likes': n['likes'],
+                'platform': '小红书',
+                'source_type': source_type,
+                'sentiment': estimate_sentiment(t),
+                'creator_type': '小红书博主',
+                'publish_time': now_iso(),
+            })
+
+    # Source 1: explore 首页 SSR
+    try:
+        r = requests.get('https://www.xiaohongshu.com/explore', headers=HEADERS, timeout=TIMEOUT)
+        if r.status_code == 200 and len(r.text) > 50000:
+            notes = _parse_xhs_ssr(r.text)
+            _add(notes, '热门笔记')
+        else:
+            print(f'[小红书] explore 返回 {len(r.text)} 字节 (无 SSR)')
+    except Exception as e:
+        print(f'[小红书-explore] {e}')
+
+    # Source 2: 频道页（推荐/美食/旅行等，各频道内容不同）
+    if len(items) < 30:
+        channels = ['homefeed_recommend', 'homefeed.food_v3', 'homefeed.travel_v3']
+        for cid in channels:
+            if len(items) >= 40:
+                break
+            try:
+                r = requests.get(f'https://www.xiaohongshu.com/explore?channel_id={cid}',
+                                 headers=HEADERS, timeout=TIMEOUT)
+                if r.status_code == 200 and len(r.text) > 50000:
+                    notes = _parse_xhs_ssr(r.text)
+                    _add(notes, '频道热门')
+            except Exception as e:
+                print(f'[小红书-{cid}] {e}')
+
+    if not items:
+        print('[小红书] SSR 不可用（可能被限流），本次返回 0 条')
+
+    return items
+
+
 # ==================== 去重 ====================
 def dedup(items):
     seen = set()
@@ -523,6 +606,7 @@ ALL_FETCHERS = [
     ('知乎', fetch_zhihu),
     ('百度', fetch_baidu),
     ('B站', fetch_bilibili),
+    ('小红书', fetch_xiaohongshu),
 ]
 
 def collect_all():

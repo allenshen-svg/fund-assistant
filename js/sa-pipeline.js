@@ -48,7 +48,8 @@ async function runFullPipeline() {
       'src-sina': srcCounts['新浪财经'] || 0,
       'src-zhihu': srcCounts['知乎'] || 0,
       'src-baidu': srcCounts['百度'] || 0,
-      'src-bili': srcCounts['B站'] || 0
+      'src-bili': srcCounts['B站'] || 0,
+      'src-xhs': srcCounts['小红书'] || 0
     };
     for (var id in srcMap) {
       var el = document.getElementById(id);
@@ -66,6 +67,7 @@ async function runFullPipeline() {
     markSource('tophub',
       ((srcCounts['知乎'] || 0) + (srcCounts['百度'] || 0) + (srcCounts['B站'] || 0) + (srcCounts['财联社'] || 0) + (srcCounts['新浪财经'] || 0)) > 0
       ? 'done' : '');
+    markSource('xhs', (srcCounts['小红书'] || 0) > 0 ? 'done' : '');
 
     // merge manual input
     var manualInput = document.getElementById('manual-input').value.trim();
