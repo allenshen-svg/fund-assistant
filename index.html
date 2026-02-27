@@ -360,8 +360,8 @@ body { font-family:-apple-system,BlinkMacSystemFont,'SF Pro','PingFang SC','Helv
 .impact-reason { font-size:10px; color:#cbd5e1; line-height:1.4; margin-top:2px; }
 .impact-events { display:flex; gap:3px; flex-wrap:wrap; margin-top:4px; }
 .impact-evt-chip { font-size:8px; padding:1px 6px; border-radius:4px; font-weight:600; }
-.impact-evt-chip.pos { background:rgba(74,222,128,0.15); color:#4ade80; }
-.impact-evt-chip.neg { background:rgba(248,113,113,0.15); color:#f87171; }
+.impact-evt-chip.pos { background:rgba(248,113,113,0.15); color:#f87171; }
+.impact-evt-chip.neg { background:rgba(74,222,128,0.15); color:#4ade80; }
 /* AI策略建议 */
 .strategy-list { display:flex; flex-direction:column; gap:6px; }
 .strategy-item { padding:6px 10px; border-radius:8px; background:rgba(255,255,255,0.04); display:flex; gap:8px; align-items:flex-start; }
@@ -1060,6 +1060,19 @@ const _COMMODITY_BASE_EVENTS = [
   },
 ];
 
+// === 隔夜美股 → A股板块映射 (用于自动生成归因事件) ===
+const _US_MARKET_SECTOR_MAP = {
+  'NVDA':  { cn:'英伟达',    threshold:1.5, isIndex:false, sectors:['半导体','AI/科技','芯片','算力'],              keywords:['半导体','芯片','科技','AI','算力','英伟达'] },
+  'AMD':   { cn:'AMD',       threshold:2,   isIndex:false, sectors:['半导体','AI/科技','芯片'],                     keywords:['半导体','芯片','AMD','科技'] },
+  'AVGO':  { cn:'博通',      threshold:2,   isIndex:false, sectors:['半导体','芯片'],                               keywords:['半导体','芯片','博通'] },
+  'SOXX':  { cn:'费半指数',  threshold:1,   isIndex:true,  sectors:['半导体','芯片','AI/科技','科技'],              keywords:['半导体','芯片','科技','费半'] },
+  'TSLA':  { cn:'特斯拉',    threshold:2,   isIndex:false, sectors:['新能源','新能源车'],                           keywords:['新能源','新能源车','特斯拉','汽车','锂电'] },
+  'AAPL':  { cn:'苹果',      threshold:2,   isIndex:false, sectors:['科技','消费电子'],                             keywords:['苹果','科技','消费电子','果链'] },
+  '.IXIC': { cn:'纳指',      threshold:0.8, isIndex:true,  sectors:['科技','AI/科技','QDII科技','港股科技'],        keywords:['纳斯达克','纳指','科技','QDII','美股'] },
+  '.INX':  { cn:'标普500',   threshold:1,   isIndex:true,  sectors:['QDII'],                                       keywords:['标普','美股','QDII'] },
+  '.DJI':  { cn:'道指',      threshold:1.5, isIndex:true,  sectors:['QDII'],                                       keywords:['道琼斯','道指','美股','QDII'] },
+};
+
 let MACRO_GEO_EVENTS = [
   // === 最小回退集 (JSON加载失败时使用) ===
   {
@@ -1152,6 +1165,76 @@ async function fetchHotEvents(){
     console.log(`[HotEvents] ✅ 加载 ${MACRO_GEO_EVENTS.length} 个事件, 更新时间: ${data.updated_at}`);
   } catch(e){
     console.warn('[HotEvents] 加载失败, 使用回退数据:', e);
+  }
+}
+
+// === 隔夜美股行情 → 持仓异动归因事件注入 ===
+let _usMarketData = null; // 缓存美股数据供UI使用
+async function fetchUSMarketForAttribution(){
+  try {
+    const resp = await fetch('/api/us_market?_=' + Date.now(), { signal: AbortSignal.timeout(6000) });
+    if(!resp.ok) return;
+    const data = await resp.json();
+    const stocks = data.stocks || [];
+    if(stocks.length === 0) return;
+
+    _usMarketData = data;  // 缓存原始数据
+    let injected = 0;
+
+    stocks.forEach(s => {
+      const mapping = _US_MARKET_SECTOR_MAP[s.symbol];
+      if(!mapping) return;
+      const pct = s.percent || 0;
+      const absPct = Math.abs(pct);
+      // 低于阈值 → 无显著影响, 跳过
+      if(absPct < mapping.threshold) return;
+
+      // 动态评估影响度和置信度
+      let impact, confidence;
+      if(absPct >= 5){
+        impact = pct > 0 ? 18 : -18;  confidence = 0.95;
+      } else if(absPct >= 3){
+        impact = pct > 0 ? 14 : -14;  confidence = 0.9;
+      } else if(absPct >= 2){
+        impact = pct > 0 ? 10 : -10;  confidence = 0.8;
+      } else {
+        impact = pct > 0 ? 6 : -6;    confidence = 0.7;
+      }
+
+      // 指数影响力略低(指数波动幅度小但意义不同)
+      if(mapping.isIndex && absPct < 2) confidence *= 0.85;
+
+      const direction = pct > 0 ? 'positive' : 'negative';
+      const pctStr = (pct > 0 ? '+' : '') + pct.toFixed(2) + '%';
+      const verb = pct > 0 ? '涨' : '跌';
+
+      MACRO_GEO_EVENTS.push({
+        id: 'us_' + s.symbol.replace('.',''),
+        name: mapping.cn + verb + pctStr,
+        category: 'market',
+        icon: '🇺🇸',
+        description: '隔夜美股' + mapping.cn + verb + pctStr + '，' +
+          (pct > 0 ? '利好' : '利空') + 'A股' + mapping.sectors.slice(0,2).join('/') + '板块',
+        impact: impact,
+        confidence: confidence,
+        sectors: direction === 'positive'
+          ? { positive: [...mapping.sectors], negative: [] }
+          : { positive: [], negative: [...mapping.sectors] },
+        fundKeywords: [...mapping.keywords],
+        duration: 'short',
+        advice: mapping.cn + verb + pctStr + '，关注A股' + mapping.sectors[0] + '板块联动',
+        concepts: mapping.sectors.slice(0,3),
+        sentiment: pct > 0 ? Math.min(40, absPct * 8) : -Math.min(40, absPct * 8),
+        _usMarket: true,  // 标记为美股来源事件
+      });
+      injected++;
+    });
+
+    if(injected > 0){
+      console.log(`[USMarket] 🇺🇸 注入 ${injected} 个美股归因事件到 MACRO_GEO_EVENTS (总计 ${MACRO_GEO_EVENTS.length})`);
+    }
+  } catch(e){
+    console.warn('[USMarket] 美股行情加载失败, 归因不受影响:', e);
   }
 }
 
@@ -2112,16 +2195,33 @@ function getMacroGeoAnalysis(){
     '港股科技':['港股互联网','恒生科技','QDII科技'],
     '港股互联网':['港股科技','恒生科技'],
     '红利':['高股息','低波动'],
+    // 美股归因相关
+    '新能源车':['新能源','汽车','锂电','电池','智能驾驶'],
+    '消费电子':['科技','苹果链','果链','电子'],
+    'QDII':['美股','海外','港股','QDII科技'],
+    'QDII科技':['科技','港股科技','QDII','美股'],
+    '算力':['AI/科技','AI','半导体','服务器','数据中心'],
   };
+  // 排除列表: 虽然有子串关系但语义不同的板块对 (防止 '新能源'↔'能源' 误匹配)
+  const SECTOR_EXCLUSIONS = [
+    ['新能源','能源'], ['新能源车','能源'], ['新能源','原油'], ['新能源车','原油'],
+    ['新能源','油气'], ['新能源车','油气'], ['新能源','石油'], ['新能源车','石油'],
+    ['新能源','天然气'], ['新能源车','天然气'], ['新能源','煤炭'], ['新能源车','煤炭'],
+  ];
+  function _isExcluded(a, b){
+    const al = a.toLowerCase(), bl = b.toLowerCase();
+    return SECTOR_EXCLUSIONS.some(([x,y]) => (al===x.toLowerCase()&&bl===y.toLowerCase()) || (al===y.toLowerCase()&&bl===x.toLowerCase()));
+  }
   // 判断两个板块名是否语义相关
   function _sectorsRelated(secA, secB){
+    if(_isExcluded(secA, secB)) return false;
     const a = secA.toLowerCase(), b = secB.toLowerCase();
     if(a.includes(b) || b.includes(a)) return true;
     // 同义词扩展
     const synsA = SECTOR_SYNONYMS[secA] || SECTOR_SYNONYMS[a] || [];
     const synsB = SECTOR_SYNONYMS[secB] || SECTOR_SYNONYMS[b] || [];
-    if(synsA.some(s => s.toLowerCase() === b || b.includes(s.toLowerCase()))) return true;
-    if(synsB.some(s => s.toLowerCase() === a || a.includes(s.toLowerCase()))) return true;
+    if(synsA.some(s => !_isExcluded(s,secB) && (s.toLowerCase() === b || b.includes(s.toLowerCase())))) return true;
+    if(synsB.some(s => !_isExcluded(s,secA) && (s.toLowerCase() === a || a.includes(s.toLowerCase())))) return true;
     return false;
   }
 
@@ -2623,6 +2723,7 @@ function startGeoNewsAutoRefresh(){
   setInterval(async () => {
     console.log('[HotEvents] 定时刷新事件...');
     await fetchHotEvents();
+    await fetchUSMarketForAttribution();
     renderAll();
   }, 300000); // 5min
   console.log('[HotEvents] 已启动定时加载 (5min)');
@@ -2634,6 +2735,7 @@ async function refreshHotEventsManual(){
   if(btn){ btn.disabled = true; btn.textContent = '⏳'; }
   try {
     await fetchHotEvents();
+    await fetchUSMarketForAttribution();
     renderAll();
     console.log('[HotEvents] 手动刷新完成');
   } catch(e){
@@ -6416,13 +6518,12 @@ function renderRadarSection(geoData){
       var cls = fi.score > 0 ? 'positive' : fi.score < 0 ? 'negative' : 'neutral';
       var pctColor = todayPct >= 0 ? '#f87171' : '#4ade80';
       var topEvts = fi.events.slice(0, 2);
-      var evtNames = topEvts.map(function(e){ return '【' + e.name.slice(0,8) + '】'; }).join('');
       var sectorStr = fi.sectorExposure ? Object.entries(fi.sectorExposure)
         .sort(function(a,b){ return b[1] - a[1]; }).slice(0,2)
         .map(function(pair){ return pair[0] + (pair[1]*100).toFixed(0) + '%'; }).join('、') : '';
       var reasonText = sectorStr
-        ? '受' + evtNames + '影响，基金配置' + sectorStr
-        : '受' + evtNames + '影响';
+        ? '基金配置' + sectorStr + '，受下方事件影响'
+        : '受下方事件影响';
       html += '<div class="impact-item ' + cls + '">';
       html += '<div style="display:flex;justify-content:space-between;align-items:center">';
       html += '<div class="impact-fund">' + fName + '</div>';
@@ -10054,6 +10155,8 @@ function syncSimFromHoldings(){
 async function loadData(){
   // 并行: 行情+热点事件
   await Promise.all([fetchIndices(), fetchSectors(), fetchAllFunds(), fetchHotEvents()]);
+  // 热点事件加载完成后, 注入隔夜美股归因事件
+  await fetchUSMarketForAttribution();
   renderAll();
   // 异步加载盘中分时数据（交易时段或收盘后都拉取当日分时）
   fetchAllIntradayDetail().then(()=>{
