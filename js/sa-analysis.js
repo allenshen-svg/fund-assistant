@@ -133,11 +133,10 @@ function parseActions(text) {
   const s = text.split(/###\s*💡/)?.[1] || '';
   // Parse per-holding-type recommendations
   var holdingActions = [];
-  var holdingMatches = s.match(/- \*\*[\S]+\s+([^*]+)\*\*：([^
-]+)/g) || [];
+  var holdingMatches = s.match(/- \*\*[\S]+\s+([^*]+)\*\*[：:]([^\n]+)/g) || [];
   for (var i = 0; i < holdingMatches.length; i++) {
     var hm = holdingMatches[i];
-    var labelMatch = hm.match(/\*\*([^*]+)\*\*：(.+)/);
+    var labelMatch = hm.match(/\*\*([^*]+)\*\*[：:](.+)/);
     if (labelMatch) {
       var label = labelMatch[1].trim();
       var advice = labelMatch[2].trim();
