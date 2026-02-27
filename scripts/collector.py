@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 舆情数据采集器 — 后端采集所有数据源，缓存到 JSON 文件
-支持: 抖音 / 微博 / 东方财富 / 财联社 / 知乎 / 百度 / B站
+支持: 抖音/头条 / 微博 / 东方财富 / 财联社 / 新浪财经 / 知乎 / 百度 / B站
 """
 
 import json, re, os, time, hashlib, traceback
@@ -68,8 +68,11 @@ def safe_int(v, default=0):
 # ==================== 各数据源采集 ====================
 
 def fetch_douyin():
-    """抖音热搜"""
+    """抖音热搜 + 头条热搜（同属字节跳动）"""
     items = []
+    seen = set()
+
+    # Source 1: 抖音热搜 API
     try:
         r = requests.get('https://aweme.snssdk.com/aweme/v1/hot/search/list/',
                          headers=HEADERS, timeout=TIMEOUT)
@@ -78,7 +81,8 @@ def fetch_douyin():
         for item in word_list:
             word = item.get('word') or item.get('content') or ''
             hot = safe_int(item.get('hot_value') or item.get('score'))
-            if word and is_finance(word):
+            if word and is_finance(word) and word not in seen:
+                seen.add(word)
                 items.append({
                     'title': word[:80],
                     'summary': word,
@@ -90,21 +94,55 @@ def fetch_douyin():
                     'publish_time': now_iso(),
                 })
     except Exception as e:
-        print(f'[抖音] 采集失败: {e}')
+        print(f'[抖音] {e}')
+
+    # Source 2: 头条热搜 API（字节跳动旗下，内容重合度高）
+    try:
+        r = requests.get('https://www.toutiao.com/hot-event/hot-board/?origin=toutiao_pc',
+                         headers=HEADERS, timeout=TIMEOUT)
+        data = r.json()
+        for item in data.get('data') or []:
+            title = item.get('Title') or ''
+            hot = safe_int(item.get('HotValue'))
+            if title and is_finance(title) and title not in seen:
+                seen.add(title)
+                items.append({
+                    'title': title[:80],
+                    'summary': title,
+                    'likes': hot,
+                    'platform': '抖音',
+                    'source_type': '头条热搜',
+                    'sentiment': estimate_sentiment(title),
+                    'creator_type': '社交热搜',
+                    'publish_time': now_iso(),
+                })
+    except Exception as e:
+        print(f'[头条] {e}')
+
     return items
 
 def fetch_weibo():
-    """微博热搜 — 尝试多种方式"""
+    """微博热搜 — 通过 Tophub 聚合 API + 官方 API 兜底"""
     items = []
-    # Approach 1: ajax API
+    seen = set()
+
+    # Approach 1: Tophub 聚合 API（稳定可用）
     try:
-        r = requests.get('https://weibo.com/ajax/side/hotSearch',
+        r = requests.get('https://api.codelife.cc/api/top/list?lang=cn&id=KqndgxeLl9',
                          headers=HEADERS, timeout=TIMEOUT)
         data = r.json()
-        for item in (data.get('data') or {}).get('realtime') or []:
-            word = item.get('word') or item.get('note') or ''
-            hot = safe_int(item.get('raw_hot') or item.get('num'))
-            if word and is_finance(word):
+        for item in data.get('data') or []:
+            word = (item.get('title') or '').strip()
+            hot_str = item.get('hotValue') or ''
+            # 解析 "108万" → 1080000
+            hot = 0
+            m = re.match(r'([\d.]+)\s*万', hot_str)
+            if m:
+                hot = int(float(m.group(1)) * 10000)
+            else:
+                hot = safe_int(re.sub(r'[^\d]', '', hot_str))
+            if word and is_finance(word) and word not in seen:
+                seen.add(word)
                 items.append({
                     'title': word[:80],
                     'summary': word,
@@ -116,32 +154,31 @@ def fetch_weibo():
                     'publish_time': now_iso(),
                 })
     except Exception as e:
-        print(f'[微博-ajax] {e}')
+        print(f'[微博-tophub] {e}')
 
-    # Approach 2: mobile API
+    # Approach 2: 官方 ajax API 兜底
     if not items:
         try:
-            r = requests.get(
-                'https://m.weibo.cn/api/container/getIndex?containerid=106003type%3D25%26t%3D3%26disable_hot%3D1%26filter_type%3Drealtimehot',
-                headers=HEADERS, timeout=TIMEOUT)
+            r = requests.get('https://weibo.com/ajax/side/hotSearch',
+                             headers=HEADERS, timeout=TIMEOUT)
             data = r.json()
-            for card in (data.get('data') or {}).get('cards') or []:
-                for g in card.get('card_group') or []:
-                    word = g.get('desc') or ''
-                    hot = safe_int(g.get('desc_extr'))
-                    if word and is_finance(word):
-                        items.append({
-                            'title': word[:80],
-                            'summary': word,
-                            'likes': hot,
-                            'platform': '微博',
-                            'source_type': '热搜',
-                            'sentiment': estimate_sentiment(word),
-                            'creator_type': '微博热搜',
-                            'publish_time': now_iso(),
-                        })
+            for item in (data.get('data') or {}).get('realtime') or []:
+                word = item.get('word') or item.get('note') or ''
+                hot = safe_int(item.get('raw_hot') or item.get('num'))
+                if word and is_finance(word) and word not in seen:
+                    seen.add(word)
+                    items.append({
+                        'title': word[:80],
+                        'summary': word,
+                        'likes': hot,
+                        'platform': '微博',
+                        'source_type': '热搜',
+                        'sentiment': estimate_sentiment(word),
+                        'creator_type': '微博热搜',
+                        'publish_time': now_iso(),
+                    })
         except Exception as e:
-            print(f'[微博-mobile] {e}')
+            print(f'[微博-ajax] {e}')
 
     return items
 
@@ -311,6 +348,37 @@ def fetch_bilibili():
 
     return items
 
+def fetch_sina_finance():
+    """新浪财经热点新闻"""
+    items = []
+    try:
+        r = requests.get(
+            'https://feed.mix.sina.com.cn/api/roll/get?pageid=153&lid=2516&k=&num=30&page=1',
+            headers=HEADERS, timeout=TIMEOUT)
+        data = r.json()
+        for item in (data.get('result') or {}).get('data') or []:
+            title = (item.get('title') or '').strip()
+            summary = (item.get('intro') or item.get('summary') or '').strip()
+            pub_time = now_iso()
+            if item.get('ctime'):
+                try:
+                    pub_time = datetime.fromtimestamp(int(item['ctime']), tz=timezone.utc).isoformat()
+                except: pass
+            if title and len(title) >= 4:
+                items.append({
+                    'title': title[:80],
+                    'summary': (summary[:200] or title),
+                    'likes': 0,
+                    'platform': '新浪财经',
+                    'source_type': '财经新闻',
+                    'sentiment': estimate_sentiment(title + ' ' + summary),
+                    'creator_type': '财经资讯平台',
+                    'publish_time': pub_time,
+                })
+    except Exception as e:
+        print(f'[新浪财经] 采集失败: {e}')
+    return items
+
 # ==================== 去重 ====================
 def dedup(items):
     seen = set()
@@ -329,6 +397,7 @@ ALL_FETCHERS = [
     ('微博', fetch_weibo),
     ('东方财富', fetch_eastmoney),
     ('财联社', fetch_cailian),
+    ('新浪财经', fetch_sina_finance),
     ('知乎', fetch_zhihu),
     ('百度', fetch_baidu),
     ('B站', fetch_bilibili),
