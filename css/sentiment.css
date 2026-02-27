@@ -111,6 +111,15 @@ body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro","PingFang SC","Helvet
 .ac-title{font-size:12px;font-weight:700;margin-bottom:4px}
 .ac-body{font-size:11px;color:#374151;line-height:1.7}
 
+/* Holdings action grid */
+.holding-actions-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:10px}
+.holding-action-card{border-radius:10px;padding:10px 12px;border:1px solid #e5e7eb;background:linear-gradient(135deg,#f9fafb,#fff)}
+.holding-action-card.bullish{border-color:#fecaca;background:linear-gradient(135deg,#fef2f2,#fff)}
+.holding-action-card.bearish{border-color:#bbf7d0;background:linear-gradient(135deg,#ecfdf5,#fff)}
+.holding-action-card.neutral{border-color:#e5e7eb;background:linear-gradient(135deg,#f9fafb,#fff)}
+.ha-label{font-size:11px;font-weight:700;margin-bottom:3px;color:#1e1b4b}
+.ha-advice{font-size:10px;color:#374151;line-height:1.6}
+
 /* ===== Heatbar ===== */
 .heatbar{display:flex;flex-direction:column;gap:4px}
 .heatbar-row{display:flex;align-items:center;gap:6px}

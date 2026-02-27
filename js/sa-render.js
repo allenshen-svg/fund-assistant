@@ -70,12 +70,32 @@ function renderDashboard(videoData, report, factors) {
   // --- Heatbar ---
   renderHeatbar(videoData);
 
-  // --- Action plan cards ---
+  // --- Action plan cards (with per-holding recommendations) ---
   var actions = parseActions(report);
-  document.getElementById('action-body').innerHTML =
+  var actionHtml = '';
+
+  // Per-holding-type action cards
+  if (actions.holdingActions && actions.holdingActions.length > 0) {
+    actionHtml += '<div class="holding-actions-grid">';
+    for (var hi = 0; hi < actions.holdingActions.length; hi++) {
+      var ha = actions.holdingActions[hi];
+      var haClass = 'neutral';
+      if (/加仓|进场|买入|看多|继续持有/.test(ha.advice)) haClass = 'bullish';
+      else if (/减仓|止损|观望|谨慎|回避|卖出/.test(ha.advice)) haClass = 'bearish';
+      actionHtml += '<div class="holding-action-card ' + haClass + '">' +
+        '<div class="ha-label">' + ha.label + '</div>' +
+        '<div class="ha-advice">' + ha.advice + '</div></div>';
+    }
+    actionHtml += '</div>';
+  }
+
+  // Summary action cards
+  actionHtml +=
     '<div class="action-card bullish"><div class="ac-title">✅ 胜率较高的方向</div><div class="ac-body">' + (actions.bullish || '见完整报告') + '</div></div>' +
     '<div class="action-card bearish"><div class="ac-title">❌ 必须回避的绞肉机</div><div class="ac-body">' + (actions.bearish || '见完整报告') + '</div></div>' +
     '<div class="action-card tactical"><div class="ac-title">⏱️ 战术纪律</div><div class="ac-body">' + (actions.tactical || '见完整报告') + '</div></div>';
+
+  document.getElementById('action-body').innerHTML = actionHtml;
 
   // --- Raw report (strip trailing JSON dashboard block) ---
   var cleanReport = report.replace(/###\s*📊\s*情绪仪表盘参数[\s\S]*$/, '').trim();
@@ -108,11 +128,16 @@ function renderHeatbar(videoData) {
   }
   var sorted = Object.entries(topicHeat).sort(function(a, b) { return b[1] - a[1]; }).slice(0, 8);
   var maxH = sorted[0] ? sorted[0][1] : 1;
+  // Use sqrt scale to compress extreme differences between bars
+  var sqrtMax = Math.sqrt(maxH);
   var colors = ['#ef4444','#f97316','#f59e0b','#eab308','#84cc16','#22c55e','#06b6d4','#6366f1'];
   var chart = document.getElementById('heatbar-chart');
   chart.innerHTML = sorted.map(function(item, i) {
     var name = item[0], heat = item[1];
-    var pct = Math.round(heat / maxH * 100);
+    // sqrt normalization: makes bars more proportional, avoids first=100% rest=tiny
+    var pct = Math.round(Math.sqrt(heat) / sqrtMax * 100);
+    // Floor at 15% so even small entries are visible
+    if (pct < 15) pct = 15;
     return '<div class="heatbar-row"><div class="heatbar-label">' + name + '</div><div class="heatbar-track"><div class="heatbar-fill" style="width:' + pct + '%;background:' + (colors[i] || '#94a3b8') + '"><span>' + Math.round(heat) + '万</span></div></div><div class="heatbar-val">' + pct + '%</div></div>';
   }).join('');
 }
