@@ -111,19 +111,18 @@ function parseKOLSections(text) {
   for(const sec of parts) {
     if(!sec.includes('\u{1F3AF}') || !sec.includes('标的')) continue;
     const target = sec.match(/标的[\/／]板块[\*]*[：:]\s*(.*)/)?.[1]?.replace(/\*+$/,'').trim() || '';
-    // Multi-line KOL: content spans until next "- **" or "####"
+    // KOL: content ends at 🐑 散户 or ⚡ 预期差结论
     let kol = '';
-    const kolMatch = sec.match(/(?:聪明钱[\/／])?KOL\s*观点\*\*[：:]\s*\n?\s*([\s\S]*?)(?=\n-\s*\*\*|\n####|$)/);
+    const kolMatch = sec.match(/(?:聪明钱[\/／])?KOL\s*观点\*\*[：:]\s*\n?\s*([\s\S]*?)(?=[\s\-]*\*\*\s*\u{1F411}|[\s\-]*\*\*\s*\u26A1|$)/u);
     if (kolMatch) kol = kolMatch[1].replace(/\s+/g, ' ').trim();
-    else { const m = sec.match(/(?:聪明钱[\/／])?KOL\s*观点\*\*[：:]\s*(.*)/); if(m) kol = m[1].trim(); }
+    // Retail: content ends at ⚡ 预期差结论
     let retail = '';
-    const retailMatch = sec.match(/(?:羊群[\/／])?散户\s*情绪\*\*[：:]\s*\n?\s*([\s\S]*?)(?=\n-\s*\*\*|\n####|$)/);
+    const retailMatch = sec.match(/(?:羊群[\/／])?散户\s*情绪\*\*[：:]\s*\n?\s*([\s\S]*?)(?=[\s\-]*\*\*\s*\u26A1|$)/u);
     if (retailMatch) retail = retailMatch[1].replace(/\s+/g, ' ').trim();
-    else { const m = sec.match(/(?:羊群[\/／])?散户\s*情绪\*\*[：:]\s*(.*)/); if(m) retail = m[1].trim(); }
+    // Conclusion: content ends at next 🎯 or ### section
     let conclusion = '';
-    const concMatch = sec.match(/预期差结论\*\*[：:]\s*\n?\s*([\s\S]*?)(?=\n-\s*\*\*|\n####|\n###|$)/);
+    const concMatch = sec.match(/预期差结论\*\*[：:]\s*\n?\s*([\s\S]*?)(?=[\s\-]*\*\*\s*\u{1F3AF}|\n###|$)/u);
     if (concMatch) conclusion = concMatch[1].replace(/\s+/g, ' ').trim();
-    else { const m = sec.match(/预期差结论\*\*[：:]\s*(.*)/); if(m) conclusion = m[1].trim(); }
     if(target) sections.push({target, kol, retail, conclusion});
   }
   return sections;

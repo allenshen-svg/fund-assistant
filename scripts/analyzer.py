@@ -190,28 +190,21 @@ def parse_kol_sections(text):
         target = ''
         m = re.search(r'标的[/／]板块[*]*[：:]\s*(.*)', sec)
         if m: target = m.group(1).strip().rstrip('*').strip()
+        # ---- KOL: ends at 🐑 散户 or ⚡ 预期差结论 ----
         kol = ''
-        # Multi-line: "**🎙️ ...观点**：\n  content\n"
-        m = re.search(r'(?:聪明钱[/／])?KOL\s*观点\*\*[：:]\s*\n?\s*(.*?)(?=\n-\s*\*\*|\n####|\Z)', sec, re.DOTALL)
+        m = re.search(r'(?:聪明钱[/／])?KOL\s*观点\*\*[：:]\s*\n?\s*(.*?)(?=[\s\-]*\*\*\s*\U0001f411|[\s\-]*\*\*\s*\u26a1|\Z)', sec, re.DOTALL)
         if m:
             kol = re.sub(r'\s+', ' ', m.group(1)).strip()
-        else:
-            m = re.search(r'(?:聪明钱[/／])?KOL\s*观点\*\*[：:]\s*(.*)', sec)
-            if m: kol = m.group(1).strip()
+        # ---- Retail: ends at ⚡ 预期差结论 ----
         retail = ''
-        m = re.search(r'(?:羊群[/／])?散户\s*情绪\*\*[：:]\s*\n?\s*(.*?)(?=\n-\s*\*\*|\n####|\Z)', sec, re.DOTALL)
+        m = re.search(r'(?:羊群[/／])?散户\s*情绪\*\*[：:]\s*\n?\s*(.*?)(?=[\s\-]*\*\*\s*\u26a1|\Z)', sec, re.DOTALL)
         if m:
             retail = re.sub(r'\s+', ' ', m.group(1)).strip()
-        else:
-            m = re.search(r'(?:羊群[/／])?散户\s*情绪\*\*[：:]\s*(.*)', sec)
-            if m: retail = m.group(1).strip()
+        # ---- Conclusion: ends at next 🎯 or ### ----
         conclusion = ''
-        m = re.search(r'预期差结论\*\*[：:]\s*\n?\s*(.*?)(?=\n-\s*\*\*|\n####|\n###|\Z)', sec, re.DOTALL)
+        m = re.search(r'预期差结论\*\*[：:]\s*\n?\s*(.*?)(?=[\s\-]*\*\*\s*\U0001F3AF|\n###|\Z)', sec, re.DOTALL)
         if m:
             conclusion = re.sub(r'\s+', ' ', m.group(1)).strip()
-        else:
-            m = re.search(r'预期差结论\*\*[：:]\s*(.*)', sec)
-            if m: conclusion = m.group(1).strip()
         if target:
             sections.append({'target': target, 'kol': kol, 'retail': retail, 'conclusion': conclusion})
     return sections
