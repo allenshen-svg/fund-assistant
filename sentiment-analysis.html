@@ -74,6 +74,20 @@
   </div>
   <div class="progress-text" id="progress-text"></div>
 
+  <!-- 隔夜美股行情 -->
+  <div class="section" id="sec-usmarket">
+    <div class="sec-header" onclick="toggleSection('usmarket-body')">
+      <div class="sec-icon">🇺🇸</div>
+      <div class="sec-title">隔夜美股行情</div>
+      <div class="sec-badge" id="us-update-time">--</div>
+      <div class="sec-toggle" id="toggle-usmarket-body">▾</div>
+    </div>
+    <div class="sec-body" id="usmarket-body">
+      <div class="placeholder" id="us-placeholder">加载中...</div>
+      <div class="us-grid" id="us-grid"></div>
+    </div>
+  </div>
+
   <!-- KOL vs 散户 博弈拆解 -->
   <div class="section" id="sec-hotspot">
     <div class="sec-header" onclick="toggleSection('hotspot-body')">

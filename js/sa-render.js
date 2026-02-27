@@ -102,6 +102,38 @@ function renderDashboard(videoData, report, factors) {
   document.getElementById('raw-report').innerHTML = renderMarkdown(cleanReport);
 }
 
+// ==================== US MARKET ====================
+function renderUSMarket(usData) {
+  var grid = document.getElementById('us-grid');
+  var placeholder = document.getElementById('us-placeholder');
+  var badge = document.getElementById('us-update-time');
+
+  if (!usData || !usData.stocks || usData.stocks.length === 0) {
+    if (placeholder) placeholder.textContent = '美股行情暂无数据';
+    return;
+  }
+  if (placeholder) placeholder.style.display = 'none';
+
+  // Show fetch time
+  if (badge && usData.fetch_time) {
+    badge.textContent = usData.fetch_time.split(' ')[1] || usData.fetch_time;
+  }
+
+  grid.innerHTML = usData.stocks.map(function(s) {
+    var isUp = s.percent >= 0;
+    var cls = isUp ? 'up' : 'down';
+    var arrow = isUp ? '▲' : '▼';
+    var pctStr = (isUp ? '+' : '') + s.percent.toFixed(2) + '%';
+    return '<div class="us-card ' + cls + '">' +
+      '<div class="us-name">' + s.name + '</div>' +
+      '<div class="us-sym">' + s.symbol + '</div>' +
+      '<div class="us-price">' + (s.price || '--') + '</div>' +
+      '<div class="us-change">' + arrow + ' ' + pctStr + '</div>' +
+      (s.amplitude ? '<div class="us-amp">振幅 ' + s.amplitude + '%</div>' : '') +
+      '</div>';
+  }).join('');
+}
+
 // ==================== HEATBAR ====================
 function renderHeatbar(videoData) {
   var topicHeat = {};

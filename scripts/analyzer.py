@@ -8,6 +8,11 @@ import json, re, os, time
 from datetime import datetime
 import requests
 
+# 用于构建美股摘要
+US_MARKET_CACHE = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'data', 'us_market_cache.json'
+)
+
 DATA_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'data')
 ANALYSIS_CACHE = os.path.join(DATA_DIR, 'analysis_cache.json')
 
@@ -40,11 +45,33 @@ SYSTEM_PROMPT = """# 角色定义 (Role)
 
 你必须严格按照指定格式输出，特别是最后的 JSON 部分必须是合法的 JSON 代码块。"""
 
+def _load_us_market_summary():
+    """读取美股缓存并生成摘要文本"""
+    try:
+        if not os.path.exists(US_MARKET_CACHE):
+            return ''
+        with open(US_MARKET_CACHE, 'r', encoding='utf-8') as f:
+            cache = json.load(f)
+        stocks = cache.get('stocks', [])
+        if not stocks:
+            return ''
+        lines = ['[隔夜美股行情（北京时间今早收盘）]:']
+        for s in stocks:
+            arrow = '📈' if s['percent'] >= 0 else '📉'
+            lines.append(f"  {arrow} {s['name']}({s['symbol']}): {s['price']} ({s['percent']:+.2f}%), 振幅{s.get('amplitude',0)}%")
+        return '\n'.join(lines)
+    except Exception:
+        return ''
+
 def build_user_prompt(video_data_str):
+    us_summary = _load_us_market_summary()
+    us_block = f"""\n\n# 隔夜美股行情 (Overnight US Market)
+以下是前一夜美股收盘行情，请将其纳入分析，特别关注半导体/科技股波动对A股相关板块（半导体、AI、科技ETF）的传导影响。
+{us_summary}\n""" if us_summary else ''
     return f"""# 输入数据格式 (Input Context)
 以下是过去 1 小时内，通过 RPA 自动化从【核心财经博主白名单】中提取的最新动态及评论区抽样数据。数据结构包括：博主影响力级别、视频核心文案、点赞增速（动量）、以及高赞评论的情绪倾向。
 [当前小时度监控数据 JSON]:
-{video_data_str}
+{video_data_str}{us_block}
 
 # 分析逻辑与数学框架 (Analytical Framework)
 请在内心运行以下逻辑进行评估，无需在输出中展示推导过程：
@@ -72,7 +99,7 @@ def build_user_prompt(video_data_str):
 [针对以下 6 类基金类型，每类给出具体的操作建议（加仓/减仓/持有/观望），以及理由]
 - **🥇 黄金类基金**：[当前情绪面支持加仓还是减仓？具体理由？]
 - **📊 宽基指数（A500/中证500/沪深300）**：[当前情绪面对宽基的影响？]
-- **🤖 AI/科技/半导体**：[该方向当前情绪拥挤度如何？操作建议？]
+- **🤖 AI/科技/半导体**：[结合隔夜美股半导体板块（英伟达、SOXX等）涨跌幅，分析对A股半导体/科技板块的传导影响。当前情绪拥挤度如何？操作建议？]
 - **💰 红利/价值**：[避险情绪是否利好红利？]
 - **⚔️ 军工/新能源/赛道股**：[是否有主题催化？风险点？]
 - **🍷 白酒/消费**：[消费情绪的真实反馈？]

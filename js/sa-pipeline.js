@@ -36,6 +36,12 @@ async function runFullPipeline() {
 
     setProgress(50, '📊 汇总数据...');
 
+    // Fetch US market data in parallel
+    var usMarketData = await fetchUSMarketData();
+    if (usMarketData) {
+      renderUSMarket(usMarketData);
+    }
+
     var allItems = apiData.items || [];
     var srcCounts = apiData.source_counts || {};
 

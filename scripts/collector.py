@@ -591,6 +591,82 @@ def fetch_xiaohongshu():
     return items
 
 
+# ==================== 隔夜美股行情 ====================
+US_MARKET_CACHE = os.path.join(DATA_DIR, 'us_market_cache.json')
+
+# 追踪的美股标的: (symbol, 中文名, 类型)
+US_SYMBOLS = [
+    ('NVDA',  '英伟达',    '半导体'),
+    ('AMD',   'AMD',      '半导体'),
+    ('AVGO',  '博通',      '半导体'),
+    ('TSLA',  '特斯拉',    '新能源车'),
+    ('AAPL',  '苹果',      '科技'),
+    ('SOXX',  '半导体ETF', '半导体指数'),
+    ('.IXIC', '纳斯达克',  '美股指数'),
+    ('.INX',  '标普500',   '美股指数'),
+    ('.DJI',  '道琼斯',    '美股指数'),
+]
+
+def fetch_us_market():
+    """从雪球获取隔夜美股行情 — 半导体 + 科技 + 三大指数"""
+    try:
+        s = requests.Session()
+        s.headers.update({'User-Agent': UA})
+        s.get('https://xueqiu.com/', timeout=5)  # 获取 cookie
+
+        symbols = ','.join(sym for sym, _, _ in US_SYMBOLS)
+        r = s.get(
+            f'https://stock.xueqiu.com/v5/stock/realtime/quotec.json?symbol={symbols}',
+            timeout=TIMEOUT
+        )
+        data = r.json()
+        sym_map = {sym: (cn, cat) for sym, cn, cat in US_SYMBOLS}
+
+        results = []
+        for item in data.get('data', []):
+            sym = item.get('symbol', '')
+            cn, cat = sym_map.get(sym, (sym, '其他'))
+            results.append({
+                'symbol': sym,
+                'name': cn,
+                'category': cat,
+                'price': item.get('current'),
+                'change': round(item.get('chg', 0), 2),
+                'percent': round(item.get('percent', 0), 2),
+                'amplitude': item.get('amplitude'),
+                'high': item.get('high'),
+                'low': item.get('low'),
+                'volume': item.get('volume'),
+                'market_cap': item.get('market_capital'),
+                'timestamp': item.get('timestamp'),
+            })
+
+        # 保存缓存
+        cache = {
+            'stocks': results,
+            'fetch_time': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+            'fetch_ts': int(time.time()),
+        }
+        os.makedirs(DATA_DIR, exist_ok=True)
+        with open(US_MARKET_CACHE, 'w', encoding='utf-8') as f:
+            json.dump(cache, f, ensure_ascii=False, indent=2)
+        print(f'  🇺🇸 美股行情: {len(results)} 个标的已缓存')
+        return cache
+    except Exception as e:
+        print(f'  ⚠️ 美股行情采集失败: {e}')
+        return None
+
+def load_us_market_cache():
+    """读取美股行情缓存"""
+    if not os.path.exists(US_MARKET_CACHE):
+        return None
+    try:
+        with open(US_MARKET_CACHE, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    except Exception:
+        return None
+
+
 # ==================== 去重 ====================
 def dedup(items):
     seen = set()
@@ -673,6 +749,8 @@ def load_cache():
 
 def collect_and_save(run_analysis=True):
     """采集并保存，可选自动运行 AI 分析 — 供 cron 或 server 调用"""
+    # 先采集美股行情（不影响主流程）
+    us_data = fetch_us_market()
     data = collect_all()
     save_cache(data)
     if run_analysis and data.get('items'):

@@ -15,7 +15,7 @@ ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, ROOT_DIR)
 
 from flask import Flask, jsonify, send_from_directory, request
-from scripts.collector import collect_and_save, load_cache, CACHE_FILE
+from scripts.collector import collect_and_save, load_cache, load_us_market_cache, fetch_us_market, CACHE_FILE
 from scripts.analyzer import load_analysis_cache, analyze_and_save, ANALYSIS_CACHE
 
 app = Flask(__name__, static_folder=None)
@@ -79,6 +79,20 @@ def api_status():
         'total_items': cache.get('total', 0) if cache else 0,
         'interval_sec': COLLECT_INTERVAL,
     })
+
+
+@app.route('/api/us_market')
+def api_us_market():
+    """返回隔夜美股行情数据"""
+    cache = load_us_market_cache()
+    if cache is None:
+        # 尝试即时采集
+        cache = fetch_us_market()
+    if cache is None:
+        return jsonify({'stocks': [], 'message': '美股行情暂无数据'}), 200
+    age = int(time.time()) - cache.get('fetch_ts', 0)
+    cache['cache_age_seconds'] = age
+    return jsonify(cache)
 
 
 @app.route('/api/analysis')

@@ -90,6 +90,21 @@ body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro","PingFang SC","Helvet
 .sec-body.collapsed{display:none}
 .placeholder{font-size:11px;color:var(--sub)}
 
+/* ===== US Market Grid ===== */
+.us-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.us-card{background:var(--bg);border-radius:8px;padding:8px 10px;text-align:center;border:1px solid var(--border)}
+.us-card.up{border-color:#fecaca;background:linear-gradient(135deg,#fef2f2,#fff)}
+.us-card.down{border-color:#bbf7d0;background:linear-gradient(135deg,#ecfdf5,#fff)}
+.us-card .us-name{font-size:10px;font-weight:700;color:var(--text);margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.us-card .us-sym{font-size:8px;color:var(--sub);margin-bottom:4px}
+.us-card .us-price{font-size:13px;font-weight:800;margin-bottom:2px}
+.us-card .us-change{font-size:11px;font-weight:700;border-radius:4px;padding:1px 5px;display:inline-block}
+.us-card.up .us-price{color:var(--up)}
+.us-card.up .us-change{background:var(--up-bg);color:var(--up)}
+.us-card.down .us-price{color:var(--down)}
+.us-card.down .us-change{background:var(--down-bg);color:var(--down)}
+.us-card .us-amp{font-size:8px;color:var(--sub);margin-top:3px}
+
 /* ===== Hotspot Cards ===== */
 .hotspot-card{background:var(--bg);border-radius:10px;padding:12px;margin-bottom:8px;border-left:4px solid var(--primary)}
 .hotspot-card:last-child{margin-bottom:0}

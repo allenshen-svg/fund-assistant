@@ -54,6 +54,17 @@ async function fetchServerStatus() {
   }
 }
 
+async function fetchUSMarketData() {
+  try {
+    const resp = await fetch('/api/us_market?t=' + Date.now());
+    if (!resp.ok) throw new Error('API error: ' + resp.status);
+    return await resp.json();
+  } catch (e) {
+    console.error('Fetch US market failed:', e);
+    return null;
+  }
+}
+
 async function waitForRefresh(onProgress) {
   const maxWait = 120, interval = 3;
   for (let elapsed = 0; elapsed < maxWait; elapsed += interval) {
