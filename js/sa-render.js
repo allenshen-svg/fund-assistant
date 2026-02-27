@@ -77,8 +77,9 @@ function renderDashboard(videoData, report, factors) {
     '<div class="action-card bearish"><div class="ac-title">❌ 必须回避的绞肉机</div><div class="ac-body">' + (actions.bearish || '见完整报告') + '</div></div>' +
     '<div class="action-card tactical"><div class="ac-title">⏱️ 战术纪律</div><div class="ac-body">' + (actions.tactical || '见完整报告') + '</div></div>';
 
-  // --- Raw report ---
-  document.getElementById('raw-report').innerHTML = renderMarkdown(report);
+  // --- Raw report (strip trailing JSON dashboard block) ---
+  var cleanReport = report.replace(/###\s*📊\s*情绪仪表盘参数[\s\S]*$/, '').trim();
+  document.getElementById('raw-report').innerHTML = renderMarkdown(cleanReport);
 }
 
 // ==================== HEATBAR ====================
