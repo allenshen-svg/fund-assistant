@@ -69,14 +69,7 @@ async function runFullPipeline() {
       ? 'done' : '');
     markSource('xhs', (srcCounts['小红书'] || 0) > 0 ? 'done' : '');
 
-    // merge manual input
-    var manualInput = document.getElementById('manual-input').value.trim();
-    if (manualInput) {
-      try {
-        var manualData = JSON.parse(manualInput);
-        if (Array.isArray(manualData)) allItems = allItems.concat(manualData);
-      } catch(e) { console.warn('Manual data parse error:', e); }
-    }
+
 
     // dedup + sort
     allItems = dedup(allItems);

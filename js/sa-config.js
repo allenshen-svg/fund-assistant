@@ -84,7 +84,7 @@ function saveSettings() {
 // ==================== HELPERS ====================
 function setProgress(pct,msg){document.getElementById('loading-fill').style.width=pct+'%';document.getElementById('loading-status').textContent=msg}
 function sleep(ms){return new Promise(r=>setTimeout(r,ms))}
-function toggleManual(){document.getElementById('manual-area').classList.toggle('show')}
+
 function markSource(src, state) {
   const el = document.querySelector(`.loading-src[data-src="${src}"]`);
   if(!el) return;

@@ -170,12 +170,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro","PingFang SC","Helvet
 .form-row input:focus,.form-row select:focus{border-color:var(--primary);background:#fff}
 .form-btn{width:100%;padding:10px;border:none;border-radius:10px;background:linear-gradient(135deg,#4338ca,#6366f1);color:white;font-size:13px;font-weight:600;cursor:pointer}
 
-/* ===== Manual Area ===== */
-.manual-area{display:none;margin:4px 12px 0}
-.manual-area.show{display:block}
-.manual-area textarea{width:100%;min-height:80px;padding:8px;border:1.5px solid var(--border);border-radius:8px;font-size:10px;font-family:'SF Mono','Menlo',monospace;resize:vertical;outline:none;background:var(--card)}
-.manual-area textarea:focus{border-color:var(--primary)}
-
 /* ===== Footer ===== */
 .page-footer{text-align:center;padding:16px 12px 32px;font-size:9px;color:var(--sub);line-height:1.6}
 .page-footer a{color:var(--primary);text-decoration:none}
