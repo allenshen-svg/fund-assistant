@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<title>KOL vs 散户 · 情绪博弈分析 · 另类数据</title>
+<link rel="stylesheet" href="css/sentiment.css">
+</head>
+<body>
+
+<!-- Loading Overlay -->
+<div class="loading-overlay" id="loading-overlay">
+  <div class="loading-icon">📡</div>
+  <div class="loading-title">舆情逆向分析引擎</div>
+  <div class="loading-sub">正在自动抓取 KOL 白名单动态与评论区散户情绪，AI 情绪博弈分析中...</div>
+  <div class="loading-bar"><div class="loading-fill" id="loading-fill" style="width:0%"></div></div>
+  <div class="loading-status" id="loading-status">初始化...</div>
+  <div class="loading-sources" id="loading-sources">
+    <span class="loading-src" data-src="douyin">📱 抖音</span>
+    <span class="loading-src" data-src="weibo">🐦 微博</span>
+    <span class="loading-src" data-src="eastmoney">💹 东方财富</span>
+    <span class="loading-src" data-src="tophub">🔥 聚合热榜</span>
+    <span class="loading-src" data-src="ai">🧠 AI分析</span>
+  </div>
+</div>
+
+<!-- Page Header -->
+<div class="page-header">
+  <a class="ph-back" href="index.html">← 返回基金小助理</a>
+  <div class="ph-title">⚖️ KOL vs 散户 情绪博弈 <span class="badge">另类数据</span></div>
+  <div class="ph-sub">RPA 白名单监控 → KOL 观点提取 → 散户评论区情绪 → 预期差发现</div>
+  <div class="ph-status">
+    <span class="ph-dot" id="live-dot"></span>
+    <span id="header-status">正在抓取...</span>
+    <span style="margin-left:auto;opacity:.6" id="header-time"></span>
+  </div>
+</div>
+
+<!-- Navigation -->
+<div class="nav-bar" id="nav-bar">
+  <a class="nav-item active" href="#sec-sources">📡 数据源</a>
+  <a class="nav-item" href="#sec-gauge">📊 情绪仪表盘</a>
+  <a class="nav-item" href="#sec-hotspot">⚖️ KOL博弈</a>
+  <a class="nav-item" href="#sec-action">💡 操作指南</a>
+  <a class="nav-item" href="#sec-raw">📋 原始报告</a>
+</div>
+
+<!-- Main Content -->
+<div id="main-content">
+
+  <!-- Source Stats -->
+  <div class="section fade-in" id="sec-sources">
+    <div class="sec-header">
+      <div class="sec-icon">📡</div>
+      <div class="sec-title">实时数据源</div>
+      <div class="sec-badge" id="total-badge">抓取中...</div>
+    </div>
+    <div class="sec-body">
+      <div class="src-stats" id="src-stats">
+        <div class="src-stat"><div class="src-stat-icon">📱</div><div class="src-stat-name">抖音</div><div class="src-stat-val" id="src-douyin">--</div></div>
+        <div class="src-stat"><div class="src-stat-icon">�</div><div class="src-stat-name">微博</div><div class="src-stat-val" id="src-weibo">--</div></div>
+        <div class="src-stat"><div class="src-stat-icon">💹</div><div class="src-stat-name">东方财富</div><div class="src-stat-val" id="src-em">--</div></div>
+        <div class="src-stat"><div class="src-stat-icon">📰</div><div class="src-stat-name">财联社</div><div class="src-stat-val" id="src-cls">--</div></div>
+        <div class="src-stat"><div class="src-stat-icon">🔥</div><div class="src-stat-name">聚合热榜</div><div class="src-stat-val" id="src-agg">--</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Re-analyze Button -->
+  <div class="btn-row">
+    <button class="btn secondary" onclick="toggleManual()">📝 手动补充数据</button>
+    <button class="btn primary" id="btn-refresh" onclick="runFullPipeline()">
+      🔄 重新抓取分析
+    </button>
+  </div>
+  <div class="manual-area" id="manual-area">
+    <textarea id="manual-input" placeholder='可在此粘贴额外的视频数据 JSON 数组，将与自动抓取的数据合并分析...'></textarea>
+    <div style="font-size:10px;color:var(--sub);margin-top:4px">💡 可选：粘贴自定义数据后点击"重新抓取分析"，数据会合并</div>
+  </div>
+  <div class="progress-text" id="progress-text"></div>
+
+  <!-- Sentiment Gauge -->
+  <div class="section fade-in" id="sec-gauge">
+    <div class="sec-header">
+      <div class="sec-icon">📊</div>
+      <div class="sec-title">情绪仪表盘</div>
+      <div id="market-temp-badge"></div>
+    </div>
+    <div class="sec-body">
+      <div class="gauge-row">
+        <div class="gauge-card">
+          <div class="gauge-label">FOMO 错失恐惧</div>
+          <svg class="gauge-svg" id="gauge-fomo" viewBox="0 0 120 70"></svg>
+          <div class="gauge-val" id="fomo-val" style="color:#ef4444">--</div>
+          <div class="gauge-desc" id="fomo-desc">等待分析...</div>
+        </div>
+        <div class="gauge-card">
+          <div class="gauge-label">PANIC 恐慌指数</div>
+          <svg class="gauge-svg" id="gauge-panic" viewBox="0 0 120 70"></svg>
+          <div class="gauge-val" id="panic-val" style="color:#3b82f6">--</div>
+          <div class="gauge-desc" id="panic-desc">等待分析...</div>
+        </div>
+      </div>
+      <div class="gauge-row">
+        <div class="gauge-card" style="background:linear-gradient(135deg,#faf5ff,#f5f3ff)">
+          <div class="gauge-label">⚡ KOL-散户 分歧度</div>
+          <svg class="gauge-svg" id="gauge-divergence" viewBox="0 0 120 70"></svg>
+          <div class="gauge-val" id="divergence-val" style="color:#8b5cf6">--</div>
+          <div class="gauge-desc" id="divergence-desc">等待分析...</div>
+        </div>
+        <div class="gauge-card" style="background:linear-gradient(135deg,#fff7ed,#fffbeb)">
+          <div class="gauge-label">🌡️ 市场温度</div>
+          <svg class="gauge-svg" id="gauge-mkttemp" viewBox="0 0 120 70"></svg>
+          <div class="gauge-val" id="mkttemp-val" style="color:#f59e0b">--</div>
+          <div class="gauge-desc" id="mkttemp-desc">等待分析...</div>
+        </div>
+      </div>
+      <div style="margin-bottom:12px">
+        <div style="font-size:11px;font-weight:700;color:var(--sub);margin-bottom:6px">🔥 热门资产标的</div>
+        <div class="crowd-pills" id="hot-assets"><span style="font-size:10px;color:var(--sub)">等待AI分析...</span></div>
+      </div>
+      <div>
+        <div style="font-size:11px;font-weight:700;color:var(--sub);margin-bottom:6px">🎯 操作信号</div>
+        <div id="action-signal" style="font-size:13px;font-weight:700;color:var(--primary);padding:6px 0">等待AI分析...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- KOL vs 散户 博弈拆解 -->
+  <div class="section fade-in" id="sec-hotspot">
+    <div class="sec-header">
+      <div class="sec-icon">⚖️</div>
+      <div class="sec-title">KOL vs 散户：情绪博弈拆解</div>
+      <div class="sec-badge">预期差</div>
+    </div>
+    <div class="sec-body" id="hotspot-body"><div style="font-size:12px;color:var(--sub)">等待AI分析...</div></div>
+  </div>
+
+  <!-- 情绪与预期差雷达 -->
+  <div class="section fade-in" id="sec-radar">
+    <div class="sec-header">
+      <div class="sec-icon">🚨</div>
+      <div class="sec-title">情绪与预期差雷达</div>
+    </div>
+    <div class="sec-body">
+      <div style="font-size:12px;color:#374151;line-height:1.8;margin-bottom:14px;background:linear-gradient(135deg,#fef2f2,#fff);border-radius:10px;padding:12px;border-left:4px solid #ef4444" id="radar-summary">等待分析...</div>
+      <div class="heatbar" id="heatbar-chart"></div>
+    </div>
+  </div>
+
+  <!-- 极简操作指南 -->
+  <div class="section fade-in" id="sec-action">
+    <div class="sec-header">
+      <div class="sec-icon">💡</div>
+      <div class="sec-title">极简操作指南</div>
+      <div class="sec-badge">反人性</div>
+    </div>
+    <div class="sec-body" id="action-body"><div style="font-size:12px;color:var(--sub)">等待AI分析...</div></div>
+  </div>
+
+  <!-- Video Data Preview -->
+  <div class="section fade-in" id="sec-videos">
+    <div class="sec-header">
+      <div class="sec-icon">📱</div>
+      <div class="sec-title">原始数据流</div>
+      <div class="sec-badge" id="video-count">0条</div>
+    </div>
+    <div class="sec-body" style="overflow-x:auto">
+      <table class="video-table" id="video-table">
+        <thead><tr><th>标题</th><th>热度</th><th>情绪</th><th>来源</th></tr></thead>
+        <tbody id="video-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Raw Report -->
+  <div class="section fade-in" id="sec-raw">
+    <div class="sec-header">
+      <div class="sec-icon">📋</div>
+      <div class="sec-title">AI 完整分析报告</div>
+      <div class="sec-badge">Markdown</div>
+    </div>
+    <div class="sec-body">
+      <div class="md-render" id="raw-report"><div style="color:var(--sub)">等待分析...</div></div>
+    </div>
+  </div>
+
+  <!-- Factor Dashboard (card-based, replaces raw JSON) -->
+  <div class="section fade-in" id="sec-json">
+    <div class="sec-header">
+      <div class="sec-icon">📊</div>
+      <div class="sec-title">情绪因子面板</div>
+      <div class="sec-badge">Dashboard</div>
+    </div>
+    <div class="sec-body" id="json-output">
+      <div style="font-size:12px;color:var(--sub)">等待分析...</div>
+    </div>
+  </div>
+</div>
+
+<!-- Settings Button -->
+<div style="position:fixed;bottom:20px;right:20px;z-index:200">
+  <button onclick="openSettings()" style="width:44px;height:44px;border-radius:50%;border:none;background:linear-gradient(135deg,#4338ca,#6366f1);color:white;font-size:18px;cursor:pointer;box-shadow:0 4px 12px rgba(99,102,241,.4);display:flex;align-items:center;justify-content:center">⚙️</button>
+</div>
+
+<!-- Settings Modal -->
+<div class="modal-overlay" id="settings-modal">
+  <div class="modal">
+    <h3>⚙️ AI 引擎设置 <button onclick="closeSettings()">✕</button></h3>
+    <div class="form-row"><label>AI 服务商</label><select id="set-provider" onchange="onProviderChange()">
+      <option value="siliconflow">硅基流动 (免费)</option>
+      <option value="deepseek">DeepSeek 官方 (极低价)</option>
+      <option value="302ai">302.AI (付费)</option>
+    </select></div>
+    <div class="form-row"><label>API Key</label><input type="password" id="set-apikey" placeholder="sk-xxxxxxxx"></div>
+    <div class="form-row"><label>分析模型</label><select id="set-model"></select></div>
+    <button class="form-btn" onclick="saveSettings()">保存设置</button>
+  </div>
+</div>
+
+<!-- Footer -->
+<div class="page-footer">
+  数据来源：抖音 · 小红书 · 微博 · 东方财富 · 36氪 · B站 · 知乎 · 百度<br>
+  本分析基于舆情逆向推理，不构成投资建议<br>
+  <a href="index.html">← 返回基金股市小助理</a>
+</div>
+
+<!-- External Scripts (load order: config → fetchers → analysis → render → pipeline) -->
+<script src="js/sa-config.js"></script>
+<script src="js/sa-fetchers.js"></script>
+<script src="js/sa-analysis.js"></script>
+<script src="js/sa-render.js"></script>
+<script src="js/sa-pipeline.js"></script>
+
+</body>
+</html>
