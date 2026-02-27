@@ -48,6 +48,16 @@ async function runFullPipeline() {
       ((srcCounts['知乎']||0) + (srcCounts['百度']||0) + (srcCounts['B站']||0) + (srcCounts['财联社']||0) + (srcCounts['新浪财经']||0)) > 0
       ? 'done' : '');
 
+    // 立即更新来源统计UI（使用后端 source_counts，不受前端 slice 影响）
+    document.getElementById('src-douyin').textContent = srcCounts['抖音'] || '0';
+    document.getElementById('src-weibo').textContent = srcCounts['微博'] || '0';
+    document.getElementById('src-em').textContent = srcCounts['东方财富'] || '0';
+    document.getElementById('src-cls').textContent = srcCounts['财联社'] || '0';
+    document.getElementById('src-sina').textContent = srcCounts['新浪财经'] || '0';
+    document.getElementById('src-agg').textContent =
+      (srcCounts['知乎']||0) + (srcCounts['百度']||0) + (srcCounts['B站']||0) || '0';
+    document.getElementById('total-badge').textContent = `共 ${apiData.total || allItems.length} 条`;
+
     // 合并手动输入数据
     const manualInput = document.getElementById('manual-input').value.trim();
     if(manualInput) {
@@ -63,27 +73,6 @@ async function runFullPipeline() {
     allItems = allItems.slice(0, 50);
 
     _allVideoData = allItems;
-
-    // 统计各来源 (从后端数据的 platform 字段)
-    const uiCounts = { '抖音':0, '微博':0, '东方财富':0, '财联社':0, '新浪财经':0, '聚合':0 };
-    for(const item of allItems) {
-      const p = item.platform || '';
-      if(p === '抖音') uiCounts['抖音']++;
-      else if(p === '微博') uiCounts['微博']++;
-      else if(p === '东方财富') uiCounts['东方财富']++;
-      else if(p === '财联社') uiCounts['财联社']++;
-      else if(p === '新浪财经') uiCounts['新浪财经']++;
-      else uiCounts['聚合']++;
-    }
-
-    // 更新来源统计UI
-    document.getElementById('src-douyin').textContent = uiCounts['抖音'] || '0';
-    document.getElementById('src-weibo').textContent = uiCounts['微博'] || '0';
-    document.getElementById('src-em').textContent = uiCounts['东方财富'] || '0';
-    document.getElementById('src-cls').textContent = uiCounts['财联社'] || '0';
-    document.getElementById('src-sina').textContent = uiCounts['新浪财经'] || '0';
-    document.getElementById('src-agg').textContent = uiCounts['聚合'] || '0';
-    document.getElementById('total-badge').textContent = `共 ${allItems.length} 条`;
 
     // 显示数据采集时间
     if(apiData.fetch_time) {
