@@ -147,18 +147,20 @@ Page({
       wx.showToast({ title: '请先填写API Key', icon: 'none' });
       return;
     }
+    // 先自动保存 key，确保 storage 与页面一致
+    setAIConfig({ key: this.data.aiKey });
+
     this.setData({ aiStatus: '测试中...' });
     const aiCfg = getAIConfig();
+    const apiKey = this.data.aiKey;
     try {
-      const { callAI } = require('../../utils/ai');
-      // 发个简单请求测试
       wx.request({
         url: aiCfg.provider.base,
         method: 'POST',
         timeout: 30000,
         header: {
           'Content-Type': 'application/json',
-          'Authorization': 'Bearer ' + this.data.aiKey,
+          'Authorization': 'Bearer ' + apiKey,
         },
         data: {
           model: aiCfg.model,
@@ -169,8 +171,17 @@ Page({
           if (res.statusCode === 200) {
             this.setData({ aiStatus: '✅ AI连接成功' });
             wx.showToast({ title: 'AI连接成功', icon: 'success' });
+          } else if (res.statusCode === 403) {
+            const errMsg = (res.data && (res.data.message || res.data.error && res.data.error.message)) || '';
+            this.setData({ aiStatus: '❌ 403 权限被拒: ' + (errMsg || 'Key无效或额度不足') });
+            wx.showModal({
+              title: 'API Key 权限错误 (403)',
+              content: '请检查：\n1. API Key 是否正确复制（完整，无多余空格）\n2. Key 是否已过期或额度用完\n3. 当前模型是否有权限使用\n\n' + (errMsg ? '服务端返回: ' + errMsg : ''),
+              showCancel: false,
+            });
           } else {
-            this.setData({ aiStatus: '❌ 错误: ' + res.statusCode });
+            const errDetail = typeof res.data === 'object' ? JSON.stringify(res.data).slice(0, 200) : String(res.data || '');
+            this.setData({ aiStatus: '❌ 错误 ' + res.statusCode + ': ' + errDetail });
           }
         },
         fail: (err) => {
