@@ -196,9 +196,9 @@
   font-weight: 600;
 }
 
-.ag-urgency-高 { background: rgba(239,68,68,0.15); color: #ef4444; }
-.ag-urgency-中 { background: rgba(251,146,60,0.15); color: #fb923c; }
-.ag-urgency-低 { background: rgba(139,143,163,0.15); color: #8b8fa3; }
+.ag-urgency-high { background: rgba(239,68,68,0.15); color: #ef4444; }
+.ag-urgency-mid  { background: rgba(251,146,60,0.15); color: #fb923c; }
+.ag-urgency-low  { background: rgba(139,143,163,0.15); color: #8b8fa3; }
 
 .ag-action-badge {
   font-size: 22rpx;

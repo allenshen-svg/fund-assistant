@@ -91,7 +91,7 @@
         </view>
         <view class="ag-top-right">
           <text class="ag-priority">#{{item.priority}}</text>
-          <text class="ag-urgency ag-urgency-{{item.urgency}}">{{item.urgency}}</text>
+          <text class="ag-urgency ag-urgency-{{item.urgencyClass}}">{{item.urgency}}</text>
           <text class="ag-action-badge action-{{item.action}}">{{item.actionLabel}}</text>
         </view>
       </view>

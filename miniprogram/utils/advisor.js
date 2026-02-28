@@ -122,6 +122,7 @@ function buildPlans(holdings, heatmap, historyMap, sectorFlows) {
       // 优先级
       priority: idx + 1,
       urgency: priorityLabel(Math.abs(vote.score)),
+      urgencyClass: priorityLabel(Math.abs(vote.score)) === '高' ? 'high' : priorityLabel(Math.abs(vote.score)) === '中' ? 'mid' : 'low',
       // 白话研判
       advisor: plainAdvisor,
       // 详情展开
