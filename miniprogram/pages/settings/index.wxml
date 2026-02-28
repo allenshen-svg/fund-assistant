@@ -52,6 +52,47 @@
     </view>
   </view>
 
+  <!-- ====== AI 分析设置 ====== -->
+  <view class="card">
+    <view class="card-header">
+      <text class="title">🤖 AI 分析设置</text>
+    </view>
+
+    <view class="form-item">
+      <text class="label">AI 提供商</text>
+      <picker mode="selector" range="{{aiProviders}}" range-key="name" value="{{aiProviderIndex}}" bindchange="onAIProviderChange">
+        <view class="input picker-val">{{aiProviders[aiProviderIndex].name}} ▾</view>
+      </picker>
+    </view>
+
+    <view class="form-item">
+      <text class="label">模型选择</text>
+      <picker mode="selector" range="{{aiModels}}" range-key="name" value="{{aiModelIndex}}" bindchange="onAIModelChange">
+        <view class="input picker-val">{{aiModels[aiModelIndex].name}} ▾</view>
+      </picker>
+    </view>
+
+    <view class="form-item">
+      <text class="label">API Key</text>
+      <input class="input" value="{{aiKey}}" bindinput="onAIKeyInput" password="true"
+             placeholder="填入你的 API Key" />
+    </view>
+
+    <view class="btn-row">
+      <button class="btn" size="mini" bindtap="saveAIKey">💾 保存 Key</button>
+      <button class="btn ghost" size="mini" bindtap="testAIConnection">🔍 测试 AI</button>
+    </view>
+
+    <view wx:if="{{aiStatus}}" class="status-bar {{aiStatus.indexOf('✅') >= 0 ? 'green' : aiStatus.indexOf('❌') >= 0 ? 'orange' : ''}}">
+      <text>{{aiStatus}}</text>
+    </view>
+
+    <view class="ai-hint">
+      <text class="sub">💡 硅基流动提供免费额度，注册后获取 Key：</text>
+      <text class="sub link" style="color:#6c8aff;">https://cloud.siliconflow.cn</text>
+    </view>
+  </view>
+
   <!-- ====== 数据管理 ====== -->
   <view class="card">
     <view class="card-header">

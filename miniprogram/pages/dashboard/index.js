@@ -2,6 +2,7 @@ const { getHoldings, getSettings } = require('../../utils/storage');
 const { fetchHotEvents, fetchIndices, fetchMultiFundEstimates, fetchSectorFlows, fetchMultiFundHistory, fetchCommodities } = require('../../utils/api');
 const { buildPlans, buildOverview, MODEL_PORTFOLIO } = require('../../utils/advisor');
 const { getMarketStatus, isMarketOpen, formatPct, pctClass, formatTime, isTradingDay, formatMoney } = require('../../utils/market');
+const { runAIAnalysis, getCachedAIResult, getAIConfig } = require('../../utils/ai');
 
 Page({
   data: {
@@ -48,16 +49,25 @@ Page({
 
     // 定时器
     _timer: null,
+
+    // AI 分析
+    showAI: false,
+    aiLoading: false,
+    aiResult: null,
+    aiTime: '',
+    aiHasKey: false,
   },
 
   onLoad() {
     this.updateMarketStatus();
     this.loadAll();
+    this._loadAICache();
   },
 
   onShow() {
     this.updateMarketStatus();
     this.loadAll();
+    this._loadAICache();
     const timer = setInterval(() => {
       this.updateMarketStatus();
       if (isMarketOpen()) this.refreshQuotes();
@@ -251,4 +261,84 @@ Page({
   goHoldings() { wx.switchTab({ url: '/pages/holdings/index' }); },
   goSentiment() { wx.switchTab({ url: '/pages/sentiment/index' }); },
   goSettings() { wx.switchTab({ url: '/pages/settings/index' }); },
+
+  // ====== AI 分析 ======
+  _loadAICache() {
+    const cfg = getAIConfig();
+    this.setData({ aiHasKey: !!cfg.key });
+    const cached = getCachedAIResult();
+    if (cached && cached.result) {
+      this.setData({
+        aiResult: this._formatAIResult(cached.result),
+        aiTime: (cached.timestamp || '').replace('T', ' ').slice(0, 16),
+      });
+    }
+  },
+
+  toggleAI() {
+    this.setData({ showAI: !this.data.showAI });
+  },
+
+  async triggerAI() {
+    const cfg = getAIConfig();
+    if (!cfg.key) {
+      wx.showModal({
+        title: '未配置 API Key',
+        content: '请先在“设置”页配置 AI API Key',
+        confirmText: '去设置',
+        success: (res) => {
+          if (res.confirm) wx.switchTab({ url: '/pages/settings/index' });
+        },
+      });
+      return;
+    }
+
+    this.setData({ aiLoading: true, showAI: true });
+    wx.showLoading({ title: 'AI 分析中...' });
+
+    try {
+      const holdings = getHoldings();
+      const codes = holdings.map(h => h.code);
+      const [estimates, historyMap] = await Promise.all([
+        require('../../utils/api').fetchMultiFundEstimates(codes),
+        require('../../utils/api').fetchMultiFundHistory(codes),
+      ]);
+
+      const result = await runAIAnalysis({
+        holdings,
+        estimates,
+        historyMap,
+        indices: this.data.indices,
+      });
+
+      this.setData({
+        aiResult: this._formatAIResult(result),
+        aiTime: new Date().toLocaleString(),
+        aiLoading: false,
+      });
+      wx.hideLoading();
+      wx.showToast({ title: 'AI 分析完成', icon: 'success' });
+    } catch (e) {
+      this.setData({ aiLoading: false });
+      wx.hideLoading();
+      wx.showModal({ title: 'AI 分析失败', content: e.message || '未知错误' });
+    }
+  },
+
+  _formatAIResult(r) {
+    if (!r) return null;
+    const signals = (r.signals || []).map(s => ({
+      ...s,
+      actionLabel: s.action === 'buy' ? '🟢 买入' : s.action === 'sell' ? '🔴 卖出' : '🟡 持有',
+      actionClass: s.action === 'buy' ? 'buy' : s.action === 'sell' ? 'sell' : 'hold',
+      confidenceStr: (s.confidence || 0) + '%',
+    }));
+    return {
+      marketSummary: r.marketSummary || '',
+      riskLevel: r.riskLevel || '中风险',
+      riskClass: (r.riskLevel || '').includes('高') ? 'high' : (r.riskLevel || '').includes('低') ? 'low' : 'mid',
+      overallAdvice: r.overallAdvice || '',
+      signals,
+    };
+  },
 });

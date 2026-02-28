@@ -331,6 +331,63 @@
     </view>
   </view>
 
+  <!-- ====== AI 智能分析 ====== -->
+  <view class="card">
+    <view class="card-header sec-toggle" bindtap="toggleAI">
+      <text class="title">🤖 AI 智能分析</text>
+      <text class="toggle-arrow">{{showAI ? '▲' : '▼'}}</text>
+    </view>
+    <view wx:if="{{!showAI}}" class="ai-summary-hint">
+      <text class="sub">{{aiResult ? '✅ 已有分析结果（' + aiTime + '）' : '点击展开运行 AI 分析'}}</text>
+    </view>
+    <view wx:if="{{showAI}}">
+      <view class="ai-action-bar">
+        <button class="btn {{aiLoading ? 'disabled' : ''}}" size="mini" bindtap="triggerAI" disabled="{{aiLoading}}">
+          {{aiLoading ? '⚙️ 分析中...' : '🚀 运行 AI 分析'}}
+        </button>
+        <text class="sub" wx:if="{{aiTime}}">{{aiTime}}</text>
+      </view>
+
+      <view wx:if="{{!aiHasKey && !aiResult}}" class="ai-no-key">
+        <text class="sub">⚠️ 未配置 API Key，请在「设置」页填写</text>
+      </view>
+
+      <view wx:if="{{aiResult}}" class="ai-result">
+        <!-- 市场总览 -->
+        <view class="ai-market-bar">
+          <text class="ai-market-text">{{aiResult.marketSummary}}</text>
+          <text class="ai-risk-tag ai-risk-{{aiResult.riskClass}}">{{aiResult.riskLevel}}</text>
+        </view>
+
+        <!-- 信号列表 -->
+        <view class="ai-signal" wx:for="{{aiResult.signals}}" wx:key="code">
+          <view class="ai-sig-top">
+            <view class="ai-sig-left">
+              <text class="ai-sig-name">{{item.name}}</text>
+              <text class="sub">{{item.code}}</text>
+            </view>
+            <view class="ai-sig-badge ai-sig-{{item.actionClass}}">
+              <text>{{item.actionLabel}}</text>
+            </view>
+          </view>
+          <view class="ai-sig-bottom">
+            <text class="ai-sig-reason">{{item.reason}}</text>
+            <view class="ai-sig-meta">
+              <text class="sub">置信度 {{item.confidenceStr}}</text>
+              <text class="sub" wx:if="{{item.urgency}}">· {{item.urgency}}紧急</text>
+            </view>
+          </view>
+        </view>
+
+        <!-- 总体建议 -->
+        <view wx:if="{{aiResult.overallAdvice}}" class="ai-overall">
+          <text class="ai-overall-label">📝 总体建议</text>
+          <text class="ai-overall-text">{{aiResult.overallAdvice}}</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
   <!-- ====== 更新时间 ====== -->
   <view class="footer-info">
     <text class="sub">数据更新：{{updatedAt}}</text>

@@ -81,6 +81,18 @@
   flex-shrink: 0;
 }
 
+/* ====== AI 提示 ====== */
+.ai-hint {
+  margin-top: 16rpx;
+  padding: 12rpx;
+  background: rgba(108,138,255,0.06);
+  border-radius: 8rpx;
+}
+
+.ai-hint .link {
+  word-break: break-all;
+}
+
 /* ====== 关于 ====== */
 .about-info {
   display: flex;

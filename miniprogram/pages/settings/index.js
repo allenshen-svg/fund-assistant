@@ -1,6 +1,7 @@
 const { getSettings, setSettings, getHoldings, getWatchlist } = require('../../utils/storage');
 const { fetchHotEvents } = require('../../utils/api');
 const { getMarketStatus, isTradingDay } = require('../../utils/market');
+const { AI_PROVIDERS, getAIConfig, setAIConfig } = require('../../utils/ai');
 
 Page({
   data: {
@@ -13,6 +14,13 @@ Page({
     watchlistCount: 0,
     marketStatus: '--',
     isTradingDay: false,
+    // AI 设置
+    aiProviders: AI_PROVIDERS,
+    aiProviderIndex: 0,
+    aiKey: '',
+    aiModels: [],
+    aiModelIndex: 0,
+    aiStatus: '',
     // 关于
     version: '2.0.0',
     updateDate: '2026-02',
@@ -21,6 +29,10 @@ Page({
   onShow() {
     const settings = getSettings();
     const ms = getMarketStatus();
+    const aiCfg = getAIConfig();
+    const providerIdx = AI_PROVIDERS.findIndex(p => p.id === aiCfg.providerId);
+    const provider = AI_PROVIDERS[providerIdx >= 0 ? providerIdx : 0];
+    const modelIdx = provider.models.findIndex(m => m.model === aiCfg.model);
     this.setData({
       useRemote: !!settings.useRemote,
       apiBase: settings.apiBase || '',
@@ -29,6 +41,10 @@ Page({
       watchlistCount: getWatchlist().length,
       marketStatus: ms.text,
       isTradingDay: isTradingDay(),
+      aiProviderIndex: providerIdx >= 0 ? providerIdx : 0,
+      aiKey: aiCfg.key || '',
+      aiModels: provider.models,
+      aiModelIndex: modelIdx >= 0 ? modelIdx : 0,
     });
   },
 
@@ -94,5 +110,74 @@ Page({
         wx.showToast({ title: '已复制', icon: 'success' });
       }
     });
+  },
+
+  // ====== AI 设置 ======
+  onAIProviderChange(e) {
+    const idx = Number(e.detail.value);
+    const provider = AI_PROVIDERS[idx];
+    setAIConfig({ providerId: provider.id, model: provider.defaultModel });
+    this.setData({
+      aiProviderIndex: idx,
+      aiModels: provider.models,
+      aiModelIndex: 0,
+    });
+  },
+
+  onAIKeyInput(e) {
+    this.setData({ aiKey: (e.detail.value || '').trim() });
+  },
+
+  saveAIKey() {
+    setAIConfig({ key: this.data.aiKey });
+    wx.showToast({ title: 'Key 已保存', icon: 'success' });
+  },
+
+  onAIModelChange(e) {
+    const idx = Number(e.detail.value);
+    const model = this.data.aiModels[idx];
+    if (model) {
+      setAIConfig({ model: model.model });
+      this.setData({ aiModelIndex: idx });
+    }
+  },
+
+  async testAIConnection() {
+    if (!this.data.aiKey) {
+      wx.showToast({ title: '请先填写API Key', icon: 'none' });
+      return;
+    }
+    this.setData({ aiStatus: '测试中...' });
+    const aiCfg = getAIConfig();
+    try {
+      const { callAI } = require('../../utils/ai');
+      // 发个简单请求测试
+      wx.request({
+        url: aiCfg.provider.base,
+        method: 'POST',
+        header: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + this.data.aiKey,
+        },
+        data: {
+          model: aiCfg.model,
+          messages: [{ role: 'user', content: '你好，请回复ok' }],
+          max_tokens: 10,
+        },
+        success: (res) => {
+          if (res.statusCode === 200) {
+            this.setData({ aiStatus: '✅ AI连接成功' });
+            wx.showToast({ title: 'AI连接成功', icon: 'success' });
+          } else {
+            this.setData({ aiStatus: '❌ 错误: ' + res.statusCode });
+          }
+        },
+        fail: (err) => {
+          this.setData({ aiStatus: '❌ 网络失败: ' + (err.errMsg || '') });
+        },
+      });
+    } catch (e) {
+      this.setData({ aiStatus: '❌ ' + e.message });
+    }
   },
 });
