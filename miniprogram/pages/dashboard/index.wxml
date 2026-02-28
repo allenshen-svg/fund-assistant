@@ -1,65 +1,132 @@
 <view class="container">
-  <view class="card">
+
+  <!-- ====== Header ====== -->
+  <view class="card header-card">
     <view class="row">
-      <text class="title">基金助手小程序</text>
-      <text class="chip {{sourceLabel === '远程数据' ? 'up' : 'flat'}}">{{sourceLabel}}</text>
-    </view>
-    <view class="sub">更新时间：{{updatedAt}}</view>
-    <view class="sub" style="margin-top: 8rpx;">持仓数量：{{holdingsCount}}</view>
-    <view class="actions">
-      <button class="btn" size="mini" bindtap="goHoldings">管理持仓</button>
-      <button class="btn ghost" size="mini" bindtap="goSettings">数据设置</button>
+      <view class="header-left">
+        <text class="header-title">📊 基金决策助手</text>
+        <view class="header-meta">
+          <view class="status-dot {{marketDot}}"></view>
+          <text class="sub">{{marketStatus}}</text>
+          <text class="sub" style="margin-left:12rpx;">{{currentTime}}</text>
+        </view>
+      </view>
+      <text class="chip {{sourceLabel === '远程数据' ? 'blue' : 'gray'}}">{{sourceLabel}}</text>
     </view>
   </view>
 
+  <!-- ====== 指数行情 ====== -->
+  <view class="idx-grid">
+    <view class="idx-item" wx:for="{{indices}}" wx:key="code">
+      <text class="idx-name">{{item.name}}</text>
+      <text class="idx-price">{{item.price}}</text>
+      <text class="idx-pct pct-{{item.pctClass}}">{{item.pctStr}}</text>
+    </view>
+    <view wx:if="{{indices.length === 0}}" class="idx-item" style="width:100%;">
+      <text class="sub">行情加载中...</text>
+    </view>
+  </view>
+
+  <!-- ====== 持仓概览 ====== -->
   <view class="card">
-    <view class="title">实盘行动指南（MVP）</view>
-    <view class="overview">
-      <view class="metric">
-        <text class="m-label">综合评分</text>
-        <text class="m-val">{{overview.score}}</text>
-      </view>
-      <view class="metric">
-        <text class="m-label">状态</text>
-        <text class="m-val">{{overview.label}}</text>
+    <view class="card-header">
+      <text class="title">💼 持仓概览</text>
+      <view class="row">
+        <text class="total-pct pct-{{totalPctClass}}">{{totalPct}}</text>
+        <text class="sub" style="margin-left:12rpx;">均值</text>
       </view>
     </view>
-    <view class="sub">加仓 {{overview.buy}} · 减仓 {{overview.sell}} · 持有 {{overview.hold}}</view>
-  </view>
 
-  <view class="card" wx:if="{{plans.length > 0}}">
-    <view class="title">白话研判</view>
-    <block wx:for="{{plans}}" wx:key="code">
-      <view class="plan-item">
+    <view wx:if="{{holdings.length === 0 && !loading}}" class="empty-state">
+      <text class="empty-icon">📦</text>
+      <text class="sub">暂无持仓</text>
+      <button class="btn sm" style="margin-top:20rpx;" bindtap="goHoldings">去添加</button>
+    </view>
+
+    <view class="holdings-grid" wx:if="{{holdings.length > 0}}">
+      <view class="holding-card" wx:for="{{holdings}}" wx:key="code">
         <view class="row">
-          <view>
-            <text class="p-name">{{item.name}}</text>
-            <text class="sub">（{{item.code}} · {{item.type}}）</text>
-          </view>
-          <text class="chip {{item.action === 'buy' ? 'up' : item.action === 'sell' ? 'down' : 'flat'}}">{{item.actionLabel}}</text>
+          <text class="h-name">{{item.name}}</text>
+          <text class="h-pct pct-{{item.pctClass}}">{{item.pctStr}}</text>
         </view>
-        <view class="sub">热点：{{item.tag}} · 温度 {{item.temperature}} · 趋势 {{item.trend}}</view>
-        <view class="sub">风险：{{item.riskLevel}}（{{item.riskScore}}）</view>
-        <view class="reason">{{item.reason}}</view>
+        <view class="row" style="margin-top:6rpx;">
+          <text class="sub">{{item.code}} · {{item.type}}</text>
+          <text class="sub" wx:if="{{item.estimate}}">估值 {{item.estimate}}</text>
+        </view>
       </view>
-    </block>
+    </view>
   </view>
 
-  <view class="card" wx:if="{{plans.length === 0 && !loading}}">
-    <view class="title">白话研判</view>
-    <view class="sub">你还没有持仓，先去“持仓”页添加基金。</view>
+  <!-- ====== 行动指南 ====== -->
+  <view class="card">
+    <view class="card-header">
+      <text class="title">🎯 行动指南</text>
+      <text class="chip {{overview.score >= 60 ? 'up' : overview.score <= 40 ? 'down' : 'gray'}}">
+        {{overview.label}} · {{overview.score}}分
+      </text>
+    </view>
+    <view class="overview-bar">
+      <view class="ob-item red"><text class="ob-num">{{overview.buy}}</text><text class="ob-label">加仓</text></view>
+      <view class="ob-item green"><text class="ob-num">{{overview.sell}}</text><text class="ob-label">减仓</text></view>
+      <view class="ob-item gray"><text class="ob-num">{{overview.hold}}</text><text class="ob-label">持有</text></view>
+    </view>
+
+    <view class="divider"></view>
+
+    <view wx:if="{{plans.length === 0 && !loading}}" class="sub" style="text-align:center;padding:20rpx 0;">
+      添加持仓后可看研判建议
+    </view>
+
+    <view class="plan-item" wx:for="{{plans}}" wx:key="code">
+      <view class="row">
+        <view>
+          <text class="p-name">{{item.name}}</text>
+          <text class="sub" style="margin-left:8rpx;">{{item.code}}</text>
+        </view>
+        <text class="chip {{item.action === 'buy' ? 'up' : item.action === 'sell' ? 'down' : 'gray'}}">
+          {{item.actionLabel}}
+        </text>
+      </view>
+      <view class="row" style="margin-top:8rpx;">
+        <text class="sub">🔥 {{item.tag}} · 温度{{item.temperature}} · {{item.trend === 'up' ? '↑' : item.trend === 'down' ? '↓' : '→'}}</text>
+        <text class="sub {{item.riskScore >= 55 ? 'danger' : ''}}">⚠️ {{item.riskLevel}}</text>
+      </view>
+      <text class="reason">{{item.reason}}</text>
+    </view>
   </view>
 
+  <!-- ====== 板块热力 ====== -->
+  <view class="card" wx:if="{{heatmap.length > 0}}">
+    <view class="card-header">
+      <text class="title">🌡️ 板块热力</text>
+    </view>
+    <view class="heat-grid">
+      <view class="heat-chip" wx:for="{{heatmap}}" wx:key="tag"
+            style="background:rgba({{item.temperature > 70 ? '239,68,68' : item.temperature > 50 ? '251,146,60' : '34,197,94'}}, {{item.temperature / 200}});">
+        <text class="heat-tag">{{item.tag}}</text>
+        <text class="heat-val">{{item.temperature}}°</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- ====== 热点事件 ====== -->
   <view class="card" wx:if="{{topEvents.length > 0}}">
-    <view class="title">热点事件（前5）</view>
-    <block wx:for="{{topEvents}}" wx:key="id">
-      <view class="event-item">
-        <view class="row">
-          <text class="e-title">{{item.title}}</text>
-          <text class="chip {{item.impact >= 0 ? 'up' : 'down'}}">{{item.impact >= 0 ? '+' : ''}}{{item.impact}}</text>
-        </view>
-        <view class="sub">建议：{{item.advice}}</view>
+    <view class="card-header">
+      <text class="title">📰 热点事件</text>
+      <text class="sub" bindtap="goSentiment">更多 ›</text>
+    </view>
+    <view class="event-item" wx:for="{{topEvents}}" wx:key="id">
+      <view class="row">
+        <text class="e-title">{{item.title}}</text>
+        <text class="chip {{item.impactClass}}">{{item.impact >= 0 ? '+' : ''}}{{item.impact}}</text>
       </view>
-    </block>
+      <text class="sub" style="margin-top:6rpx;">{{item.advice}}</text>
+    </view>
   </view>
+
+  <!-- ====== 更新时间 ====== -->
+  <view class="footer-info">
+    <text class="sub">数据更新：{{updatedAt}}</text>
+  </view>
+
 </view>

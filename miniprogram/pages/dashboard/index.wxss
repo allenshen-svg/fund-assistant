@@ -1,67 +1,213 @@
-.actions {
-  margin-top: 16rpx;
-  display: flex;
-  gap: 14rpx;
+/* ====== Header ====== */
+.header-card {
+  background: linear-gradient(135deg, #1e1e38 0%, #252547 100%);
 }
 
-.overview {
-  display: flex;
-  gap: 20rpx;
-  margin-bottom: 12rpx;
+.header-title {
+  font-size: 36rpx;
+  font-weight: 800;
+  color: #fff;
 }
 
-.metric {
+.header-meta {
+  display: flex;
+  align-items: center;
+  margin-top: 8rpx;
+}
+
+.header-left {
   flex: 1;
-  background: #f8fafc;
-  border-radius: 12rpx;
-  padding: 14rpx;
 }
 
-.m-label {
-  color: #64748b;
+.status-dot {
+  width: 14rpx;
+  height: 14rpx;
+  border-radius: 50%;
+  margin-right: 8rpx;
+}
+
+.status-dot.green { background: #4ade80; box-shadow: 0 0 8rpx #4ade80; }
+.status-dot.orange { background: #fb923c; box-shadow: 0 0 8rpx #fb923c; }
+.status-dot.blue { background: #6c8aff; box-shadow: 0 0 8rpx #6c8aff; }
+.status-dot.gray { background: #8b8fa3; }
+
+/* ====== 指数网格 ====== */
+.idx-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12rpx;
+  padding: 0 24rpx;
+  margin-bottom: 24rpx;
+}
+
+.idx-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #1e1e38 0%, #1a1a2e 100%);
+  border: 1rpx solid rgba(108,138,255,0.1);
+  border-radius: 14rpx;
+  padding: 16rpx 8rpx;
+  /* 每行3个：(750 - 48padding - 24gap) / 3 ≈ 226rpx，用 calc 自适应 */
+  width: calc((100% - 24rpx) / 3);
+  box-sizing: border-box;
+}
+
+.idx-name {
   font-size: 22rpx;
-  display: block;
+  color: #8b8fa3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
 }
 
-.m-val {
+.idx-price {
+  font-size: 26rpx;
+  font-weight: 700;
+  color: #fff;
+  margin: 4rpx 0;
+  white-space: nowrap;
+}
+
+.idx-pct {
+  font-size: 22rpx;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* ====== 持仓 ====== */
+.total-pct {
   font-size: 34rpx;
+  font-weight: 800;
+}
+
+.holdings-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 12rpx;
+}
+
+.holding-card {
+  background: rgba(255,255,255,0.03);
+  border: 1rpx solid rgba(108,138,255,0.06);
+  border-radius: 14rpx;
+  padding: 16rpx 18rpx;
+}
+
+.h-name {
+  font-size: 26rpx;
+  font-weight: 600;
+  color: #e0e0e0;
+  max-width: 400rpx;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.h-pct {
+  font-size: 28rpx;
   font-weight: 700;
 }
 
+/* ====== 行动指南 ====== */
+.overview-bar {
+  display: flex;
+  gap: 16rpx;
+  margin: 12rpx 0;
+}
+
+.ob-item {
+  flex: 1;
+  text-align: center;
+  border-radius: 12rpx;
+  padding: 14rpx 0;
+}
+
+.ob-item.red { background: rgba(239,68,68,0.1); }
+.ob-item.green { background: rgba(34,197,94,0.1); }
+.ob-item.gray { background: rgba(139,143,163,0.1); }
+
+.ob-num {
+  display: block;
+  font-size: 36rpx;
+  font-weight: 800;
+  color: #fff;
+}
+
+.ob-label {
+  font-size: 22rpx;
+  color: #8b8fa3;
+}
+
 .plan-item {
-  border-top: 1rpx solid #edf2f7;
+  border-top: 1rpx solid rgba(108,138,255,0.08);
   padding: 16rpx 0;
 }
 
 .plan-item:first-child {
-  border-top: 0;
-  padding-top: 4rpx;
+  border-top: none;
 }
 
 .p-name {
   font-size: 28rpx;
   font-weight: 700;
+  color: #e0e0e0;
 }
 
 .reason {
   margin-top: 8rpx;
-  color: #0f172a;
+  color: #b0b4c8;
   font-size: 24rpx;
   line-height: 1.6;
 }
 
+/* ====== 板块热力 ====== */
+.heat-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12rpx;
+}
+
+.heat-chip {
+  border-radius: 10rpx;
+  padding: 10rpx 16rpx;
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+}
+
+.heat-tag {
+  font-size: 22rpx;
+  color: #fff;
+  font-weight: 600;
+}
+
+.heat-val {
+  font-size: 20rpx;
+  color: rgba(255,255,255,0.7);
+}
+
+/* ====== 热点事件 ====== */
 .event-item {
-  border-top: 1rpx solid #edf2f7;
+  border-top: 1rpx solid rgba(108,138,255,0.08);
   padding: 16rpx 0;
 }
 
 .event-item:first-child {
-  border-top: 0;
-  padding-top: 4rpx;
+  border-top: none;
 }
 
 .e-title {
   font-size: 26rpx;
   font-weight: 600;
+  color: #e0e0e0;
   max-width: 520rpx;
+}
+
+/* ====== Footer ====== */
+.footer-info {
+  text-align: center;
+  padding: 20rpx 0 40rpx;
 }
