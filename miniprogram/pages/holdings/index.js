@@ -28,14 +28,58 @@ Page({
 
     // ====== 预测追踪 ======
     secPred: false,
-    predStats: null,     // { totalDays, accuracy, avgReturn, correctCount, wrongCount, neutralCount, totalCount }
-    predLatest: null,     // latest verified entry
-    predHistory: [],      // last 10 entries for display
+    predStats: null,
+    predLatest: null,
+    predHistory: [],
     predTodayDone: false,
+    _reminderTimer: null,
   },
 
   onShow() {
     this.reload();
+    this._scheduleReminder();
+  },
+
+  onHide() {
+    this._clearReminder();
+  },
+
+  onUnload() {
+    this._clearReminder();
+  },
+
+  _scheduleReminder() {
+    this._clearReminder();
+    const today = todayStr();
+    if (!isTradingDay(today)) return;
+    const now = new Date();
+    const target = new Date(now);
+    target.setHours(14, 50, 0, 0);
+    const diff = target.getTime() - now.getTime();
+    // 如果还没到14:50且距离不超过6小时，设置定时提醒
+    if (diff > 0 && diff < 6 * 3600 * 1000) {
+      this._reminderTimer = setTimeout(() => {
+        wx.vibrateLong({ type: 'heavy' });
+        wx.showModal({
+          title: '⏰ 快照提醒',
+          content: '现在是 14:50，建议立即记录今日预测快照！',
+          confirmText: '立即快照',
+          cancelText: '稍后',
+          success: (res) => {
+            if (res.confirm) {
+              this.snapshotPrediction();
+            }
+          },
+        });
+      }, diff);
+    }
+  },
+
+  _clearReminder() {
+    if (this._reminderTimer) {
+      clearTimeout(this._reminderTimer);
+      this._reminderTimer = null;
+    }
   },
 
   onPullDownRefresh() {
