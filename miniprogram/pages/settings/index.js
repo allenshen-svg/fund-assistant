@@ -155,6 +155,7 @@ Page({
       wx.request({
         url: aiCfg.provider.base,
         method: 'POST',
+        timeout: 30000,
         header: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer ' + this.data.aiKey,

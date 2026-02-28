@@ -319,9 +319,10 @@ Page({
     }
 
     this.setData({ aiLoading: true, showAI: true });
-    wx.showLoading({ title: 'AI 深度分析中...' });
+    wx.showLoading({ title: 'AI 深度分析中...', mask: true });
 
     try {
+      wx.showLoading({ title: '获取基金数据...', mask: true });
       const holdings = getHoldings();
       const codes = holdings.map(h => h.code);
       const [estimates, historyMap] = await Promise.all([
@@ -329,6 +330,7 @@ Page({
         require('../../utils/api').fetchMultiFundHistory(codes),
       ]);
 
+      wx.showLoading({ title: 'AI 分析中(约30-90秒)...', mask: true });
       const app = getApp();
       const result = await runAIAnalysis({
         holdings,
@@ -356,7 +358,12 @@ Page({
     } catch (e) {
       this.setData({ aiLoading: false });
       wx.hideLoading();
-      wx.showModal({ title: 'AI 分析失败', content: e.message || '未知错误' });
+      const msg = e.message || '未知错误';
+      let content = msg;
+      if (msg.includes('timeout') || msg.includes('超时')) {
+        content = 'AI分析超时，可能原因：\n1. 网络不稳定\n2. AI服务器繁忙\n\n建议：稍后重试，或在设置中切换AI模型';
+      }
+      wx.showModal({ title: 'AI 分析失败', content });
     }
   },
 

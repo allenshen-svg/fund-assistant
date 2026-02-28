@@ -203,6 +203,7 @@ function callAI(apiBase, apiKey, model, systemPrompt, userPrompt, temperature = 
     wx.request({
       url: apiBase,
       method: 'POST',
+      timeout: 120000, // 2分钟超时，AI深度分析需要较长时间
       header: {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer ' + apiKey,
@@ -214,7 +215,7 @@ function callAI(apiBase, apiKey, model, systemPrompt, userPrompt, temperature = 
           { role: 'user', content: userPrompt },
         ],
         temperature,
-        max_tokens: 8192,
+        max_tokens: 4096,
       },
       success(res) {
         if (res.statusCode !== 200) {
