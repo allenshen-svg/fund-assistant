@@ -1,4 +1,7 @@
 {
-  "navigationBarTitleText": "首页",
-  "enablePullDownRefresh": true
+  "navigationBarTitleText": "基金决策助手",
+  "enablePullDownRefresh": true,
+  "navigationBarBackgroundColor": "#1a1a2e",
+  "navigationBarTextStyle": "white",
+  "backgroundColor": "#0f0f1a"
 }

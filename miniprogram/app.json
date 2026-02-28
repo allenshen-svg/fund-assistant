@@ -1,33 +1,46 @@
 {
   "pages": [
     "pages/dashboard/index",
+    "pages/sentiment/index",
     "pages/holdings/index",
     "pages/settings/index"
   ],
   "window": {
-    "navigationBarTitleText": "基金助手小程序",
-    "navigationBarBackgroundColor": "#ffffff",
-    "navigationBarTextStyle": "black",
-    "backgroundColor": "#f5f7fb",
-    "backgroundTextStyle": "light"
+    "navigationBarTitleText": "基金决策助手",
+    "navigationBarBackgroundColor": "#1a1a2e",
+    "navigationBarTextStyle": "white",
+    "backgroundColor": "#0f0f1a",
+    "backgroundTextStyle": "dark"
   },
   "tabBar": {
-    "color": "#6b7280",
-    "selectedColor": "#2563eb",
+    "color": "#8b8fa3",
+    "selectedColor": "#6c8aff",
     "borderStyle": "black",
-    "backgroundColor": "#ffffff",
+    "backgroundColor": "#1a1a2e",
     "list": [
       {
         "pagePath": "pages/dashboard/index",
-        "text": "首页"
+        "text": "首页",
+        "iconPath": "images/tab-home.png",
+        "selectedIconPath": "images/tab-home-active.png"
+      },
+      {
+        "pagePath": "pages/sentiment/index",
+        "text": "舆情",
+        "iconPath": "images/tab-sentiment.png",
+        "selectedIconPath": "images/tab-sentiment-active.png"
       },
       {
         "pagePath": "pages/holdings/index",
-        "text": "持仓"
+        "text": "持仓",
+        "iconPath": "images/tab-holdings.png",
+        "selectedIconPath": "images/tab-holdings-active.png"
       },
       {
         "pagePath": "pages/settings/index",
-        "text": "设置"
+        "text": "设置",
+        "iconPath": "images/tab-settings.png",
+        "selectedIconPath": "images/tab-settings-active.png"
       }
     ]
   },

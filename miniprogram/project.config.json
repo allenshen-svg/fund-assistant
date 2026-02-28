@@ -1,7 +1,8 @@
 {
   "description": "fund assistant mini program",
   "packOptions": {
-    "ignore": []
+    "ignore": [],
+    "include": []
   },
   "setting": {
     "urlCheck": false,
@@ -10,11 +11,61 @@
     "minified": true,
     "enhance": true,
     "showShadowRootInWxmlPanel": true,
-    "packNpmRelationList": []
+    "packNpmRelationList": [],
+    "compileHotReLoad": true,
+    "checkSiteMap": false,
+    "coverView": true,
+    "autoAudits": false,
+    "preloadBackgroundData": false,
+    "lazyloadPlaceholderEnable": false,
+    "useCompilerPlugins": false,
+    "compileWorklet": false,
+    "uglifyFileName": false,
+    "uploadWithSourceMap": true,
+    "packNpmManually": false,
+    "minifyWXSS": true,
+    "minifyWXML": true,
+    "localPlugins": false,
+    "disableUseStrict": false,
+    "condition": false,
+    "swc": false,
+    "disableSWC": true,
+    "babelSetting": {
+      "ignore": [],
+      "disablePlugins": [],
+      "outputPath": ""
+    }
   },
   "compileType": "miniprogram",
-  "libVersion": "3.4.3",
-  "appid": "touristappid",
+  "libVersion": "3.6.4",
+  "appid": "wxdff3c1b4fad3158c",
   "projectname": "fund-assistant-mini",
-  "condition": {}
+  "condition": {
+    "miniprogram": {
+      "list": [
+        {
+          "name": "首页",
+          "pathName": "pages/dashboard/index",
+          "query": ""
+        },
+        {
+          "name": "舆情分析",
+          "pathName": "pages/sentiment/index",
+          "query": ""
+        },
+        {
+          "name": "持仓管理",
+          "pathName": "pages/holdings/index",
+          "query": ""
+        },
+        {
+          "name": "设置",
+          "pathName": "pages/settings/index",
+          "query": ""
+        }
+      ]
+    }
+  },
+  "simulatorPluginLibVersion": {},
+  "editorSetting": {}
 }

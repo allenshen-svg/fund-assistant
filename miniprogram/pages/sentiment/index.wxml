@@ -1,0 +1,91 @@
+<view class="container">
+
+  <!-- ====== Header ====== -->
+  <view class="card">
+    <view class="card-header">
+      <text class="title">📡 舆情分析</text>
+      <text class="chip {{sourceLabel === '远程数据' ? 'blue' : 'gray'}}">{{sourceLabel}}</text>
+    </view>
+    <text class="sub">更新：{{updatedAt}}</text>
+  </view>
+
+  <!-- ====== 板块热力图 ====== -->
+  <view class="card" wx:if="{{heatmap.length > 0}}">
+    <view class="card-header">
+      <text class="title">🌡️ 板块热力图</text>
+    </view>
+    <view class="heat-list">
+      <view class="heat-row" wx:for="{{heatmap}}" wx:key="tag">
+        <view class="heat-info">
+          <text class="heat-tag">{{item.tag}}</text>
+          <text class="heat-trend {{item.trend === 'up' ? 'pct-up' : item.trend === 'down' ? 'pct-down' : 'pct-flat'}}">
+            {{item.trendIcon}}
+          </text>
+        </view>
+        <view class="heat-bar-wrap">
+          <view class="heat-bar {{item.tempClass}}" style="width: {{item.temperature}}%;"></view>
+        </view>
+        <text class="heat-temp">{{item.temperature}}°</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- ====== 市场展望 ====== -->
+  <view class="card" wx:if="{{outlook}}">
+    <view class="card-header">
+      <text class="title">🔮 市场展望</text>
+      <text class="chip {{outlook.score >= 55 ? 'up' : outlook.score <= 45 ? 'down' : 'gray'}}">
+        评分 {{outlook.score}}
+      </text>
+    </view>
+    <text class="outlook-text">{{outlook.summary || outlook.narrative || '--'}}</text>
+  </view>
+
+  <!-- ====== 筛选条 ====== -->
+  <scroll-view class="filter-scroll" scroll-x enable-flex>
+    <view class="filter-chip {{activeFilter === item.key ? 'active' : ''}}"
+          wx:for="{{filters}}" wx:key="key"
+          data-key="{{item.key}}" bindtap="onFilterTap">
+      {{item.label}}
+    </view>
+  </scroll-view>
+
+  <!-- ====== 事件列表 ====== -->
+  <view class="card" wx:if="{{events.length > 0}}">
+    <view class="card-header">
+      <text class="title">📰 市场事件</text>
+      <text class="sub">共 {{events.length}} 条</text>
+    </view>
+    <block wx:for="{{events}}" wx:key="id">
+      <view class="evt-item" wx:if="{{activeFilter === 'all' || (activeFilter === 'positive' && item.impact > 0) || (activeFilter === 'negative' && item.impact < 0) || item.category === activeFilter}}">
+        <view class="row">
+          <text class="evt-title">{{item.title}}</text>
+          <text class="chip {{item.impactClass}}">{{item.impactStr}}</text>
+        </view>
+        <view class="evt-meta">
+          <text class="chip gray" style="margin-right:8rpx;">{{item.category}}</text>
+          <text class="sub">情绪: {{item.sentimentLabel}}</text>
+        </view>
+        <text class="sub" wx:if="{{item.reason}}" style="margin-top:6rpx;">{{item.reason}}</text>
+        <view class="evt-sectors" wx:if="{{item.sectorsPos !== '--'}}">
+          <text class="sub pct-up">利好：{{item.sectorsPos}}</text>
+        </view>
+        <view class="evt-sectors" wx:if="{{item.sectorsNeg !== '--'}}">
+          <text class="sub pct-down">利空：{{item.sectorsNeg}}</text>
+        </view>
+        <text class="sub" wx:if="{{item.advice}}" style="margin-top:6rpx;color:#6c8aff;">💡 {{item.advice}}</text>
+      </view>
+    </block>
+  </view>
+
+  <view wx:if="{{events.length === 0 && !loading}}" class="empty-state">
+    <text class="empty-icon">📭</text>
+    <text class="sub">暂无事件数据</text>
+  </view>
+
+  <view wx:if="{{loading}}" class="loading-wrap">
+    <view class="loading-dot"></view>
+    <text class="sub" style="margin-top:16rpx;">加载中...</text>
+  </view>
+
+</view>

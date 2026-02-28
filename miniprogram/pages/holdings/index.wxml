@@ -1,6 +1,46 @@
 <view class="container">
+
+  <!-- ====== 当前持仓 ====== -->
   <view class="card">
-    <view class="title">添加持仓</view>
+    <view class="card-header">
+      <text class="title">💼 当前持仓</text>
+      <text class="sub">共 {{list.length}} 只</text>
+    </view>
+
+    <view wx:if="{{list.length === 0 && !loading}}" class="empty-state">
+      <text class="empty-icon">📦</text>
+      <text class="sub">暂无持仓，请添加基金</text>
+    </view>
+
+    <view class="h-item" wx:for="{{list}}" wx:key="code">
+      <view class="h-main">
+        <view class="h-left">
+          <text class="h-name">{{item.name}}</text>
+          <text class="sub">{{item.code}} · {{item.type}}</text>
+        </view>
+        <view class="h-right">
+          <text class="h-pct pct-{{item.pctClass}}">{{item.pctStr}}</text>
+          <text class="sub" wx:if="{{item.estimate}}">估值 {{item.estimate}}</text>
+        </view>
+      </view>
+      <view class="h-actions">
+        <text class="del-btn" data-code="{{item.code}}" data-name="{{item.name}}" bindtap="removeHolding">删除</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- ====== 操作按钮 ====== -->
+  <view class="action-btns">
+    <button class="btn" bindtap="toggleAdd">✏️ 手动添加</button>
+    <button class="btn ghost" bindtap="toggleQuick">⚡ 快速选择</button>
+    <button class="btn ghost" style="margin-top:12rpx;" bindtap="resetToDefault">🔄 恢复默认</button>
+  </view>
+
+  <!-- ====== 手动添加面板 ====== -->
+  <view class="card add-panel" wx:if="{{showAdd}}">
+    <view class="card-header">
+      <text class="title">✏️ 手动添加</text>
+    </view>
     <view class="form-item">
       <text class="label">基金代码</text>
       <input class="input" placeholder="例如 000216" value="{{code}}" bindinput="onCodeInput" />
@@ -12,26 +52,29 @@
     <view class="form-item">
       <text class="label">基金类型</text>
       <picker mode="selector" range="{{typeOptions}}" value="{{typeIndex}}" bindchange="onTypeChange">
-        <view class="input">{{typeOptions[typeIndex]}}</view>
+        <view class="input picker-val">{{typeOptions[typeIndex]}} ▾</view>
       </picker>
     </view>
-    <button class="btn" bindtap="addHolding">添加</button>
+    <button class="btn" style="margin-top:16rpx;" bindtap="addHolding">确认添加</button>
   </view>
 
-  <view class="card">
-    <view class="row" style="margin-bottom: 10rpx;">
-      <text class="title">当前持仓</text>
-      <text class="sub">共 {{list.length}} 只</text>
+  <!-- ====== 快速选择面板 ====== -->
+  <view class="card" wx:if="{{showQuick}}">
+    <view class="card-header">
+      <text class="title">⚡ 从内置库选择</text>
+      <text class="sub">点击即可添加</text>
     </view>
-    <view wx:if="{{list.length === 0}}" class="sub">暂无持仓，请先添加。</view>
-    <block wx:for="{{list}}" wx:key="code">
-      <view class="holding-item">
-        <view>
-          <view class="h-name">{{item.name}}</view>
-          <view class="sub">{{item.code}} · {{item.type}}</view>
-        </view>
-        <text class="danger" bindtap="removeHolding" data-code="{{item.code}}">删除</text>
+    <view wx:if="{{quickList.length === 0}}" class="sub" style="text-align:center;padding:20rpx;">
+      内置基金已全部添加
+    </view>
+    <view class="quick-item" wx:for="{{quickList}}" wx:key="code"
+          data-item="{{item}}" bindtap="quickAdd">
+      <view>
+        <text class="h-name">{{item.name}}</text>
+        <text class="sub" style="margin-left:8rpx;">{{item.code}}</text>
       </view>
-    </block>
+      <text class="chip blue">{{item.type}}</text>
+    </view>
   </view>
+
 </view>

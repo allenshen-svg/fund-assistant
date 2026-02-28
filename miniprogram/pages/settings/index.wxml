@@ -1,26 +1,101 @@
 <view class="container">
+
+  <!-- ====== 概况 ====== -->
   <view class="card">
-    <view class="title">数据源设置</view>
+    <view class="card-header">
+      <text class="title">📊 数据概况</text>
+    </view>
+    <view class="stat-grid">
+      <view class="stat-item">
+        <text class="stat-num">{{holdingsCount}}</text>
+        <text class="sub">持仓基金</text>
+      </view>
+      <view class="stat-item">
+        <text class="stat-num">{{watchlistCount}}</text>
+        <text class="sub">自选基金</text>
+      </view>
+      <view class="stat-item">
+        <text class="stat-num {{isTradingDay ? 'pct-up' : 'pct-flat'}}">{{isTradingDay ? '是' : '否'}}</text>
+        <text class="sub">交易日</text>
+      </view>
+      <view class="stat-item">
+        <text class="stat-num" style="font-size:24rpx;">{{marketStatus}}</text>
+        <text class="sub">市场状态</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- ====== 数据源设置 ====== -->
+  <view class="card">
+    <view class="card-header">
+      <text class="title">🔗 数据源设置</text>
+    </view>
     <view class="row switch-row">
-      <text>优先使用远程数据</text>
-      <switch checked="{{useRemote}}" bindchange="onSwitchRemote" color="#2563eb" />
+      <text class="set-label">优先使用远程数据</text>
+      <switch checked="{{useRemote}}" bindchange="onSwitchRemote" color="#6c8aff" />
     </view>
 
-    <view class="sub" style="margin: 8rpx 0 10rpx;">远程基地址（示例）</view>
-    <input class="input" value="{{apiBase}}" bindinput="onApiInput" placeholder="https://allenshen-svg.github.io/fund-assistant" />
+    <view class="form-item" style="margin-top:16rpx;">
+      <text class="label">远程基地址</text>
+      <input class="input" value="{{apiBase}}" bindinput="onApiInput"
+             placeholder="https://allenshen-svg.github.io/fund-assistant" />
+    </view>
 
     <view class="btn-row">
-      <button class="btn" size="mini" bindtap="save">保存</button>
-      <button class="btn ghost" size="mini" bindtap="testConnection">测试连接</button>
+      <button class="btn" size="mini" bindtap="save">💾 保存</button>
+      <button class="btn ghost" size="mini" bindtap="testConnection">🔍 测试连接</button>
+      <button class="btn ghost" size="mini" bindtap="copyApiBase">📋 复制地址</button>
     </view>
 
-    <view class="sub" style="margin-top: 12rpx;">{{status}}</view>
+    <view wx:if="{{status}}" class="status-bar {{statusColor}}">
+      <text>{{status}}</text>
+    </view>
   </view>
 
+  <!-- ====== 数据管理 ====== -->
   <view class="card">
-    <view class="title">上线前检查</view>
-    <view class="sub line">1. 在微信公众平台配置 request 合法域名。</view>
-    <view class="sub line">2. 域名必须 HTTPS 且证书有效。</view>
-    <view class="sub line">3. 若远程失败，小程序会自动回退本地样本。</view>
+    <view class="card-header">
+      <text class="title">🛠️ 数据管理</text>
+    </view>
+    <view class="set-item" bindtap="clearCache">
+      <text class="set-label danger">🗑️ 清除所有缓存</text>
+      <text class="sub">重置持仓、设置等数据</text>
+    </view>
   </view>
+
+  <!-- ====== 上线须知 ====== -->
+  <view class="card">
+    <view class="card-header">
+      <text class="title">📋 上线前检查</text>
+    </view>
+    <view class="check-item">
+      <text class="check-icon">1️⃣</text>
+      <text class="sub">在微信公众平台配置 request 合法域名</text>
+    </view>
+    <view class="check-item">
+      <text class="check-icon">2️⃣</text>
+      <text class="sub">域名必须 HTTPS 且证书有效</text>
+    </view>
+    <view class="check-item">
+      <text class="check-icon">3️⃣</text>
+      <text class="sub">替换 project.config.json 中的 AppID</text>
+    </view>
+    <view class="check-item">
+      <text class="check-icon">4️⃣</text>
+      <text class="sub">远程请求失败时自动回退到本地样本</text>
+    </view>
+  </view>
+
+  <!-- ====== 关于 ====== -->
+  <view class="card">
+    <view class="card-header">
+      <text class="title">ℹ️ 关于</text>
+    </view>
+    <view class="about-info">
+      <text class="sub">基金决策助手小程序 v{{version}}</text>
+      <text class="sub">最后更新：{{updateDate}}</text>
+      <text class="sub" style="margin-top:8rpx;">数据仅供参考，不构成投资建议</text>
+    </view>
+  </view>
+
 </view>

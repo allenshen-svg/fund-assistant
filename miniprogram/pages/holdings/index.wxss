@@ -1,36 +1,87 @@
-.form-item {
-  margin-bottom: 14rpx;
-}
-
-.label {
-  display: block;
-  color: #64748b;
-  margin-bottom: 8rpx;
-  font-size: 24rpx;
-}
-
-.input {
-  background: #f8fafc;
-  border: 1rpx solid #e5e7eb;
-  border-radius: 12rpx;
-  padding: 16rpx;
-  font-size: 26rpx;
-}
-
-.holding-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  border-top: 1rpx solid #edf2f7;
+/* ====== 持仓条目 ====== */
+.h-item {
+  border-top: 1rpx solid rgba(108,138,255,0.08);
   padding: 16rpx 0;
 }
 
-.holding-item:first-child {
-  border-top: 0;
-  padding-top: 8rpx;
+.h-item:first-child {
+  border-top: none;
+}
+
+.h-main {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.h-left {
+  flex: 1;
+}
+
+.h-right {
+  text-align: right;
 }
 
 .h-name {
   font-size: 28rpx;
   font-weight: 700;
+  color: #e0e0e0;
+}
+
+.h-pct {
+  font-size: 30rpx;
+  font-weight: 700;
+}
+
+.h-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 8rpx;
+}
+
+.del-btn {
+  font-size: 24rpx;
+  color: #f87171;
+  padding: 4rpx 12rpx;
+}
+
+/* ====== 操作按钮 ====== */
+.action-btns {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12rpx;
+  margin-bottom: 20rpx;
+}
+
+.action-btns .btn {
+  flex: 1;
+  min-width: 200rpx;
+}
+
+/* ====== 添加面板 ====== */
+.add-panel {
+  border: 1rpx solid rgba(108,138,255,0.2);
+}
+
+.form-item {
+  margin-bottom: 16rpx;
+}
+
+.picker-val {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* ====== 快速选择 ====== */
+.quick-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-top: 1rpx solid rgba(108,138,255,0.08);
+  padding: 16rpx 0;
+}
+
+.quick-item:first-child {
+  border-top: none;
 }
