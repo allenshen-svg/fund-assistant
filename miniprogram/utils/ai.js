@@ -9,7 +9,17 @@ const { todayStr, formatPct, isTradingDay } = require('./market');
 /* ====== 提供商配置 ====== */
 const AI_PROVIDERS = [
   {
-    id: 'siliconflow', name: '硅基流动(免费)', free: true,
+    id: 'zhipu', name: '智谱AI(免费)', free: true,
+    base: 'https://open.bigmodel.cn/api/paas/v4/chat/completions',
+    models: [
+      { id: 'glm-4-flash', name: 'GLM-4-Flash(免费)', model: 'glm-4-flash' },
+      { id: 'glm-4-air', name: 'GLM-4-Air', model: 'glm-4-air' },
+      { id: 'glm-4-plus', name: 'GLM-4-Plus', model: 'glm-4-plus' },
+    ],
+    defaultModel: 'glm-4-flash',
+  },
+  {
+    id: 'siliconflow', name: '硅基流动', free: true,
     base: 'https://api.siliconflow.cn/v1/chat/completions',
     models: [
       { id: 'deepseek-v3', name: 'DeepSeek-V3', model: 'deepseek-ai/DeepSeek-V3' },
@@ -35,7 +45,7 @@ const AI_MODEL_KEY = 'fa_mp_ai_model';
 
 /* ====== 存取 ====== */
 function getAIConfig() {
-  const providerId = wx.getStorageSync(AI_PROVIDER_KEY) || 'deepseek';
+  const providerId = wx.getStorageSync(AI_PROVIDER_KEY) || 'zhipu';
   const key = wx.getStorageSync(AI_KEY) || '';
   const modelId = wx.getStorageSync(AI_MODEL_KEY) || '';
   const provider = AI_PROVIDERS.find(p => p.id === providerId) || AI_PROVIDERS[0];
