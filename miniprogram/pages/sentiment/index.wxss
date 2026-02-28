@@ -1,3 +1,351 @@
+/* ====== 总览信号卡 ====== */
+.summary-card { padding-bottom: 20rpx; }
+.summary-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16rpx;
+}
+.signal-box {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+  padding: 12rpx 24rpx;
+  border-radius: 16rpx;
+}
+.signal-box.buy    { background: rgba(239,68,68,0.12); }
+.signal-box.hold   { background: rgba(234,179,8,0.12); }
+.signal-box.defensive { background: rgba(249,115,22,0.12); }
+.signal-box.sell   { background: rgba(220,38,38,0.12); }
+.signal-box.wait   { background: rgba(148,163,184,0.12); }
+.signal-icon { font-size: 40rpx; }
+.signal-text { font-size: 28rpx; font-weight: 700; color: #e0e0e0; }
+
+.temp-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 10rpx 20rpx;
+  border-radius: 14rpx;
+}
+.temp-box.overheat { background: rgba(239,68,68,0.15); }
+.temp-box.hot      { background: rgba(249,115,22,0.12); }
+.temp-box.warm     { background: rgba(234,179,8,0.10); }
+.temp-box.neutral  { background: rgba(148,163,184,0.10); }
+.temp-box.cold     { background: rgba(59,130,246,0.12); }
+.temp-val { font-size: 36rpx; font-weight: 800; color: #fff; }
+.temp-label { font-size: 22rpx; color: #b0b4c8; }
+
+.radar-summary {
+  font-size: 26rpx;
+  color: #f59e0b;
+  line-height: 1.6;
+  margin-bottom: 12rpx;
+}
+
+.hot-assets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10rpx;
+  margin-bottom: 14rpx;
+}
+.asset-pill {
+  display: inline-block;
+  padding: 6rpx 16rpx;
+  font-size: 22rpx;
+  font-weight: 600;
+  color: #fbbf24;
+  background: rgba(251,191,36,0.10);
+  border: 1rpx solid rgba(251,191,36,0.25);
+  border-radius: 999rpx;
+}
+
+/* 指标条 */
+.gauge-row {
+  display: flex;
+  gap: 16rpx;
+  margin-bottom: 14rpx;
+}
+.gauge-item {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+}
+.gauge-label { font-size: 22rpx; color: #8b8fa3; width: 60rpx; }
+.gauge-bar-bg {
+  flex: 1;
+  height: 14rpx;
+  background: rgba(255,255,255,0.06);
+  border-radius: 8rpx;
+  overflow: hidden;
+}
+.gauge-bar {
+  height: 100%;
+  border-radius: 8rpx;
+  transition: width 0.5s ease;
+}
+.gauge-bar.fomo   { background: linear-gradient(90deg, #f59e0b, #ef4444); }
+.gauge-bar.panic  { background: linear-gradient(90deg, #22c55e, #3b82f6); }
+.gauge-bar.diverge { background: linear-gradient(90deg, #a855f7, #6366f1); }
+.gauge-val { font-size: 22rpx; color: #e0e0e0; width: 50rpx; text-align: right; }
+
+.summary-meta {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  margin-top: 8rpx;
+}
+
+/* ====== 数据源统计条 ====== */
+.src-bar {
+  display: flex;
+  white-space: nowrap;
+  padding: 12rpx 0;
+  margin-bottom: 16rpx;
+}
+.src-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6rpx;
+  padding: 8rpx 16rpx;
+  margin-right: 10rpx;
+  border-radius: 999rpx;
+  background: rgba(108,138,255,0.08);
+  border: 1rpx solid rgba(108,138,255,0.15);
+}
+.src-pill.total {
+  background: rgba(251,191,36,0.10);
+  border-color: rgba(251,191,36,0.25);
+}
+.src-name { font-size: 22rpx; color: #8b8fa3; }
+.src-count { font-size: 22rpx; color: #e0e0e0; font-weight: 700; }
+.src-pill.total .src-name { color: #fbbf24; }
+.src-pill.total .src-count { color: #fbbf24; }
+
+/* ====== 隔夜美股 ====== */
+.us-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12rpx;
+}
+.us-item {
+  display: flex;
+  flex-direction: column;
+  padding: 14rpx;
+  border-radius: 12rpx;
+  background: rgba(255,255,255,0.03);
+  border: 1rpx solid rgba(108,138,255,0.08);
+}
+.us-name { font-size: 24rpx; font-weight: 700; color: #e0e0e0; }
+.us-price { font-size: 22rpx; color: #b0b4c8; margin-top: 4rpx; }
+.us-pct { font-size: 24rpx; font-weight: 700; margin-top: 4rpx; }
+.us-amp { font-size: 20rpx; color: #64748b; margin-top: 2rpx; }
+
+/* ====== KOL vs 散户 ====== */
+.kol-card {
+  padding: 18rpx;
+  margin-bottom: 16rpx;
+  border-radius: 14rpx;
+  background: rgba(255,255,255,0.03);
+  border-left: 6rpx solid #64748b;
+}
+.kol-card.fomo    { border-left-color: #ef4444; background: rgba(239,68,68,0.04); }
+.kol-card.panic   { border-left-color: #22c55e; background: rgba(34,197,94,0.04); }
+.kol-card.neutral { border-left-color: #64748b; }
+
+.kol-target {
+  font-size: 28rpx;
+  font-weight: 700;
+  color: #e0e0e0;
+  margin-bottom: 12rpx;
+  display: block;
+}
+.kol-section {
+  margin-bottom: 10rpx;
+}
+.kol-section.conclusion {
+  padding-top: 10rpx;
+  border-top: 1rpx solid rgba(108,138,255,0.08);
+}
+.kol-label {
+  font-size: 24rpx;
+  font-weight: 600;
+  color: #8b8fa3;
+  display: block;
+  margin-bottom: 4rpx;
+}
+.kol-body {
+  font-size: 24rpx;
+  color: #b0b4c8;
+  line-height: 1.7;
+  display: block;
+}
+
+/* ====== 热度雷达 ====== */
+.heatbar-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14rpx;
+}
+.heatbar-row {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+}
+.heatbar-kw {
+  width: 120rpx;
+  font-size: 24rpx;
+  font-weight: 600;
+  color: #e0e0e0;
+}
+.heatbar-track {
+  flex: 1;
+  height: 20rpx;
+  background: rgba(255,255,255,0.05);
+  border-radius: 10rpx;
+  overflow: hidden;
+}
+.heatbar-fill {
+  height: 100%;
+  border-radius: 10rpx;
+  transition: width 0.6s ease;
+}
+.heatbar-fill.heat-top    { background: linear-gradient(90deg, #ef4444, #f87171); }
+.heatbar-fill.heat-normal { background: linear-gradient(90deg, #6366f1, #818cf8); }
+.heatbar-val {
+  width: 80rpx;
+  text-align: right;
+  font-size: 22rpx;
+  color: #b0b4c8;
+  font-weight: 600;
+}
+
+/* ====== 操作指南 ====== */
+.action-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12rpx;
+  margin-bottom: 18rpx;
+}
+.action-item {
+  padding: 14rpx;
+  border-radius: 12rpx;
+  border-left: 5rpx solid #64748b;
+  background: rgba(255,255,255,0.03);
+}
+.action-item.bullish {
+  border-left-color: #ef4444;
+  background: rgba(239,68,68,0.05);
+}
+.action-item.bearish {
+  border-left-color: #22c55e;
+  background: rgba(34,197,94,0.05);
+}
+.action-item.neutral {
+  border-left-color: #64748b;
+}
+.action-label {
+  font-size: 24rpx;
+  font-weight: 700;
+  color: #e0e0e0;
+  display: block;
+  margin-bottom: 6rpx;
+}
+.action-advice {
+  font-size: 22rpx;
+  color: #b0b4c8;
+  line-height: 1.6;
+  display: block;
+}
+
+.action-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 14rpx;
+}
+.summary-line {
+  display: flex;
+  align-items: flex-start;
+  gap: 12rpx;
+  padding: 14rpx;
+  border-radius: 12rpx;
+}
+.summary-line.bullish  { background: rgba(239,68,68,0.06); }
+.summary-line.bearish  { background: rgba(34,197,94,0.06); }
+.summary-line.tactical { background: rgba(59,130,246,0.06); }
+.summary-icon { font-size: 32rpx; flex-shrink: 0; }
+.summary-content { flex: 1; }
+.summary-head { font-size: 24rpx; font-weight: 700; color: #e0e0e0; display: block; }
+.summary-body { font-size: 22rpx; color: #b0b4c8; line-height: 1.6; display: block; margin-top: 4rpx; }
+
+/* ====== 原始数据流 ====== */
+.video-row {
+  padding: 14rpx 0;
+  border-bottom: 1rpx solid rgba(108,138,255,0.06);
+}
+.video-row.noise { opacity: 0.5; }
+.video-main {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+.video-title { font-size: 24rpx; color: #e0e0e0; flex: 1; line-height: 1.5; }
+.video-row.noise .video-title { text-decoration: line-through; }
+.video-likes { font-size: 22rpx; color: #f59e0b; flex-shrink: 0; margin-left: 12rpx; }
+.video-meta {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+  margin-top: 6rpx;
+}
+.sent-badge {
+  display: inline-block;
+  padding: 4rpx 12rpx;
+  border-radius: 999rpx;
+  font-size: 20rpx;
+  font-weight: 600;
+}
+.sent-badge.pos { color: #ef4444; background: rgba(239,68,68,0.12); }
+.sent-badge.neg { color: #22c55e; background: rgba(34,197,94,0.12); }
+.sent-badge.neu { color: #8b8fa3; background: rgba(148,163,184,0.10); }
+.video-platform { font-size: 20rpx; color: #64748b; }
+.noise-tag {
+  display: inline-block;
+  padding: 2rpx 10rpx;
+  border-radius: 6rpx;
+  font-size: 18rpx;
+  color: #f59e0b;
+  background: rgba(245,158,11,0.12);
+}
+
+/* ====== AI 报告 ====== */
+.ai-report {
+  max-height: 800rpx;
+  overflow-y: auto;
+}
+.ai-report-text {
+  font-size: 24rpx;
+  color: #b0b4c8;
+  line-height: 1.8;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+/* ====== 折叠控制 ====== */
+.toggle-icon {
+  font-size: 22rpx;
+  color: #64748b;
+  margin-left: auto;
+  padding-left: 12rpx;
+}
+
+/* ====== Footer ====== */
+.footer {
+  text-align: center;
+  padding: 30rpx 20rpx;
+}
+
 /* ====== 热力图 ====== */
 .heat-list {
   display: flex;

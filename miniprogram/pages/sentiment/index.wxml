@@ -1,20 +1,170 @@
 <view class="container">
 
-  <!-- ====== Header ====== -->
-  <view class="card">
-    <view class="card-header">
-      <text class="title">📡 舆情分析</text>
-      <text class="chip {{sourceLabel === '远程数据' ? 'blue' : 'gray'}}">{{sourceLabel}}</text>
-    </view>
-    <text class="sub">更新：{{updatedAt}}</text>
+  <!-- ====== Loading ====== -->
+  <view wx:if="{{loading}}" class="loading-wrap">
+    <view class="loading-dot"></view>
+    <text class="sub" style="margin-top:16rpx;">正在加载舆情数据...</text>
   </view>
 
-  <!-- ====== 板块热力图 ====== -->
-  <view class="card" wx:if="{{heatmap.length > 0}}">
-    <view class="card-header">
-      <text class="title">🌡️ 板块热力图</text>
+  <!-- ====== 总览信号卡 ====== -->
+  <view class="card summary-card" wx:if="{{!loading}}">
+    <view class="summary-top">
+      <view class="signal-box {{signalClass}}">
+        <text class="signal-icon">{{signalIcon}}</text>
+        <text class="signal-text">{{signalText}}</text>
+      </view>
+      <view class="temp-box {{tempClass}}">
+        <text class="temp-val">{{marketTemp}}</text>
+        <text class="temp-label">{{tempLabel}}</text>
+      </view>
     </view>
-    <view class="heat-list">
+    <text class="radar-summary" wx:if="{{radarSummary !== '--'}}">🚨 {{radarSummary}}</text>
+    <!-- 热门资产 -->
+    <view class="hot-assets" wx:if="{{hotAssets.length > 0}}">
+      <text class="asset-pill" wx:for="{{hotAssets}}" wx:key="name">🔥 {{item.name}}</text>
+    </view>
+    <!-- 指标条 -->
+    <view class="gauge-row" wx:if="{{fomoLevel > 0 || panicLevel > 0}}">
+      <view class="gauge-item">
+        <text class="gauge-label">FOMO</text>
+        <view class="gauge-bar-bg"><view class="gauge-bar fomo" style="width:{{fomoLevel}}%;"></view></view>
+        <text class="gauge-val">{{fomoLevel}}</text>
+      </view>
+      <view class="gauge-item">
+        <text class="gauge-label">恐慌</text>
+        <view class="gauge-bar-bg"><view class="gauge-bar panic" style="width:{{panicLevel}}%;"></view></view>
+        <text class="gauge-val">{{panicLevel}}</text>
+      </view>
+      <view class="gauge-item">
+        <text class="gauge-label">分歧</text>
+        <view class="gauge-bar-bg"><view class="gauge-bar diverge" style="width:{{divergenceIndex}}%;"></view></view>
+        <text class="gauge-val">{{divergenceIndex}}</text>
+      </view>
+    </view>
+    <view class="summary-meta">
+      <text class="chip {{sourceLabel === '远程分析' ? 'blue' : 'gray'}}">{{sourceLabel}}</text>
+      <text class="sub">更新：{{updatedAt}}</text>
+    </view>
+  </view>
+
+  <!-- ====== 数据源统计 ====== -->
+  <scroll-view class="src-bar" scroll-x enable-flex wx:if="{{sourcePills.length > 0}}">
+    <view class="src-pill" wx:for="{{sourcePills}}" wx:key="name">
+      <text class="src-name">{{item.short}}</text>
+      <text class="src-count">{{item.count}}</text>
+    </view>
+    <view class="src-pill total">
+      <text class="src-name">合计</text>
+      <text class="src-count">{{totalItems}}</text>
+    </view>
+  </scroll-view>
+
+  <!-- ====== 隔夜美股 ====== -->
+  <view class="card" wx:if="{{usStocks.length > 0}}">
+    <view class="card-header" bindtap="toggleSection" data-key="secUsMarket">
+      <text class="title">🇺🇸 隔夜美股行情</text>
+      <text class="toggle-icon">{{secUsMarket ? '▼' : '▶'}}</text>
+    </view>
+    <view class="us-grid" wx:if="{{secUsMarket}}">
+      <view class="us-item" wx:for="{{usStocks}}" wx:key="symbol">
+        <text class="us-name">{{item.name}}</text>
+        <text class="us-price">{{item.price}}</text>
+        <text class="us-pct {{item.pctClass}}">{{item.pctStr}}</text>
+        <text class="us-amp">振幅 {{item.amplitude}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- ====== KOL vs 散户 博弈拆解 ====== -->
+  <view class="card" wx:if="{{kolSections.length > 0}}">
+    <view class="card-header" bindtap="toggleSection" data-key="secKol">
+      <text class="title">⚖️ KOL vs 散户 博弈拆解</text>
+      <text class="toggle-icon">{{secKol ? '▼' : '▶'}}</text>
+    </view>
+    <view wx:if="{{secKol}}">
+      <view class="kol-card {{item.divClass}}" wx:for="{{kolSections}}" wx:key="target">
+        <text class="kol-target">🎯 {{item.target}}</text>
+        <view class="kol-section">
+          <text class="kol-label">🎙️ KOL观点</text>
+          <text class="kol-body">{{item.kol}}</text>
+        </view>
+        <view class="kol-section">
+          <text class="kol-label">🐑 散户情绪</text>
+          <text class="kol-body">{{item.retail}}</text>
+        </view>
+        <view class="kol-section conclusion">
+          <text class="kol-label">⚡ 预期差结论</text>
+          <text class="kol-body">{{item.conclusion}}</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- ====== 热度雷达 ====== -->
+  <view class="card" wx:if="{{heatbars.length > 0}}">
+    <view class="card-header" bindtap="toggleSection" data-key="secHeatbar">
+      <text class="title">📊 热度雷达</text>
+      <text class="toggle-icon">{{secHeatbar ? '▼' : '▶'}}</text>
+    </view>
+    <view class="heatbar-list" wx:if="{{secHeatbar}}">
+      <view class="heatbar-row" wx:for="{{heatbars}}" wx:key="keyword">
+        <text class="heatbar-kw">{{item.keyword}}</text>
+        <view class="heatbar-track">
+          <view class="heatbar-fill {{item.barClass}}" style="width:{{item.barWidth}}%;"></view>
+        </view>
+        <text class="heatbar-val">{{item.heatStr}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- ====== 极简操作指南 ====== -->
+  <view class="card" wx:if="{{holdingActions.length > 0}}">
+    <view class="card-header" bindtap="toggleSection" data-key="secAction">
+      <text class="title">💡 极简操作指南</text>
+      <text class="toggle-icon">{{secAction ? '▼' : '▶'}}</text>
+    </view>
+    <view wx:if="{{secAction}}">
+      <!-- 持仓操作 -->
+      <view class="action-grid">
+        <view class="action-item {{item.actClass}}" wx:for="{{holdingActions}}" wx:key="label">
+          <text class="action-label">{{item.label}}</text>
+          <text class="action-advice">{{item.advice}}</text>
+        </view>
+      </view>
+      <!-- 综合建议 -->
+      <view class="action-summary">
+        <view class="summary-line bullish" wx:if="{{bullish !== '--'}}">
+          <text class="summary-icon">✅</text>
+          <view class="summary-content">
+            <text class="summary-head">胜率较高的方向</text>
+            <text class="summary-body">{{bullish}}</text>
+          </view>
+        </view>
+        <view class="summary-line bearish" wx:if="{{bearish !== '--'}}">
+          <text class="summary-icon">❌</text>
+          <view class="summary-content">
+            <text class="summary-head">必须回避的绞肉机</text>
+            <text class="summary-body">{{bearish}}</text>
+          </view>
+        </view>
+        <view class="summary-line tactical" wx:if="{{tactical !== '--'}}">
+          <text class="summary-icon">⏱️</text>
+          <view class="summary-content">
+            <text class="summary-head">战术纪律</text>
+            <text class="summary-body">{{tactical}}</text>
+          </view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- ====== 板块热力图 (原有) ====== -->
+  <view class="card" wx:if="{{heatmap.length > 0}}">
+    <view class="card-header" bindtap="toggleSection" data-key="secHeatmap">
+      <text class="title">🌡️ 板块热力图</text>
+      <text class="toggle-icon">{{secHeatmap ? '▼' : '▶'}}</text>
+    </view>
+    <view class="heat-list" wx:if="{{secHeatmap}}">
       <view class="heat-row" wx:for="{{heatmap}}" wx:key="tag">
         <view class="heat-info">
           <text class="heat-tag">{{item.tag}}</text>
@@ -30,7 +180,7 @@
     </view>
   </view>
 
-  <!-- ====== 市场展望 ====== -->
+  <!-- ====== 市场展望 (原有) ====== -->
   <view class="card" wx:if="{{outlook}}">
     <view class="card-header">
       <text class="title">🔮 市场展望</text>
@@ -41,8 +191,41 @@
     <text class="outlook-text">{{outlook.summary || outlook.narrative || '--'}}</text>
   </view>
 
-  <!-- ====== 筛选条 ====== -->
-  <scroll-view class="filter-scroll" scroll-x enable-flex>
+  <!-- ====== 原始数据流 ====== -->
+  <view class="card" wx:if="{{videoItems.length > 0}}">
+    <view class="card-header" bindtap="toggleSection" data-key="secVideos">
+      <text class="title">📱 原始数据流</text>
+      <text class="sub">{{videoItems.length}} 条</text>
+      <text class="toggle-icon">{{secVideos ? '▼' : '▶'}}</text>
+    </view>
+    <view wx:if="{{secVideos}}">
+      <view class="video-row {{item.isNoise ? 'noise' : ''}}" wx:for="{{videoItems}}" wx:key="index">
+        <view class="video-main">
+          <text class="video-title">{{item.title}}</text>
+          <text class="video-likes">{{item.likes}}</text>
+        </view>
+        <view class="video-meta">
+          <text class="sent-badge {{item.sentClass}}">{{item.sentiment}}</text>
+          <text class="video-platform">{{item.platform}}</text>
+          <text class="noise-tag" wx:if="{{item.isNoise}}">噪音</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- ====== AI 完整报告 ====== -->
+  <view class="card" wx:if="{{aiReport}}">
+    <view class="card-header" bindtap="toggleSection" data-key="secReport">
+      <text class="title">🤖 AI 完整报告</text>
+      <text class="toggle-icon">{{secReport ? '▼' : '▶'}}</text>
+    </view>
+    <view class="ai-report" wx:if="{{secReport}}">
+      <text class="ai-report-text">{{aiReport}}</text>
+    </view>
+  </view>
+
+  <!-- ====== 筛选条 (事件) ====== -->
+  <scroll-view class="filter-scroll" scroll-x enable-flex wx:if="{{events.length > 0}}">
     <view class="filter-chip {{activeFilter === item.key ? 'active' : ''}}"
           wx:for="{{filters}}" wx:key="key"
           data-key="{{item.key}}" bindtap="onFilterTap">
@@ -50,42 +233,47 @@
     </view>
   </scroll-view>
 
-  <!-- ====== 事件列表 ====== -->
+  <!-- ====== 事件列表 (原有) ====== -->
   <view class="card" wx:if="{{events.length > 0}}">
-    <view class="card-header">
+    <view class="card-header" bindtap="toggleSection" data-key="secEvents">
       <text class="title">📰 市场事件</text>
       <text class="sub">共 {{events.length}} 条</text>
+      <text class="toggle-icon">{{secEvents ? '▼' : '▶'}}</text>
     </view>
-    <block wx:for="{{events}}" wx:key="id">
-      <view class="evt-item" wx:if="{{activeFilter === 'all' || (activeFilter === 'positive' && item.impact > 0) || (activeFilter === 'negative' && item.impact < 0) || item.category === activeFilter}}">
-        <view class="row">
-          <text class="evt-title">{{item.title}}</text>
-          <text class="chip {{item.impactClass}}">{{item.impactStr}}</text>
+    <view wx:if="{{secEvents}}">
+      <block wx:for="{{events}}" wx:key="id">
+        <view class="evt-item" wx:if="{{activeFilter === 'all' || (activeFilter === 'positive' && item.impact > 0) || (activeFilter === 'negative' && item.impact < 0) || item.category === activeFilter}}">
+          <view class="row">
+            <text class="evt-title">{{item.title}}</text>
+            <text class="chip {{item.impactClass}}">{{item.impactStr}}</text>
+          </view>
+          <view class="evt-meta">
+            <text class="chip gray" style="margin-right:8rpx;">{{item.category}}</text>
+            <text class="sub">情绪: {{item.sentimentLabel}}</text>
+          </view>
+          <text class="sub" wx:if="{{item.reason}}" style="margin-top:6rpx;">{{item.reason}}</text>
+          <view class="evt-sectors" wx:if="{{item.sectorsPos !== '--'}}">
+            <text class="sub pct-up">利好：{{item.sectorsPos}}</text>
+          </view>
+          <view class="evt-sectors" wx:if="{{item.sectorsNeg !== '--'}}">
+            <text class="sub pct-down">利空：{{item.sectorsNeg}}</text>
+          </view>
+          <text class="sub" wx:if="{{item.advice}}" style="margin-top:6rpx;color:#6c8aff;">💡 {{item.advice}}</text>
         </view>
-        <view class="evt-meta">
-          <text class="chip gray" style="margin-right:8rpx;">{{item.category}}</text>
-          <text class="sub">情绪: {{item.sentimentLabel}}</text>
-        </view>
-        <text class="sub" wx:if="{{item.reason}}" style="margin-top:6rpx;">{{item.reason}}</text>
-        <view class="evt-sectors" wx:if="{{item.sectorsPos !== '--'}}">
-          <text class="sub pct-up">利好：{{item.sectorsPos}}</text>
-        </view>
-        <view class="evt-sectors" wx:if="{{item.sectorsNeg !== '--'}}">
-          <text class="sub pct-down">利空：{{item.sectorsNeg}}</text>
-        </view>
-        <text class="sub" wx:if="{{item.advice}}" style="margin-top:6rpx;color:#6c8aff;">💡 {{item.advice}}</text>
-      </view>
-    </block>
+      </block>
+    </view>
   </view>
 
-  <view wx:if="{{events.length === 0 && !loading}}" class="empty-state">
+  <!-- ====== 空状态 ====== -->
+  <view wx:if="{{!loading && events.length === 0 && kolSections.length === 0}}" class="empty-state">
     <text class="empty-icon">📭</text>
-    <text class="sub">暂无事件数据</text>
+    <text class="sub">暂无舆情数据</text>
   </view>
 
-  <view wx:if="{{loading}}" class="loading-wrap">
-    <view class="loading-dot"></view>
-    <text class="sub" style="margin-top:16rpx;">加载中...</text>
+  <!-- ====== Footer ====== -->
+  <view class="footer" wx:if="{{!loading}}">
+    <text class="sub">数据来源：抖音/微博/东财/知乎/百度/B站/小红书 + AI分析</text>
+    <text class="sub" style="margin-top:6rpx;">⚠️ 本分析不构成投资建议</text>
   </view>
 
 </view>

@@ -262,4 +262,76 @@ module.exports = {
   fetchFundHistory,
   fetchMultiFundHistory,
   fetchCommodities,
+  fetchSentimentData,
+  fetchAnalysisData,
+  fetchUSMarketData,
 };
+
+/**
+ * 获取舆情采集数据 (sentiment_cache.json)
+ * 返回 { items[], source_counts{}, total, fetch_time }
+ */
+function fetchSentimentData(settings) {
+  const base = String((settings && settings.apiBase) || '').replace(/\/$/, '');
+  const url = `${base}/data/sentiment_cache.json?_t=${Date.now()}`;
+  return new Promise((resolve) => {
+    wx.request({
+      url,
+      timeout: 12000,
+      success(res) {
+        if (res.statusCode >= 200 && res.statusCode < 300 && res.data && Array.isArray(res.data.items)) {
+          resolve(res.data);
+        } else {
+          resolve(null);
+        }
+      },
+      fail() { resolve(null); }
+    });
+  });
+}
+
+/**
+ * 获取 AI 分析结果 (analysis_cache.json)
+ * 返回 { raw_text, dashboard, radar_summary, kol_sections[], actions, analysis_time }
+ */
+function fetchAnalysisData(settings) {
+  const base = String((settings && settings.apiBase) || '').replace(/\/$/, '');
+  const url = `${base}/data/analysis_cache.json?_t=${Date.now()}`;
+  return new Promise((resolve) => {
+    wx.request({
+      url,
+      timeout: 12000,
+      success(res) {
+        if (res.statusCode >= 200 && res.statusCode < 300 && res.data && res.data.raw_text) {
+          resolve(res.data);
+        } else {
+          resolve(null);
+        }
+      },
+      fail() { resolve(null); }
+    });
+  });
+}
+
+/**
+ * 获取隔夜美股行情 (us_market_cache.json)
+ * 返回 { stocks[], fetch_time }
+ */
+function fetchUSMarketData(settings) {
+  const base = String((settings && settings.apiBase) || '').replace(/\/$/, '');
+  const url = `${base}/data/us_market_cache.json?_t=${Date.now()}`;
+  return new Promise((resolve) => {
+    wx.request({
+      url,
+      timeout: 10000,
+      success(res) {
+        if (res.statusCode >= 200 && res.statusCode < 300 && res.data && Array.isArray(res.data.stocks)) {
+          resolve(res.data);
+        } else {
+          resolve(null);
+        }
+      },
+      fail() { resolve(null); }
+    });
+  });
+}
