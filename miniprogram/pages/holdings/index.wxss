@@ -1,6 +1,6 @@
 /* ====== 持仓条目 ====== */
 .h-item {
-  border-top: 1rpx solid rgba(108,138,255,0.08);
+  border-top: 1rpx solid var(--border-subtle);
   padding: 16rpx 0;
 }
 
@@ -25,7 +25,7 @@
 .h-name {
   font-size: 28rpx;
   font-weight: 700;
-  color: #e0e0e0;
+  color: var(--text);
 }
 
 .h-pct {
@@ -54,7 +54,7 @@
 
 .toggle-arrow {
   font-size: 22rpx;
-  color: #888;
+  color: var(--text-muted);
 }
 
 .sec-sub-header {
@@ -64,17 +64,17 @@
 .loading-tip {
   text-align: center;
   padding: 40rpx 0;
-  color: #888;
+  color: var(--text-muted);
   font-size: 26rpx;
 }
 
 /* ====== 波段组合 ====== */
 .swing-card {
-  background: rgba(30,34,55,0.6);
+  background: var(--elevated);
   border-radius: 16rpx;
   padding: 20rpx;
   margin-bottom: 16rpx;
-  border-left: 6rpx solid #888;
+  border-left: 6rpx solid var(--text-muted);
 }
 
 .swing-card.swing-buy {
@@ -106,7 +106,7 @@
 .swing-name {
   font-size: 28rpx;
   font-weight: 700;
-  color: #e0e0e0;
+  color: var(--text);
   display: block;
 }
 
@@ -147,19 +147,19 @@
 
 .sg-label {
   font-size: 20rpx;
-  color: #888;
+  color: var(--text-muted);
 }
 
 .sg-val {
   font-size: 26rpx;
   font-weight: 600;
-  color: #e0e0e0;
+  color: var(--text);
 }
 
 .swing-advice {
   margin-top: 12rpx;
   padding-top: 12rpx;
-  border-top: 1rpx solid rgba(108,138,255,0.08);
+  border-top: 1rpx solid var(--border-subtle);
 }
 
 .swing-nodata {
@@ -186,7 +186,7 @@
 
 /* 统计卡片 */
 .pred-stats-card {
-  background: rgba(30,34,55,0.6);
+  background: var(--elevated);
   border-radius: 16rpx;
   padding: 20rpx;
   margin-bottom: 16rpx;
@@ -207,7 +207,7 @@
 .ps-val {
   font-size: 28rpx;
   font-weight: 700;
-  color: #e0e0e0;
+  color: var(--text);
 }
 
 .ps-val.big {
@@ -216,7 +216,7 @@
 
 .ps-label {
   font-size: 20rpx;
-  color: #888;
+  color: var(--text-muted);
   margin-top: 4rpx;
 }
 
@@ -227,7 +227,7 @@
 
 .pred-bar {
   height: 12rpx;
-  background: rgba(108,138,255,0.12);
+  background: var(--accent-bg);
   border-radius: 6rpx;
   overflow: hidden;
 }
@@ -241,7 +241,7 @@
 
 /* 最近验证 */
 .pred-latest {
-  background: rgba(30,34,55,0.6);
+  background: var(--elevated);
   border-radius: 16rpx;
   padding: 20rpx;
   margin-bottom: 16rpx;
@@ -281,7 +281,7 @@
   justify-content: space-between;
   align-items: center;
   padding: 10rpx 0;
-  border-top: 1rpx solid rgba(108,138,255,0.06);
+  border-top: 1rpx solid var(--border-faint);
 }
 
 .pred-result-item:first-child {
@@ -300,7 +300,7 @@
 
 .pr-name {
   font-size: 24rpx;
-  color: #e0e0e0;
+  color: var(--text);
 }
 
 .pr-right {
@@ -309,7 +309,7 @@
 
 .pr-pred {
   font-size: 22rpx;
-  color: #888;
+  color: var(--text-muted);
   display: block;
 }
 
@@ -326,7 +326,7 @@
 .sub-title {
   font-size: 26rpx;
   font-weight: 600;
-  color: #c0c0c0;
+  color: var(--text-label);
   display: block;
   margin-bottom: 12rpx;
 }
@@ -336,7 +336,7 @@
   justify-content: space-between;
   align-items: center;
   padding: 12rpx 0;
-  border-top: 1rpx solid rgba(108,138,255,0.06);
+  border-top: 1rpx solid var(--border-faint);
 }
 
 .ph-item:first-child {
@@ -350,7 +350,7 @@
 
 .ph-date {
   font-size: 26rpx;
-  color: #e0e0e0;
+  color: var(--text);
   font-weight: 600;
 }
 
@@ -364,7 +364,7 @@
 }
 
 .ph-acc.pending {
-  color: #888;
+  color: var(--text-muted);
 }
 
 /* ====== 操作按钮 ====== */
@@ -382,7 +382,7 @@
 
 /* ====== 添加面板 ====== */
 .add-panel {
-  border: 1rpx solid rgba(108,138,255,0.2);
+  border: 1rpx solid var(--border-accent);
 }
 
 .form-item {

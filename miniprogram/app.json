@@ -5,18 +5,20 @@
     "pages/holdings/index",
     "pages/settings/index"
   ],
+  "darkmode": true,
+  "themeLocation": "theme.json",
   "window": {
     "navigationBarTitleText": "基金决策助手",
-    "navigationBarBackgroundColor": "#1a1a2e",
-    "navigationBarTextStyle": "white",
-    "backgroundColor": "#0f0f1a",
+    "navigationBarBackgroundColor": "@navBgColor",
+    "navigationBarTextStyle": "@navTextStyle",
+    "backgroundColor": "@pageBgColor",
     "backgroundTextStyle": "dark"
   },
   "tabBar": {
-    "color": "#8b8fa3",
-    "selectedColor": "#6c8aff",
-    "borderStyle": "black",
-    "backgroundColor": "#1a1a2e",
+    "color": "@tabBarColor",
+    "selectedColor": "@tabBarSelectedColor",
+    "borderStyle": "@tabBarBorderStyle",
+    "backgroundColor": "@tabBarBgColor",
     "list": [
       {
         "pagePath": "pages/dashboard/index",

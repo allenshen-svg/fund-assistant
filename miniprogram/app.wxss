@@ -1,9 +1,77 @@
-/* ====== 全局暗色主题 ====== */
+/* ====== 主题变量 ====== */
 page {
-  background: #0f0f1a;
-  color: #e0e0e0;
+  /* ── 暗色主题（默认） ── */
+  --bg: #0f0f1a;
+  --surface: #1e1e38;
+  --surface-end: #1a1a2e;
+  --surface-alt: #252547;
+  --elevated: rgba(255,255,255,0.03);
+  --elevated-2: rgba(255,255,255,0.04);
+  --elevated-3: rgba(255,255,255,0.05);
+  --elevated-4: rgba(255,255,255,0.06);
+  --input-bg: rgba(255,255,255,0.05);
+  --accent-subtle: rgba(108,138,255,0.06);
+  --accent-bg: rgba(108,138,255,0.12);
+  --accent-bg-2: rgba(108,138,255,0.08);
+  --accent-bg-3: rgba(108,138,255,0.04);
+  --border: rgba(108,138,255,0.12);
+  --border-subtle: rgba(108,138,255,0.08);
+  --border-faint: rgba(108,138,255,0.06);
+  --border-accent: rgba(108,138,255,0.2);
+  --border-accent-light: rgba(108,138,255,0.1);
+  --border-accent-faint: rgba(108,138,255,0.15);
+  --text: #e0e0e0;
+  --text-strong: #fff;
+  --text-sub: #8b8fa3;
+  --text-body: #b0b4c8;
+  --text-medium: #c8cce0;
+  --text-label: #c0c0c0;
+  --text-muted: #888;
+  --text-dim: #666;
+  --text-faint: #64748b;
+  --accent: #6c8aff;
+  --card-shadow: none;
+
+  background: var(--bg);
+  color: var(--text);
   font-size: 28rpx;
   font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Helvetica Neue', sans-serif;
+}
+
+/* ── 亮色主题 ── */
+@media (prefers-color-scheme: light) {
+  page {
+    --bg: #f5f6fa;
+    --surface: #ffffff;
+    --surface-end: #f8f9fc;
+    --surface-alt: #f0f2f8;
+    --elevated: rgba(0,0,0,0.02);
+    --elevated-2: rgba(0,0,0,0.03);
+    --elevated-3: rgba(0,0,0,0.04);
+    --elevated-4: rgba(0,0,0,0.05);
+    --input-bg: rgba(0,0,0,0.04);
+    --accent-subtle: rgba(74,108,247,0.06);
+    --accent-bg: rgba(74,108,247,0.10);
+    --accent-bg-2: rgba(74,108,247,0.07);
+    --accent-bg-3: rgba(74,108,247,0.04);
+    --border: rgba(0,0,0,0.10);
+    --border-subtle: rgba(0,0,0,0.06);
+    --border-faint: rgba(0,0,0,0.04);
+    --border-accent: rgba(74,108,247,0.20);
+    --border-accent-light: rgba(0,0,0,0.08);
+    --border-accent-faint: rgba(0,0,0,0.06);
+    --text: #333333;
+    --text-strong: #1a1a2e;
+    --text-sub: #666666;
+    --text-body: #555555;
+    --text-medium: #444444;
+    --text-label: #555555;
+    --text-muted: #888888;
+    --text-dim: #999999;
+    --text-faint: #aaaaaa;
+    --accent: #4a6cf7;
+    --card-shadow: 0 2rpx 12rpx rgba(0,0,0,0.06);
+  }
 }
 
 .container {
@@ -13,11 +81,12 @@ page {
 
 /* ====== 卡片 ====== */
 .card {
-  background: linear-gradient(135deg, #1e1e38 0%, #1a1a2e 100%);
-  border: 1rpx solid rgba(108,138,255,0.12);
+  background: linear-gradient(135deg, var(--surface) 0%, var(--surface-end) 100%);
+  border: 1rpx solid var(--border);
   border-radius: 20rpx;
   padding: 24rpx;
   margin-bottom: 20rpx;
+  box-shadow: var(--card-shadow);
 }
 
 .card-header {
@@ -30,11 +99,11 @@ page {
 .title {
   font-size: 30rpx;
   font-weight: 700;
-  color: #fff;
+  color: var(--text-strong);
 }
 
 .sub {
-  color: #8b8fa3;
+  color: var(--text-sub);
   font-size: 24rpx;
 }
 
@@ -71,12 +140,12 @@ page {
 
 .chip.flat, .chip.gray {
   background: rgba(139,143,163,0.15);
-  color: #8b8fa3;
+  color: var(--text-sub);
 }
 
 .chip.blue {
   background: rgba(108,138,255,0.15);
-  color: #6c8aff;
+  color: var(--accent);
 }
 
 .chip.orange {
@@ -97,8 +166,8 @@ page {
 }
 
 .btn.ghost {
-  background: rgba(108,138,255,0.12);
-  color: #6c8aff;
+  background: var(--accent-bg);
+  color: var(--accent);
 }
 
 .btn.sm {
@@ -113,12 +182,12 @@ page {
 /* ====== 涨跌色 ====== */
 .pct-up { color: #f87171; }
 .pct-down { color: #4ade80; }
-.pct-flat { color: #8b8fa3; }
+.pct-flat { color: var(--text-sub); }
 
 /* ====== 分割线 ====== */
 .divider {
   height: 1rpx;
-  background: rgba(108,138,255,0.08);
+  background: var(--border-subtle);
   margin: 16rpx 0;
 }
 
@@ -135,7 +204,7 @@ page {
   width: 16rpx;
   height: 16rpx;
   border-radius: 50%;
-  background: #6c8aff;
+  background: var(--accent);
   animation: pulse 1.2s infinite;
 }
 
@@ -148,7 +217,7 @@ page {
 .empty-state {
   text-align: center;
   padding: 60rpx 0;
-  color: #8b8fa3;
+  color: var(--text-sub);
 }
 
 .empty-icon {
@@ -158,17 +227,17 @@ page {
 
 /* ====== 输入框 ====== */
 .input {
-  background: rgba(255,255,255,0.05);
-  border: 1rpx solid rgba(108,138,255,0.2);
+  background: var(--input-bg);
+  border: 1rpx solid var(--border-accent);
   border-radius: 12rpx;
   padding: 16rpx;
   font-size: 26rpx;
-  color: #e0e0e0;
+  color: var(--text);
 }
 
 .label {
   display: block;
-  color: #8b8fa3;
+  color: var(--text-sub);
   margin-bottom: 8rpx;
   font-size: 24rpx;
 }

@@ -6,7 +6,7 @@
 
 .stat-item {
   flex: 1;
-  background: rgba(255,255,255,0.03);
+  background: var(--elevated);
   border-radius: 12rpx;
   padding: 16rpx 12rpx;
   text-align: center;
@@ -16,7 +16,7 @@
   display: block;
   font-size: 32rpx;
   font-weight: 800;
-  color: #e0e0e0;
+  color: var(--text);
   margin-bottom: 4rpx;
 }
 
@@ -27,7 +27,7 @@
 
 .set-label {
   font-size: 28rpx;
-  color: #e0e0e0;
+  color: var(--text);
 }
 
 /* ====== 按钮行 ====== */
@@ -44,8 +44,8 @@
   padding: 12rpx 16rpx;
   border-radius: 10rpx;
   font-size: 24rpx;
-  background: rgba(108,138,255,0.08);
-  color: #8b8fa3;
+  background: var(--accent-bg-2);
+  color: var(--text-sub);
 }
 
 .status-bar.green {
@@ -61,7 +61,7 @@
 /* ====== 设置条目 ====== */
 .set-item {
   padding: 16rpx 0;
-  border-top: 1rpx solid rgba(108,138,255,0.08);
+  border-top: 1rpx solid var(--border-subtle);
 }
 
 .set-item:first-child {
@@ -85,7 +85,7 @@
 .ai-hint {
   margin-top: 16rpx;
   padding: 12rpx;
-  background: rgba(108,138,255,0.06);
+  background: var(--accent-subtle);
   border-radius: 8rpx;
 }
 
