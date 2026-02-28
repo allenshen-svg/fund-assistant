@@ -64,6 +64,33 @@ Page({
 
     // 加载预测追踪
     this._loadPredTracker();
+
+    // 自动快照：交易日 14:50~15:00 且今日未快照
+    this._tryAutoSnapshot();
+  },
+
+  _tryAutoSnapshot() {
+    const today = todayStr();
+    if (!isTradingDay(today)) return;
+    const now = new Date();
+    const hh = now.getHours();
+    const mm = now.getMinutes();
+    // 14:50 ~ 15:00
+    if (hh === 14 && mm >= 50) {
+      const tracker = wx.getStorageSync(PRED_KEY) || [];
+      if (!tracker.some(e => e.date === today)) {
+        wx.showModal({
+          title: '自动快照',
+          content: '当前为收盘前（14:50~15:00），是否自动记录今日预测快照？',
+          success: (res) => {
+            if (res.confirm) {
+              const t = wx.getStorageSync(PRED_KEY) || [];
+              this._doSnapshot(t, today);
+            }
+          },
+        });
+      }
+    }
   },
 
   toggleSection(e) {
