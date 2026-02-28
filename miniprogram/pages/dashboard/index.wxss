@@ -941,3 +941,316 @@
   background: var(--accent-bg-3);
   border-radius: 10rpx;
 }
+
+/* ====== AI 市场温度计 ====== */
+.ai-temp-bar {
+  margin-bottom: 16rpx;
+  padding: 8rpx 0;
+}
+
+.ai-temp-track {
+  position: relative;
+  height: 12rpx;
+  border-radius: 6rpx;
+  background: linear-gradient(90deg, #22c55e 0%, #fbbf24 50%, #ef4444 100%);
+  overflow: visible;
+}
+
+.ai-temp-fill {
+  height: 100%;
+  border-radius: 6rpx;
+}
+
+.ai-temp-dot {
+  position: absolute;
+  top: -6rpx;
+  width: 24rpx;
+  height: 24rpx;
+  border-radius: 50%;
+  background: #fff;
+  border: 4rpx solid var(--text-strong);
+  transform: translateX(-50%);
+  box-shadow: 0 2rpx 8rpx rgba(0,0,0,0.2);
+}
+
+.ai-temp-labels {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 8rpx;
+}
+
+.ai-temp-label {
+  font-size: 18rpx;
+  color: var(--text-sub);
+}
+
+/* ====== AI 未来展望 ====== */
+.ai-outlook-card {
+  background: linear-gradient(135deg, rgba(99,102,241,0.08), rgba(139,92,246,0.08));
+  border: 1rpx solid rgba(99,102,241,0.2);
+  border-radius: 12rpx;
+  padding: 16rpx;
+  margin-bottom: 12rpx;
+}
+
+.ai-outlook-title {
+  font-size: 24rpx;
+  font-weight: 700;
+  color: #6366f1;
+  display: block;
+  margin-bottom: 8rpx;
+}
+
+.ai-outlook-text {
+  font-size: 24rpx;
+  color: var(--text);
+  line-height: 1.7;
+}
+
+/* ====== AI 板块轮动 ====== */
+.ai-sector-card {
+  background: linear-gradient(135deg, rgba(251,146,60,0.06), rgba(245,158,11,0.06));
+  border: 1rpx solid rgba(251,146,60,0.2);
+  border-radius: 12rpx;
+  padding: 16rpx;
+  margin-bottom: 12rpx;
+}
+
+.ai-sector-title {
+  font-size: 24rpx;
+  font-weight: 700;
+  color: #f59e0b;
+  display: block;
+  margin-bottom: 8rpx;
+}
+
+.ai-sector-text {
+  font-size: 24rpx;
+  color: var(--text);
+  line-height: 1.7;
+}
+
+/* ====== AI 持仓分析信号 ====== */
+.ai-signals-header {
+  margin-top: 12rpx;
+  margin-bottom: 8rpx;
+}
+
+.ai-signals-title {
+  font-size: 26rpx;
+  font-weight: 700;
+  color: var(--text-strong);
+}
+
+.ai-sig-reason {
+  font-size: 24rpx;
+  color: var(--text-body);
+  display: block;
+  margin-top: 8rpx;
+  line-height: 1.5;
+}
+
+.ai-sig-detail {
+  margin-top: 12rpx;
+  padding-top: 12rpx;
+  border-top: 1rpx solid var(--border-subtle);
+}
+
+.ai-sig-analysis {
+  background: var(--elevated-2);
+  border-radius: 10rpx;
+  padding: 14rpx;
+  margin-bottom: 10rpx;
+}
+
+.ai-sig-analysis-text {
+  font-size: 24rpx;
+  color: var(--text);
+  line-height: 1.7;
+}
+
+.ai-sig-extra {
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+}
+
+.ai-sig-extra-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 6rpx 0;
+}
+
+.ai-sig-extra-key {
+  font-size: 22rpx;
+  color: var(--text-muted);
+  white-space: nowrap;
+  margin-right: 12rpx;
+  flex-shrink: 0;
+}
+
+.ai-sig-extra-val {
+  font-size: 22rpx;
+  color: var(--text);
+  text-align: right;
+  flex: 1;
+  line-height: 1.5;
+}
+
+.ai-sig-meta {
+  margin-top: 6rpx;
+  display: flex;
+  gap: 12rpx;
+}
+
+/* ====== AI 推荐基金 ====== */
+.ai-reco-hint {
+  padding: 4rpx 0 12rpx;
+}
+
+.ai-reco-card {
+  margin-bottom: 12rpx;
+  padding: 16rpx;
+  border-radius: 14rpx;
+  background: var(--elevated);
+  border: 1rpx solid var(--border-accent-light);
+  transition: all .2s;
+}
+
+.ai-reco-card.strong-buy {
+  border-left: 6rpx solid #ef4444;
+  background: linear-gradient(135deg, var(--elevated) 92%, rgba(239,68,68,0.06));
+}
+
+.ai-reco-card.buy {
+  border-left: 6rpx solid #f59e0b;
+  background: linear-gradient(135deg, var(--elevated) 92%, rgba(245,158,11,0.06));
+}
+
+.ai-reco-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.ai-reco-left {
+  flex: 1;
+}
+
+.ai-reco-name {
+  font-size: 28rpx;
+  font-weight: 700;
+  color: var(--text);
+  display: block;
+}
+
+.ai-reco-code {
+  font-size: 22rpx;
+  color: var(--text-sub);
+  margin-top: 4rpx;
+  display: block;
+}
+
+.ai-reco-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6rpx;
+}
+
+.ai-reco-badge {
+  font-size: 22rpx;
+  font-weight: 700;
+  padding: 4rpx 14rpx;
+  border-radius: 20rpx;
+}
+
+.ai-reco-badge.strong-buy {
+  background: rgba(239,68,68,0.15);
+  color: #ef4444;
+}
+
+.ai-reco-badge.buy {
+  background: rgba(245,158,11,0.15);
+  color: #f59e0b;
+}
+
+.ai-reco-conf {
+  font-size: 20rpx;
+  color: var(--text-sub);
+  font-weight: 600;
+}
+
+.ai-reco-reason {
+  font-size: 24rpx;
+  color: var(--text-body);
+  margin-top: 10rpx;
+  display: block;
+  line-height: 1.5;
+}
+
+.ai-reco-detail {
+  margin-top: 12rpx;
+  padding-top: 12rpx;
+  border-top: 1rpx solid var(--border-subtle);
+}
+
+.ai-reco-analysis {
+  background: var(--elevated-2);
+  border-radius: 10rpx;
+  padding: 14rpx;
+  margin-bottom: 10rpx;
+}
+
+.ai-reco-analysis-text {
+  font-size: 24rpx;
+  color: var(--text);
+  line-height: 1.7;
+}
+
+.ai-reco-extras {
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+}
+
+.ai-reco-extra-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 4rpx 0;
+}
+
+.ai-reco-extra-key {
+  font-size: 22rpx;
+  color: var(--text-muted);
+  white-space: nowrap;
+  margin-right: 12rpx;
+  flex-shrink: 0;
+}
+
+.ai-reco-extra-val {
+  font-size: 22rpx;
+  color: var(--text);
+  text-align: right;
+  flex: 1;
+  line-height: 1.5;
+}
+
+.ai-reco-actions {
+  display: flex;
+  align-items: center;
+  margin-top: 10rpx;
+  gap: 12rpx;
+}
+
+.ai-reco-add-btn {
+  background: linear-gradient(135deg, #1e293b, #334155);
+  color: #fff;
+  font-size: 22rpx;
+  font-weight: 600;
+  padding: 8rpx 20rpx;
+  border-radius: 10rpx;
+  flex-shrink: 0;
+}

@@ -391,7 +391,7 @@
     <view wx:if="{{showAI}}">
       <view class="ai-action-bar">
         <button class="btn {{aiLoading ? 'disabled' : ''}}" size="mini" bindtap="triggerAI" disabled="{{aiLoading}}">
-          {{aiLoading ? '⚙️ 分析中...' : '🚀 运行 AI 分析'}}
+          {{aiLoading ? '⚙️ 深度分析中...' : '🚀 运行 AI 深度分析'}}
         </button>
         <text class="sub" wx:if="{{aiTime}}">{{aiTime}}</text>
       </view>
@@ -401,36 +401,145 @@
       </view>
 
       <view wx:if="{{aiResult}}" class="ai-result">
+
+        <!-- 市场温度计 -->
+        <view class="ai-temp-bar">
+          <view class="ai-temp-track">
+            <view class="ai-temp-fill" style="width:{{aiMarketTemp}}%;"></view>
+            <view class="ai-temp-dot" style="left:{{aiMarketTemp}}%;"></view>
+          </view>
+          <view class="ai-temp-labels">
+            <text class="ai-temp-label">❄️ 恐慌</text>
+            <text class="ai-temp-label">⚖️ 中性</text>
+            <text class="ai-temp-label">🔥 贪婪</text>
+          </view>
+        </view>
+
         <!-- 市场总览 -->
         <view class="ai-market-bar">
           <text class="ai-market-text">{{aiResult.marketSummary}}</text>
           <text class="ai-risk-tag ai-risk-{{aiResult.riskClass}}">{{aiResult.riskLevel}}</text>
         </view>
 
-        <!-- 信号列表 -->
-        <view class="ai-signal" wx:for="{{aiResult.signals}}" wx:key="code">
+        <!-- 未来1个月展望 -->
+        <view wx:if="{{aiResult.marketOutlook}}" class="ai-outlook-card">
+          <text class="ai-outlook-title">🔮 未来1个月展望</text>
+          <text class="ai-outlook-text">{{aiResult.marketOutlook}}</text>
+        </view>
+
+        <!-- 板块轮动建议 -->
+        <view wx:if="{{aiResult.sectorRotation}}" class="ai-sector-card">
+          <text class="ai-sector-title">🔄 板块轮动</text>
+          <text class="ai-sector-text">{{aiResult.sectorRotation}}</text>
+        </view>
+
+        <!-- 持仓基金AI分析信号列表 -->
+        <view class="ai-signals-header">
+          <text class="ai-signals-title">📊 持仓AI分析</text>
+        </view>
+        <view class="ai-signal" wx:for="{{aiResult.signals}}" wx:key="code" data-idx="{{index}}" bindtap="toggleSignalDetail">
           <view class="ai-sig-top">
             <view class="ai-sig-left">
               <text class="ai-sig-name">{{item.name}}</text>
-              <text class="sub">{{item.code}}</text>
+              <text class="sub">{{item.code}} · 置信度 {{item.confidenceStr}}</text>
             </view>
             <view class="ai-sig-badge ai-sig-{{item.actionClass}}">
               <text>{{item.actionLabel}}</text>
             </view>
           </view>
-          <view class="ai-sig-bottom">
-            <text class="ai-sig-reason">{{item.reason}}</text>
-            <view class="ai-sig-meta">
-              <text class="sub">置信度 {{item.confidenceStr}}</text>
-              <text class="sub" wx:if="{{item.urgency}}">· {{item.urgency}}紧急</text>
+          <text class="ai-sig-reason">{{item.reason}}</text>
+          <!-- 展开详细分析 -->
+          <view wx:if="{{item.showDetail}}" class="ai-sig-detail">
+            <view class="ai-sig-analysis">
+              <text class="ai-sig-analysis-text">{{item.analysis}}</text>
+            </view>
+            <view class="ai-sig-extra">
+              <view class="ai-sig-extra-row" wx:if="{{item.targetReturn}}">
+                <text class="ai-sig-extra-key">📈 预期收益</text>
+                <text class="ai-sig-extra-val">{{item.targetReturn}}</text>
+              </view>
+              <view class="ai-sig-extra-row" wx:if="{{item.riskWarning}}">
+                <text class="ai-sig-extra-key">⚠️ 风险提示</text>
+                <text class="ai-sig-extra-val">{{item.riskWarning}}</text>
+              </view>
+              <view class="ai-sig-extra-row" wx:if="{{item.bestTiming}}">
+                <text class="ai-sig-extra-key">⏰ 最佳时机</text>
+                <text class="ai-sig-extra-val">{{item.bestTiming}}</text>
+              </view>
+              <view class="ai-sig-meta">
+                <text class="sub" wx:if="{{item.urgency}}">紧急度：{{item.urgency}}</text>
+              </view>
             </view>
           </view>
+          <text class="ag-expand-hint">{{item.showDetail ? '▲ 收起' : '▼ 展开详细分析'}}</text>
         </view>
 
         <!-- 总体建议 -->
         <view wx:if="{{aiResult.overallAdvice}}" class="ai-overall">
           <text class="ai-overall-label">📝 总体建议</text>
           <text class="ai-overall-text">{{aiResult.overallAdvice}}</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- ====== AI 推荐基金 ====== -->
+  <view class="card" wx:if="{{aiRecommendations.length > 0}}">
+    <view class="card-header sec-toggle" bindtap="toggleRecommendations">
+      <text class="title">🌟 AI 推荐基金</text>
+      <view class="row">
+        <text class="chip blue">{{aiRecommendations.length}}只</text>
+        <text class="toggle-arrow" style="margin-left:12rpx;">{{showRecommendations ? '▲' : '▼'}}</text>
+      </view>
+    </view>
+
+    <view wx:if="{{showRecommendations}}">
+      <view class="ai-reco-hint">
+        <text class="sub">基于大盘观测与未来1个月推断，AI从基金库中筛选</text>
+      </view>
+
+      <view class="ai-reco-card {{item.actionClass}}" wx:for="{{aiRecommendations}}" wx:key="code" data-idx="{{index}}">
+        <view class="ai-reco-top" bindtap="toggleRecoDetail" data-idx="{{index}}">
+          <view class="ai-reco-left">
+            <text class="ai-reco-name">{{item.name}}</text>
+            <text class="ai-reco-code">{{item.code}} · {{item.type}}</text>
+          </view>
+          <view class="ai-reco-right">
+            <text class="ai-reco-badge {{item.actionClass}}">{{item.actionLabel}}</text>
+            <text class="ai-reco-conf">{{item.confidenceStr}}</text>
+          </view>
+        </view>
+
+        <text class="ai-reco-reason">{{item.reason}}</text>
+
+        <!-- 展开详情 -->
+        <view wx:if="{{item.showDetail}}" class="ai-reco-detail">
+          <view class="ai-reco-analysis">
+            <text class="ai-reco-analysis-text">{{item.analysis}}</text>
+          </view>
+          <view class="ai-reco-extras">
+            <view class="ai-reco-extra-item" wx:if="{{item.expectedReturn}}">
+              <text class="ai-reco-extra-key">📈 预期收益</text>
+              <text class="ai-reco-extra-val">{{item.expectedReturn}}</text>
+            </view>
+            <view class="ai-reco-extra-item" wx:if="{{item.catalyst}}">
+              <text class="ai-reco-extra-key">🚀 催化剂</text>
+              <text class="ai-reco-extra-val">{{item.catalyst}}</text>
+            </view>
+            <view class="ai-reco-extra-item" wx:if="{{item.riskNote}}">
+              <text class="ai-reco-extra-key">⚠️ 风险</text>
+              <text class="ai-reco-extra-val">{{item.riskNote}}</text>
+            </view>
+          </view>
+        </view>
+
+        <view class="ai-reco-actions">
+          <text class="ag-expand-hint" style="flex:1;" bindtap="toggleRecoDetail" data-idx="{{index}}">
+            {{item.showDetail ? '▲ 收起' : '▼ 详细分析'}}
+          </text>
+          <view class="ai-reco-add-btn" bindtap="addRecoToHoldings" data-code="{{item.code}}" data-name="{{item.name}}" data-type="{{item.type}}">
+            <text>+ 加入持仓</text>
+          </view>
         </view>
       </view>
     </view>

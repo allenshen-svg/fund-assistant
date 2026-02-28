@@ -56,6 +56,13 @@ Page({
     aiResult: null,
     aiTime: '',
     aiHasKey: false,
+
+    // AI 推荐基金
+    showRecommendations: true,
+    aiRecommendations: [],
+    aiMarketOutlook: '',
+    aiSectorRotation: '',
+    aiMarketTemp: 50,
   },
 
   onLoad() {
@@ -271,9 +278,14 @@ Page({
     this.setData({ aiHasKey: !!cfg.key });
     const cached = getCachedAIResult();
     if (cached && cached.result) {
+      const formatted = this._formatAIResult(cached.result);
       this.setData({
-        aiResult: this._formatAIResult(cached.result),
+        aiResult: formatted,
         aiTime: (cached.timestamp || '').replace('T', ' ').slice(0, 16),
+        aiRecommendations: formatted.recommendations || [],
+        aiMarketOutlook: cached.result.marketOutlook || '',
+        aiSectorRotation: cached.result.sectorRotation || '',
+        aiMarketTemp: cached.result.marketTemperature || 50,
       });
     }
   },
@@ -297,7 +309,7 @@ Page({
     }
 
     this.setData({ aiLoading: true, showAI: true });
-    wx.showLoading({ title: 'AI 分析中...' });
+    wx.showLoading({ title: 'AI 深度分析中...' });
 
     try {
       const holdings = getHoldings();
@@ -307,17 +319,26 @@ Page({
         require('../../utils/api').fetchMultiFundHistory(codes),
       ]);
 
+      const app = getApp();
       const result = await runAIAnalysis({
         holdings,
         estimates,
         historyMap,
         indices: this.data.indices,
+        commodities: this.data.commodities,
+        heatmap: this.data.heatmap,
+        hotEvents: this.data.topEvents,
+        fundDB: app.globalData.FUND_DB,
       });
 
       this.setData({
         aiResult: this._formatAIResult(result),
         aiTime: new Date().toLocaleString(),
         aiLoading: false,
+        aiRecommendations: this._formatAIResult(result).recommendations || [],
+        aiMarketOutlook: result.marketOutlook || '',
+        aiSectorRotation: result.sectorRotation || '',
+        aiMarketTemp: result.marketTemperature || 50,
       });
       this._mergeAIIntoPlans();
       wx.hideLoading();
@@ -336,13 +357,26 @@ Page({
       actionLabel: s.action === 'buy' ? '🟢 买入' : s.action === 'sell' ? '🔴 卖出' : '🟡 持有',
       actionClass: s.action === 'buy' ? 'buy' : s.action === 'sell' ? 'sell' : 'hold',
       confidenceStr: (s.confidence || 0) + '%',
+      hasAnalysis: !!(s.analysis),
+      showDetail: false,
+    }));
+    const recommendations = (r.recommendations || []).map(rec => ({
+      ...rec,
+      actionLabel: rec.action === 'strong_buy' ? '🔥 强烈推荐' : '🟢 推荐买入',
+      actionClass: rec.action === 'strong_buy' ? 'strong-buy' : 'buy',
+      confidenceStr: (rec.confidence || 0) + '%',
+      showDetail: false,
     }));
     return {
       marketSummary: r.marketSummary || '',
+      marketOutlook: r.marketOutlook || '',
+      sectorRotation: r.sectorRotation || '',
+      marketTemperature: r.marketTemperature || 50,
       riskLevel: r.riskLevel || '中风险',
       riskClass: (r.riskLevel || '').includes('高') ? 'high' : (r.riskLevel || '').includes('低') ? 'low' : 'mid',
       overallAdvice: r.overallAdvice || '',
       signals,
+      recommendations,
     };
   },
 
@@ -415,5 +449,39 @@ Page({
       aiReason: sig.reason || '',
       aiUrgency: sig.urgency || '中',
     };
+  },
+
+  // 展开/收起AI推荐
+  toggleRecommendations() {
+    this.setData({ showRecommendations: !this.data.showRecommendations });
+  },
+
+  // 展开/收起AI信号详情
+  toggleSignalDetail(e) {
+    const idx = e.currentTarget.dataset.idx;
+    const key = `aiResult.signals[${idx}].showDetail`;
+    this.setData({ [key]: !this.data.aiResult.signals[idx].showDetail });
+  },
+
+  // 展开/收起推荐基金详情
+  toggleRecoDetail(e) {
+    const idx = e.currentTarget.dataset.idx;
+    const key = `aiRecommendations[${idx}].showDetail`;
+    this.setData({ [key]: !this.data.aiRecommendations[idx].showDetail });
+  },
+
+  // 添加推荐基金到持仓
+  addRecoToHoldings(e) {
+    const { code, name, type } = e.currentTarget.dataset;
+    const { getHoldings: getH, setHoldings } = require('../../utils/storage');
+    const holdings = getH();
+    if (holdings.find(h => h.code === code)) {
+      wx.showToast({ title: '已在持仓中', icon: 'none' });
+      return;
+    }
+    holdings.push({ code, name, type });
+    setHoldings(holdings);
+    wx.showToast({ title: '已添加到持仓', icon: 'success' });
+    this.loadAll();
   },
 });
