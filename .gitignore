@@ -7,3 +7,4 @@
 __pycache__/
 data/sentiment_cache.json
 data/analysis_cache.json
+miniprogram/project.private.config.json

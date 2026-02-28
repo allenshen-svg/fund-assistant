@@ -37,7 +37,7 @@
     }
   },
   "compileType": "miniprogram",
-  "libVersion": "3.6.4",
+  "libVersion": "2.30.4",
   "appid": "wxdff3c1b4fad3158c",
   "projectname": "fund-assistant-mini",
   "condition": {
