@@ -234,6 +234,54 @@
           </view>
         </view>
 
+        <!-- AI 加减仓方案 -->
+        <view wx:if="{{item.aiPlan}}" class="ai-fund-plan">
+          <view class="ai-fund-plan-header">
+            <text class="ai-fund-plan-title">🤖 AI 加减仓方案</text>
+            <text class="ai-fund-plan-badge ai-fp-{{item.aiPlan.finalAction}}">{{item.aiPlan.finalLabel}}</text>
+          </view>
+
+          <view class="ai-fp-compare">
+            <view class="ai-fp-col">
+              <text class="ai-fp-label">📊 算法建议</text>
+              <text class="ai-fp-val">{{item.aiPlan.algoLabel}}</text>
+            </view>
+            <view class="ai-fp-vs">
+              <text>VS</text>
+            </view>
+            <view class="ai-fp-col">
+              <text class="ai-fp-label">🤖 AI建议</text>
+              <text class="ai-fp-val">{{item.aiPlan.aiLabel}}</text>
+            </view>
+          </view>
+
+          <view class="ai-fp-detail">
+            <view class="ai-fp-row">
+              <text class="ai-fp-key">📐 仓位调整</text>
+              <text class="ai-fp-value">{{item.aiPlan.posAdj}}</text>
+            </view>
+            <view class="ai-fp-row">
+              <text class="ai-fp-key">💡 综合依据</text>
+              <text class="ai-fp-value">{{item.aiPlan.reason}}</text>
+            </view>
+            <view class="ai-fp-row">
+              <text class="ai-fp-key">🎯 AI置信度</text>
+              <text class="ai-fp-value">{{item.aiPlan.aiConfidence}}</text>
+            </view>
+            <view class="ai-fp-row" wx:if="{{item.aiPlan.aiReason}}">
+              <text class="ai-fp-key">📝 AI理由</text>
+              <text class="ai-fp-value">{{item.aiPlan.aiReason}}</text>
+            </view>
+            <view class="ai-fp-row">
+              <text class="ai-fp-key">⏰ 紧急程度</text>
+              <text class="ai-fp-value">{{item.aiPlan.aiUrgency}}</text>
+            </view>
+          </view>
+        </view>
+        <view wx:elif="{{!item.aiPlan}}" class="ai-fund-plan-empty">
+          <text class="sub">🤖 点击上方「运行 AI 分析」获取加减仓方案</text>
+        </view>
+
         <!-- 雷达图 (用 CSS bars 代替 SVG) -->
         <view class="ag-radar">
           <view class="ag-radar-item">

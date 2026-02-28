@@ -836,3 +836,106 @@
   color: #e0e0e0;
   line-height: 1.6;
 }
+
+/* ====== AI 基金加减仓方案 ====== */
+.ai-fund-plan {
+  margin-top: 16rpx;
+  padding: 16rpx;
+  background: rgba(108,138,255,0.06);
+  border-radius: 12rpx;
+  border: 1rpx solid rgba(108,138,255,0.12);
+}
+
+.ai-fund-plan-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12rpx;
+}
+
+.ai-fund-plan-title {
+  font-size: 26rpx;
+  font-weight: 700;
+  color: #c0c0c0;
+}
+
+.ai-fund-plan-badge {
+  font-size: 22rpx;
+  font-weight: 700;
+  padding: 4rpx 16rpx;
+  border-radius: 20rpx;
+}
+
+.ai-fp-buy  { background: rgba(52,211,153,0.2); color: #34d399; }
+.ai-fp-sell { background: rgba(248,113,113,0.2); color: #f87171; }
+.ai-fp-hold { background: rgba(251,191,36,0.2); color: #fbbf24; }
+
+.ai-fp-compare {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16rpx;
+  margin-bottom: 14rpx;
+  padding: 12rpx;
+  background: rgba(255,255,255,0.03);
+  border-radius: 10rpx;
+}
+
+.ai-fp-col {
+  flex: 1;
+  text-align: center;
+}
+
+.ai-fp-label {
+  font-size: 20rpx;
+  color: #888;
+  display: block;
+}
+
+.ai-fp-val {
+  font-size: 26rpx;
+  font-weight: 700;
+  color: #e0e0e0;
+  display: block;
+  margin-top: 4rpx;
+}
+
+.ai-fp-vs {
+  font-size: 20rpx;
+  color: #666;
+  font-weight: 700;
+}
+
+.ai-fp-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+}
+
+.ai-fp-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.ai-fp-key {
+  font-size: 22rpx;
+  color: #888;
+  white-space: nowrap;
+  margin-right: 12rpx;
+}
+
+.ai-fp-value {
+  font-size: 24rpx;
+  color: #e0e0e0;
+  text-align: right;
+  flex: 1;
+}
+
+.ai-fund-plan-empty {
+  margin-top: 12rpx;
+  padding: 16rpx;
+  text-align: center;
+  background: rgba(108,138,255,0.04);
+  border-radius: 10rpx;
+}

@@ -206,6 +206,9 @@ Page({
       updatedAt: String(hotData.data.updated_at || '--').replace('T', ' ').slice(0, 16),
       loading: false,
     });
+
+    // 合并缓存的 AI 信号到每只基金卡片
+    this._mergeAIIntoPlans();
   },
 
   async refreshQuotes() {
@@ -316,6 +319,7 @@ Page({
         aiTime: new Date().toLocaleString(),
         aiLoading: false,
       });
+      this._mergeAIIntoPlans();
       wx.hideLoading();
       wx.showToast({ title: 'AI 分析完成', icon: 'success' });
     } catch (e) {
@@ -339,6 +343,77 @@ Page({
       riskClass: (r.riskLevel || '').includes('高') ? 'high' : (r.riskLevel || '').includes('低') ? 'low' : 'mid',
       overallAdvice: r.overallAdvice || '',
       signals,
+    };
+  },
+
+  _mergeAIIntoPlans() {
+    const ai = this.data.aiResult;
+    if (!ai || !ai.signals || !ai.signals.length) return;
+    const plans = this.data.plans;
+    if (!plans || !plans.length) return;
+
+    const signalMap = {};
+    ai.signals.forEach(s => { signalMap[s.code] = s; });
+
+    const updates = {};
+    plans.forEach((p, i) => {
+      const sig = signalMap[p.code];
+      if (sig) {
+        updates[`plans[${i}].aiSignal`] = sig;
+        // 生成综合加减仓方案
+        updates[`plans[${i}].aiPlan`] = this._buildAIPlan(p, sig);
+      }
+    });
+    this.setData(updates);
+  },
+
+  _buildAIPlan(plan, sig) {
+    // 算法建议
+    const algoAction = plan.action; // buy/sell/hold
+    const aiAction = sig.action;    // buy/sell/hold
+
+    // 综合判定
+    let finalAction, finalLabel, posAdj, reason;
+    if (algoAction === aiAction) {
+      // 算法与AI一致 → 高置信度
+      if (aiAction === 'buy') {
+        finalAction = 'buy'; finalLabel = '✅ 加仓';
+        posAdj = sig.urgency === '高' ? '加仓 15-20%' : sig.urgency === '中' ? '加仓 10-15%' : '加仓 5-10%';
+        reason = '算法+AI共识看多';
+      } else if (aiAction === 'sell') {
+        finalAction = 'sell'; finalLabel = '✅ 减仓';
+        posAdj = sig.urgency === '高' ? '减仓 20-30%' : sig.urgency === '中' ? '减仓 10-20%' : '减仓 5-10%';
+        reason = '算法+AI共识看空';
+      } else {
+        finalAction = 'hold'; finalLabel = '✅ 持有观望';
+        posAdj = '维持现有仓位';
+        reason = '算法+AI共识观望';
+      }
+    } else if ((algoAction === 'buy' && aiAction === 'hold') || (algoAction === 'hold' && aiAction === 'buy')) {
+      finalAction = 'buy'; finalLabel = '🟡 小幅加仓';
+      posAdj = '加仓 5-8%';
+      reason = '信号偏多但未完全一致';
+    } else if ((algoAction === 'sell' && aiAction === 'hold') || (algoAction === 'hold' && aiAction === 'sell')) {
+      finalAction = 'sell'; finalLabel = '🟡 小幅减仓';
+      posAdj = '减仓 5-10%';
+      reason = '信号偏空但未完全一致';
+    } else {
+      // 完全冲突 buy vs sell
+      finalAction = 'hold'; finalLabel = '⚠️ 信号冲突';
+      posAdj = '暂不操作，等待信号明确';
+      reason = '算法与AI判断相反，以稳为主';
+    }
+
+    return {
+      finalAction,
+      finalLabel,
+      posAdj,
+      reason,
+      algoLabel: algoAction === 'buy' ? '加仓' : algoAction === 'sell' ? '减仓' : '持有',
+      aiLabel: sig.actionLabel,
+      aiConfidence: sig.confidenceStr,
+      aiReason: sig.reason || '',
+      aiUrgency: sig.urgency || '中',
     };
   },
 });
