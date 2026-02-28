@@ -77,6 +77,32 @@ function formatTime(date) {
   return `${h}:${m}:${s}`;
 }
 
+/**
+ * 获取前一个交易日
+ */
+function getPrevTradingDay(dateStr) {
+  const d = new Date(dateStr);
+  for (let i = 0; i < 10; i++) {
+    d.setDate(d.getDate() - 1);
+    const s = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    if (isTradingDay(s)) return s;
+  }
+  return null;
+}
+
+/**
+ * 获取下一个交易日
+ */
+function getNextTradingDay(dateStr) {
+  const d = new Date(dateStr);
+  for (let i = 0; i < 10; i++) {
+    d.setDate(d.getDate() + 1);
+    const s = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    if (isTradingDay(s)) return s;
+  }
+  return null;
+}
+
 module.exports = {
   todayStr,
   isTradingDay,
@@ -86,4 +112,6 @@ module.exports = {
   pctClass,
   formatMoney,
   formatTime,
+  getPrevTradingDay,
+  getNextTradingDay,
 };

@@ -29,6 +29,157 @@
     </view>
   </view>
 
+  <!-- ====== 波段组合（持仓基金） ====== -->
+  <view class="card">
+    <view class="card-header sec-toggle" data-key="secSwing" bindtap="toggleSection">
+      <text class="title">📊 波段组合</text>
+      <text class="toggle-arrow">{{secSwing ? '▲' : '▼'}}</text>
+    </view>
+    <view class="sec-sub-header" wx:if="{{!secSwing}}">
+      <text class="sub">基于持仓基金的波段信号分析</text>
+    </view>
+    <view wx:if="{{secSwing}}">
+      <view wx:if="{{swingLoading}}" class="loading-tip">
+        <text>加载趋势数据中...</text>
+      </view>
+      <view wx:elif="{{swingItems.length === 0}}" class="empty-state">
+        <text class="sub">暂无持仓</text>
+      </view>
+      <view wx:else>
+        <view class="swing-card swing-{{item.swingClass}}" wx:for="{{swingItems}}" wx:key="code">
+          <view class="swing-top">
+            <view class="swing-left">
+              <text class="swing-name">{{item.name}}</text>
+              <text class="sub">{{item.code}} · {{item.type}}</text>
+            </view>
+            <view class="swing-badge swing-badge-{{item.swingClass}}">
+              <text>{{item.swingSignal}}</text>
+            </view>
+          </view>
+          <view wx:if="{{item.hasTrend}}" class="swing-detail">
+            <view class="swing-grid">
+              <view class="sg-item">
+                <text class="sg-label">5日涨幅</text>
+                <text class="sg-val {{item.chg5dClass}}">{{item.chg5d}}</text>
+              </view>
+              <view class="sg-item">
+                <text class="sg-label">20日涨幅</text>
+                <text class="sg-val {{item.chg20dClass}}">{{item.chg20d}}</text>
+              </view>
+              <view class="sg-item">
+                <text class="sg-label">RSI</text>
+                <text class="sg-val">{{item.rsi}}</text>
+              </view>
+              <view class="sg-item">
+                <text class="sg-label">回撤</text>
+                <text class="sg-val pct-down">{{item.drawdown}}</text>
+              </view>
+              <view class="sg-item">
+                <text class="sg-label">反弹</text>
+                <text class="sg-val pct-up">{{item.rebound}}</text>
+              </view>
+              <view class="sg-item">
+                <text class="sg-label">均线</text>
+                <text class="sg-val">{{item.maStatus}}</text>
+              </view>
+            </view>
+            <view wx:if="{{item.swingAdvice}}" class="swing-advice">
+              <text class="sub">💡 {{item.swingAdvice}}</text>
+            </view>
+          </view>
+          <view wx:else class="swing-nodata">
+            <text class="sub">数据不足，无法分析</text>
+          </view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- ====== 预测追踪 ====== -->
+  <view class="card">
+    <view class="card-header sec-toggle" data-key="secPred" bindtap="toggleSection">
+      <text class="title">🎯 预测追踪</text>
+      <text class="toggle-arrow">{{secPred ? '▲' : '▼'}}</text>
+    </view>
+    <view class="sec-sub-header" wx:if="{{!secPred}}">
+      <text class="sub">追踪每日投资建议的准确率</text>
+    </view>
+    <view wx:if="{{secPred}}">
+      <!-- 操作按钮 -->
+      <view class="pred-actions">
+        <button class="btn small" bindtap="snapshotPrediction" disabled="{{predTodayDone}}">
+          📸 {{predTodayDone ? '今日已快照' : '立即快照'}}
+        </button>
+        <button class="btn small ghost" bindtap="manualVerify">✅ 手动验证</button>
+      </view>
+
+      <!-- 统计概览 -->
+      <view wx:if="{{predStats && predStats.totalDays > 0}}" class="pred-stats-card">
+        <view class="pred-stats-row">
+          <view class="ps-item">
+            <text class="ps-val big">{{predStats.totalDays}}</text>
+            <text class="ps-label">追踪天数</text>
+          </view>
+          <view class="ps-item">
+            <text class="ps-val big pct-up">{{predStats.accuracy > 0 ? predStats.accuracy.toFixed(0) + '%' : '--'}}</text>
+            <text class="ps-label">总准确率</text>
+          </view>
+          <view class="ps-item">
+            <text class="ps-val">{{predStats.correctCount}}</text>
+            <text class="ps-label">✅ 正确</text>
+          </view>
+          <view class="ps-item">
+            <text class="ps-val">{{predStats.wrongCount}}</text>
+            <text class="ps-label">❌ 错误</text>
+          </view>
+        </view>
+        <!-- 准确率进度条 -->
+        <view class="pred-bar-wrap">
+          <view class="pred-bar">
+            <view class="pred-bar-fill" style="width: {{predStats.accuracy}}%;"></view>
+          </view>
+          <text class="sub" style="margin-top:4rpx;">准确率 {{predStats.accuracy.toFixed(1)}}%</text>
+        </view>
+      </view>
+      <view wx:elif="{{predStats && predStats.totalDays === 0}}" class="empty-state">
+        <text class="empty-icon">🎯</text>
+        <text class="sub">暂无追踪数据，点击"立即快照"开始追踪</text>
+      </view>
+
+      <!-- 最近验证详情 -->
+      <view wx:if="{{predLatest}}" class="pred-latest">
+        <view class="pred-latest-header">
+          <text class="title">📋 最近验证 ({{predLatest.date}})</text>
+          <text class="pred-acc-badge {{predLatest.accuracyClass}}">{{predLatest.accuracy}}</text>
+        </view>
+        <view class="pred-result-item" wx:for="{{predLatest.results}}" wx:key="name">
+          <view class="pr-left">
+            <text class="pr-icon">{{item.verdictIcon}}</text>
+            <text class="pr-name">{{item.name}}</text>
+          </view>
+          <view class="pr-right">
+            <text class="pr-pred">建议: {{item.predLabel}}</text>
+            <text class="pr-actual {{item.nextPctClass}}">次日: {{item.nextPct}}</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- 历史记录 -->
+      <view wx:if="{{predHistory.length > 0}}" class="pred-history">
+        <text class="sub-title">📅 历史快照</text>
+        <view class="ph-item" wx:for="{{predHistory}}" wx:key="date">
+          <view class="ph-left">
+            <text class="ph-date">{{item.date}}</text>
+            <text class="sub">{{item.timestamp}} · {{item.overallLabel}}</text>
+          </view>
+          <view class="ph-right">
+            <text class="ph-acc {{item.verified ? 'verified' : 'pending'}}">{{item.accuracyStr}}</text>
+          </view>
+        </view>
+      </view>
+    </view>
+  </view>
+
   <!-- ====== 操作按钮 ====== -->
   <view class="action-btns">
     <button class="btn" bindtap="toggleAdd">✏️ 手动添加</button>
