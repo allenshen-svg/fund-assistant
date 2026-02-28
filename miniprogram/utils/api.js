@@ -180,6 +180,38 @@ async function fetchMultiFundHistory(codes) {
   return results;
 }
 
+/**
+ * 获取大宗商品期货实时行情 (东方财富期货推送接口)
+ */
+function fetchCommodities(codes) {
+  const secids = codes.map(c => c.code).join(',');
+  const url = `https://push2.eastmoney.com/api/qt/ulist.np/get?fltt=2&fields=f2,f3,f4,f12,f14&secids=${secids}`;
+  return new Promise((resolve) => {
+    wx.request({
+      url,
+      timeout: 6000,
+      success(res) {
+        if (res.data && res.data.data && res.data.data.diff) {
+          const list = res.data.data.diff.map((d, i) => ({
+            code: codes[i] ? codes[i].code : d.f12,
+            name: codes[i] ? codes[i].name : d.f14,
+            short: codes[i] ? codes[i].short : '',
+            icon: codes[i] ? codes[i].icon : '',
+            group: codes[i] ? codes[i].group : '',
+            price: d.f2,
+            pct: d.f3,
+            change: d.f4
+          }));
+          resolve(list);
+        } else {
+          resolve([]);
+        }
+      },
+      fail() { resolve([]); }
+    });
+  });
+}
+
 module.exports = {
   fetchHotEvents,
   fetchIndices,
@@ -188,4 +220,5 @@ module.exports = {
   fetchSectorFlows,
   fetchFundHistory,
   fetchMultiFundHistory,
+  fetchCommodities,
 };

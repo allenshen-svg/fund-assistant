@@ -46,6 +46,17 @@ App({
       { code:'1.518880', name:'黄金ETF', short:'金' },
       { code:'1.161226', name:'白银LOF', short:'银' },
       { code:'0.159980', name:'有色50', short:'色' },
+    ],
+    // 大宗商品 (期货/ETF 实时行情)
+    COMMODITIES: [
+      { code:'113.AU0',   name:'沪金主力', short:'金', icon:'🥇', group:'metal' },
+      { code:'113.AG0',   name:'沪银主力', short:'银', icon:'🥈', group:'metal' },
+      { code:'113.CU0',   name:'沪铜主力', short:'铜', icon:'🔩', group:'metal' },
+      { code:'113.AL0',   name:'沪铝主力', short:'铝', icon:'⚙️', group:'metal' },
+      { code:'113.SC0',   name:'原油主力', short:'油', icon:'🛢️', group:'energy' },
+      { code:'113.FU0',   name:'燃油主力', short:'燃', icon:'⛽', group:'energy' },
+      { code:'113.RB0',   name:'螺纹钢主力', short:'钢', icon:'🏗️', group:'industry' },
+      { code:'113.I0',    name:'铁矿石主力', short:'铁', icon:'⛏️', group:'industry' },
     ]
   },
 

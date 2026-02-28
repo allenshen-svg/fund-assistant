@@ -1,5 +1,5 @@
 const { getHoldings, getSettings } = require('../../utils/storage');
-const { fetchHotEvents, fetchIndices, fetchMultiFundEstimates, fetchSectorFlows, fetchMultiFundHistory } = require('../../utils/api');
+const { fetchHotEvents, fetchIndices, fetchMultiFundEstimates, fetchSectorFlows, fetchMultiFundHistory, fetchCommodities } = require('../../utils/api');
 const { buildPlans, buildOverview, MODEL_PORTFOLIO } = require('../../utils/advisor');
 const { getMarketStatus, isMarketOpen, formatPct, pctClass, formatTime, isTradingDay, formatMoney } = require('../../utils/market');
 
@@ -30,6 +30,12 @@ Page({
     modelCore: MODEL_PORTFOLIO.core,
     modelSat: MODEL_PORTFOLIO.satellite,
     showModel: false,
+
+    // 大宗商品
+    commodities: [],
+
+    // 热点异动事件 (置顶地缘/商品)
+    hotBreaking: [],
 
     // 热点事件
     topEvents: [],
@@ -90,9 +96,10 @@ Page({
     const app = getApp();
     const codes = holdings.map(h => h.code);
 
-    // 并行获取: 指数 + 热点 + 估值 + 历史净值 + 板块资金流
-    const [indicesData, hotResult, estimates, historyData, sectorData] = await Promise.allSettled([
+    // 并行获取: 指数 + 商品 + 热点 + 估值 + 历史净值 + 板块资金流
+    const [indicesData, commodityData, hotResult, estimates, historyData, sectorData] = await Promise.allSettled([
       fetchIndices(app.globalData.INDICES),
+      fetchCommodities(app.globalData.COMMODITIES || []),
       fetchHotEvents(settings),
       fetchMultiFundEstimates(codes),
       fetchMultiFundHistory(codes),
@@ -105,14 +112,49 @@ Page({
       ...idx, pctStr: formatPct(idx.pct), pctClass: pctClass(idx.pct),
     }));
 
+    // 大宗商品
+    const rawCommodities = commodityData.status === 'fulfilled' ? commodityData.value : [];
+    const commodities = rawCommodities.map(c => ({
+      ...c, pctStr: formatPct(c.pct), pctClass: pctClass(c.pct),
+      anomaly: Math.abs(c.pct) >= 2,
+    }));
+
     // 热点事件
     const hotData = hotResult.status === 'fulfilled' ? hotResult.value : { source: 'local', data: { heatmap: [], events: [] } };
     const heatmap = (hotData.data.heatmap || []).slice(0, 14);
-    const topEvents = (hotData.data.events || []).slice(0, 5).map(item => ({
+    const allEvents = (hotData.data.events || []).map(item => ({
       id: item.id, title: item.title, advice: item.advice || '保持观察',
+      reason: item.reason || '',
+      category: item.category || '',
+      concepts: item.concepts || [],
+      sectorsPos: (item.sectors_positive || []).join('、'),
+      sectorsNeg: (item.sectors_negative || []).join('、'),
       impact: Number(item.impact || 0),
       impactClass: Number(item.impact || 0) >= 0 ? 'up' : 'down',
+      impactAbs: Math.abs(Number(item.impact || 0)),
+      confidence: Number(item.confidence || 0),
+      isGeo: item.category === 'geopolitics',
+      isCommodity: item.category === 'commodity',
     }));
+    const topEvents = allEvents.slice(0, 5);
+
+    // 热点异动: 地缘政治+商品事件 + 商品价格异动
+    const breakingEvents = allEvents.filter(e => e.isGeo || e.isCommodity || e.impactAbs >= 10);
+    const commodityAnomalies = commodities.filter(c => Math.abs(c.pct) >= 1.5).map(c => ({
+      id: 'anom_' + c.code,
+      title: c.icon + ' ' + c.name + (c.pct >= 0 ? '大涨' : '大跌') + ' ' + c.pctStr,
+      reason: Math.abs(c.pct) >= 3 ? '超常波动，关注相关持仓' : '显著异动，留意联动',
+      impact: Math.round(c.pct * 2),
+      impactClass: c.pct >= 0 ? 'up' : 'down',
+      impactAbs: Math.abs(Math.round(c.pct * 2)),
+      category: 'commodity_anomaly',
+      isGeo: false, isCommodity: true,
+      concepts: [c.name],
+      advice: Math.abs(c.pct) >= 3 ? '关注偏离修复机会' : '观察后续走势',
+    }));
+    const hotBreaking = [...breakingEvents, ...commodityAnomalies]
+      .sort((a, b) => b.impactAbs - a.impactAbs)
+      .slice(0, 8);
 
     // 基金估值
     const estData = estimates.status === 'fulfilled' ? estimates.value : {};
@@ -146,7 +188,8 @@ Page({
     const overview = buildOverview(plans);
 
     this.setData({
-      indices, holdings: holdingsWithEst, totalPct, totalPctClass,
+      indices, commodities, hotBreaking,
+      holdings: holdingsWithEst, totalPct, totalPctClass,
       overview, plans,
       topEvents, heatmap,
       sourceLabel: hotData.source === 'remote' ? '远程数据' : '本地回退',
@@ -158,11 +201,17 @@ Page({
   async refreshQuotes() {
     const app = getApp();
     const holdings = getHoldings();
-    const [indicesData, estimates] = await Promise.allSettled([
+    const [indicesData, commodityData, estimates] = await Promise.allSettled([
       fetchIndices(app.globalData.INDICES),
+      fetchCommodities(app.globalData.COMMODITIES || []),
       fetchMultiFundEstimates(holdings.map(h => h.code)),
     ]);
     const rawIndices = indicesData.status === 'fulfilled' ? indicesData.value : [];
+    const rawComm = commodityData.status === 'fulfilled' ? commodityData.value : [];
+    const commodities = rawComm.map(c => ({
+      ...c, pctStr: formatPct(c.pct), pctClass: pctClass(c.pct),
+      anomaly: Math.abs(c.pct) >= 2,
+    }));
     const indices = rawIndices.map(idx => ({
       ...idx, pctStr: formatPct(idx.pct), pctClass: pctClass(idx.pct),
     }));
@@ -179,7 +228,7 @@ Page({
       const avg = validPcts.reduce((s, h) => s + h.pct, 0) / validPcts.length;
       totalPct = formatPct(avg); totalPctClass = pctClass(avg);
     }
-    this.setData({ indices, holdings: holdingsWithEst, totalPct, totalPctClass, currentTime: formatTime() });
+    this.setData({ indices, commodities, holdings: holdingsWithEst, totalPct, totalPctClass, currentTime: formatTime() });
   },
 
   // 展开/收起基金详情

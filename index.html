@@ -178,6 +178,43 @@ body { font-family:-apple-system,BlinkMacSystemFont,'SF Pro','PingFang SC','Helv
 .idx-pct.up { color:#ef4444; }
 .idx-pct.down { color:#22c55e; }
 .idx-pct.flat { color:rgba(255,255,255,0.5); }
+
+/* ===== 大宗商品行情 ===== */
+.comm-section { background:linear-gradient(135deg,#0f172a,#1a1a2e); padding:10px 12px; border-bottom:1px solid rgba(255,255,255,0.06); }
+.comm-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; }
+.comm-title { font-size:11px; font-weight:700; color:rgba(255,255,255,0.7); }
+.comm-grid { display:flex; flex-wrap:wrap; gap:4px; }
+.comm-chip { flex:1 1 calc(25% - 3px); min-width:0; text-align:center; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.06); border-radius:6px; padding:4px 2px; position:relative; }
+.comm-chip.anomaly { border-color:rgba(251,146,60,0.4); background:rgba(251,146,60,0.06); }
+.comm-chip-icon { font-size:12px; }
+.comm-chip-name { font-size:8px; color:rgba(255,255,255,0.5); font-weight:600; }
+.comm-chip-price { font-size:10px; font-weight:700; color:#fff; margin:1px 0; font-variant-numeric:tabular-nums; }
+.comm-chip-pct { font-size:9px; font-weight:600; }
+.comm-chip-pct.up { color:#ef4444; }
+.comm-chip-pct.down { color:#22c55e; }
+.comm-chip-pct.flat { color:rgba(255,255,255,0.4); }
+.comm-anomaly-tag { position:absolute; top:1px; right:2px; font-size:7px; font-weight:700; color:#fb923c; background:rgba(251,146,60,0.15); padding:0 4px; border-radius:3px; }
+
+/* ===== 实时热点异动 ===== */
+.breaking-section { padding:10px 14px; }
+.breaking-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; }
+.breaking-title-h { font-size:12px; font-weight:700; }
+.breaking-count { font-size:9px; font-weight:600; background:rgba(239,68,68,0.15); color:#ef4444; padding:1px 6px; border-radius:4px; }
+.breaking-list2 { display:flex; flex-direction:column; gap:6px; }
+.breaking-card { padding:8px 10px; border-radius:8px; background:var(--card); box-shadow:var(--shadow); border-left:3px solid transparent; }
+.breaking-card.geo { border-left-color:#f87171; }
+.breaking-card.comm { border-left-color:#fb923c; }
+.breaking-card-top { display:flex; align-items:center; gap:4px; }
+.breaking-cat { font-size:10px; font-weight:600; flex-shrink:0; }
+.breaking-card-title { font-size:11px; font-weight:700; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.breaking-impact { font-size:9px; font-weight:700; padding:1px 6px; border-radius:4px; flex-shrink:0; }
+.breaking-impact.up { background:rgba(239,68,68,0.12); color:#ef4444; }
+.breaking-impact.down { background:rgba(34,197,94,0.12); color:#22c55e; }
+.breaking-reason { font-size:10px; color:var(--sub); margin-top:3px; line-height:1.4; }
+.breaking-sectors { display:flex; flex-wrap:wrap; gap:6px; margin-top:4px; font-size:9px; font-weight:600; }
+.breaking-pos { color:#f87171; }
+.breaking-neg { color:#4ade80; }
+.breaking-advice { font-size:9px; color:var(--primary); margin-top:3px; }
 /* 第二行3个指数居中 (nth-child 5,6,7) */
 @media (max-width:480px) {
   .idx-item { flex:1 1 calc(25% - 1px); }
@@ -638,6 +675,18 @@ body { font-family:-apple-system,BlinkMacSystemFont,'SF Pro','PingFang SC','Helv
   <div class="idx-item"><div class="idx-name">白银</div><div class="idx-val" id="iv-ag">--</div><div class="idx-pct flat" id="ip-ag">--</div></div>
   <div class="idx-item"><div class="idx-name">有色</div><div class="idx-val" id="iv-ys">--</div><div class="idx-pct flat" id="ip-ys">--</div></div>
 </div>
+
+<!-- Commodity Bar -->
+<div class="comm-section" id="comm-section" style="display:none;">
+  <div class="comm-header">
+    <span class="comm-title">📦 大宗商品 · 期货主力</span>
+    <span style="font-size:8px;color:rgba(255,255,255,0.35);" id="comm-time"></span>
+  </div>
+  <div class="comm-grid" id="comm-grid"></div>
+</div>
+
+<!-- Breaking Events -->
+<div id="breaking-section" style="display:none;"></div>
 
 <!-- Stats Bar -->
 <div class="stats-bar" id="stats-bar">
@@ -2907,6 +2956,101 @@ async function fetchSectors(){
   }catch(e){}
 }
 
+// ==================== 大宗商品行情 ====================
+const COMMODITY_CONFIG = [
+  { secid:'113.AU0',  name:'沪金', short:'金', icon:'🥇', group:'metal' },
+  { secid:'113.AG0',  name:'沪银', short:'银', icon:'🥈', group:'metal' },
+  { secid:'113.CU0',  name:'沪铜', short:'铜', icon:'🔩', group:'metal' },
+  { secid:'113.AL0',  name:'沪铝', short:'铝', icon:'⚙️', group:'metal' },
+  { secid:'113.SC0',  name:'原油', short:'油', icon:'🛢️', group:'energy' },
+  { secid:'113.FU0',  name:'燃油', short:'燃', icon:'⛽', group:'energy' },
+  { secid:'113.RB0',  name:'螺钢', short:'钢', icon:'🏗️', group:'industry' },
+  { secid:'113.I0',   name:'铁矿', short:'铁', icon:'⛏️', group:'industry' },
+];
+let liveCommodities = [];
+async function fetchCommodities(){
+  try{
+    const secids = COMMODITY_CONFIG.map(c=>c.secid).join(',');
+    const data = await jsonpFetch(`https://push2.eastmoney.com/api/qt/ulist.np/get?fltt=2&secids=${secids}&fields=f2,f3,f4,f12,f13,f14`);
+    if(data?.data?.diff){
+      liveCommodities = data.data.diff.map((d,i)=>{
+        const cfg = COMMODITY_CONFIG[i] || {};
+        return { secid:cfg.secid, name:cfg.name||d.f14, short:cfg.short, icon:cfg.icon, group:cfg.group,
+                 price:d.f2, pct:d.f3, change:d.f4, anomaly:Math.abs(d.f3)>=2 };
+      });
+    }
+  }catch(e){ console.error('fetchCommodities:', e); }
+}
+function renderCommodities(){
+  const section = document.getElementById('comm-section');
+  const grid = document.getElementById('comm-grid');
+  if(!grid || liveCommodities.length === 0){ if(section) section.style.display='none'; return; }
+  section.style.display='';
+  let html = '';
+  liveCommodities.forEach(c=>{
+    const pctCls = c.pct > 0 ? 'up' : c.pct < 0 ? 'down' : 'flat';
+    const pctStr = (c.pct >= 0 ? '+' : '') + c.pct.toFixed(2) + '%';
+    const anomTag = c.anomaly ? '<span class="comm-anomaly-tag">异动</span>' : '';
+    html += `<div class="comm-chip${c.anomaly?' anomaly':''}">
+      ${anomTag}
+      <span class="comm-chip-icon">${c.icon}</span>
+      <span class="comm-chip-name">${c.short}</span>
+      <span class="comm-chip-price">${c.price}</span>
+      <span class="comm-chip-pct ${pctCls}">${pctStr}</span>
+    </div>`;
+  });
+  grid.innerHTML = html;
+  const timeEl = document.getElementById('comm-time');
+  if(timeEl) timeEl.textContent = new Date().toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'});
+}
+
+// ==================== 实时热点异动 ====================
+function renderBreakingEvents(){
+  const container = document.getElementById('breaking-section');
+  if(!container) return;
+  const events = (MACRO_GEO_EVENTS || []).filter(e=>{
+    return e.category === 'geopolitics' || e.category === 'commodity' || Math.abs(e.impact) >= 10;
+  });
+  // 加入商品异动
+  const commBreaking = liveCommodities.filter(c=>Math.abs(c.pct)>=1.5).map(c=>({
+    id:'anom_'+c.short, name:c.icon+' '+c.name+(c.pct>=0?'大涨':'大跌')+' '+(c.pct>=0?'+':'')+c.pct.toFixed(2)+'%',
+    category:'commodity_anomaly', icon:c.icon,
+    description:Math.abs(c.pct)>=3?'超常波动，关注相关持仓':'显著异动，留意联动',
+    impact:Math.round(c.pct*2), confidence:0.8,
+    sectors:{positive:c.group==='metal'?['黄金','有色金属','贵金属']:c.group==='energy'?['能源','原油','油气']:['钢铁','基建'],negative:[]},
+    advice:Math.abs(c.pct)>=3?'关注偏离修复机会':'观察后续走势',
+  }));
+  const allBreaking = [...events,...commBreaking].sort((a,b)=>Math.abs(b.impact)-Math.abs(a.impact)).slice(0,8);
+  if(allBreaking.length === 0){ container.style.display='none'; return; }
+  container.style.display='';
+  let html = '<div class="breaking-section"><div class="breaking-header">';
+  html += '<span class="breaking-title-h">🔥 实时热点 · 异动</span>';
+  html += '<span class="breaking-count">'+allBreaking.length+'条</span></div>';
+  html += '<div class="breaking-list2">';
+  allBreaking.forEach(e=>{
+    const isGeo = e.category === 'geopolitics';
+    const cls = isGeo ? 'geo' : 'comm';
+    const cat = isGeo ? '🌍地缘' : '📦商品';
+    const impCls = e.impact >= 0 ? 'up' : 'down';
+    const impStr = (e.impact>=0?'+':'')+e.impact;
+    const posArr = e.sectors?.positive || [];
+    const negArr = e.sectors?.negative || [];
+    html += `<div class="breaking-card ${cls}">`;
+    html += `<div class="breaking-card-top"><span class="breaking-cat">${cat}</span><span class="breaking-card-title">${e.name||e.title||''}</span><span class="breaking-impact ${impCls}">${impStr}</span></div>`;
+    if(e.description) html += `<div class="breaking-reason">${e.description}</div>`;
+    if(posArr.length || negArr.length){
+      html += '<div class="breaking-sectors">';
+      if(posArr.length) html += '<span class="breaking-pos">▲ '+posArr.join('、')+'</span>';
+      if(negArr.length) html += '<span class="breaking-neg">▼ '+negArr.join('、')+'</span>';
+      html += '</div>';
+    }
+    if(e.advice) html += `<div class="breaking-advice">💡 ${e.advice}</div>`;
+    html += '</div>';
+  });
+  html += '</div></div>';
+  container.innerHTML = html;
+}
+
 // fundgz API 固定回调名 jsonpgz，但响应包含 fundcode 字段，用于匹配
 const _fundEstimateWaiters = {}; // code -> {resolve, reject, timer, cleanup}
 async function fetchFundEstimate(code){
@@ -5046,6 +5190,8 @@ function synthesize(results){
 function renderAll(){
   renderCountdown();
   renderIndices();
+  renderCommodities();
+  renderBreakingEvents();
   renderStats();
   renderPortfolio();
   renderSimBrief();
@@ -10153,7 +10299,7 @@ function syncSimFromHoldings(){
 
 async function loadData(){
   // 并行: 行情+热点事件
-  await Promise.all([fetchIndices(), fetchSectors(), fetchAllFunds(), fetchHotEvents()]);
+  await Promise.all([fetchIndices(), fetchSectors(), fetchAllFunds(), fetchHotEvents(), fetchCommodities()]);
   // 热点事件加载完成后, 注入隔夜美股归因事件
   await fetchUSMarketForAttribution();
   renderAll();
@@ -10196,13 +10342,15 @@ function startTimers(){
   _refreshTimer = setInterval(async ()=>{
     const ms = getMarketStatus();
     if(ms.status==='open' || ms.status==='break'){
-      await Promise.all([fetchIndices(), fetchAllFunds()]);
+      await Promise.all([fetchIndices(), fetchAllFunds(), fetchCommodities()]);
       // 每5分钟拉一次完整分时数据（补全快照可能遗漏的点）
       if(new Date().getMinutes() % 5 === 0) fetchAllIntradayDetail().catch(()=>{});
       // 更新净值刷新时间
       const _rt = document.getElementById('nav-refresh-time');
       if(_rt){ const _n=new Date(); _rt.textContent='净值 '+String(_n.getHours()).padStart(2,'0')+':'+String(_n.getMinutes()).padStart(2,'0')+':'+String(_n.getSeconds()).padStart(2,'0'); _rt.style.display=''; }
       renderIndices();
+      renderCommodities();
+      renderBreakingEvents();
       renderStats();
       renderActionGuide();
       renderWatchlist();

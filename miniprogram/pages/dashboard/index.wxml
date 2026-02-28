@@ -27,6 +27,48 @@
     </view>
   </view>
 
+  <!-- ====== 大宗商品实时行情 ====== -->
+  <view class="card" wx:if="{{commodities.length > 0}}">
+    <view class="card-header">
+      <text class="title">📦 大宗商品</text>
+      <text class="sub">期货主力合约</text>
+    </view>
+    <view class="comm-grid">
+      <view class="comm-item {{item.anomaly ? 'comm-anomaly' : ''}}" wx:for="{{commodities}}" wx:key="code">
+        <view class="comm-icon-row">
+          <text class="comm-icon">{{item.icon}}</text>
+          <text class="comm-name">{{item.short}}</text>
+        </view>
+        <text class="comm-price">{{item.price}}</text>
+        <text class="comm-pct pct-{{item.pctClass}}">{{item.pctStr}}</text>
+        <text class="comm-anomaly-tag" wx:if="{{item.anomaly}}">异动</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- ====== 实时热点异动 ====== -->
+  <view class="card" wx:if="{{hotBreaking.length > 0}}">
+    <view class="card-header">
+      <text class="title">🔥 实时热点 · 异动</text>
+      <text class="chip red">{{hotBreaking.length}}条</text>
+    </view>
+    <view class="breaking-list">
+      <view class="breaking-item {{item.isGeo ? 'geo' : 'comm'}}" wx:for="{{hotBreaking}}" wx:key="id">
+        <view class="breaking-top">
+          <text class="breaking-cat">{{item.isGeo ? '🌍地缘' : '📦商品'}}</text>
+          <text class="breaking-title">{{item.title}}</text>
+          <text class="chip sm {{item.impactClass}}">{{item.impact >= 0 ? '+' : ''}}{{item.impact}}</text>
+        </view>
+        <text class="breaking-reason" wx:if="{{item.reason}}">{{item.reason}}</text>
+        <view class="breaking-bottom" wx:if="{{item.sectorsPos || item.sectorsNeg}}">
+          <text class="breaking-pos" wx:if="{{item.sectorsPos}}">▲ {{item.sectorsPos}}</text>
+          <text class="breaking-neg" wx:if="{{item.sectorsNeg}}">▼ {{item.sectorsNeg}}</text>
+        </view>
+        <text class="breaking-advice">💡 {{item.advice}}</text>
+      </view>
+    </view>
+  </view>
+
   <!-- ====== 持仓概览 ====== -->
   <view class="card">
     <view class="card-header">
