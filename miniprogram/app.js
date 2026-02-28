@@ -55,6 +55,8 @@ App({
       { code:'113.AL0',   name:'沪铝主力', short:'铝', icon:'⚙️', group:'metal' },
       { code:'113.SC0',   name:'原油主力', short:'油', icon:'🛢️', group:'energy' },
       { code:'113.FU0',   name:'燃油主力', short:'燃', icon:'⛽', group:'energy' },
+      { code:'113.ZN0',   name:'沪锌主力', short:'锌', icon:'🔧', group:'metal' },
+      { code:'113.NI0',   name:'沪镍主力', short:'镍', icon:'🧲', group:'metal' },
       { code:'113.RB0',   name:'螺纹钢主力', short:'钢', icon:'🏗️', group:'industry' },
       { code:'113.I0',    name:'铁矿石主力', short:'铁', icon:'⛏️', group:'industry' },
     ]
