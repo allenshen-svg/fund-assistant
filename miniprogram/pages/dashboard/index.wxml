@@ -1,5 +1,10 @@
 <view class="container">
 
+  <!-- Debug: 错误信息面板 -->
+  <view wx:if="{{debugError}}" style="background:#ff4444;color:#fff;padding:20rpx;font-size:24rpx;word-break:break-all;">
+    <text>ERROR: {{debugError}}</text>
+  </view>
+
   <!-- ====== Header ====== -->
   <view class="card header-card">
     <view class="row">

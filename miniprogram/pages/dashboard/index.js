@@ -63,21 +63,26 @@ Page({
     aiMarketOutlook: '',
     aiSectorRotation: '',
     aiMarketTemp: 50,
+
+    // 调试
+    debugError: '',
   },
 
   onLoad() {
-    this.updateMarketStatus();
-    this.loadAll();
-    this._loadAICache();
+    try { this.updateMarketStatus(); } catch(e) { console.error('updateMarketStatus error:', e); this.setData({ debugError: 'updateMarketStatus: ' + (e.message || e) }); }
+    this.loadAll().catch(e => { console.error('loadAll error:', e); this.setData({ loading: false, debugError: 'loadAll: ' + (e.message || e) }); });
+    try { this._loadAICache(); } catch(e) { console.error('_loadAICache error:', e); this.setData({ debugError: '_loadAICache: ' + (e.message || e) }); }
   },
 
   onShow() {
-    this.updateMarketStatus();
-    this.loadAll();
-    this._loadAICache();
+    try { this.updateMarketStatus(); } catch(e) { console.error('updateMarketStatus error:', e); }
+    this.loadAll().catch(e => { console.error('loadAll error:', e); this.setData({ loading: false, debugError: 'loadAll(onShow): ' + (e.message || e) }); });
+    try { this._loadAICache(); } catch(e) { console.error('_loadAICache error:', e); }
     const timer = setInterval(() => {
-      this.updateMarketStatus();
-      if (isMarketOpen()) this.refreshQuotes();
+      try {
+        this.updateMarketStatus();
+        if (isMarketOpen()) this.refreshQuotes().catch(e => console.error('refreshQuotes error:', e));
+      } catch(e) { console.error('timer error:', e); }
     }, 30000);
     this.setData({ _timer: timer });
   },
@@ -108,6 +113,7 @@ Page({
 
   async loadAll() {
     this.setData({ loading: true });
+    try {
     const holdings = getHoldings();
     const settings = getSettings();
     const app = getApp();
@@ -216,6 +222,10 @@ Page({
 
     // 合并缓存的 AI 信号到每只基金卡片
     this._mergeAIIntoPlans();
+    } catch (e) {
+      console.error('[loadAll] error:', e);
+      this.setData({ loading: false, debugError: 'loadAll内部: ' + (e.message || String(e)) });
+    }
   },
 
   async refreshQuotes() {

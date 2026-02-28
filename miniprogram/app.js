@@ -64,5 +64,13 @@ App({
 
   onLaunch() {
     console.log('Fund Assistant Mini Program launched');
+  },
+
+  onError(err) {
+    console.error('[App.onError]', err);
+  },
+
+  onUnhandledRejection(res) {
+    console.error('[App.onUnhandledRejection]', res.reason);
   }
 });

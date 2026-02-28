@@ -11,6 +11,11 @@
 				"8000"
 			],
 			"isBackground": true
+		},
+		{
+			"label": "Check Syntax",
+			"type": "shell",
+			"command": "python3 /Users/allen.shen/fund-assistant/check_syntax.py"
 		}
 	]
 }

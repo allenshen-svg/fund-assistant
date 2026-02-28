@@ -313,4 +313,5 @@ module.exports = {
   setAIConfig,
   runAIAnalysis,
   getCachedAIResult,
+  callAI,
 };
