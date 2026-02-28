@@ -135,10 +135,57 @@ function fetchSectorFlows() {
   });
 }
 
+/**
+ * 获取基金历史净值 (东方财富)
+ * 返回 [{date, nav}] 按时间升序，最多取250条
+ */
+function fetchFundHistory(fundCode, pageSize) {
+  pageSize = pageSize || 250;
+  const url = `https://api.fund.eastmoney.com/f10/lsjz?fundCode=${fundCode}&pageIndex=1&pageSize=${pageSize}`;
+  return new Promise((resolve) => {
+    wx.request({
+      url,
+      timeout: 10000,
+      header: { 'Referer': 'https://fundf10.eastmoney.com/' },
+      success(res) {
+        try {
+          const data = res.data;
+          const lsjz = (data && data.Data && data.Data.LSJZList) || [];
+          const navList = lsjz
+            .filter(item => item.DWJZ && !isNaN(parseFloat(item.DWJZ)))
+            .map(item => ({
+              date: item.FSRQ,
+              nav: parseFloat(item.DWJZ),
+            }))
+            .reverse(); // 按时间升序
+          resolve(navList);
+        } catch (e) {
+          resolve([]);
+        }
+      },
+      fail() { resolve([]); }
+    });
+  });
+}
+
+/**
+ * 批量获取多只基金历史净值
+ */
+async function fetchMultiFundHistory(codes) {
+  const results = {};
+  const tasks = codes.map(code =>
+    fetchFundHistory(code, 120).then(r => { if (r && r.length > 0) results[code] = r; })
+  );
+  await Promise.allSettled(tasks);
+  return results;
+}
+
 module.exports = {
   fetchHotEvents,
   fetchIndices,
   fetchFundEstimate,
   fetchMultiFundEstimates,
   fetchSectorFlows,
+  fetchFundHistory,
+  fetchMultiFundHistory,
 };

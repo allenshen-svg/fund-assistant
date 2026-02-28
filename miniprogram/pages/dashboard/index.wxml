@@ -57,10 +57,10 @@
     </view>
   </view>
 
-  <!-- ====== 行动指南 ====== -->
+  <!-- ====== 实盘行动指南 ====== -->
   <view class="card">
     <view class="card-header">
-      <text class="title">🎯 行动指南</text>
+      <text class="title">🎯 实盘行动指南</text>
       <text class="chip {{overview.score >= 60 ? 'up' : overview.score <= 40 ? 'down' : 'gray'}}">
         {{overview.label}} · {{overview.score}}分
       </text>
@@ -77,21 +77,186 @@
       添加持仓后可看研判建议
     </view>
 
-    <view class="plan-item" wx:for="{{plans}}" wx:key="code">
-      <view class="row">
-        <view>
-          <text class="p-name">{{item.name}}</text>
-          <text class="sub" style="margin-left:8rpx;">{{item.code}}</text>
+    <!-- ===== 每只基金的丰富分析卡片 ===== -->
+    <view class="ag-card action-{{item.action}}" wx:for="{{plans}}" wx:key="code" data-idx="{{index}}" bindtap="togglePlan">
+
+      <!-- 顶部: 名称 + 代码 + 涨跌 + 行动标签 -->
+      <view class="ag-top">
+        <view class="ag-top-left">
+          <text class="ag-name">{{item.name}}</text>
+          <view class="row" style="margin-top:4rpx;">
+            <text class="sub">{{item.code}} · {{item.type}}</text>
+            <text class="ag-today-pct pct-{{item.pctClass}}" wx:if="{{item.pctStr !== '待开盘'}}"> {{item.pctStr}}</text>
+          </view>
         </view>
-        <text class="chip {{item.action === 'buy' ? 'up' : item.action === 'sell' ? 'down' : 'gray'}}">
-          {{item.actionLabel}}
+        <view class="ag-top-right">
+          <text class="ag-priority">#{{item.priority}}</text>
+          <text class="ag-urgency ag-urgency-{{item.urgency}}">{{item.urgency}}</text>
+          <text class="ag-action-badge action-{{item.action}}">{{item.actionLabel}}</text>
+        </view>
+      </view>
+
+      <!-- 投票条: 因子投票 + 共识 + 波段建议 -->
+      <view class="ag-vote-strip">
+        <view class="ag-vote-chip" wx:for="{{item.factors}}" wx:for-item="f" wx:key="name"
+              wx:if="{{index < 4}}">
+          <text class="ag-vote-label">{{f.name}}</text>
+          <text class="ag-vote-val vote-{{f.dir}}">{{f.val}}</text>
+        </view>
+        <text class="ag-consensus-chip consensus-{{item.consensus === '共识看多' || item.consensus === '偏多' ? 'buy' : item.consensus === '共识看空' || item.consensus === '偏空' ? 'sell' : 'hold'}}">
+          {{item.consensus}}
         </text>
+        <text class="ag-swing-chip" wx:if="{{item.swingAdvice !== '—'}}">{{item.swingAdvice}}</text>
       </view>
-      <view class="row" style="margin-top:8rpx;">
-        <text class="sub">🔥 {{item.tag}} · 温度{{item.temperature}} · {{item.trend === 'up' ? '↑' : item.trend === 'down' ? '↓' : '→'}}</text>
-        <text class="sub {{item.riskScore >= 55 ? 'danger' : ''}}">⚠️ {{item.riskLevel}}</text>
+
+      <!-- 趋势 + 波段 + MA + 资金流 -->
+      <view class="ag-trend-row" wx:if="{{item.hasTrend}}">
+        <text class="ag-trend-tag" style="color:{{item.dirColor}}">{{item.dirIcon}} {{item.dirText}}</text>
+        <text class="ag-trend-tag" style="color:{{item.swingColor}}">{{item.swingIcon}} {{item.swingText}}</text>
+        <text class="ag-trend-tag ag-ma-{{item.maStatus === '多头排列' ? 'bull' : item.maStatus === '空头排列' ? 'bear' : 'mix'}}">{{item.maStatus}}</text>
+        <text class="ag-trend-tag ag-flow-{{item.sectorFlowDir}}" wx:if="{{item.sectorFlowText}}">💰{{item.sectorFlowText}}</text>
       </view>
-      <text class="reason">{{item.reason}}</text>
+
+      <!-- 关键指标条 -->
+      <view class="ag-metrics" wx:if="{{item.hasTrend}}">
+        <text class="ag-metric">RSI {{item.rsi}}</text>
+        <text class="ag-metric">5日 {{item.chg5d}}</text>
+        <text class="ag-metric">20日 {{item.chg20d}}</text>
+        <text class="ag-metric" wx:if="{{item.showDrawdown}}">距高点 {{item.drawdown}}</text>
+        <text class="ag-metric" wx:if="{{item.showRebound}}">从低点 +{{item.rebound}}</text>
+        <text class="ag-metric">波动 {{item.volatility}}</text>
+      </view>
+
+      <!-- 风险标签 -->
+      <view class="ag-risk-row">
+        <text class="ag-risk-badge risk-{{item.riskLevel === '高风险' ? 'high' : item.riskLevel === '中风险' ? 'mid' : 'low'}}">
+          ⚠️ {{item.riskLevel}} · {{item.riskScore}}分
+        </text>
+        <text class="sub">🔥 {{item.tag}} · {{item.temperature}}°</text>
+        <text class="ag-crowding" wx:if="{{item.crowding}}">{{item.crowding}}</text>
+      </view>
+
+      <!-- ===== 展开详情: 白话研判 ===== -->
+      <view class="ag-detail" wx:if="{{item.expanded}}">
+        <view class="ag-detail-divider"></view>
+
+        <!-- 一句话诊断 -->
+        <view class="ag-tldr">
+          <text class="ag-tldr-icon">💡</text>
+          <text class="ag-tldr-text">{{item.advisor.tldr}}</text>
+        </view>
+
+        <!-- 四维体检 -->
+        <view class="ag-checkup">
+          <view class="ag-checkup-item">
+            <text class="ag-ck-label">估值</text>
+            <text class="ag-ck-val" style="color:{{item.advisor.valuation.color}}">{{item.advisor.valuation.label}}</text>
+          </view>
+          <view class="ag-checkup-item">
+            <text class="ag-ck-label">趋势</text>
+            <text class="ag-ck-val" style="color:{{item.advisor.trendLabel.color}}">{{item.advisor.trendLabel.label}}</text>
+          </view>
+          <view class="ag-checkup-item">
+            <text class="ag-ck-label">风向</text>
+            <text class="ag-ck-val">{{item.advisor.windDir}}</text>
+          </view>
+          <view class="ag-checkup-item">
+            <text class="ag-ck-label">隐患</text>
+            <text class="ag-ck-val" style="font-size:20rpx;">{{item.advisor.biggestRisk}}</text>
+          </view>
+        </view>
+
+        <!-- 原始数据 -->
+        <view class="ag-raw-data">
+          <text class="ag-raw-item">今日 {{item.advisor.rawData.todayPct}}</text>
+          <text class="ag-raw-item">20日 {{item.advisor.rawData.chg20d}}</text>
+          <text class="ag-raw-item">回撤 {{item.advisor.rawData.drawdown}}</text>
+          <text class="ag-raw-item">波动 {{item.advisor.rawData.volatility}}</text>
+          <text class="ag-raw-item">RSI {{item.advisor.rawData.rsi}}</text>
+          <text class="ag-raw-item">热度 {{item.advisor.rawData.heat}}</text>
+        </view>
+
+        <!-- 行动方案 -->
+        <view class="ag-action-plan">
+          <view class="ag-plan-row">
+            <text class="ag-plan-label">📋 操作</text>
+            <text class="ag-plan-val">{{item.advisor.operation}}</text>
+          </view>
+          <view class="ag-plan-row">
+            <text class="ag-plan-label">🎯 战术</text>
+            <text class="ag-plan-val">{{item.advisor.tactics}}</text>
+          </view>
+          <view class="ag-plan-row">
+            <text class="ag-plan-label">🛡️ 止损</text>
+            <text class="ag-plan-val">{{item.advisor.stopLoss}}</text>
+          </view>
+        </view>
+
+        <!-- 雷达图 (用 CSS bars 代替 SVG) -->
+        <view class="ag-radar">
+          <view class="ag-radar-item">
+            <text class="ag-radar-label">估值力</text>
+            <view class="ag-radar-bar"><view class="ag-radar-fill" style="width:{{item.advisor.radar.valuation}}%;"></view></view>
+            <text class="ag-radar-num">{{item.advisor.radar.valuation}}</text>
+          </view>
+          <view class="ag-radar-item">
+            <text class="ag-radar-label">爆发力</text>
+            <view class="ag-radar-bar"><view class="ag-radar-fill" style="width:{{item.advisor.radar.momentum}}%;"></view></view>
+            <text class="ag-radar-num">{{item.advisor.radar.momentum}}</text>
+          </view>
+          <view class="ag-radar-item">
+            <text class="ag-radar-label">顺风度</text>
+            <view class="ag-radar-bar"><view class="ag-radar-fill" style="width:{{item.advisor.radar.macro}}%;"></view></view>
+            <text class="ag-radar-num">{{item.advisor.radar.macro}}</text>
+          </view>
+          <view class="ag-radar-item">
+            <text class="ag-radar-label">防御力</text>
+            <view class="ag-radar-bar"><view class="ag-radar-fill" style="width:{{item.advisor.radar.defense}}%;"></view></view>
+            <text class="ag-radar-num">{{item.advisor.radar.defense}}</text>
+          </view>
+          <view class="ag-radar-item">
+            <text class="ag-radar-label">情绪度</text>
+            <view class="ag-radar-bar"><view class="ag-radar-fill" style="width:{{item.advisor.radar.sentiment}}%;"></view></view>
+            <text class="ag-radar-num">{{item.advisor.radar.sentiment}}</text>
+          </view>
+        </view>
+
+        <text class="ag-expand-hint">▲ 收起详情</text>
+      </view>
+
+      <!-- 未展开时的展开提示 -->
+      <text class="ag-expand-hint" wx:if="{{!item.expanded}}">▼ 展开详细分析</text>
+    </view>
+  </view>
+
+  <!-- ====== 模型组合 ====== -->
+  <view class="card">
+    <view class="card-header" bindtap="toggleModel">
+      <text class="title">📐 波段组合</text>
+      <text class="sub">{{showModel ? '收起 ▲' : '展开 ▼'}}</text>
+    </view>
+    <view wx:if="{{showModel}}">
+      <view class="model-section">
+        <text class="model-section-title">核心仓 60%</text>
+        <view class="model-fund" wx:for="{{modelCore}}" wx:key="code">
+          <view class="row">
+            <text class="model-name">{{item.name}}</text>
+            <text class="model-weight">{{item.weight}}%</text>
+          </view>
+          <text class="sub">{{item.code}} · {{item.type}}</text>
+        </view>
+      </view>
+      <view class="divider"></view>
+      <view class="model-section">
+        <text class="model-section-title">卫星仓 40%</text>
+        <view class="model-fund" wx:for="{{modelSat}}" wx:key="code">
+          <view class="row">
+            <text class="model-name">{{item.name}}</text>
+            <text class="model-weight">{{item.weight}}%</text>
+          </view>
+          <text class="sub">{{item.code}} · {{item.type}}</text>
+        </view>
+      </view>
     </view>
   </view>
 
