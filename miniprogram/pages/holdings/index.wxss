@@ -395,15 +395,4 @@
   justify-content: space-between;
 }
 
-/* ====== 快速选择 ====== */
-.quick-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  border-top: 1rpx solid rgba(108,138,255,0.08);
-  padding: 16rpx 0;
-}
 
-.quick-item:first-child {
-  border-top: none;
-}

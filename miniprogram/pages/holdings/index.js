@@ -19,8 +19,7 @@ Page({
     typeOptions: TYPE_OPTIONS,
     showAdd: false,
     loading: false,
-    quickList: [],
-    showQuick: false,
+
 
     // ====== 波段组合 ======
     secSwing: false,
@@ -442,49 +441,5 @@ Page({
     });
   },
 
-  toggleQuick() {
-    if (!this.data.showQuick) {
-      const app = getApp();
-      const db = app.globalData.FUND_DB;
-      const current = getHoldings();
-      const existCodes = new Set(current.map(h => h.code));
-      const quickList = Object.keys(db)
-        .filter(code => !existCodes.has(code))
-        .map(code => ({ code, name: db[code].name, type: db[code].type }));
-      this.setData({ quickList, showQuick: true });
-    } else {
-      this.setData({ showQuick: false });
-    }
-  },
 
-  quickAdd(e) {
-    const item = e.currentTarget.dataset.item;
-    const current = getHoldings();
-    if (current.some(h => h.code === item.code)) {
-      wx.showToast({ title: '已存在', icon: 'none' });
-      return;
-    }
-    setHoldings([...current, { code: item.code, name: item.name, type: item.type }]);
-    wx.showToast({ title: '已添加', icon: 'success' });
-    this.setData({
-      quickList: this.data.quickList.filter(q => q.code !== item.code)
-    });
-    this.reload();
-  },
-
-  resetToDefault() {
-    wx.showModal({
-      title: '重置持仓',
-      content: '将恢复为默认的12只基金，当前持仓将被清除',
-      success: (res) => {
-        if (res.confirm) {
-          const app = getApp();
-          const key = app.globalData.storageKeys.holdings;
-          wx.removeStorageSync(key);
-          wx.showToast({ title: '已重置', icon: 'success' });
-          this.reload();
-        }
-      }
-    });
-  },
 });

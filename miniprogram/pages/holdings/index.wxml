@@ -183,8 +183,6 @@
   <!-- ====== 操作按钮 ====== -->
   <view class="action-btns">
     <button class="btn" bindtap="toggleAdd">✏️ 手动添加</button>
-    <button class="btn ghost" bindtap="toggleQuick">⚡ 快速选择</button>
-    <button class="btn ghost" style="margin-top:12rpx;" bindtap="resetToDefault">🔄 恢复默认</button>
   </view>
 
   <!-- ====== 手动添加面板 ====== -->
@@ -207,25 +205,6 @@
       </picker>
     </view>
     <button class="btn" style="margin-top:16rpx;" bindtap="addHolding">确认添加</button>
-  </view>
-
-  <!-- ====== 快速选择面板 ====== -->
-  <view class="card" wx:if="{{showQuick}}">
-    <view class="card-header">
-      <text class="title">⚡ 从内置库选择</text>
-      <text class="sub">点击即可添加</text>
-    </view>
-    <view wx:if="{{quickList.length === 0}}" class="sub" style="text-align:center;padding:20rpx;">
-      内置基金已全部添加
-    </view>
-    <view class="quick-item" wx:for="{{quickList}}" wx:key="code"
-          data-item="{{item}}" bindtap="quickAdd">
-      <view>
-        <text class="h-name">{{item.name}}</text>
-        <text class="sub" style="margin-left:8rpx;">{{item.code}}</text>
-      </view>
-      <text class="chip blue">{{item.type}}</text>
-    </view>
   </view>
 
 </view>
