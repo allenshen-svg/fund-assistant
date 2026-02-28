@@ -138,33 +138,81 @@ function fetchSectorFlows() {
 /**
  * 获取基金历史净值 (东方财富)
  * 返回 [{date, nav}] 按时间升序，最多取250条
+ *
+ * wx.request 会静默丢弃自定义 Referer 头，导致 lsjz 接口返回空。
+ * 因此优先使用 push2his kline 接口（无需 Referer），lsjz 作为备选。
  */
+function getSecidForFund(code) {
+  const first = code.charAt(0);
+  if (first === '5' || first === '6') return `1.${code}`;
+  return `0.${code}`;
+}
+
 function fetchFundHistory(fundCode, pageSize) {
   pageSize = pageSize || 250;
-  const url = `https://api.fund.eastmoney.com/f10/lsjz?fundCode=${fundCode}&pageIndex=1&pageSize=${pageSize}`;
-  return new Promise((resolve) => {
-    wx.request({
-      url,
-      timeout: 10000,
-      header: { 'Referer': 'https://fundf10.eastmoney.com/' },
-      success(res) {
-        try {
-          const data = res.data;
-          const lsjz = (data && data.Data && data.Data.LSJZList) || [];
-          const navList = lsjz
-            .filter(item => item.DWJZ && !isNaN(parseFloat(item.DWJZ)))
-            .map(item => ({
-              date: item.FSRQ,
-              nav: parseFloat(item.DWJZ),
-            }))
-            .reverse(); // 按时间升序
-          resolve(navList);
-        } catch (e) {
-          resolve([]);
-        }
-      },
-      fail() { resolve([]); }
+
+  // —— 方式1: push2his kline 接口（不需要 Referer，优先） ——
+  function tryKline() {
+    const secid = getSecidForFund(fundCode);
+    const url = `https://push2his.eastmoney.com/api/qt/stock/kline/get?secid=${secid}&fields1=f1,f2,f3&fields2=f51,f52,f53&klt=101&fqt=1&beg=0&end=20500101&lmt=${pageSize}`;
+    return new Promise((resolve) => {
+      wx.request({
+        url,
+        timeout: 10000,
+        success(res) {
+          try {
+            const klines = res.data && res.data.data && res.data.data.klines;
+            if (klines && klines.length > 0) {
+              const navList = klines.map(k => {
+                const parts = k.split(',');
+                return { date: parts[0], nav: parseFloat(parts[1]) };
+              }).filter(d => !isNaN(d.nav));
+              if (navList.length > 0) { resolve(navList); return; }
+            }
+            resolve(null); // kline 无数据，走 fallback
+          } catch (e) { resolve(null); }
+        },
+        fail() { resolve(null); }
+      });
     });
+  }
+
+  // —— 方式2: lsjz 接口（JSONP 格式，手动解析） ——
+  function tryLsjz() {
+    const cbName = 'jQuery' + Date.now();
+    const url = `https://api.fund.eastmoney.com/f10/lsjz?fundCode=${fundCode}&pageIndex=1&pageSize=${pageSize}&callback=${cbName}`;
+    return new Promise((resolve) => {
+      wx.request({
+        url,
+        timeout: 10000,
+        dataType: 'text',   // 不自动解析，拿原始文本
+        responseType: 'text',
+        success(res) {
+          try {
+            let text = typeof res.data === 'string' ? res.data : JSON.stringify(res.data);
+            // 剥离 JSONP 包装:  callbackName({...})  →  {...}
+            const lp = text.indexOf('(');
+            const rp = text.lastIndexOf(')');
+            if (lp !== -1 && rp > lp) {
+              text = text.substring(lp + 1, rp);
+            }
+            const data = JSON.parse(text);
+            const lsjz = (data && data.Data && data.Data.LSJZList) || [];
+            const navList = lsjz
+              .filter(item => item.DWJZ && !isNaN(parseFloat(item.DWJZ)))
+              .map(item => ({ date: item.FSRQ, nav: parseFloat(item.DWJZ) }))
+              .reverse();
+            resolve(navList.length > 0 ? navList : []);
+          } catch (e) { resolve([]); }
+        },
+        fail() { resolve([]); }
+      });
+    });
+  }
+
+  return tryKline().then(result => {
+    if (result && result.length > 0) return result;
+    return tryLsjz();
   });
 }
 
