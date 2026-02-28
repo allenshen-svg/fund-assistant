@@ -49,7 +49,9 @@ function getAIConfig() {
   const key = wx.getStorageSync(AI_KEY) || '';
   const modelId = wx.getStorageSync(AI_MODEL_KEY) || '';
   const provider = AI_PROVIDERS.find(p => p.id === providerId) || AI_PROVIDERS[0];
-  const model = modelId || provider.defaultModel;
+  // 确保 model 属于当前 provider，否则回退到默认模型
+  const validModel = provider.models.some(m => m.model === modelId);
+  const model = validModel ? modelId : provider.defaultModel;
   return { providerId, key, model, provider };
 }
 
