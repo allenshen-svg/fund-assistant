@@ -160,7 +160,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro","PingFang SC","Helvet
 
 <!-- Loading Overlay -->
 <div class="loading-overlay" id="loading-overlay">
-  <div class="loading-icon">🏆</div>
+ <div class="loading-icon"></div>
   <div class="loading-title">基金经理行为分析</div>
   <div class="loading-sub">正在从天天基金获取前500位基金经理数据...</div>
   <div class="loading-bar"><div class="loading-fill" id="loading-fill" style="width:0%"></div></div>
@@ -170,18 +170,18 @@ body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro","PingFang SC","Helvet
 <!-- Page Header -->
 <div class="page-header">
   <div class="ph-back" onclick="location.href='index.html'">← 返回基金小助理</div>
-  <div class="ph-title">🏆 基金经理行为分析 <span class="badge">TOP 500</span></div>
+ <div class="ph-title"> 基金经理行为分析 <span class="badge">TOP 500</span></div>
   <div class="ph-sub">精简版 · 聚焦投资决策 · 数据驱动信号 + 基金推荐<br>更新时间：<span id="update-time">--</span></div>
 </div>
 
 <!-- Navigation -->
 <div class="nav-bar" id="nav-bar">
-  <a class="nav-item active" href="#sec-overview">📊 概览</a>
-  <a class="nav-item" href="#sec-review">📋 回顾</a>
-  <a class="nav-item" href="#sec-discover">🔬 信号</a>
-  <a class="nav-item" href="#sec-outlook">🔮 前瞻</a>
-  <a class="nav-item" href="#sec-recos">🎖️ 推荐</a>
-  <a class="nav-item" href="#sec-summary">📋 总结</a>
+ <a class="nav-item active" href="#sec-overview"> 概览</a>
+ <a class="nav-item" href="#sec-review"> 回顾</a>
+ <a class="nav-item" href="#sec-discover"> 信号</a>
+ <a class="nav-item" href="#sec-outlook"> 前瞻</a>
+ <a class="nav-item" href="#sec-recos"> 推荐</a>
+ <a class="nav-item" href="#sec-summary"> 总结</a>
 </div>
 
 <!-- Main Content -->
@@ -417,7 +417,7 @@ async function generateAIMacroOutlook(onProgress){
   const models = _aiProvider.macroModels;
   for(const m of models){
     try {
-      if(onProgress) onProgress(`🧠 ${m.name} 正在分析宏观形势...`);
+ if(onProgress) onProgress(` ${m.name} 正在分析宏观形势...`);
       const userMsg = `请根据以下TOP基金经理的真实业绩数据，结合你对当前市场的专业判断，生成完整的宏观市场分析报告。\n\n${dataCtx}\n\n请分析：1.过去一年各板块表现 2.国际形势 3.国内形势 4.未来3个月配置建议`;
       const raw = await callAI(m.model, MACRO_SYSTEM_PROMPT, userMsg, 0.6);
       let jsonStr = raw.trim();
@@ -426,11 +426,11 @@ async function generateAIMacroOutlook(onProgress){
       if(!jsonMatch) throw new Error('No JSON');
       const parsed = JSON.parse(jsonMatch[0]);
       if(!parsed.pastYearReview || !parsed.sectorRecos) throw new Error('Missing fields');
-      if(onProgress) onProgress(`✅ ${m.name} 分析完成`);
+ if(onProgress) onProgress(` ${m.name} 分析完成`);
       return parsed;
     } catch(e){
       console.error(`${m.name} failed:`, e);
-      if(onProgress) onProgress(`⚠️ ${m.name} 失败，尝试下一个...`);
+ if(onProgress) onProgress(` ${m.name} 失败，尝试下一个...`);
       continue;
     }
   }
@@ -679,7 +679,7 @@ function renderAll(){
 function renderOverview(){
   const o = analysis.overview;
   return `<div class="section" id="sec-overview">
-    <div class="sec-header"><span class="sec-icon">📊</span><span class="sec-title">数据概览</span><span class="sec-badge">TOP ${o.count}</span></div>
+ <div class="sec-header"><span class="sec-icon"></span><span class="sec-title">数据概览</span><span class="sec-badge">TOP ${o.count}</span></div>
     <div class="sec-body">
       <div class="metrics">
         <div class="metric"><div class="m-val">${o.count}</div><div class="m-label">权益类基金经理</div></div>
@@ -713,7 +713,7 @@ function renderMarketReview(){
   const aiTag = aiMacroGenerated ? '<span style="font-size:9px;background:#3b82f6;color:white;padding:1px 6px;border-radius:4px;margin-left:6px">AI</span>' : '';
 
   let html = `<div class="section" id="sec-review">
-    <div class="sec-header"><span class="sec-icon">📋</span><span class="sec-title">过去一年板块表现${aiTag}</span></div>
+ <div class="sec-header"><span class="sec-icon"></span><span class="sec-title">过去一年板块表现${aiTag}</span></div>
     <div class="sec-body">
       <div class="bar-chart">`;
   review.forEach(r=>{
@@ -731,7 +731,7 @@ function renderMarketReview(){
   const highlights = review.filter(r=>r.highlight);
   if(highlights.length>0){
     html += `<div class="insight" style="margin-top:12px">
-      <div class="i-title">🔥 强势板块</div>
+ <div class="i-title"> 强势板块</div>
       <div class="i-body">${highlights.map(r=>`<b>${r.sector}(${r.ret})</b>：${r.detail.substring(0,80)}...`).join('<br>')}</div>
     </div>`;
   }
@@ -748,7 +748,7 @@ function renderDataDiscovery(){
   const strongCount = discoveries.filter(d=>d.signal==='strong').length;
   const emergingCount = discoveries.filter(d=>d.signal==='emerging').length;
 
-  const signalLabel = {alpha:'🔥被忽视的α',strong:'💪强势信号',emerging:'🌱潜力萌芽',normal:''};
+ const signalLabel = {alpha:'被忽视的α',strong:'强势信号',emerging:'潜力萌芽',normal:''};
   const signalDesc = {
     alpha:'高超额回报+低拥挤度=可能被市场忽视的结构性机会',
     strong:'超额回报显著且胜率高，已被市场认可但趋势仍在',
@@ -757,18 +757,18 @@ function renderDataDiscovery(){
   };
 
   let html = `<div class="section" id="sec-discover">
-    <div class="sec-header"><span class="sec-icon">🔬</span><span class="sec-title">数据驱动·赛道发现</span><span class="sec-badge">自下而上</span></div>
+ <div class="sec-header"><span class="sec-icon"></span><span class="sec-title">数据驱动·赛道发现</span><span class="sec-badge">自下而上</span></div>
     <div class="sec-body">
       <div style="font-size:10px;color:var(--sub);line-height:1.6;margin-bottom:10px">
         自动扫描所有${discoveries.length}个风格的<b>超额回报</b>、<b>拥挤度</b>、<b>胜率</b>，识别三类信号：
-        <span style="color:#92400e">🔥α</span> = 高回报+低拥挤，
-        <span style="color:#166534">💪强势</span> = 高回报+高胜率，
-        <span style="color:#1e40af">🌱萌芽</span> = 人少但突出
+ <span style="color:#92400e">α</span> = 高回报+低拥挤，
+ <span style="color:#166534">强势</span> = 高回报+高胜率，
+ <span style="color:#1e40af">萌芽</span> = 人少但突出
       </div>
       <div class="metrics tri">
-        <div class="metric"><div class="m-val" style="color:#92400e">${alphaCount}</div><div class="m-label">🔥被忽视的α</div></div>
-        <div class="metric"><div class="m-val" style="color:#166534">${strongCount}</div><div class="m-label">💪强势信号</div></div>
-        <div class="metric"><div class="m-val" style="color:#1e40af">${emergingCount}</div><div class="m-label">🌱潜力萌芽</div></div>
+ <div class="metric"><div class="m-val" style="color:#92400e">${alphaCount}</div><div class="m-label">被忽视的α</div></div>
+ <div class="metric"><div class="m-val" style="color:#166534">${strongCount}</div><div class="m-label">强势信号</div></div>
+ <div class="metric"><div class="m-val" style="color:#1e40af">${emergingCount}</div><div class="m-label">潜力萌芽</div></div>
       </div>
       <div style="font-size:9px;color:var(--sub);margin:4px 0 10px;text-align:center">全体均回 ${fmt(overallAvgReturn)}% · 标准差 ${fmt(returnStdDev)} · 超均值+0.5σ(${fmt(overallAvgReturn+returnStdDev*0.5)}%)即为显著超额</div>`;
 
@@ -797,7 +797,7 @@ function renderDataDiscovery(){
   });
 
   if(normals.length>0){
-    html += `<div style="font-size:11px;font-weight:600;color:var(--sub);margin:12px 0 6px">📋 其他风格（无显著信号）</div>
+ html += `<div style="font-size:11px;font-weight:600;color:var(--sub);margin:12px 0 6px"> 其他风格（无显著信号）</div>
     <table class="compact-table">
       <tr><th>风格</th><th>人数</th><th>均回</th><th>胜率</th><th>年化</th><th>得分</th></tr>
       ${normals.map(d=>`<tr>
@@ -813,7 +813,7 @@ function renderDataDiscovery(){
 
   const topAlpha = signaled.filter(d=>d.signal==='alpha');
   html += `<div class="insight" style="margin-top:12px">
-    <div class="i-title">🎯 核心价值</div>
+ <div class="i-title"> 核心价值</div>
     <div class="i-body">
       让所有${discoveries.length}个风格自动排名，不漏掉任何赛道。${topAlpha.length>0?`当前α赛道：<b>${topAlpha.map(d=>`${d.style}(超额${d.excessReturn>=0?'+':''}${fmt(d.excessReturn)}%)`).join('、')}</b>——低拥挤+高回报，最容易被传统分析遗漏。`:''}
     </div>
@@ -828,9 +828,9 @@ function renderOutlook(){
   const aiTag = aiMacroGenerated ? '<span style="font-size:9px;background:#3b82f6;color:white;padding:1px 6px;border-radius:4px;margin-left:6px">AI分析</span>' : '';
 
   let html = `<div class="section" id="sec-outlook">
-    <div class="sec-header"><span class="sec-icon">🔮</span><span class="sec-title">未来三个月前瞻${aiTag}</span><span class="sec-badge">${m.period}</span></div>
+ <div class="sec-header"><span class="sec-icon"></span><span class="sec-title">未来三个月前瞻${aiTag}</span><span class="sec-badge">${m.period}</span></div>
     <div class="sec-body">
-      <div style="font-size:11px;font-weight:600;margin-bottom:8px;color:var(--sub)">🌍 国际形势</div>
+ <div style="font-size:11px;font-weight:600;margin-bottom:8px;color:var(--sub)"> 国际形势</div>
       ${m.intlFactors.map(f=>{
         const color = f.score>=75?'#ef4444':f.score>=60?'#f59e0b':f.score>=45?'#8b5cf6':'#64748b';
         return `<div class="outlook-factor">
@@ -842,7 +842,7 @@ function renderOutlook(){
         <div style="font-size:9px;color:var(--sub);padding:0 0 6px 68px;line-height:1.4">${f.desc}</div>`;
       }).join('')}
 
-      <div style="font-size:11px;font-weight:600;margin:16px 0 8px;color:var(--sub)">🇨🇳 国内形势</div>
+ <div style="font-size:11px;font-weight:600;margin:16px 0 8px;color:var(--sub)"> 国内形势</div>
       ${m.domesticFactors.map(f=>{
         const color = f.score>=75?'#ef4444':f.score>=60?'#f59e0b':f.score>=45?'#8b5cf6':'#64748b';
         return `<div class="outlook-factor">
@@ -858,14 +858,14 @@ function renderOutlook(){
         const topRecos = m.sectorRecos.filter(s=>s.rating.includes('强烈')).slice(0,2);
         if(topRecos.length>0){
           return `<div class="insight" style="margin:12px 0 8px;background:linear-gradient(135deg,#fef3c7,#fffbeb);border-left:3px solid #d97706">
-            <div class="i-title">🔥 核心判断：${topRecos.map(s=>s.sector).join(' + ')}</div>
+ <div class="i-title"> 核心判断：${topRecos.map(s=>s.sector).join(' + ')}</div>
             <div class="i-body">${topRecos.map(s=>`<b>${s.sector}(${s.weight}%)：</b>${s.reason}`).join('<br><br>')}</div>
           </div>`;
         }
         return '';
       })()}
 
-      <div style="font-size:11px;font-weight:600;margin:16px 0 8px;color:var(--sub)">📊 板块配置建议</div>
+ <div style="font-size:11px;font-weight:600;margin:16px 0 8px;color:var(--sub)"> 板块配置建议</div>
       ${m.sectorRecos.map(s=>{
         const ratingCls = s.rating.includes('强烈')?'strong':s.rating.includes('推荐')||s.rating.includes('适度')?'ok':'weak';
         return `<div class="alloc-row">
@@ -944,15 +944,15 @@ function renderRecommendations(){
 
   const styleSignals = {};
   discoveries.forEach(d=>{ if(d.signal!=='normal') styleSignals[d.style]=d.signal; });
-  const signalEmoji = {alpha:'🔥',strong:'💪',emerging:'🌱'};
+ const signalEmoji = {alpha:'',strong:'',emerging:''};
   const signalColor = {alpha:'#d97706',strong:'#22c55e',emerging:'#3b82f6'};
 
   return `<div class="section" id="sec-recos">
-    <div class="sec-header"><span class="sec-icon">🎖️</span><span class="sec-title">综合推荐基金</span><span class="sec-badge">精选${recos.length}只</span></div>
+ <div class="sec-header"><span class="sec-icon"></span><span class="sec-title">综合推荐基金</span><span class="sec-badge">精选${recos.length}只</span></div>
     <div class="sec-body">
       <div style="font-size:10px;color:var(--sub);line-height:1.6;margin-bottom:12px">
         评分：<b>发现引擎(40%)</b> + <b>宏观匹配(15%)</b> + <b>任职回报(30%)</b> + <b>经验规模(15%)</b>。
-        带标记为<span style="color:#d97706">🔥α</span>/<span style="color:#22c55e">💪强势</span>/<span style="color:#3b82f6">🌱萌芽</span>信号。
+ 带标记为<span style="color:#d97706">α</span>/<span style="color:#22c55e">强势</span>/<span style="color:#3b82f6">萌芽</span>信号。
       </div>
       ${recos.map((m,i)=>{
         const rankCls = i===0?'r1':i===1?'r2':i===2?'r3':'rn';
@@ -986,7 +986,7 @@ function renderRecommendations(){
         </div>`;
       }).join('')}
       <div class="warn-box">
-        <b>⚠️ 风险提示：</b>以上推荐基于数据驱动分析，不构成投资建议。历史表现不代表未来收益。投资有风险，建议分批建仓、中长线持有。
+ <b> 风险提示：</b>以上推荐基于数据驱动分析，不构成投资建议。历史表现不代表未来收益。投资有风险，建议分批建仓、中长线持有。
       </div>
     </div>
   </div>`;
@@ -1007,23 +1007,23 @@ function renderSummary(){
   const bestStyle = [...analysis.styles].sort((a,b)=>b.avgReturn-a.avgReturn)[0];
 
   return `<div class="summary-box" id="sec-summary">
-    <div class="sb-title">📋 投资策略总结</div>
+ <div class="sb-title"> 投资策略总结</div>
     <p>基于 <b>${o.count}</b> 位头部基金经理的数据分析 + 宏观研判：</p>
 
     <ul>
-      ${alphaStyles.length>0?`<li><b style="color:#92400e">🔥 被忽视的α(${alphaStyles.length}个)：</b>${alphaStyles.map(d=>`${d.style}(超额${d.excessReturn>=0?'+':''}${fmt(d.excessReturn)}%, 胜率${fmt(d.winRate,0)}%)`).join('、')}——低拥挤+高回报，中长线最有价值。</li>`:''}
-      ${strongStyles.length>0?`<li><b style="color:#166534">💪 强势信号(${strongStyles.length}个)：</b>${strongStyles.map(d=>`${d.style}(超额${d.excessReturn>=0?'+':''}${fmt(d.excessReturn)}%)`).join('、')}——趋势确认，可作核心配置。</li>`:''}
-      ${emergingStyles.length>0?`<li><b style="color:#1e40af">🌱 潜力萌芽(${emergingStyles.length}个)：</b>${emergingStyles.map(d=>`${d.style}(${d.count}人)`).join('、')}——值得前瞻布局。</li>`:''}
+ ${alphaStyles.length>0?`<li><b style="color:#92400e"> 被忽视的α(${alphaStyles.length}个)：</b>${alphaStyles.map(d=>`${d.style}(超额${d.excessReturn>=0?'+':''}${fmt(d.excessReturn)}%, 胜率${fmt(d.winRate,0)}%)`).join('、')}——低拥挤+高回报，中长线最有价值。</li>`:''}
+ ${strongStyles.length>0?`<li><b style="color:#166534"> 强势信号(${strongStyles.length}个)：</b>${strongStyles.map(d=>`${d.style}(超额${d.excessReturn>=0?'+':''}${fmt(d.excessReturn)}%)`).join('、')}——趋势确认，可作核心配置。</li>`:''}
+ ${emergingStyles.length>0?`<li><b style="color:#1e40af"> 潜力萌芽(${emergingStyles.length}个)：</b>${emergingStyles.map(d=>`${d.style}(${d.count}人)`).join('、')}——值得前瞻布局。</li>`:''}
       ${bestStyle?`<li><b>最强风格：</b>${bestStyle.style}(均回${fmt(bestStyle.avgReturn)}%)</li>`:''}
     </ul>
 
-    <p style="margin-top:8px;font-weight:600">🔮 配置建议（${m.period}）：</p>
+ <p style="margin-top:8px;font-weight:600"> 配置建议（${m.period}）：</p>
     <ul>
       <li><b>第一梯队：</b>${allSignals.filter(d=>d.signal==='alpha'||d.discoveryScore>=60).map(d=>d.style).join('、')||'科技/AI, 有色金属'}——数据+宏观双重共振。</li>
       ${m.sectorRecos.filter(s=>s.weight>=12).map(s=>`<li><b>${s.sector}(${s.weight}%)：</b>${s.reason.substring(0,60)}...</li>`).join('')}
     </ul>
 
-    <p style="margin-top:8px;font-weight:600">⚠️ 风控铁律：</p>
+ <p style="margin-top:8px;font-weight:600"> 风控铁律：</p>
     <ul>
       <li>单一赛道不超25%，单一基金不超15%</li>
       <li>α信号赛道建议分3-6个月分批建仓</li>
@@ -1094,7 +1094,7 @@ async function init(){
   sectorDiscovery = discoverSectors(filteredManagers);
 
   if(_302aiKey){
-    setLoadProgress(88, '🧠 调用AI分析宏观形势...');
+ setLoadProgress(88, ' 调用AI分析宏观形势...');
     try {
       const aiOutlook = await generateAIMacroOutlook((msg)=>{
         setLoadProgress(90, msg);
@@ -1107,13 +1107,13 @@ async function init(){
         if(aiOutlook.period) MACRO_OUTLOOK.period = aiOutlook.period;
         if(aiOutlook.updated) MACRO_OUTLOOK.updated = aiOutlook.updated;
         aiMacroGenerated = true;
-        setLoadProgress(95, '✅ AI宏观分析完成');
+ setLoadProgress(95, ' AI宏观分析完成');
       } else {
-        setLoadProgress(95, '⚠️ AI分析失败，使用默认数据');
+ setLoadProgress(95, ' AI分析失败，使用默认数据');
       }
     } catch(e){
       console.error('AI macro generation failed:', e);
-      setLoadProgress(95, '⚠️ AI分析异常，使用默认数据');
+ setLoadProgress(95, ' AI分析异常，使用默认数据');
     }
   } else {
     setLoadProgress(95, '生成投资建议...');

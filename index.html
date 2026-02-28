@@ -168,9 +168,9 @@ body { font-family:-apple-system,BlinkMacSystemFont,'SF Pro','PingFang SC','Helv
 .provider-tag { font-size:9px; background:var(--primary-bg); color:var(--primary); padding:2px 8px; border-radius:10px; margin-left:6px; font-weight:500; }
 
 /* Index Bar — single scrollable row */
-.idx-bar { background:linear-gradient(135deg,#0f172a,#1e293b); padding:8px 12px; display:flex; gap:0; border-bottom:1px solid rgba(255,255,255,0.06); overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none; }
+.idx-bar { background:linear-gradient(135deg,#0f172a,#1e293b); padding:8px 12px; display:flex; flex-wrap:wrap; gap:0; border-bottom:1px solid rgba(255,255,255,0.06); }
 .idx-bar::-webkit-scrollbar { display:none; }
-.idx-item { min-width:0; flex:1 0 auto; text-align:center; position:relative; padding:0 6px; }
+.idx-item { min-width:0; flex:1 1 calc(25% - 1px); text-align:center; position:relative; padding:4px 2px; box-sizing:border-box; }
 .idx-item+.idx-item { border-left:1px solid rgba(255,255,255,0.08); }
 .idx-name { font-size:9px; color:rgba(251,191,36,0.7); letter-spacing:0.2px; white-space:nowrap; }
 .idx-val { font-size:12px; font-weight:700; color:#fff; margin-top:1px; font-variant-numeric:tabular-nums; }
@@ -178,6 +178,15 @@ body { font-family:-apple-system,BlinkMacSystemFont,'SF Pro','PingFang SC','Helv
 .idx-pct.up { color:#ef4444; }
 .idx-pct.down { color:#22c55e; }
 .idx-pct.flat { color:rgba(255,255,255,0.5); }
+/* 第二行3个指数居中 (nth-child 5,6,7) */
+@media (max-width:480px) {
+  .idx-item { flex:1 1 calc(25% - 1px); }
+  .idx-item:nth-child(n+5) { flex:1 1 calc(33.33% - 1px); border-left:none; }
+  .idx-item:nth-child(n+5) + .idx-item { border-left:1px solid rgba(255,255,255,0.08); }
+  .idx-item:nth-child(5) { border-top:1px solid rgba(255,255,255,0.06); }
+  .idx-item:nth-child(6) { border-top:1px solid rgba(255,255,255,0.06); }
+  .idx-item:nth-child(7) { border-top:1px solid rgba(255,255,255,0.06); }
+}
 
 /* Portfolio Section */
 .pf-section { padding:10px 16px 4px; }
@@ -604,11 +613,11 @@ body { font-family:-apple-system,BlinkMacSystemFont,'SF Pro','PingFang SC','Helv
 <!-- Header -->
 <div class="header">
   <div class="header-top">
-    <span class="header-title">📊 基金决策助手</span>
+ <span class="header-title">基金决策助手</span>
     <div style="display:flex;gap:6px;align-items:center">
-      <a href="sentiment-analysis.html" style="display:inline-block;padding:4px 10px;background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.25);border-radius:6px;color:white;font-size:11px;font-weight:600;text-decoration:none;white-space:nowrap">📡 舆情</a>
-      <a href="manager-analysis.html" style="display:inline-block;padding:4px 10px;background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.25);border-radius:6px;color:white;font-size:11px;font-weight:600;text-decoration:none;white-space:nowrap">🏆 TOP500</a>
-      <button class="header-gear" onclick="openSettings()">⚙️</button>
+ <a href="sentiment-analysis.html" style="display:inline-block;padding:4px 10px;background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.25);border-radius:6px;color:white;font-size:11px;font-weight:600;text-decoration:none;white-space:nowrap">舆情</a>
+ <a href="manager-analysis.html" style="display:inline-block;padding:4px 10px;background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.25);border-radius:6px;color:white;font-size:11px;font-weight:600;text-decoration:none;white-space:nowrap">TOP500</a>
+ <button class="header-gear" onclick="openSettings()">设置</button>
     </div>
   </div>
   <div class="market-status">
@@ -649,7 +658,7 @@ body { font-family:-apple-system,BlinkMacSystemFont,'SF Pro','PingFang SC','Helv
 <!-- Real-World Action Guide -->
 <div class="action-guide">
   <div class="section-title action-guide-header" onclick="toggleActionGuide()">
-    <span>🎯 实盘行动指南 <span style="font-size:10px;color:var(--sub);font-weight:400">双引擎共识 · 实操建议</span></span>
+ <span> 实盘行动指南 <span style="font-size:10px;color:var(--sub);font-weight:400">双引擎共识 · 实操建议</span></span>
     <div class="action-guide-header-right">
       <span id="action-guide-brief" class="action-guide-brief" style="color:var(--sub)">等待分析</span>
       <span class="action-guide-toggle" id="action-guide-toggle">▼</span>
@@ -658,7 +667,7 @@ body { font-family:-apple-system,BlinkMacSystemFont,'SF Pro','PingFang SC','Helv
   <div id="action-guide-container" class="action-guide-container"></div>
   <div class="ai-btn-wrap" style="padding:10px 0 2px">
     <button class="ai-btn" id="ai-btn" onclick="triggerAI()">
-      🧠 一键AI分析 · 4引擎研判
+ 一键AI分析 · 4引擎研判
     </button>
     <div class="ai-progress" id="ai-progress"></div>
   </div>
@@ -667,7 +676,7 @@ body { font-family:-apple-system,BlinkMacSystemFont,'SF Pro','PingFang SC','Helv
 <!-- Plain-Language Institutional Analysis -->
 <div class="section" id="plain-advisor-section">
   <div class="section-title" style="cursor:pointer" onclick="togglePlainAdvisor()">
-    🧭 白话研判 <span style="font-size:10px;color:var(--sub);font-weight:400">机构逻辑 · 小白可懂</span>
+ 白话研判 <span style="font-size:10px;color:var(--sub);font-weight:400">机构逻辑 · 小白可懂</span>
     <span id="plain-advisor-toggle" style="margin-left:auto;font-size:12px;color:var(--sub)">▼</span>
   </div>
   <div id="plain-advisor-container"></div>
@@ -676,7 +685,7 @@ body { font-family:-apple-system,BlinkMacSystemFont,'SF Pro','PingFang SC','Helv
 <!-- Engine Details (RL + Backtest + Second-Order merged) -->
 <div class="engine-detail-section" style="padding:10px 16px 4px">
   <div class="section-title" style="cursor:pointer" onclick="toggleEngineDetail()">
-    <span>🔬 引擎详情 <span style="font-size:10px;color:var(--sub);font-weight:400">
+ <span> 引擎详情 <span style="font-size:10px;color:var(--sub);font-weight:400">
       <span id="rl-brain-brief" style="margin-right:4px">RL:未训练</span>
       <span id="bt-brief" style="margin-right:4px">BT:未回测</span>
       <span id="sot-brief">SOT:加载中</span>
@@ -685,9 +694,9 @@ body { font-family:-apple-system,BlinkMacSystemFont,'SF Pro','PingFang SC','Helv
   </div>
   <div id="engine-detail-body" style="display:none">
     <div style="display:flex;gap:0;background:var(--card);border-radius:10px;overflow:hidden;margin-bottom:8px;box-shadow:var(--shadow)">
-      <div class="eng-tab active" id="eng-tab-rl" onclick="switchEngTab('rl')" style="flex:1;text-align:center;padding:8px 4px;font-size:11px;font-weight:600;cursor:pointer;border-bottom:2px solid #1e293b;color:var(--text);transition:all .2s">🧠 RL大脑</div>
-      <div class="eng-tab" id="eng-tab-bt" onclick="switchEngTab('bt')" style="flex:1;text-align:center;padding:8px 4px;font-size:11px;font-weight:600;cursor:pointer;border-bottom:2px solid transparent;color:var(--sub);transition:all .2s">📈 回测</div>
-      <div class="eng-tab" id="eng-tab-sot" onclick="switchEngTab('sot')" style="flex:1;text-align:center;padding:8px 4px;font-size:11px;font-weight:600;cursor:pointer;border-bottom:2px solid transparent;color:var(--sub);transition:all .2s">🧊 二层思维</div>
+ <div class="eng-tab active" id="eng-tab-rl" onclick="switchEngTab('rl')" style="flex:1;text-align:center;padding:8px 4px;font-size:11px;font-weight:600;cursor:pointer;border-bottom:2px solid #1e293b;color:var(--text);transition:all .2s"> RL大脑</div>
+ <div class="eng-tab" id="eng-tab-bt" onclick="switchEngTab('bt')" style="flex:1;text-align:center;padding:8px 4px;font-size:11px;font-weight:600;cursor:pointer;border-bottom:2px solid transparent;color:var(--sub);transition:all .2s"> 回测</div>
+ <div class="eng-tab" id="eng-tab-sot" onclick="switchEngTab('sot')" style="flex:1;text-align:center;padding:8px 4px;font-size:11px;font-weight:600;cursor:pointer;border-bottom:2px solid transparent;color:var(--sub);transition:all .2s"> 二层思维</div>
     </div>
     <div id="rl-brain-container" class="rl-brain-container"></div>
     <div id="bt-container" class="bt-container" style="display:none"></div>
@@ -698,7 +707,7 @@ body { font-family:-apple-system,BlinkMacSystemFont,'SF Pro','PingFang SC','Helv
 <!-- Simulation Portfolio (collapsed by default) -->
 <div class="sim-section">
   <div class="section-title sim-header" onclick="toggleSimDetail()">
-    <span>🤖 AI模拟盘 <span style="font-size:10px;color:var(--sub);font-weight:400">50万建仓 · AI自动交易</span></span>
+ <span> AI模拟盘 <span style="font-size:10px;color:var(--sub);font-weight:400">50万建仓 · AI自动交易</span></span>
     <div class="sim-header-right">
       <span id="sim-brief" style="font-size:12px;font-weight:700">--</span>
       <span class="sim-toggle-icon" id="sim-toggle-icon">▶</span>
@@ -710,13 +719,13 @@ body { font-family:-apple-system,BlinkMacSystemFont,'SF Pro','PingFang SC','Helv
 <!-- Portfolio Section (collapsed by default) -->
 <div class="pf-section">
   <div class="section-title" style="cursor:pointer" onclick="togglePortfolioSection()">
-    <span>💼 波段组合 <span style="font-size:10px;color:var(--sub);font-weight:400">实时趋势 · 波段信号</span></span>
+ <span> 波段组合 <span style="font-size:10px;color:var(--sub);font-weight:400">实时趋势 · 波段信号</span></span>
     <span id="pf-section-toggle" style="font-size:12px;color:var(--sub);margin-left:auto">▶</span>
   </div>
   <div id="pf-section-body" style="display:none">
     <div class="pf-tabs">
-      <div class="pf-tab active" onclick="switchPfTab('core')" id="pf-tab-core">🛡️ 核心仓<span class="pf-tab-ratio">建议60%</span></div>
-      <div class="pf-tab" onclick="switchPfTab('satellite')" id="pf-tab-sat">🚀 卫星仓<span class="pf-tab-ratio">建议40%</span></div>
+ <div class="pf-tab active" onclick="switchPfTab('core')" id="pf-tab-core"> 核心仓<span class="pf-tab-ratio">建议60%</span></div>
+ <div class="pf-tab" onclick="switchPfTab('satellite')" id="pf-tab-sat"> 卫星仓<span class="pf-tab-ratio">建议40%</span></div>
     </div>
     <div class="pf-group active" id="pf-group-core"></div>
     <div class="pf-group" id="pf-group-satellite"></div>
@@ -730,10 +739,10 @@ body { font-family:-apple-system,BlinkMacSystemFont,'SF Pro','PingFang SC','Helv
 
 <!-- Daily Review -->
 <div class="review-section" id="review-section" style="display:none">
-  <div class="section-title">📝 每日复盘 <span style="font-size:10px;color:var(--sub);font-weight:400">昨日判断 vs 今日结果</span></div>
+ <div class="section-title"> 每日复盘 <span style="font-size:10px;color:var(--sub);font-weight:400">昨日判断 vs 今日结果</span></div>
   <div id="review-container"></div>
   <div class="review-history-toggle" id="review-history-toggle" style="display:none">
-    <span class="review-toggle" onclick="toggleReviewHistory()">📋 查看历史复盘记录</span>
+ <span class="review-toggle" onclick="toggleReviewHistory()"> 查看历史复盘记录</span>
   </div>
   <div id="review-history" style="display:none"></div>
 </div>
@@ -741,7 +750,7 @@ body { font-family:-apple-system,BlinkMacSystemFont,'SF Pro','PingFang SC','Helv
 <!-- Prediction Tracker -->
 <div class="section" id="pred-tracker-section">
   <div class="section-title" style="cursor:pointer" onclick="document.getElementById('pred-tracker-container').style.display=document.getElementById('pred-tracker-container').style.display==='none'?'':'none';this.querySelector('.toggle-arrow').textContent=document.getElementById('pred-tracker-container').style.display==='none'?'▶':'▼'">
-    📊 预测追踪 <span style="font-size:10px;color:var(--sub);font-weight:400">14:50快照 → 次日验证</span>
+ 预测追踪 <span style="font-size:10px;color:var(--sub);font-weight:400">14:50快照 → 次日验证</span>
     <span class="toggle-arrow" style="float:right;font-size:10px;color:var(--sub)">▼</span>
   </div>
   <div id="pred-tracker-container" style="padding:0 14px 10px"></div>
@@ -751,20 +760,20 @@ body { font-family:-apple-system,BlinkMacSystemFont,'SF Pro','PingFang SC','Helv
 
 <!-- Watchlist Signals -->
 <div class="section" id="watchlist-section" style="display:none">
-  <div class="section-title">👁 自选观察</div>
+ <div class="section-title"> 自选观察</div>
   <div id="watchlist-container"></div>
 </div>
 
 <!-- AI Recommendations -->
 <div class="section" id="reco-section" style="display:none">
-  <div class="section-title">🎯 AI推荐关注 <span style="font-size:10px;color:var(--sub);font-weight:400">3月稳健增长视角</span></div>
+ <div class="section-title"> AI推荐关注 <span style="font-size:10px;color:var(--sub);font-weight:400">3月稳健增长视角</span></div>
   <div id="reco-container"></div>
 </div>
 
 <!-- Bottom Bar -->
 <div class="bottom-bar">
-  <button class="bottom-btn primary" onclick="openManagePanel('holding')">💼 持仓管理</button>
-  <button class="bottom-btn secondary" onclick="openManagePanel('watch')">👁 自选管理</button>
+ <button class="bottom-btn primary" onclick="openManagePanel('holding')"> 持仓管理</button>
+ <button class="bottom-btn secondary" onclick="openManagePanel('watch')"> 自选管理</button>
 </div>
 
 <!-- Manage Panel (Full Screen Slide Up) -->
@@ -772,13 +781,13 @@ body { font-family:-apple-system,BlinkMacSystemFont,'SF Pro','PingFang SC','Helv
   <div class="manage-panel">
     <div class="manage-header">
       <div class="manage-tabs">
-        <div class="manage-tab active" id="manage-tab-holding" onclick="switchManageTab('holding')">💼 持仓 <span class="manage-count" id="manage-holding-count">0</span></div>
-        <div class="manage-tab" id="manage-tab-watch" onclick="switchManageTab('watch')">👁 自选 <span class="manage-count" id="manage-watch-count">0</span></div>
+ <div class="manage-tab active" id="manage-tab-holding" onclick="switchManageTab('holding')"> 持仓 <span class="manage-count" id="manage-holding-count">0</span></div>
+ <div class="manage-tab" id="manage-tab-watch" onclick="switchManageTab('watch')"> 自选 <span class="manage-count" id="manage-watch-count">0</span></div>
       </div>
-      <button class="manage-close" onclick="closeManagePanel()">✕</button>
+ <button class="manage-close" onclick="closeManagePanel()"></button>
     </div>
     <div class="manage-toolbar">
-      <input type="text" class="manage-search" id="manage-search" placeholder="🔍 搜索基金代码或名称..." oninput="renderManageList()">
+ <input type="text" class="manage-search" id="manage-search" placeholder=" 搜索基金代码或名称..." oninput="renderManageList()">
       <button class="manage-add-btn" onclick="openAddModal(_manageTab)">+ 添加</button>
     </div>
     <div class="manage-body" id="manage-body"></div>
@@ -788,11 +797,11 @@ body { font-family:-apple-system,BlinkMacSystemFont,'SF Pro','PingFang SC','Helv
 <!-- Add Fund Modal -->
 <div class="modal-overlay" id="add-modal" onclick="if(event.target===this)closeAddModal()">
   <div class="modal">
-    <h3 id="add-modal-title">添加持仓 <button onclick="closeAddModal()">✕</button></h3>
+ <h3 id="add-modal-title">添加持仓 <button onclick="closeAddModal()"></button></h3>
     <!-- 搜索区 -->
     <div id="add-search-area">
       <div class="fund-search-box">
-        <span class="search-icon">🔍</span>
+ <span class="search-icon"></span>
         <input type="text" id="add-search-input" placeholder="输入基金代码或名称搜索..." oninput="onFundSearchInput()" autocomplete="off">
       </div>
       <div class="fund-search-results" id="add-search-results"></div>
@@ -803,7 +812,7 @@ body { font-family:-apple-system,BlinkMacSystemFont,'SF Pro','PingFang SC','Helv
       <div class="fund-selected-card">
         <span class="sel-code" id="add-sel-code"></span>
         <span class="sel-name" id="add-sel-name"></span>
-        <button class="sel-clear" onclick="clearFundSelection()" title="重新选择">✕</button>
+ <button class="sel-clear" onclick="clearFundSelection()" title="重新选择"></button>
       </div>
       <div class="form-row" id="add-type-row"><label>类型</label>
         <select id="add-type"><option value="宽基">宽基</option><option value="AI/科技">AI/科技</option><option value="黄金">黄金</option><option value="红利">红利</option><option value="军工">军工</option><option value="新能源">新能源</option><option value="消费">消费</option><option value="医药">医药</option><option value="半导体">半导体</option><option value="有色金属">有色金属</option><option value="QDII">QDII</option><option value="其他">其他</option></select>
@@ -816,9 +825,9 @@ body { font-family:-apple-system,BlinkMacSystemFont,'SF Pro','PingFang SC','Helv
 <!-- Settings Modal -->
 <div class="modal-overlay" id="settings-modal" onclick="if(event.target===this)closeSettings()">
   <div class="modal" style="max-width:360px">
-    <h3>⚙️ 设置 <button onclick="closeSettings()">✕</button></h3>
+ <h3> 设置 <button onclick="closeSettings()"></button></h3>
     <div style="padding:6px 0">
-      <div style="font-size:11px;font-weight:600;margin-bottom:8px">🌐 AI服务商</div>
+ <div style="font-size:11px;font-weight:600;margin-bottom:8px"> AI服务商</div>
       <div id="provider-list"></div>
       <div style="font-size:11px;font-weight:600;margin:14px 0 6px">API Key</div>
       <div class="form-row">
@@ -856,7 +865,7 @@ const FUND_DB = [
 // 推荐组合：核心仓(稳健长持) + 卫星仓(波段进攻)
 const MODEL_PORTFOLIO = {
   core: {
-    label:'🛡️ 核心仓', ratio:'60%',
+ label:' 核心仓', ratio:'60%',
     desc:'压舱石配置，长期持有为主，追求稳健收益。宽基+黄金+红利三角组合，低相关性分散风险。',
     funds: [
       {code:'022430',name:'华夏中证A500ETF联接A',type:'宽基',alloc:'20%',reason:'A股核心500资产，长期配置基石'},
@@ -866,7 +875,7 @@ const MODEL_PORTFOLIO = {
     ]
   },
   satellite: {
-    label:'🚀 卫星仓', ratio:'40%',
+ label:' 卫星仓', ratio:'40%',
     desc:'弹性进攻仓位，积极做波段——逢跌买入、逢涨止盈。关注趋势向上且短期回调的品种。',
     funds: [
       {code:'016708',name:'华夏有色金属ETF联接C',type:'有色金属',alloc:'10%',reason:'全球铜铝涨价+新基建需求，波动大波段空间足'},
@@ -1027,8 +1036,8 @@ let _hotEventsLastUpdate = null;  // 上次加载时间
 
 // 类别图标映射
 const CATEGORY_ICONS = {
-  technology: '🤖', geopolitics: '🌍', monetary: '🏦',
-  policy: '📜', commodity: '🛢️', market: '📊',
+ technology: '', geopolitics: '', monetary: '',
+ policy: '', commodity: '', market: '',
 };
 
 // 动态事件数组 (从JSON加载后填充, 兼容原getMacroGeoAnalysis接口)
@@ -1143,7 +1152,7 @@ async function fetchHotEvents(){
       (ev.sectors.negative || []).forEach(s => allDynSectors.add(s));
     });
     _COMMODITY_BASE_EVENTS.forEach(fb => {
-      // ★ 改为ALL: 所有baseSectors都被覆盖才跳过(防止'新能源'误盖'能源')
+ // 改为ALL: 所有baseSectors都被覆盖才跳过(防止'新能源'误盖'能源')
       const covered = fb._baseSectors.every(s => allDynSectors.has(s));
       if(!covered){
         MACRO_GEO_EVENTS.push({...fb});
@@ -1271,15 +1280,15 @@ function calculateAdjustedKelly(winRate, odds, crowdingScore, rsiValue) {
   if (crowdingScore > 80 && rsiValue > 70) {
     penalty = 0.15; // 仅保留15%仓位
     status = 'crowded_warning';
-    warning = '⚠️ 极度拥挤+超买: 拥挤度' + crowdingScore + ', RSI=' + rsiValue.toFixed(0) + '。共识陷阱风险极高，Kelly仓位惩罚至15%';
+ warning = ' 极度拥挤+超买: 拥挤度' + crowdingScore + ', RSI=' + rsiValue.toFixed(0) + '。共识陷阱风险极高，Kelly仓位惩罚至15%';
   } else if (crowdingScore > 80) {
     penalty = 0.35; // 高拥挤度但RSI未极端
     status = 'crowded_warning';
-    warning = '⚠️ 高度拥挤: 拥挤度' + crowdingScore + '。"买预期卖事实"风险大，Kelly仓位惩罚至35%';
+ warning = ' 高度拥挤: 拥挤度' + crowdingScore + '。"买预期卖事实"风险大，Kelly仓位惩罚至35%';
   } else if (crowdingScore > 60 && rsiValue > 65) {
     penalty = 0.6;
     status = 'crowded_warning';
-    warning = '⚠️ 偏拥挤: 拥挤度' + crowdingScore + ', RSI=' + rsiValue.toFixed(0) + '。适度降低仓位';
+ warning = ' 偏拥挤: 拥挤度' + crowdingScore + ', RSI=' + rsiValue.toFixed(0) + '。适度降低仓位';
   } else if (crowdingScore > 60) {
     penalty = 0.75;
   }
@@ -1533,7 +1542,7 @@ function getFundamentalStatus(tag) {
 }
 
 function generateMasterAdvice(crowded, deepValue) {
-  let advice = '🔸 Howard Marks第二层思维忠告：\n';
+ let advice = ' Howard Marks第二层思维忠告：\n';
   advice += '① 你赚的每一分钱都来自于"别人的错误"。当所有人都看好某个方向时，错误在你——因为你买的是共识，不是预期差。';
   if (crowded.length > 0) {
     advice += '\n② 当前最拥挤的交易：' + crowded.map(c => c.name).join('、') + '。这些方向的Expectation已极高，边际买入者越来越少，潜在卖出者越来越多。';
@@ -1568,23 +1577,23 @@ function renderSOTDashboard() {
   const crowdCount = summaryAnalysis.crowdedTrades.length;
   const oppCount = summaryAnalysis.contrarianPicks.length;
   html += '<div style="background:var(--card);border-radius:10px;padding:12px 14px;margin-bottom:8px;box-shadow:var(--shadow)">';
-  html += '<div style="font-size:13px;font-weight:800;margin-bottom:8px">📋 一句话总结</div>';
+ html += '<div style="font-size:13px;font-weight:800;margin-bottom:8px"> 一句话总结</div>';
   html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">';
   html += '<div style="background:#fef2f2;border-radius:8px;padding:10px;text-align:center">';
   html += '<div style="font-size:24px;font-weight:800;color:#ef4444">' + crowdCount + '</div>';
-  html += '<div style="font-size:11px;font-weight:600;color:#ef4444">⛔ 过热方向</div>';
+ html += '<div style="font-size:11px;font-weight:600;color:#ef4444"> 过热方向</div>';
   html += '<div style="font-size:9px;color:#9ca3af;margin-top:2px">不要追高</div>';
   html += '</div>';
   html += '<div style="background:#ecfdf5;border-radius:8px;padding:10px;text-align:center">';
   html += '<div style="font-size:24px;font-weight:800;color:#22c55e">' + oppCount + '</div>';
-  html += '<div style="font-size:11px;font-weight:600;color:#22c55e">✅ 逆向机会</div>';
+ html += '<div style="font-size:11px;font-weight:600;color:#22c55e"> 逆向机会</div>';
   html += '<div style="font-size:9px;color:#9ca3af;margin-top:2px">可以布局</div>';
   html += '</div></div></div>';
 
   // ===== 1. 反拥挤Kelly仪表盘 =====
   html += '<div class="kelly-adj-card">';
-  html += '<div class="kelly-adj-title">📐 持仓Kelly仓位建议 <span style="font-size:9px;color:rgba(255,255,255,0.4)">根据拥挤度+RSI自动调整</span></div>';
-  html += '<div class="kelly-formula" style="font-size:11px;color:rgba(255,255,255,0.5)">🔴红=减仓  🟢绿=可加  🔵蓝=正常持有</div>';
+ html += '<div class="kelly-adj-title"> 持仓Kelly仓位建议 <span style="font-size:9px;color:rgba(255,255,255,0.4)">根据拥挤度+RSI自动调整</span></div>';
+ html += '<div class="kelly-formula" style="font-size:11px;color:rgba(255,255,255,0.5)">红=减仓 绿=可加 蓝=正常持有</div>';
 
   // 对用户持仓的基金计算调整后Kelly
   const kellyItems = [];
@@ -1622,8 +1631,8 @@ function renderSOTDashboard() {
     kellyItems.forEach(k => {
       // 修正颜色：拥挤=红色警告，逆向=绿色机会
       const statusColor = k.status === 'crowded_warning' ? '#f87171' : k.status === 'contrarian_opportunity' ? '#4ade80' : 'rgba(255,255,255,0.7)';
-      const statusIcon = k.status === 'crowded_warning' ? '🔴' : k.status === 'contrarian_opportunity' ? '🟢' : '🔵';
-      const actionLabel = k.status === 'crowded_warning' ? '⛔ 减仓/不追' : k.status === 'contrarian_opportunity' ? '✅ 可布局' : '➖ 正常持有';
+ const statusIcon = k.status === 'crowded_warning' ? '' : k.status === 'contrarian_opportunity' ? '' : '';
+ const actionLabel = k.status === 'crowded_warning' ? ' 减仓/不追' : k.status === 'contrarian_opportunity' ? ' 可布局' : ' 正常持有';
       const actionBg = k.status === 'crowded_warning' ? 'rgba(239,68,68,0.2)' : k.status === 'contrarian_opportunity' ? 'rgba(34,197,94,0.2)' : 'rgba(255,255,255,0.08)';
       const crowdCls = k.crowdingScore >= 80 ? 'extreme' : k.crowdingScore >= 60 ? 'high' : k.crowdingScore >= 40 ? 'mid' : k.crowdingScore >= 20 ? 'low' : 'desert';
 
@@ -1665,7 +1674,7 @@ function renderSOTDashboard() {
   // ===== 2. 拥挤交易警告 (What NOT to buy) =====
   if (analysis.crowdedTrades.length > 0) {
     html += '<div class="sot-card warning">';
-    html += '<div class="sot-card-title">🚨 拥挤交易预警 — 不要追高 <span class="sot-tag hot">⛔ 共识过热</span></div>';
+ html += '<div class="sot-card-title"> 拥挤交易预警 — 不要追高 <span class="sot-tag hot"> 共识过热</span></div>';
     html += '<div style="font-size:10px;color:var(--sub);margin-bottom:8px;padding:6px 8px;background:#fef2f2;border-radius:6px;line-height:1.5">以下方向市场共识度极高，"买预期卖事实"风险大。即使看好，也应等回调再介入，不宜追高。</div>';
     analysis.crowdedTrades.forEach(ct => {
       const tempColor = ct.temperature >= 85 ? '#dc2626' : '#ef4444';
@@ -1674,14 +1683,14 @@ function renderSOTDashboard() {
       html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">';
       html += '<span style="font-size:13px;font-weight:700">' + ct.tag + '</span>';
       html += '<div style="display:flex;align-items:center;gap:6px">';
-      html += '<span style="font-size:12px;font-weight:800;color:' + tempColor + '">🔥 ' + ct.temperature + '°</span>';
+ html += '<span style="font-size:12px;font-weight:800;color:' + tempColor + '"> ' + ct.temperature + '°</span>';
       html += '<span style="font-size:9px;font-weight:700;color:white;background:' + tempColor + ';padding:2px 6px;border-radius:4px">' + (ct.temperature >= 85 ? '极度拥挤' : '偏拥挤') + '</span>';
       html += '</div></div>';
       html += '<div class="sot-event" style="font-size:11px;line-height:1.6">' + ct.insight + '</div>';
       // 第二层受益标的
       if (ct.secondOrderTargets.length > 0) {
         html += '<div style="margin-top:4px;padding:6px 8px;background:#eef2ff;border-radius:6px">';
-        html += '<div style="font-size:10px;color:var(--primary);font-weight:700;margin-bottom:4px">💡 不追热点，买"卖铲子"的：</div>';
+ html += '<div style="font-size:10px;color:var(--primary);font-weight:700;margin-bottom:4px"> 不追热点，买"卖铲子"的：</div>';
         html += '<div class="sot-second-targets">';
         ct.secondOrderTargets.forEach(t => {
           html += '<span class="sot-target-chip">' + t + '</span>';
@@ -1696,7 +1705,7 @@ function renderSOTDashboard() {
   // ===== 3. 逆向机会发掘 (Where to look) =====
   if (analysis.contrarianPicks.length > 0) {
     html += '<div class="sot-card opportunity">';
-    html += '<div class="sot-card-title">🧊 逆向机会 — 可以布局 <span class="sot-tag cold">✅ 情绪冰点</span></div>';
+ html += '<div class="sot-card-title"> 逆向机会 — 可以布局 <span class="sot-tag cold"> 情绪冰点</span></div>';
     html += '<div style="font-size:10px;color:var(--sub);margin-bottom:8px;padding:6px 8px;background:#ecfdf5;border-radius:6px;line-height:1.5">以下方向市场极度悲观，预期已充分下调。如果基本面未恶化，预期差ΔP为正，适合逐步左侧布局。</div>';
     analysis.contrarianPicks.forEach(cp => {
       const fund = getFundamentalStatus(cp.tag);
@@ -1707,7 +1716,7 @@ function renderSOTDashboard() {
       html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">';
       html += '<span style="font-size:13px;font-weight:700">' + cp.tag + '</span>';
       html += '<div style="display:flex;align-items:center;gap:6px">';
-      html += '<span style="font-size:12px;font-weight:800;color:#22c55e">❄️ ' + cp.temperature + '°</span>';
+ html += '<span style="font-size:12px;font-weight:800;color:#22c55e"> ' + cp.temperature + '°</span>';
       html += '<span style="font-size:9px;font-weight:700;color:white;background:' + gapColor + ';padding:2px 6px;border-radius:4px">' + gapLabel + '</span>';
       html += '</div></div>';
       html += '<div class="sot-event" style="font-size:11px;line-height:1.6">' + cp.insight + '</div>';
@@ -1734,7 +1743,7 @@ function renderSOTDashboard() {
 
   // ===== 4. Howard Marks 压力测试 =====
   html += '<div class="contrarian-card">';
-  html += '<div class="contrarian-title">📖 Howard Marks 压力测试 <span style="font-size:9px;color:var(--sub);font-weight:400">"The most important thing is not to buy at the right price, but to not buy at the wrong price."</span></div>';
+ html += '<div class="contrarian-title"> Howard Marks 压力测试 <span style="font-size:9px;color:var(--sub);font-weight:400">"The most important thing is not to buy at the right price, but to not buy at the wrong price."</span></div>';
 
   // 4.1 最拥挤交易
   if (stressTest.mostCrowded.length > 0) {
@@ -1752,7 +1761,7 @@ function renderSOTDashboard() {
   // 4.2 第二层思维推演
   if (stressTest.secondLayer.length > 0) {
     html += '<div class="contrarian-section">';
-    html += '<div class="contrarian-section-title">🧠 第二层思维 — 被冷落的"卖铲子"行业</div>';
+ html += '<div class="contrarian-section-title"> 第二层思维 — 被冷落的"卖铲子"行业</div>';
     stressTest.secondLayer.forEach(sl => {
       html += '<div class="contrarian-item">';
       html += '<div class="contrarian-item-name">表面: ' + sl.hotTopic + ' → 实际: <span style="color:var(--primary)">' + sl.shovels.join('、') + '</span></div>';
@@ -2278,7 +2287,7 @@ function getMacroGeoAnalysis(){
       if(posDirectName && posScore === 0) posScore = 0.3;
       if(negDirectName && negScore === 0) negScore = 0.3;
       
-      // ★ 基于持仓数据匹配时：要求板块重叠度≥0.15(即至少15%持仓权重在相关板块)
+ // 基于持仓数据匹配时：要求板块重叠度≥0.15(即至少15%持仓权重在相关板块)
       // 避免宽基基金因少量科技持仓就被匹配到所有科技事件
       const sectorMatchStrong = (posScore >= 0.15 || negScore >= 0.15);
       const nameMatchStrong = (posDirectName || negDirectName || kwMatchList.length > 0);
@@ -2314,7 +2323,7 @@ function getMacroGeoAnalysis(){
     });
     
     if(matchedEvents.length > 0){
-      // ★ 按板块重叠度降序排列，确保最相关的事件排在前面
+ // 按板块重叠度降序排列，确保最相关的事件排在前面
       matchedEvents.sort((a,b) => (b.sectorOverlap||0) - (a.sectorOverlap||0));
       fundImpacts[code] = {
         score: fundScore,
@@ -2323,7 +2332,7 @@ function getMacroGeoAnalysis(){
         analysisSource: hasSectorData ? (_fundHoldingsCache[code]?.source || 'inferred') : 'name-only',
       };
     } else {
-      // ★ 所有持仓基金都纳入归因，无匹配事件的用板块/市场行情兜底
+ // 所有持仓基金都纳入归因，无匹配事件的用板块/市场行情兜底
       const fd = getFundData(code);
       const todayPct = parseFloat(fd?.gszzl || 0);
       const absPct = Math.abs(todayPct);
@@ -2552,7 +2561,7 @@ function analyzeFMSocialCoupling(){
 // 生成AI上下文注入文本
 function getFMSocialContextForAI(){
   const data = _fmSocialTrendData || analyzeFMSocialCoupling();
-  let ctx = '\n■ 📊 TOP50基金经理投资方向 × 社交媒体热词 耦合分析:\n';
+ let ctx = '\n■ TOP50基金经理投资方向 × 社交媒体热词 耦合分析:\n';
   ctx += `  数据源: TOP500基金经理前50名(季报持仓+调研动向) × 社交媒体(微博/雪球/东财/同花顺)\n`;
 
   ctx += '  [趋势共振排行(经理共识×社交热度)]:\n';
@@ -2572,7 +2581,7 @@ function getFMSocialContextForAI(){
     ctx += `    ${h.word}(热度${h.heat}·${h.trend==='up'?'↑升温':h.trend==='down'?'↓降温':'→持平'}) 来源:${h.sources.join('/')}\n`;
   });
 
-  ctx += '  ⚠️ 请特别关注「强共振」板块(基金经理集中配置+社交热度飙升)，这些方向往往代表中期趋势拐点。同时警惕纯舆情主导但经理未参与的方向(可能是散户追涨)。\n';
+ ctx += ' 请特别关注「强共振」板块(基金经理集中配置+社交热度飙升)，这些方向往往代表中期趋势拐点。同时警惕纯舆情主导但经理未参与的方向(可能是散户追涨)。\n';
 
   return ctx;
 }
@@ -2741,7 +2750,7 @@ async function refreshHotEventsManual(){
   } catch(e){
     console.warn('[HotEvents] 手动刷新失败:', e);
   } finally {
-    if(btn){ btn.disabled = false; btn.textContent = '🔄'; }
+ if(btn){ btn.disabled = false; btn.textContent = ''; }
   }
 }
 
@@ -3024,7 +3033,7 @@ async function fetchAllIntradayDetail(){
 /** 渲染基金日内估值曲线 SVG */
 function renderIntradaySVG(code){
   const points = intradayData[code];
-  if(!points || points.length < 2) return `<div class="ag-intraday-chart"><div style="display:flex;align-items:center;justify-content:center;height:100%;font-size:10px;color:var(--sub)">📈 盘中估值加载中...</div></div>`;
+ if(!points || points.length < 2) return `<div class="ag-intraday-chart"><div style="display:flex;align-items:center;justify-content:center;height:100%;font-size:10px;color:var(--sub)"> 盘中估值加载中...</div></div>`;
 
   const W = 300, H = 48, padT = 2, padB = 2;
   const chartH = H - padT - padB;
@@ -3075,7 +3084,7 @@ function renderIntradaySVG(code){
   svg += `<circle cx="${last.x.toFixed(1)}" cy="${last.y.toFixed(1)}" r="2.5" fill="${lineColor}"/>`;
   svg += `</svg>`;
   // 标签
-  svg += `<span class="intra-label">📈 盘中估值 · ${points.length}个采样</span>`;
+ svg += `<span class="intra-label"> 盘中估值 · ${points.length}个采样</span>`;
   svg += `<span class="intra-val" style="color:${pctColor}">${points[points.length-1].gsz.toFixed(4)} (${pctSign}${lastPct.toFixed(2)}%)</span>`;
   svg += `<span class="intra-time">${points[0].time}</span>`;
   svg += `<span class="intra-time-end">${points[points.length-1].time}</span>`;
@@ -4559,13 +4568,13 @@ function buildContext(){
 }
 
 function buildDataIntelContext(){
-  let ctx = '\n【🌍 宏观地缘事件与投资研判 — 多维度分析】\n';
+ let ctx = '\n【 宏观地缘事件与投资研判 — 多维度分析】\n';
 
   // 宏观经济
   const macro = getMacroSummary();
   ctx += '\n■ 宏观经济指标:\n';
   macro.signals.forEach(s=>{
-    ctx += `  ${s.name}: ${s.value} (${s.signal}) ${s.positive?'✅':'⚠️'}\n`;
+ ctx += ` ${s.name}: ${s.value} (${s.signal}) ${s.positive?'':''}\n`;
   });
   ctx += `  综合宏观信号: ${macro.overallSignal} (${macro.positiveCount}/5项正面)\n`;
   // PMI趋势
@@ -4586,7 +4595,7 @@ function buildDataIntelContext(){
       ctx += `  � ${s.name}: +${(s.mainNet/1e8).toFixed(1)}亿\n`;
     });
     capFlow.topOutflow.slice(0,3).forEach(s=>{
-      ctx += `  🟢 ${s.name}: ${(s.mainNet/1e8).toFixed(1)}亿\n`;
+ ctx += ` ${s.name}: ${(s.mainNet/1e8).toFixed(1)}亿\n`;
     });
     // 匹配用户持仓的板块资金流
     const holdTypes = new Set([...holdings.map(h=>h.type||''), ...watchlist.map(w=>w.type||'')]);
@@ -4604,7 +4613,7 @@ function buildDataIntelContext(){
   if(newsHeadlines.length>0){
     ctx += '  [重要财经新闻]:\n';
     newsHeadlines.slice(0,8).forEach(n=>{
-      const tag = n.sentiment==='bull'?'�利好':n.sentiment==='bear'?'🟢利空':'⚪中性';
+ const tag = n.sentiment==='bull'?'�利好':n.sentiment==='bear'?'利空':'中性';
       ctx += `    ${tag} ${n.title}\n`;
     });
   }
@@ -4612,11 +4621,11 @@ function buildDataIntelContext(){
   // 国际新闻聚合
   if(globalNews.length > 0){
     const gSent = getGlobalNewsSentiment();
-    ctx += '\n■ 🌍 国际新闻聚合(全球十大媒体 · 政治经济):\n';
+ ctx += '\n■ 国际新闻聚合(全球十大媒体 · 政治经济):\n';
     ctx += `  国际舆情指数: ${gSent.score}/100 (${gSent.label}) 正面${gSent.bullCount}条/负面${gSent.bearCount}条/共${gSent.total}条\n`;
     ctx += '  [重要国际新闻]:\n';
     globalNews.slice(0,12).forEach(n=>{
-      const tag = n.sentiment==='bull'?'�正面':n.sentiment==='bear'?'🟢负面':'⚪中性';
+ const tag = n.sentiment==='bull'?'�正面':n.sentiment==='bear'?'负面':'中性';
       ctx += `    [${n.source}] ${tag} ${n.titleCN||n.title}\n`;
     });
     if(globalNewsSummary){
@@ -4637,7 +4646,7 @@ function buildDataIntelContext(){
 
   // 宏观地缘事件引擎
   const geoA = getMacroGeoAnalysis();
-  ctx += `\n■ 🌍 宏观地缘事件引擎 (综合评分${geoA.score}/100 · ${geoA.label}):\n`;
+ ctx += `\n■ 宏观地缘事件引擎 (综合评分${geoA.score}/100 · ${geoA.label}):\n`;
   geoA.topEvents.forEach(e => {
     ctx += `  ${e.icon} ${e.name}: 影响=${e.impact>0?'+':''}${e.impact} 置信度=${(e.confidence*100).toFixed(0)}%\n`;
     ctx += `    ${e.description}\n`;
@@ -4652,18 +4661,18 @@ function buildDataIntelContext(){
     }
     ctx += `    操作建议: ${e.advice}\n`;
   });
-  ctx += `\n  📅 三个月展望(${geoA.outlook.period}): ${geoA.outlook.overall}\n`;
+ ctx += `\n 三个月展望(${geoA.outlook.period}): ${geoA.outlook.overall}\n`;
   ctx += `  投资主线:\n`;
   geoA.outlook.themes.forEach(t => {
     const arrow = t.direction==='up'?'↑':t.direction==='down'?'↓':'→';
     ctx += `    ${arrow} ${t.name}(置信:${t.conviction}): ${t.reason}\n`;
   });
   ctx += `  建议配置:\n`;
-  ctx += `    🔴 进攻仓: ${geoA.outlook.allocation.offensive}\n`;
-  ctx += `    🔵 核心仓: ${geoA.outlook.allocation.core}\n`;
-  ctx += `    🟡 防御仓: ${geoA.outlook.allocation.hedge}\n`;
-  ctx += `    ⚪ 现金: ${geoA.outlook.allocation.cash}\n`;
-  ctx += `  ⚠️ 重点风险: ${geoA.outlook.risks.join('; ')}\n`;
+ ctx += ` 进攻仓: ${geoA.outlook.allocation.offensive}\n`;
+ ctx += ` 核心仓: ${geoA.outlook.allocation.core}\n`;
+ ctx += ` 防御仓: ${geoA.outlook.allocation.hedge}\n`;
+ ctx += ` 现金: ${geoA.outlook.allocation.cash}\n`;
+ ctx += ` 重点风险: ${geoA.outlook.risks.join('; ')}\n`;
 
   // 持仓基金地缘事件关联 (增强：包含行业板块暴露)
   if(Object.keys(geoA.fundImpacts).length > 0){
@@ -4685,7 +4694,7 @@ function buildDataIntelContext(){
     });
   }
 
-  ctx += '\n⚠️ 请结合以上宏观数据、资金流向、国内舆情、国际新闻以及重大地缘事件分析，对你的操作建议进行验证和调整。特别注意：①地缘事件对持仓基金的板块影响 ②三个月投资主线是否与持仓吻合 ③风险事件是否需要调仓对冲 ④TOP50基金经理共识方向与社交热词的趋势共振信号。数据驱动决策，减少主观偏差。\n';
+ ctx += '\n 请结合以上宏观数据、资金流向、国内舆情、国际新闻以及重大地缘事件分析，对你的操作建议进行验证和调整。特别注意：①地缘事件对持仓基金的板块影响 ②三个月投资主线是否与持仓吻合 ③风险事件是否需要调仓对冲 ④TOP50基金经理共识方向与社交热词的趋势共振信号。数据驱动决策，减少主观偏差。\n';
 
   // 注入TOP50基金经理×社交热词耦合分析
   ctx += getFMSocialContextForAI();
@@ -4699,7 +4708,7 @@ function buildDataIntelContext(){
 function buildSecondOrderContext(){
   if(!_hotEventsLoaded) return '';
   const analysis = analyzeSecondOrderThinking();
-  let ctx = '\n【🧊 第二层思维 & 反拥挤度分析 (Anti-Crowding · ΔP=Reality-Expectation)】\n';
+ let ctx = '\n【 第二层思维 & 反拥挤度分析 (Anti-Crowding · ΔP=Reality-Expectation)】\n';
 
   // 拥挤交易预警
   if(analysis.crowdedTrades.length > 0){
@@ -4722,7 +4731,7 @@ function buildSecondOrderContext(){
     });
   }
 
-  ctx += '\n⚠️ 第二层思维要求: 避开拥挤度>80且RSI>70的方向(Kelly仓位已惩罚至15-35%); 关注拥挤度<25且RSI<35的逆向机会(Kelly给予1.12-1.25倍流动性补偿)。不要追逐表面热点,寻找预期差。\n';
+ ctx += '\n 第二层思维要求: 避开拥挤度>80且RSI>70的方向(Kelly仓位已惩罚至15-35%); 关注拥挤度<25且RSI<35的逆向机会(Kelly给予1.12-1.25倍流动性补偿)。不要追逐表面热点,寻找预期差。\n';
   return ctx;
 }
 
@@ -4749,13 +4758,13 @@ const SYSTEM_PROMPT = `你是一位擅长波段操作和趋势跟踪的基金投
 7. 反拥挤度：避免追逐拥挤度极高(>80)的表面热点，关注其上下游"卖铲子"产业。对情绪冰点但基本面修复中的板块，积极左侧布局。记住Howard Marks的忠告："风险不在波动率，在于你为之付出了过高的价格"
 
 ■ 操作决策框架：
-- 中期趋势↑ + 今日大跌 → buy(加仓/低吸) ✅
+- 中期趋势↑ + 今日大跌 → buy(加仓/低吸) 
 - 中期趋势↑ + 今日大涨 → hold或sell(部分止盈)
 - 中期趋势↑ + 今日平稳 → hold(持有)
 - 中期趋势→ + 今日大跌 → hold或buy(小仓试探)
 - 中期趋势↓ + 任何情况 → sell(减仓避险)
 
-■ ★★★ 波段止盈铁律（绝不追高）：
+■ 波段止盈铁律（绝不追高）：
 - 连涨冲高(5日涨≥3%且接近年内新高) → sell(部分止盈20-30%)，绝不追高加仓！
 - 短期暴涨(5日涨≥4%且RSI>70) → sell(超买区获利了结)
 - 中期涨幅过大(20日涨>10%且仍在涨) → hold(不追，等回调再考虑)
@@ -4840,10 +4849,10 @@ async function runAIAnalysis(onProgress){
       if(!jsonMatch) throw new Error('No JSON');
       const parsed = JSON.parse(jsonMatch[0]);
       results[eng.id] = parsed;
-      if(onProgress) onProgress(`✅ ${eng.name} 完成`, done);
+ if(onProgress) onProgress(` ${eng.name} 完成`, done);
     } catch(e) {
       console.error(`${eng.name} failed:`, e);
-      if(onProgress) onProgress(`⚠️ ${eng.name} 失败`, done);
+ if(onProgress) onProgress(` ${eng.name} 失败`, done);
     }
   });
 
@@ -4945,7 +4954,7 @@ function synthesize(results){
       action = 'sell';
     }
 
-    // ★ 波段止盈修正：趋势向上但连续冲高+近高点 → hold升级为sell(部分止盈)
+ // 波段止盈修正：趋势向上但连续冲高+近高点 → hold升级为sell(部分止盈)
     if(realTrend && action !== 'sell'){
       const { swingPos, chg5d, chg20d, drawdownFromHigh } = realTrend;
       const rsi = btResults[code]?.lastRSI || 50;
@@ -5071,17 +5080,17 @@ function renderPortfolio(){
       let swingClass = 'hold', swingText = '等待数据';
       if(td){
         if(td.swingAdvice && td.swingAdvice.includes('买入')){
-          swingClass = 'buy'; swingText = '⚡ 波段买入';
+ swingClass = 'buy'; swingText = ' 波段买入';
         } else if(td.swingAdvice && (td.swingAdvice.includes('止盈') || td.swingAdvice.includes('减仓'))){
-          swingClass = 'sell'; swingText = '📤 考虑止盈';
+ swingClass = 'sell'; swingText = ' 考虑止盈';
         } else if(td.swingAdvice && td.swingAdvice.includes('不建议')){
-          swingClass = 'sell'; swingText = '⛔ 暂避';
+ swingClass = 'sell'; swingText = ' 暂避';
         } else if(td.trendDir==='strong_up'||td.trendDir==='up'){
-          swingClass = 'hold'; swingText = '📈 趋势向上';
+ swingClass = 'hold'; swingText = ' 趋势向上';
         } else if(td.trendDir==='strong_down'||td.trendDir==='down'){
-          swingClass = 'sell'; swingText = '📉 趋势偏弱';
+ swingClass = 'sell'; swingText = ' 趋势偏弱';
         } else {
-          swingClass = 'hold'; swingText = '📊 震荡观望';
+ swingClass = 'hold'; swingText = ' 震荡观望';
         }
       }
 
@@ -5095,12 +5104,12 @@ function renderPortfolio(){
       // Action buttons
       let actHtml = '';
       if(isHeld){
-        actHtml = `<span class="pf-act-btn in-hold">✓ 已持仓</span>`;
+ actHtml = `<span class="pf-act-btn in-hold"> 已持仓</span>`;
       } else {
         actHtml = `<button class="pf-act-btn" onclick="addFromPortfolio('${pf.code}','${pf.name}','${pf.type}','holding')">+ 持仓</button>`;
       }
       if(isWatched){
-        actHtml += `<span class="pf-act-btn in-watch">✓ 自选</span>`;
+ actHtml += `<span class="pf-act-btn in-watch"> 自选</span>`;
       } else if(!isHeld){
         actHtml += `<button class="pf-act-btn" onclick="addFromPortfolio('${pf.code}','${pf.name}','${pf.type}','watch')">+ 自选</button>`;
       }
@@ -5412,7 +5421,7 @@ function computeTriEngineVote(code, aiSig, rlSig, btR){
     // 中性区但有方向性偏置 → 给出弱信号而非0
     else if(sharpe > 0.8 && winRate > 0.55){ btVote = 1; btConf = 50; }
     else if(sharpe < -0.5 && winRate < 0.4){ btVote = -1; btConf = 50; }
-    // ★ RSI 50-65中性区: 根据RSI相对位置+Sharpe给出弱方向性信号
+ // RSI 50-65中性区: 根据RSI相对位置+Sharpe给出弱方向性信号
     else if(rsi <= 55 && sharpe > 0){ btVote = 1; btConf = 45; }
     else if(rsi >= 58 && sharpe < 0){ btVote = -1; btConf = 45; }
     else if(sharpe > 0.3){ btVote = 1; btConf = 42; }
@@ -5621,7 +5630,7 @@ function computeTriEngineVote(code, aiSig, rlSig, btR){
 
   // === 8. 最终决策 ===
   const finalScore = temporalScore * riskMult;
-  let action = 'hold', actionLabel = '🔵 持有观望';
+ let action = 'hold', actionLabel = ' 持有观望';
   // effConf: 当AI未分析时(aiConf=0)，用地缘事件置信度作为备用
   const geoConfFallback = geoBias > 0 ? Math.min(80, geoBias * 60) : 0;
   const baseConf = aiConf > 0 ? aiConf : geoConfFallback;
@@ -5633,10 +5642,10 @@ function computeTriEngineVote(code, aiSig, rlSig, btR){
   const sellScoreThreshold = geoBias < -0.15 ? -0.1 : -0.2;
   const totalVotes = Math.abs(aiVote) + Math.abs(rlVote) + Math.abs(btVote);
   // 统一决策逻辑 —— 无论引擎是否有信号都走相同路径
-  if(finalScore > buyScoreThreshold && (effConf >= buyConfThreshold || hasStrongGeo)){ action = 'buy'; actionLabel = '🔴 建议加仓'; }
-  else if(finalScore < sellScoreThreshold && effConf >= 50){ action = 'sell'; actionLabel = '🟢 建议减仓'; }
-  else if(finalScore > 0.08){ actionLabel = '🔵 偏多持有'; }
-  else if(finalScore < -0.08){ actionLabel = '🔵 偏空持有'; }
+ if(finalScore > buyScoreThreshold && (effConf >= buyConfThreshold || hasStrongGeo)){ action = 'buy'; actionLabel = ' 建议加仓'; }
+ else if(finalScore < sellScoreThreshold && effConf >= 50){ action = 'sell'; actionLabel = ' 建议减仓'; }
+ else if(finalScore > 0.08){ actionLabel = ' 偏多持有'; }
+ else if(finalScore < -0.08){ actionLabel = ' 偏空持有'; }
 
   // Kelly建议仓位(受组合风险调整 + 反拥挤度惩罚)
   const kelly = btR?.finalKelly || 0.05;
@@ -5814,38 +5823,38 @@ function generateSwingAnalysis(code, td, vote, capFlow){
   // 基于多维度综合判断波段阶段(非简单5日涨跌)
   if(trendDir === 'strong_up' || trendDir === 'up'){
     if(swingPos === 'surge' || (chg5d >= 3 && drawdownFromHigh > -2)){
-      phase = 'peak_zone'; phaseIcon = '🔺'; phaseColor = '#ef4444';
+ phase = 'peak_zone'; phaseIcon = ''; phaseColor = '#ef4444';
       phaseDesc = '冲顶区间 — 连续上涨接近高点，获利盘压力最大的区域';
     } else if(swingPos === 'rally' || (chg5d >= 1 && chg20d > 5)){
-      phase = 'accel_up'; phaseIcon = '📈'; phaseColor = '#f59e0b';
+ phase = 'accel_up'; phaseIcon = ''; phaseColor = '#f59e0b';
       phaseDesc = '加速上涨 — 趋势维持但涨速加快，需关注冲高回落';
     } else if(swingPos === 'dip' || swingPos === 'deep_dip'){
-      phase = 'trend_pullback'; phaseIcon = '💎'; phaseColor = '#3b82f6';
+ phase = 'trend_pullback'; phaseIcon = ''; phaseColor = '#3b82f6';
       phaseDesc = '趋势内回调 — 上升趋势中的正常回调，经典波段低吸位';
     } else {
-      phase = 'steady_up'; phaseIcon = '🟢'; phaseColor = '#22c55e';
+ phase = 'steady_up'; phaseIcon = ''; phaseColor = '#22c55e';
       phaseDesc = '稳步上行 — 趋势健康运行中，价格在均线附近';
     }
   } else if(trendDir === 'strong_down' || trendDir === 'down'){
     if(swingPos === 'rally' || swingPos === 'surge'){
-      phase = 'bear_bounce'; phaseIcon = '⚠️'; phaseColor = '#f59e0b';
+ phase = 'bear_bounce'; phaseIcon = ''; phaseColor = '#f59e0b';
       phaseDesc = '下跌反弹 — 大趋势向下的短暂反弹，不宜追涨，可逢高减仓';
     } else if(swingPos === 'deep_dip'){
-      phase = 'free_fall'; phaseIcon = '🔻'; phaseColor = '#ef4444';
+ phase = 'free_fall'; phaseIcon = ''; phaseColor = '#ef4444';
       phaseDesc = '加速下跌 — 空头主导，不建议接刀，等待企稳信号';
     } else {
-      phase = 'decline'; phaseIcon = '📉'; phaseColor = '#f87171';
+ phase = 'decline'; phaseIcon = ''; phaseColor = '#f87171';
       phaseDesc = '下行通道 — 趋势偏弱，反弹高度有限，控制仓位';
     }
   } else { // sideways
     if(swingPos === 'dip' || swingPos === 'deep_dip'){
-      phase = 'range_low'; phaseIcon = '🔵'; phaseColor = '#3b82f6';
+ phase = 'range_low'; phaseIcon = ''; phaseColor = '#3b82f6';
       phaseDesc = '震荡区间低位 — 接近箱体底部，可小仓位试探';
     } else if(swingPos === 'surge' || swingPos === 'rally'){
-      phase = 'range_high'; phaseIcon = '⚪'; phaseColor = '#94a3b8';
+ phase = 'range_high'; phaseIcon = ''; phaseColor = '#94a3b8';
       phaseDesc = '震荡区间高位 — 接近箱体顶部，宜减仓或等回调';
     } else {
-      phase = 'range_mid'; phaseIcon = '↔️'; phaseColor = '#94a3b8';
+ phase = 'range_mid'; phaseIcon = '↔'; phaseColor = '#94a3b8';
       phaseDesc = '震荡中位 — 方向不明，等待突破或跌至箱底';
     }
   }
@@ -5867,7 +5876,7 @@ function generateSwingAnalysis(code, td, vote, capFlow){
     : hasCapOutflow ? '(注意：主力资金净流出)' : '';
 
   if(phase === 'peak_zone'){
-    planIcon = '🎯';
+ planIcon = '';
     plan = `<b>波段计划：分批止盈</b>\n`;
     plan += `连续冲高${chg5d>=0?'+':''}${chg5d.toFixed(1)}%(5日)且距年内高点仅${Math.abs(drawdownFromHigh).toFixed(1)}%，`;
     plan += `RSI=${rsi.toFixed(0)}${rsi>70?'(超买区)':''}，获利盘压力大。`;
@@ -5876,7 +5885,7 @@ function generateSwingAnalysis(code, td, vote, capFlow){
     plan += `<br>→ 止盈后保留底仓，等波段低点再接回${capFlowHint}`;
     if(isSatellite) plan += `<br>→ 卫星仓品种，波段高位止盈是纪律，"会卖的是师傅"`;
   } else if(phase === 'accel_up'){
-    planIcon = '📊';
+ planIcon = '';
     plan = `<b>波段计划：跟踪持有+止盈准备</b>\n`;
     plan += `趋势向上且近期加速(5日${chg5d>=0?'+':''}${chg5d.toFixed(1)}%，20日${chg20d>=0?'+':''}${chg20d.toFixed(1)}%)${capFlowHint}。`;
     plan += `<br>→ <b>维持持有</b>，但设置移动止盈线在MA5(${priceFmt(ma5)})`;
@@ -5884,7 +5893,7 @@ function generateSwingAnalysis(code, td, vote, capFlow){
     plan += `<br>→ 跌破MA20(${ma20Str})则果断止盈剩余仓位`;
     plan += `<br>→ 不宜此时追高加仓，等回调至MA20附近再考虑`;
   } else if(phase === 'trend_pullback'){
-    planIcon = '💰';
+ planIcon = '';
     plan = `<b>波段计划：低吸加仓</b>\n`;
     plan += `上升趋势中出现回调(5日${chg5d.toFixed(1)}%)，价格回到均线附近，这是经典的波段买点。`;
     plan += `<br>→ <b>建议分批低吸</b>，MA20(${ma20Str})附近建仓`;
@@ -5892,14 +5901,14 @@ function generateSwingAnalysis(code, td, vote, capFlow){
     plan += `<br>→ 止损线设在MA60下方3-5%，跌破清仓`;
     plan += `<br>→ 目标：反弹至前高附近分批止盈${capFlowHint}`;
   } else if(phase === 'steady_up'){
-    planIcon = '🟢';
+ planIcon = '';
     plan = `<b>波段计划：沿趋势持有</b>\n`;
     plan += `趋势健康，价格沿均线稳步上行${capFlowHint}。`;
     plan += `<br>→ <b>已持有则继续持有</b>，用MA20(${ma20Str})作为动态止盈线`;
     plan += `<br>→ 未持有可在回调至MA20时小仓位参与`;
     plan += `<br>→ 不追涨，等价格脱离均线过远(涨>5%)再考虑止盈`;
   } else if(phase === 'bear_bounce'){
-    planIcon = '🚨';
+ planIcon = '';
     plan = `<b>波段计划：逢反弹减仓</b>\n`;
     plan += `大趋势下行中的反弹(5日${chg5d>=0?'+':''}${chg5d.toFixed(1)}%)，反弹高度通常有限。`;
     plan += `<br>→ <b>趁反弹减仓30-50%</b>，不追涨`;
@@ -5907,7 +5916,7 @@ function generateSwingAnalysis(code, td, vote, capFlow){
     plan += `<br>→ 若价格受阻于均线压力回落，确认减仓`;
     plan += `<br>→ 等趋势确认反转(MA5上穿MA20)后再重新建仓${capFlowHint}`;
   } else if(phase === 'free_fall'){
-    planIcon = '🛑';
+ planIcon = '';
     plan = `<b>波段计划：回避观望</b>\n`;
     plan += `处于加速下跌中(5日${chg5d.toFixed(1)}%，距高点${drawdownFromHigh.toFixed(1)}%)，下跌趋势未见止跌信号。`;
     plan += `<br>→ <b>不接飞刀</b>，空仓等待`;
@@ -5915,7 +5924,7 @@ function generateSwingAnalysis(code, td, vote, capFlow){
     plan += `<br>→ 企稳后第一次反弹不急进，等二次回踩确认底部再入场`;
     plan += `<br>→ 已有仓位应趁反弹果断止损${capFlowHint}`;
   } else if(phase === 'decline'){
-    planIcon = '📉';
+ planIcon = '';
     plan = `<b>波段计划：控制仓位</b>\n`;
     plan += `趋势走弱，均线空头排列中${capFlowHint}。`;
     plan += `<br>→ <b>已有仓位减至半仓以下</b>`;
@@ -5923,21 +5932,21 @@ function generateSwingAnalysis(code, td, vote, capFlow){
     plan += `<br>→ 只有当价格站稳MA20且MA5拐头向上时，才小仓位试探`;
     plan += `<br>→ 严格止损：再创新低则清仓`;
   } else if(phase === 'range_low'){
-    planIcon = '🔵';
+ planIcon = '';
     plan = `<b>波段计划：箱底试探</b>\n`;
     plan += `横盘震荡中回调至低位(5日${chg5d.toFixed(1)}%)，接近箱体下沿。`;
     plan += `<br>→ <b>可小仓位(20-30%)试探</b>，在支撑位(MA60 ${ma60Str})附近`;
     plan += `<br>→ 止损设在箱体下沿下方2%`;
     plan += `<br>→ 目标：反弹至箱体上沿(MA5 ${priceFmt(ma5)}附近)时止盈${capFlowHint}`;
   } else if(phase === 'range_high'){
-    planIcon = '⚪';
+ planIcon = '';
     plan = `<b>波段计划：箱顶止盈</b>\n`;
     plan += `横盘震荡中冲高至高位(5日${chg5d>=0?'+':''}${chg5d.toFixed(1)}%)，接近箱体上沿。`;
     plan += `<br>→ <b>建议减仓20-30%</b>，锁定利润`;
     plan += `<br>→ 若有效突破箱顶并站稳，可追回(但需设止损)`;
     plan += `<br>→ 回落则等箱底再接回${capFlowHint}`;
   } else {
-    planIcon = '↔️';
+ planIcon = '↔';
     plan = `<b>波段计划：观望等待</b>\n`;
     plan += `横盘震荡中位，方向不明${capFlowHint}。`;
     plan += `<br>→ 不宜加仓，等待回调至MA20(${ma20Str})以下或突破前高后参与`;
@@ -5950,24 +5959,24 @@ function generateSwingAnalysis(code, td, vote, capFlow){
     const aiDir = vote.ai.vote > 0 ? '看多' : '看空';
     // AI方向与波段阶段矛盾时给出警示
     if(vote.ai.vote > 0 && (phase === 'peak_zone' || phase === 'range_high')){
-      aiSwingNote = `⚡AI引擎${aiDir}(置信${vote.ai.conf}%)，但波段处于高位区。建议：<b>尊重波段纪律先止盈一部分</b>，待回调后按AI方向重新买入，可降低持仓成本`;
+ aiSwingNote = `AI引擎${aiDir}(置信${vote.ai.conf}%)，但波段处于高位区。建议：<b>尊重波段纪律先止盈一部分</b>，待回调后按AI方向重新买入，可降低持仓成本`;
     } else if(vote.ai.vote < 0 && (phase === 'trend_pullback' || phase === 'range_low')){
-      aiSwingNote = `⚡AI引擎${aiDir}(置信${vote.ai.conf}%)，但波段处于低位区。建议：<b>以AI方向为主减仓</b>，但可保留少量底仓作为万一反转的"保险"`;
+ aiSwingNote = `AI引擎${aiDir}(置信${vote.ai.conf}%)，但波段处于低位区。建议：<b>以AI方向为主减仓</b>，但可保留少量底仓作为万一反转的"保险"`;
     } else if(vote.ai.vote > 0 && (phase === 'trend_pullback' || phase === 'range_low')){
-      aiSwingNote = `✅AI引擎${aiDir}(置信${vote.ai.conf}%)与波段低位一致：<b>形成共振买点</b>，可更积极地执行低吸计划`;
+ aiSwingNote = `AI引擎${aiDir}(置信${vote.ai.conf}%)与波段低位一致：<b>形成共振买点</b>，可更积极地执行低吸计划`;
     } else if(vote.ai.vote < 0 && (phase === 'peak_zone' || phase === 'bear_bounce')){
-      aiSwingNote = `✅AI引擎${aiDir}(置信${vote.ai.conf}%)与波段高位一致：<b>形成共振卖点</b>，止盈/减仓信心更足`;
+ aiSwingNote = `AI引擎${aiDir}(置信${vote.ai.conf}%)与波段高位一致：<b>形成共振卖点</b>，止盈/减仓信心更足`;
     }
   }
   // 宏观面与波段的交叉
   let macroSwingNote = '';
   if(vote.macroBias !== undefined){
     if(vote.macroBias < -0.06 && phase === 'peak_zone'){
-      macroSwingNote = '📊宏观面偏冷+波段高位：双杀风险，止盈优先级极高';
+ macroSwingNote = '宏观面偏冷+波段高位：双杀风险，止盈优先级极高';
     } else if(vote.macroBias > 0.06 && phase === 'trend_pullback'){
-      macroSwingNote = '📊宏观面偏暖+波段低位：双重支撑，低吸安全边际更高';
+ macroSwingNote = '宏观面偏暖+波段低位：双重支撑，低吸安全边际更高';
     } else if(vote.macroBias < -0.04 && (phase === 'accel_up' || phase === 'steady_up')){
-      macroSwingNote = '📊注意：宏观面偏弱，上涨趋势可能面临宏观逆风，适当缩减仓位';
+ macroSwingNote = '注意：宏观面偏弱，上涨趋势可能面临宏观逆风，适当缩减仓位';
     }
   }
 
@@ -6020,7 +6029,7 @@ function generateSmartReason(p, capFlow, ds){
   if(vote.ai.vote !== 0 || vote.ai.conf > 0){
     const aiDir = vote.ai.vote > 0 ? '看多' : vote.ai.vote < 0 ? '看空' : '中性';
     const aiConfDesc = vote.ai.conf >= 80 ? '高置信' : vote.ai.conf >= 60 ? '中等置信' : vote.ai.conf >= 40 ? '低置信' : '弱信号';
-    engineSection += `<b>🤖AI引擎</b>: ${aiDir}(${aiConfDesc}${vote.ai.conf}%)`;
+ engineSection += `<b>AI引擎</b>: ${aiDir}(${aiConfDesc}${vote.ai.conf}%)`;
     if(vote.ai.reason) engineSection += `，AI判断: "${vote.ai.reason.slice(0, 100)}"`;
     engineSection += `，历史准确率${(vote.ai.accuracy * 100).toFixed(0)}%，权重${vote.engineWeights.ai}`;
     engineSection += '<br>';
@@ -6028,9 +6037,9 @@ function generateSmartReason(p, capFlow, ds){
   // RL引擎详述
   if(useRL && (vote.rl.vote !== 0 || vote.rl.conf > 0)){
     const rlDir = vote.rl.vote > 0 ? '看多' : vote.rl.vote < 0 ? '看空' : '观望';
-    const rlConvDesc = vote.rl.conviction === '强' ? '(信心强💪)' : vote.rl.conviction === '弱' ? '(信心弱⚠️)' : '';
+ const rlConvDesc = vote.rl.conviction === '强' ? '(信心强)' : vote.rl.conviction === '弱' ? '(信心弱)' : '';
     const rlUncDesc = vote.rl.uncertainty > 0.5 ? '决策不确定性高' : vote.rl.uncertainty > 0.2 ? '决策不确定性中' : '决策确定性高';
-    engineSection += `<b>🧠RL大脑</b>: ${rlDir}${rlConvDesc}，置信${vote.rl.conf.toFixed(0)}%，${rlUncDesc}`;
+ engineSection += `<b>RL大脑</b>: ${rlDir}${rlConvDesc}，置信${vote.rl.conf.toFixed(0)}%，${rlUncDesc}`;
     engineSection += `，历史准确率${(vote.rl.accuracy * 100).toFixed(0)}%，权重${vote.engineWeights.rl}`;
     engineSection += '<br>';
   }
@@ -6040,9 +6049,9 @@ function generateSmartReason(p, capFlow, ds){
     const rsi = bt.rsi;
     if(btSummary){
       const btDir = bt.vote > 0 ? '看多' : bt.vote < 0 ? '看空' : '中性';
-      const rsiZone = rsi > 80 ? '极度超买🔴' : rsi > 70 ? '超买区⚠️' : rsi > 55 ? '偏强' : rsi > 45 ? '中性' : rsi > 30 ? '偏弱' : rsi > 20 ? '超卖区⚡' : '极度超卖💎';
+ const rsiZone = rsi > 80 ? '极度超买' : rsi > 70 ? '超买区' : rsi > 55 ? '偏强' : rsi > 45 ? '中性' : rsi > 30 ? '偏弱' : rsi > 20 ? '超卖区' : '极度超卖';
       const sharpeDesc = bt.sharpe > 1.5 ? '优秀' : bt.sharpe > 0.8 ? '良好' : bt.sharpe > 0.3 ? '尚可' : bt.sharpe > 0 ? '偏弱' : '为负';
-      engineSection += `<b>📈回测引擎</b>: ${btDir}，RSI=${rsi.toFixed(0)}(${rsiZone})，Sharpe=${bt.sharpe.toFixed(2)}(${sharpeDesc})，Sortino=${bt.sortino.toFixed(2)}`;
+ engineSection += `<b>回测引擎</b>: ${btDir}，RSI=${rsi.toFixed(0)}(${rsiZone})，Sharpe=${bt.sharpe.toFixed(2)}(${sharpeDesc})，Sortino=${bt.sortino.toFixed(2)}`;
       if(bt.winRate > 0) engineSection += `，历史胜率${(bt.winRate * 100).toFixed(0)}%`;
       if(bt.maxDD < 0) engineSection += `，最大回撤${(bt.maxDD * 100).toFixed(1)}%`;
       engineSection += `，Kelly建议仓位${(bt.kelly * 100).toFixed(1)}%`;
@@ -6055,14 +6064,14 @@ function generateSmartReason(p, capFlow, ds){
   let consensusDesc = '';
   const maxEngines = useRL ? 3 : 2;
   if(vote.buyVotes >= maxEngines){
-    consensusDesc = `${maxEngines===3?'✅三引擎':'✅双引擎'}一致看多，共识较强(×${vote.consensusMult.toFixed(2)})`;
+ consensusDesc = `${maxEngines===3?'三引擎':'双引擎'}一致看多，共识较强(×${vote.consensusMult.toFixed(2)})`;
   }
-  else if(vote.buyVotes === 2 && vote.sellVotes === 0) consensusDesc = '✅双引擎看多(×' + vote.consensusMult.toFixed(2) + ')，信号较强';
+ else if(vote.buyVotes === 2 && vote.sellVotes === 0) consensusDesc = '双引擎看多(×' + vote.consensusMult.toFixed(2) + ')，信号较强';
   else if(vote.sellVotes >= maxEngines){
-    consensusDesc = `${maxEngines===3?'🔻三引擎':'🔻双引擎'}一致看空，共识较强(×${vote.consensusMult.toFixed(2)})`;
+ consensusDesc = `${maxEngines===3?'三引擎':'双引擎'}一致看空，共识较强(×${vote.consensusMult.toFixed(2)})`;
   }
-  else if(vote.sellVotes === 2 && vote.buyVotes === 0) consensusDesc = '🔻双引擎看空(×' + vote.consensusMult.toFixed(2) + ')，空头信号明确';
-  else if(vote.buyVotes > 0 && vote.sellVotes > 0) consensusDesc = '⚠️引擎分歧(买' + vote.buyVotes + '卖' + vote.sellVotes + ')，共识惩罚(×' + vote.consensusMult.toFixed(2) + ')，方向不明';
+ else if(vote.sellVotes === 2 && vote.buyVotes === 0) consensusDesc = '双引擎看空(×' + vote.consensusMult.toFixed(2) + ')，空头信号明确';
+ else if(vote.buyVotes > 0 && vote.sellVotes > 0) consensusDesc = '引擎分歧(买' + vote.buyVotes + '卖' + vote.sellVotes + ')，共识惩罚(×' + vote.consensusMult.toFixed(2) + ')，方向不明';
   else if(totalVotes === 0){
     // 具体说明哪些引擎未激活
     const missing = [];
@@ -6078,7 +6087,7 @@ function generateSmartReason(p, capFlow, ds){
     if(!_analysisResult) consensusDesc += '。建议点击「AI分析」激活AI引擎';
   }
   else consensusDesc = '仅单引擎有信号，信号较弱';
-  engineSection += `<b>📊共识</b>: ${consensusDesc}`;
+ engineSection += `<b>共识</b>: ${consensusDesc}`;
 
   // ========== Section 2: 技术面分析 ==========
   let techSection = '';
@@ -6086,20 +6095,20 @@ function generateSmartReason(p, capFlow, ds){
     const tl = getTrendLabel(td);
     // 趋势方向
     const trendDesc = {
-      'strong_up': '🔥当前处于强势上攻趋势，多头占据主导，短期动能充沛',
-      'up': '📈整体趋势向上，中期方向偏多，但上涨力度尚未达到强势',
-      'sideways': '↔️当前横盘震荡，方向不明确，多空力量胶着，等待突破方向',
-      'down': '📉趋势走弱，空头逐步占优，注意控制风险',
-      'strong_down': '⚠️强势下跌趋势，空头主导，短期内反转概率较低',
+ 'strong_up': '当前处于强势上攻趋势，多头占据主导，短期动能充沛',
+ 'up': '整体趋势向上，中期方向偏多，但上涨力度尚未达到强势',
+ 'sideways': '↔当前横盘震荡，方向不明确，多空力量胶着，等待突破方向',
+ 'down': '趋势走弱，空头逐步占优，注意控制风险',
+ 'strong_down': '强势下跌趋势，空头主导，短期内反转概率较低',
     };
     techSection += `<b>趋势方向</b>: ${trendDesc[td.trendDir] || '数据不足'}<br>`;
     // 波段位置
     const swingDesc = {
-      'deep_dip': '💎处于深度回调区间，偏离均值较远，若趋势未破，是较好的低吸位置',
-      'dip': '🔻短期回调中，价格小幅回落，可能是波段买点',
+ 'deep_dip': '处于深度回调区间，偏离均值较远，若趋势未破，是较好的低吸位置',
+ 'dip': '短期回调中，价格小幅回落，可能是波段买点',
       'mid': '处于中位运行区间，波段方向不明确，无明显加减仓信号',
-      'rally': '🔺短期出现反弹，但需关注反弹力度和持续性',
-      'surge': '🚀短期快速冲高，获利盘积累较多，需防范回调风险',
+ 'rally': '短期出现反弹，但需关注反弹力度和持续性',
+ 'surge': '短期快速冲高，获利盘积累较多，需防范回调风险',
     };
     techSection += `<b>波段位置</b>: ${swingDesc[td.swingPos] || '中位运行'}<br>`;
     // 均线排列
@@ -6137,7 +6146,7 @@ function generateSmartReason(p, capFlow, ds){
     else if(netB > 0) fundFlowSection += `${fType}相关板块资金面中性偏正，主力小幅净流入${(netB/1e8).toFixed(1)}亿`;
     else if(netB > -1e8) fundFlowSection += `${fType}相关板块资金面中性偏负，主力小幅净流出${(absB/1e8).toFixed(1)}亿`;
     else if(netB > -5e8) fundFlowSection += `${fType}相关板块主力资金净流出${(absB/1e8).toFixed(1)}亿，短期资金偏谨慎`;
-    else fundFlowSection += `⚠️${fType}相关板块主力资金大幅净流出${(absB/1e8).toFixed(1)}亿，资金加速离场，需警惕持续下行压力`;
+ else fundFlowSection += `${fType}相关板块主力资金大幅净流出${(absB/1e8).toFixed(1)}亿，资金加速离场，需警惕持续下行压力`;
   }
 
   // ========== Section 4: 宏观 & 地缘 ==========
@@ -6147,21 +6156,21 @@ function generateSmartReason(p, capFlow, ds){
     else if(ds.score >= 55) macroSection += `宏观环境偏正面(评分${ds.score})，整体环境对市场有一定支撑`;
     else if(ds.score >= 45) macroSection += `宏观环境中性(评分${ds.score})，经济数据暂无明显方向，政策面平稳`;
     else if(ds.score >= 30) macroSection += `宏观环境偏弱(评分${ds.score})，部分经济数据走弱，需注意系统性风险`;
-    else macroSection += `⚠️宏观环境较差(评分${ds.score})，多项数据走弱，风险偏好收缩，建议保守操作`;
+ else macroSection += `宏观环境较差(评分${ds.score})，多项数据走弱，风险偏好收缩，建议保守操作`;
   }
-  if(vote.geoBias > 0.25) macroSection += (macroSection?'。':'') + `🌍地缘事件形成强正向催化(偏置+${vote.geoBias.toFixed(2)})，可能带来超预期上涨`;
+ if(vote.geoBias > 0.25) macroSection += (macroSection?'。':'') + `地缘事件形成强正向催化(偏置+${vote.geoBias.toFixed(2)})，可能带来超预期上涨`;
   else if(vote.geoBias > 0.1) macroSection += (macroSection?'。':'') + `地缘事件偏利好(偏置+${vote.geoBias.toFixed(2)})，有一定正面催化`;
-  else if(vote.geoBias < -0.25) macroSection += (macroSection?'。':'') + `⚠️地缘事件形成强利空(偏置${vote.geoBias.toFixed(2)})，可能引发超预期下跌`;
+ else if(vote.geoBias < -0.25) macroSection += (macroSection?'。':'') + `地缘事件形成强利空(偏置${vote.geoBias.toFixed(2)})，可能引发超预期下跌`;
   else if(vote.geoBias < -0.1) macroSection += (macroSection?'。':'') + `地缘事件偏利空(偏置${vote.geoBias.toFixed(2)})，需关注风险传导`;
 
   // ========== Section 5: 拥挤度 & 逆向 (仅在触发时展示) ==========
   let crowdSection = '';
-  if(vote.sotStatus === 'crowded') crowdSection = `⚠️该品种当前交易拥挤度较高，市场关注度过热，短期追涨风险大。Kelly仓位已按拥挤度因子(×${vote.crowdingPenalty.toFixed(2)})下调，减少过热板块暴露`;
-  else if(vote.sotStatus === 'contrarian') crowdSection = `🎯该品种当前处于市场冷门区域，关注度低迷，具备逆向投资价值。Kelly仓位获得逆向奖励(×${vote.contrarianBonus.toFixed(2)})`;
+ if(vote.sotStatus === 'crowded') crowdSection = `该品种当前交易拥挤度较高，市场关注度过热，短期追涨风险大。Kelly仓位已按拥挤度因子(×${vote.crowdingPenalty.toFixed(2)})下调，减少过热板块暴露`;
+ else if(vote.sotStatus === 'contrarian') crowdSection = `该品种当前处于市场冷门区域，关注度低迷，具备逆向投资价值。Kelly仓位获得逆向奖励(×${vote.contrarianBonus.toFixed(2)})`;
 
   // ========== Section 6: 风控约束 (仅在约束生效时展示) ==========
   let riskSection = '';
-  if(vote.riskMult < 0.8) riskSection += `⚠️组合风险约束生效: 当前组合整体风险偏高(风险评分${(vote.portRisk*100).toFixed(0)})，买入信号已被风控系统压缩(×${vote.riskMult.toFixed(2)})`;
+ if(vote.riskMult < 0.8) riskSection += `组合风险约束生效: 当前组合整体风险偏高(风险评分${(vote.portRisk*100).toFixed(0)})，买入信号已被风控系统压缩(×${vote.riskMult.toFixed(2)})`;
 
   // ========== Section 7: 顶级基金经理同赛道动向 ==========
   let mgrSection = '';
@@ -6275,7 +6284,7 @@ function generateSmartReason(p, capFlow, ds){
       if(relatedMgrs.length > 0){
         const top = relatedMgrs.slice(0, 4);
         mgrSection = top.map(function(m){
-          const convIcon = m.conviction === '极高' ? '🔥' : m.conviction === '高' ? '💪' : '📌';
+ const convIcon = m.conviction === '极高' ? '' : m.conviction === '高' ? '' : '';
           const overlapStr = m.overlapSectors.slice(0,2).join('/');
           return `${convIcon}<b>${m.name}</b>(${m.firm}·${m.aum}·${m.style})<span style="color:#94a3b8;font-size:8px;margin:0 2px">${overlapStr}</span>${m.recent} <span style="color:#94a3b8;font-size:8px">[${m.conviction}]</span>`;
         }).join('<br>');
@@ -6290,7 +6299,7 @@ function generateSmartReason(p, capFlow, ds){
     if(xq){
       const liveTag = xq.isLive ? '<span style="color:#22c55e;font-size:9px">● 实时</span>' : '<span style="color:#94a3b8;font-size:9px">○ 静态</span>';
       const catStr = xq.categories.map(c => {
-        const t = c.trend === 'up' ? '🔥升温' : c.trend === 'down' ? '❄️降温' : '➡️持平';
+ const t = c.trend === 'up' ? '升温' : c.trend === 'down' ? '降温' : '持平';
         return `${c.category}(持仓${(c.weight*100).toFixed(0)}%·热度${Math.round(c.heat/1000)}k·${t})`;
       }).join('、');
       const wordStr = xq.topWords.slice(0, 4).join(' / ');
@@ -6321,17 +6330,17 @@ function generateSmartReason(p, capFlow, ds){
   let reason = '';
   // 操作结论(放最前面，醒目)
   if(vote.action === 'buy'){
-    reason += `<b style="color:#ef4444">📌 结论: 建议加仓</b>，Kelly建议仓位${(vote.bt.kelly * 100).toFixed(1)}%，综合评分${vote.score.toFixed(3)}，有效置信${vote.effConf}%。`;
+ reason += `<b style="color:#ef4444"> 结论: 建议加仓</b>，Kelly建议仓位${(vote.bt.kelly * 100).toFixed(1)}%，综合评分${vote.score.toFixed(3)}，有效置信${vote.effConf}%。`;
     if(td?.swingPos === 'deep_dip') reason += '当前正处于深度回调区间，是较佳的加仓时机，可适当加大力度。';
     else if(td?.swingPos === 'dip') reason += '正处于波段回调低点，适合分批建仓。';
     else reason += '建议分2-3批逐步建仓，避免一次性重仓。';
   } else if(vote.action === 'sell'){
-    reason += `<b style="color:#22c55e">📌 结论: 建议减仓</b>，建议先减30-50%仓位，综合评分${vote.score.toFixed(3)}，有效置信${vote.effConf}%。`;
+ reason += `<b style="color:#22c55e"> 结论: 建议减仓</b>，建议先减30-50%仓位，综合评分${vote.score.toFixed(3)}，有效置信${vote.effConf}%。`;
     if(td?.swingPos === 'surge' || td?.swingPos === 'rally') reason += '当前处于反弹/冲高阶段，是相对好的卖出窗口，趁反弹出货。';
     else if(td?.trendDir === 'strong_down') reason += '趋势处于强势下跌中，建议果断止损，避免深套。';
     else reason += '分批减仓锁定利润，控制下行风险。';
   } else {
-    let holdReason = `<b style="color:#64748b">📌 结论: 维持持有</b>，综合评分${vote.score.toFixed(3)}`;
+ let holdReason = `<b style="color:#64748b"> 结论: 维持持有</b>，综合评分${vote.score.toFixed(3)}`;
     if(vote.buyVotes > 0 && vote.sellVotes > 0) holdReason += '。引擎间存在分歧，方向不明确，不宜轻易操作';
     else if(totalVotes === 0) holdReason += '。信号未达共识阈值，数据不足以支撑决策';
     else holdReason += '。信号虽有一定方向性但未达行动阈值';
@@ -6344,29 +6353,29 @@ function generateSmartReason(p, capFlow, ds){
   // 组装分析维度 — 只展示有实质内容的模块
   const sections = [];
   if(engineSection.trim()) sections.push(engineSection);
-  if(techSection) sections.push(`<b>📉技术面</b>: ${techSection}`);
+ if(techSection) sections.push(`<b>技术面</b>: ${techSection}`);
   // 波段止盈信号(仅在触发时展示)
   if(vote.swingDampen < -0.1){
-    const swingDesc = vote.swingDampen < -0.3 ? '⚠️<b>强止盈信号</b>: 连续冲高+接近高点，追涨风险极大，建议落袋为安'
-      : vote.swingDampen < -0.2 ? '⚠️<b>止盈信号</b>: 近期涨幅较大且接近高位区间，获利盘压力增大，建议部分止盈'
-      : '📊<b>冲高提醒</b>: 短期涨幅偏大，注意分批获利了结';
-    sections.push(`<b>🎯波段</b>: ${swingDesc} (波段衰减=${vote.swingDampen.toFixed(2)})`);
+ const swingDesc = vote.swingDampen < -0.3 ? '<b>强止盈信号</b>: 连续冲高+接近高点，追涨风险极大，建议落袋为安'
+ : vote.swingDampen < -0.2 ? '<b>止盈信号</b>: 近期涨幅较大且接近高位区间，获利盘压力增大，建议部分止盈'
+ : '<b>冲高提醒</b>: 短期涨幅偏大，注意分批获利了结';
+ sections.push(`<b>波段</b>: ${swingDesc} (波段衰减=${vote.swingDampen.toFixed(2)})`);
   }
   // 宏观量化偏置(仅在显著时展示)
   if(Math.abs(vote.macroBias) >= 0.04){
     const macBiasDesc = vote.macroBias > 0.06 ? '宏观面偏暖(PMI/流动性等支撑)，对该品种形成正面助力'
       : vote.macroBias > 0 ? '宏观数据中性偏正，有一定基本面支撑'
       : vote.macroBias > -0.06 ? '宏观数据偏弱(流动性或景气度不足)，增加下行压力'
-      : '⚠️宏观面偏冷(PMI收缩/资金流出等)，周期品基本面承压';
-    sections.push(`<b>📊宏观量化</b>: ${macBiasDesc} (宏观偏置=${vote.macroBias>0?'+':''}${vote.macroBias.toFixed(2)})`);
+ : '宏观面偏冷(PMI收缩/资金流出等)，周期品基本面承压';
+ sections.push(`<b>宏观量化</b>: ${macBiasDesc} (宏观偏置=${vote.macroBias>0?'+':''}${vote.macroBias.toFixed(2)})`);
   }
-  if(fundFlowSection) sections.push(`<b>💰资金面</b>: ${fundFlowSection}`);
-  if(macroSection) sections.push(`<b>🌐宏观&地缘</b>: ${macroSection}`);
-  if(mgrSection) sections.push(`<b>👔同赛道顶级经理</b>: ${mgrSection}`);
-  if(xqSection) sections.push(`<b>❄️雪球持仓类目</b>: ${xqSection}`);
-  if(crowdSection) sections.push(`<b>🎭拥挤度</b>: ${crowdSection}`);
-  if(riskSection) sections.push(`<b>🛡️风控</b>: ${riskSection}`);
-  if(vote.ai.reason && vote.ai.conf > 0) sections.push(`<b>💬AI原文</b>: "${vote.ai.reason.slice(0, 200)}"`);
+ if(fundFlowSection) sections.push(`<b>资金面</b>: ${fundFlowSection}`);
+ if(macroSection) sections.push(`<b>宏观&地缘</b>: ${macroSection}`);
+ if(mgrSection) sections.push(`<b>同赛道顶级经理</b>: ${mgrSection}`);
+ if(xqSection) sections.push(`<b>雪球持仓类目</b>: ${xqSection}`);
+ if(crowdSection) sections.push(`<b>拥挤度</b>: ${crowdSection}`);
+ if(riskSection) sections.push(`<b>风控</b>: ${riskSection}`);
+ if(vote.ai.reason && vote.ai.conf > 0) sections.push(`<b>AI原文</b>: "${vote.ai.reason.slice(0, 200)}"`);
 
   if(sections.length > 0){
     reason += `<div style="margin-top:4px;padding:4px 8px;background:rgba(79,110,247,0.06);border-radius:6px;border-left:3px solid var(--primary);font-size:10px;line-height:1.6">`;
@@ -6391,7 +6400,7 @@ function renderRadarSection(geoData){
   html += '<div class="radar-section">';
   // 标题栏
   html += '<div class="radar-header">';
-  html += '<div class="radar-title">📡 宏观与异动雷达</div>';
+ html += '<div class="radar-title"> 宏观与异动雷达</div>';
   html += '<div class="radar-meta">';
   html += '<span>' + srcStr + '</span>';
   html += '<span>' + updateStr + '</span>';
@@ -6406,7 +6415,7 @@ function renderRadarSection(geoData){
     const _ds = generateDataSignal();
     html += '<div style="background:rgba(15,23,42,0.6);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:8px 10px;margin-bottom:10px">';
     html += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">';
-    html += '<span style="font-size:10px;font-weight:700;color:#22d3ee">🤖 AI多维信号综合</span>';
+ html += '<span style="font-size:10px;font-weight:700;color:#22d3ee"> AI多维信号综合</span>';
     html += '<span style="font-size:14px;font-weight:800;color:' + _ds.color + '">' + _ds.icon + ' ' + _ds.label + ' ' + _ds.score + '</span>';
     html += '</div>';
     // 四维度网格
@@ -6446,9 +6455,9 @@ function renderRadarSection(geoData){
     // 舆情快报
     if(typeof newsHeadlines !== 'undefined' && newsHeadlines.length > 0){
       html += '<div style="margin-top:6px;padding-top:6px;border-top:1px solid rgba(255,255,255,0.06)">';
-      html += '<div style="font-size:9px;color:rgba(255,255,255,0.4);margin-bottom:3px">📰 舆情焦点</div>';
+ html += '<div style="font-size:9px;color:rgba(255,255,255,0.4);margin-bottom:3px"> 舆情焦点</div>';
       newsHeadlines.slice(0,3).forEach(function(n){
-        var ic = n.sentiment==='bull'?'�':n.sentiment==='bear'?'🟢':'⚪';
+ var ic = n.sentiment==='bull'?'�':n.sentiment==='bear'?'':'';
         html += '<div style="display:flex;gap:4px;padding:2px 0;font-size:9px;color:#e2e8f0;line-height:1.3"><span style="min-width:12px">' + ic + '</span><span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + n.title + '</span></div>';
       });
       html += '</div>';
@@ -6460,7 +6469,7 @@ function renderRadarSection(geoData){
 
   // ===== 模块A: 热点温度计 (实时行情修正) =====
   html += '<div class="radar-module">';
-  html += '<div class="radar-mod-title">🔥 热点温度计 <span style="font-size:9px;font-weight:400;color:rgba(255,255,255,0.3)">新闻热度 × 实时行情修正</span></div>';
+ html += '<div class="radar-mod-title"> 热点温度计 <span style="font-size:9px;font-weight:400;color:rgba(255,255,255,0.3)">新闻热度 × 实时行情修正</span></div>';
   html += '<div class="heatmap-grid">';
   var displayHeatmap = heatmap.length > 0 ? heatmap.map(function(h){ return Object.assign({}, h); }) : _buildFallbackHeatmap(geoData);
   // === 实时行情修正: 用今日板块涨跌幅 + 指数涨跌幅动态调整温度 ===
@@ -6496,9 +6505,9 @@ function renderRadarSection(geoData){
 
   // ===== 模块B: 持仓异动归因 =====
   html += '<div class="radar-module">';
-  html += '<div class="radar-mod-title">⚡ 持仓异动归因</div>';
+ html += '<div class="radar-mod-title"> 持仓异动归因</div>';
   html += '<div class="impact-list">';
-  // ★ 只保留持仓基金（不含自选），按今日涨跌幅绝对值排序
+ // 只保留持仓基金（不含自选），按今日涨跌幅绝对值排序
   var holdingCodeSet = new Set(holdings.map(function(h){ return h.code; }));
   var impactEntries = Object.entries(geoData.fundImpacts || {})
     .filter(function(pair){ return holdingCodeSet.has(pair[0]); })
@@ -6545,7 +6554,7 @@ function renderRadarSection(geoData){
 
   // ===== 模块C: AI顺势策略建议 =====
   html += '<div class="radar-module">';
-  html += '<div class="radar-mod-title">💡 AI 顺势策略</div>';
+ html += '<div class="radar-mod-title"> AI 顺势策略</div>';
   html += '<div class="strategy-list">';
 
   // 机会: 高温概念 — 先检查用户持仓是否已有暴露，再推荐未持有的
@@ -6571,22 +6580,22 @@ function renderRadarSection(geoData){
     if(ownedRelated.length > 0){
       // 用户已持有相关资产 → 显示持仓 + 建议加仓/持有
       html += '<div class="strategy-item">';
-      html += '<div class="strategy-icon">🔥</div>';
+ html += '<div class="strategy-icon"></div>';
       html += '<div class="strategy-body">';
-      html += '<div class="strategy-label" style="color:#f87171">机会 · ' + ht.tag + ' 🔥' + ht.temperature + '</div>';
+ html += '<div class="strategy-label" style="color:#f87171">机会 · ' + ht.tag + ' ' + ht.temperature + '</div>';
       var ownedNames = ownedRelated.map(function(h){ return fundName(h.code).slice(0,8); }).join('、');
-      html += '<div class="strategy-text">热度' + ht.temperature + '，情绪偏多。✅ 你已持有: ' + ownedNames + '，顺势持有或逢回调加仓。</div>';
+ html += '<div class="strategy-text">热度' + ht.temperature + '，情绪偏多。 你已持有: ' + ownedNames + '，顺势持有或逢回调加仓。</div>';
       html += '</div></div>';
       strategyCount++;
     } else if(recoFunds.length > 0){
       // 用户未持有 → 推荐关注
       var rf = recoFunds[0];
       html += '<div class="strategy-item">';
-      html += '<div class="strategy-icon">💡</div>';
+ html += '<div class="strategy-icon"></div>';
       html += '<div class="strategy-body">';
-      html += '<div class="strategy-label" style="color:#f87171">机会 · ' + ht.tag + ' 🔥' + ht.temperature + '</div>';
+ html += '<div class="strategy-label" style="color:#f87171">机会 · ' + ht.tag + ' ' + ht.temperature + '</div>';
       html += '<div class="strategy-text">热度' + ht.temperature + '，情绪偏多。你未持有相关资产，可关注布局。</div>';
-      html += '<div class="strategy-fund" onclick="addFromPortfolio(\'' + rf.code + '\',\'' + rf.name.replace(/'/g,"\\'") + '\',\'' + rf.type + '\',\'watch\')">💡 推荐关注: ' + rf.name + ' (' + rf.code + ')</div>';
+ html += '<div class="strategy-fund" onclick="addFromPortfolio(\'' + rf.code + '\',\'' + rf.name.replace(/'/g,"\\'") + '\',\'' + rf.type + '\',\'watch\')"> 推荐关注: ' + rf.name + ' (' + rf.code + ')</div>';
       html += '</div></div>';
       strategyCount++;
     }
@@ -6601,11 +6610,11 @@ function renderRadarSection(geoData){
     });
     if(exposedHoldings.length > 0){
       html += '<div class="strategy-item">';
-      html += '<div class="strategy-icon">⚠️</div>';
+ html += '<div class="strategy-icon"></div>';
       html += '<div class="strategy-body">';
-      html += '<div class="strategy-label" style="color:#4ade80">风险 · ' + ct.tag + ' ❄️' + ct.temperature + '</div>';
+ html += '<div class="strategy-label" style="color:#4ade80">风险 · ' + ct.tag + ' ' + ct.temperature + '</div>';
       html += '<div class="strategy-text">热度仅' + ct.temperature + '，情绪偏空。你持有: ' + exposedHoldings.map(function(x){return fundName(x.code).slice(0,6);}).join('、') + '</div>';
-      html += '<div class="strategy-fund" style="color:#4ade80">⚠️ 建议关注减仓时机</div>';
+ html += '<div class="strategy-fund" style="color:#4ade80"> 建议关注减仓时机</div>';
       html += '</div></div>';
       strategyCount++;
     }
@@ -6614,7 +6623,7 @@ function renderRadarSection(geoData){
   // 如果没有明确策略, 显示市场总览
   if(strategyCount === 0){
     html += '<div class="strategy-item">';
-    html += '<div class="strategy-icon">📊</div>';
+ html += '<div class="strategy-icon"></div>';
     html += '<div class="strategy-body">';
     html += '<div class="strategy-label" style="color:#22d3ee">市场总览</div>';
     html += '<div class="strategy-text">' + (outlook.overall || outlook.summary || '市场结构性行情延续') + '</div>';
@@ -6625,21 +6634,25 @@ function renderRadarSection(geoData){
 
   // ===== 关键事件清单 (紧凑) =====
   html += '<div class="radar-module">';
-  html += '<div class="radar-mod-title" style="display:flex;align-items:center;gap:6px">📋 关键事件 (' + geoData.topEvents.length + ')';
+ html += '<div class="radar-mod-title" style="display:flex;align-items:center;gap:6px"> 关键事件 (' + geoData.topEvents.length + ')';
   // 数据来源时间
   const dataTime = _hotEventsData?.updated_at ? new Date(_hotEventsData.updated_at).toLocaleString('zh-CN',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'}) : '';
   if(dataTime) html += '<span style="font-size:8px;color:#94a3b8;font-weight:400;margin-left:auto">' + dataTime + '</span>';
-  html += '<button id="refreshEventsBtn" onclick="refreshHotEventsManual()" style="background:none;border:1px solid rgba(148,163,184,0.3);border-radius:4px;cursor:pointer;font-size:11px;padding:1px 5px;color:#94a3b8" title="刷新事件">🔄</button>';
+ html += '<button id="refreshEventsBtn" onclick="refreshHotEventsManual()" style="background:none;border:1px solid rgba(148,163,184,0.3);border-radius:4px;cursor:pointer;font-size:11px;padding:1px 5px;color:#94a3b8" title="刷新事件"></button>';
   html += '</div>';
   html += '<div style="display:flex;flex-direction:column;gap:2px">';
   geoData.topEvents.forEach(function(e){
     var ic = e.impact > 0 ? '#f87171' : e.impact < 0 ? '#4ade80' : '#fbbf24';
     var arrow = e.impact > 0 ? '↑' : e.impact < 0 ? '↓' : '→';
-    html += '<div style="display:flex;align-items:center;gap:6px;padding:4px 6px;border-radius:6px;background:rgba(255,255,255,0.03);font-size:10px">';
-    html += '<span style="font-size:13px;min-width:18px">' + e.icon + '</span>';
+    html += '<div style="padding:5px 8px;border-radius:6px;background:rgba(255,255,255,0.03)">';
+    html += '<div style="display:flex;align-items:center;gap:6px;font-size:10px">';
     html += '<span style="flex:1;color:#e2e8f0;font-weight:600">' + e.name + '</span>';
     html += '<span style="color:' + ic + ';font-weight:700;min-width:30px;text-align:right">' + arrow + Math.abs(e.impact) + '</span>';
     html += '<span style="color:#94a3b8;font-size:8px;min-width:30px;text-align:right">' + (e.confidence*100).toFixed(0) + '%</span>';
+    html += '</div>';
+    if(e.description){
+      html += '<div style="font-size:9px;color:#94a3b8;margin-top:2px;line-height:1.4">' + e.description + '</div>';
+    }
     html += '</div>';
   });
   html += '</div></div>';
@@ -6812,7 +6825,7 @@ function renderActionGuide(){
   if(!container) return;
 
   if(holdings.length === 0){
-    container.innerHTML = '<div class="empty" style="padding:20px"><div class="empty-icon">🎯</div>添加持仓后，这里会显示双引擎闭环的实盘操作建议</div>';
+ container.innerHTML = '<div class="empty" style="padding:20px"><div class="empty-icon"></div>添加持仓后，这里会显示双引擎闭环的实盘操作建议</div>';
     if(brief) brief.textContent = '无持仓';
     return;
   }
@@ -6827,7 +6840,7 @@ function renderActionGuide(){
     plans.push({ code: h.code, fd, td, vote, hIdx, disableRLInReason: true });
   });
 
-  // ★ 板块一致性修正: 同板块基金信号应趋于一致，避免"A加仓B持有"的矛盾建议
+ // 板块一致性修正: 同板块基金信号应趋于一致，避免"A加仓B持有"的矛盾建议
   (function sectorConsistencyCorrection(){
     // 1. 按板块分组
     const sectorGroups = {};
@@ -6859,18 +6872,18 @@ function renderActionGuide(){
           // 同板块有买入信号，本基金也偏正但未触发买入
           // → 如果score差距不大(与板块均值相差<0.15)，升级提示但不改action
           if(gap < 0.2){
-            v.actionLabel = '🔵 偏多持有（同板块有加仓信号）';
+ v.actionLabel = ' 偏多持有（同板块有加仓信号）';
             v._sectorNote = `同板块${group.length}只基金中有加仓信号，本基金指标略弱，建议同步关注`;
           }
         } else if(hasBuy && v.action === 'buy' && v.score < avgScore * 0.5){
           // 本基金触发了buy但score远低于板块均值 → 降级为持有
           v.action = 'buy';
-          v.actionLabel = '🔴 建议加仓（轻仓跟随）';
+ v.actionLabel = ' 建议加仓（轻仓跟随）';
           v._sectorNote = `本基金指标弱于同板块其他品种，建议降低仓位比例`;
         } else if(hasSell && v.action === 'hold' && avgScore < -0.15 && v.score < 0){
           // 同板块有卖出信号，本基金也偏负
           if(gap < 0.2){
-            v.actionLabel = '🔵 偏空持有（同板块有减仓信号）';
+ v.actionLabel = ' 偏空持有（同板块有减仓信号）';
             v._sectorNote = `同板块${group.length}只基金中有减仓信号，本基金也偏弱，注意风险`;
           }
         }
@@ -6901,7 +6914,7 @@ function renderActionGuide(){
   // 组合结构风险提示
   if(sectorAnalysis.warnings.length > 0){
     const concTypes = sectorAnalysis.warnings.map(w => `${w.type}×${w.count}`).join('、');
-    overallAdvice += ` ⚠️板块集中: ${concTypes}，注意相关性风险。`;
+ overallAdvice += ` 板块集中: ${concTypes}，注意相关性风险。`;
   }
   if(ds) overallAdvice += ` [宏观: ${ds.label}(${ds.score})]`;
 
@@ -6931,19 +6944,8 @@ function renderActionGuide(){
   html += `<div class="ag-score-meta"><div class="ag-score-label" style="color:${overallColor}">${overallLabel}</div>`;
   html += `<div class="ag-score-desc">综合评分：AI信号×回测验证×宏观数据</div></div></div>`;
 
-  // 双引擎投票概览
-  html += `<div class="ag-engines">`;
-  html += `<div class="ag-engine"><div class="ag-engine-icon">🤖</div><div class="ag-engine-name">AI分析</div>`;
-  html += `<div class="ag-engine-vote" style="color:${engAI>engAISell?'#f87171':engAISell>engAI?'#4ade80':'rgba(255,255,255,0.5)'}">${engAI}买 ${engAISell}卖</div>`;
-  html += `<div class="ag-engine-conf">${_analysisResult ? _analysisResult.engineCount+'引擎' : '未分析'}</div></div>`;
-
-  html += `<div class="ag-engine"><div class="ag-engine-icon">📈</div><div class="ag-engine-name">回测引擎</div>`;
-  html += `<div class="ag-engine-vote" style="color:${engBT>engBTSell?'#f87171':engBTSell>engBT?'#4ade80':'rgba(255,255,255,0.5)'}">${engBT}买 ${engBTSell}卖</div>`;
-  html += `<div class="ag-engine-conf">${btSummary ? 'Sharpe '+btSummary.avgSharpe.toFixed(1) : '未回测'}</div></div>`;
-  html += `</div>`;
-
   // 整体建议
-  html += `<div class="ag-advice-bar"><b>📌 今日操作建议：</b>${overallAdvice}</div>`;
+ html += `<div class="ag-advice-bar"><b> 今日操作建议：</b>${overallAdvice}</div>`;
 
   // 1.2 数据信号分解 (宏观/资金/舆情/国际/地缘)
   if(_dataIntelLoaded){
@@ -6952,7 +6954,7 @@ function renderActionGuide(){
     const gSent = globalNews.length > 0 ? getGlobalNewsSentiment() : null;
     const geoScore = getMacroGeoAnalysis().score;
     html += `<div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:4px;padding:5px 8px;background:rgba(34,211,238,0.06);border-radius:8px;font-size:9px">`;
-    html += `<span style="font-weight:700;color:#22d3ee;font-size:10px">📊 多维信号</span>`;
+ html += `<span style="font-weight:700;color:#22d3ee;font-size:10px"> 多维信号</span>`;
     // 宏观
     const macroColor = macro.positiveCount >= 4 ? '#4ade80' : macro.positiveCount >= 2 ? '#fbbf24' : '#f87171';
     html += `<span style="padding:2px 6px;border-radius:4px;background:rgba(255,255,255,0.05)">宏观<b style="color:${macroColor}"> ${macro.overallSignal}</b></span>`;
@@ -6984,12 +6986,12 @@ function renderActionGuide(){
   // 1.3 组合持仓结构
   if(sectorAnalysis.distribution.length > 1){
     html += `<div style="display:flex;gap:3px;flex-wrap:wrap;margin-top:4px;padding:4px 8px;background:rgba(139,92,246,0.05);border-radius:8px;font-size:9px">`;
-    html += `<span style="font-weight:700;color:#e2e8f0;font-size:10px">💼 持仓结构</span>`;
+ html += `<span style="font-weight:700;color:#e2e8f0;font-size:10px"> 持仓结构</span>`;
     sectorAnalysis.distribution.forEach(d => {
       html += `<span style="padding:2px 5px;border-radius:4px;background:rgba(255,255,255,0.06)">${d.type} <b>${d.pct}%</b></span>`;
     });
     if(sectorAnalysis.warnings.length > 0){
-      html += `<span style="color:#f87171;font-weight:600">⚠️集中度风险</span>`;
+ html += `<span style="color:#f87171;font-weight:600">集中度风险</span>`;
     }
     html += `</div>`;
   }
@@ -7026,7 +7028,7 @@ function renderActionGuide(){
     html += `<div style="display:flex;align-items:center;gap:6px">`;
     // 优先级标记
     if(vote.action !== 'hold'){
-      const urgency = Math.abs(vote.score) > 0.3 ? '⚡高' : Math.abs(vote.score) > 0.15 ? '●中' : '○低';
+ const urgency = Math.abs(vote.score) > 0.3 ? '高' : Math.abs(vote.score) > 0.15 ? '●中' : '○低';
       html += `<span style="font-size:9px;padding:1px 5px;border-radius:4px;background:rgba(255,255,255,0.06);color:var(--sub)">#${pidx+1} ${urgency}</span>`;
     }
     html += `<span class="ag-fund-action ${vote.action}">${vote.actionLabel}</span>`;
@@ -7041,12 +7043,12 @@ function renderActionGuide(){
       if(extra) label += ' '+extra;
       return `<span class="ag-vote-chip ${cls}">${label}</span>`;
     };
-    html += mkChip('AI', vote.ai.vote, vote.ai.conf, vote.ai.conf >= 70 ? '🎯' : '');
+ html += mkChip('AI', vote.ai.vote, vote.ai.conf, vote.ai.conf >= 70 ? '' : '');
     html += mkChip('BT', vote.bt.vote, vote.bt.conf, '');
     // 共识标签
-    if(vote.buyVotes >= 2 && vote.sellVotes === 0) html += `<span class="ag-vote-chip bullish">✓共识看多×${vote.consensusMult.toFixed(1)}</span>`;
-    else if(vote.sellVotes >= 2 && vote.buyVotes === 0) html += `<span class="ag-vote-chip bearish">✓共识看空×${vote.consensusMult.toFixed(1)}</span>`;
-    else if(vote.buyVotes > 0 && vote.sellVotes > 0) html += `<span class="ag-vote-chip neutral">⚠分歧×${vote.consensusMult.toFixed(1)}</span>`;
+ if(vote.buyVotes >= 2 && vote.sellVotes === 0) html += `<span class="ag-vote-chip bullish">共识看多×${vote.consensusMult.toFixed(1)}</span>`;
+ else if(vote.sellVotes >= 2 && vote.buyVotes === 0) html += `<span class="ag-vote-chip bearish">共识看空×${vote.consensusMult.toFixed(1)}</span>`;
+ else if(vote.buyVotes > 0 && vote.sellVotes > 0) html += `<span class="ag-vote-chip neutral">分歧×${vote.consensusMult.toFixed(1)}</span>`;
     // 宏观地缘事件标签
     const fImpact = geoData.fundImpacts[code];
     if(fImpact && fImpact.events.length > 0){
@@ -7059,13 +7061,13 @@ function renderActionGuide(){
     const swingAnalysis = generateSwingAnalysis(code, td, vote, capFlow);
     if(swingAnalysis.phase !== 'unknown'){
       const _swgPhaseLabels = {
-        'peak_zone':'🔺冲顶止盈','accel_up':'📈加速持有','trend_pullback':'💎低吸机会','steady_up':'🟢稳步持有',
-        'bear_bounce':'⚠️反弹减仓','free_fall':'🛑回避','decline':'📉控仓','range_low':'🔵箱底试探',
-        'range_high':'⚪箱顶止盈','range_mid':'↔️等待'
+ 'peak_zone':'冲顶止盈','accel_up':'加速持有','trend_pullback':'低吸机会','steady_up':'稳步持有',
+ 'bear_bounce':'反弹减仓','free_fall':'回避','decline':'控仓','range_low':'箱底试探',
+ 'range_high':'箱顶止盈','range_mid':'↔等待'
       };
       const _swgCls = swingAnalysis.phase.includes('peak') || swingAnalysis.phase.includes('bear') || swingAnalysis.phase.includes('range_high') ? 'bearish'
         : swingAnalysis.phase.includes('pullback') || swingAnalysis.phase.includes('range_low') || swingAnalysis.phase.includes('steady') ? 'bullish' : 'neutral';
-      html += `<span class="ag-vote-chip ${_swgCls}">${_swgPhaseLabels[swingAnalysis.phase]||'↔️'}</span>`;
+ html += `<span class="ag-vote-chip ${_swgCls}">${_swgPhaseLabels[swingAnalysis.phase]||'↔'}</span>`;
     }
     html += `</div>`;
 
@@ -7093,7 +7095,7 @@ function renderActionGuide(){
       if(capFlow){
         const cfColor = capFlow.mainNet > 0 ? '#4ade80' : '#f87171';
         const cfVal = capFlow.mainNet > 0 ? `+${(capFlow.mainNet/1e8).toFixed(1)}亿` : `${(capFlow.mainNet/1e8).toFixed(1)}亿`;
-        html += `<span style="padding:2px 5px;border-radius:4px;background:rgba(255,255,255,0.05);color:${cfColor}">💰主力${cfVal}</span>`;
+ html += `<span style="padding:2px 5px;border-radius:4px;background:rgba(255,255,255,0.05);color:${cfColor}">主力${cfVal}</span>`;
       }
       html += `</div>`;
     }
@@ -7103,7 +7105,7 @@ function renderActionGuide(){
     const holdingsInfo = _fundHoldingsCache[code];
     if(sectorExp && Object.keys(sectorExp).length > 0){
       html += `<div style="display:flex;gap:4px;flex-wrap:wrap;padding:4px 0;font-size:9px;align-items:center">`;
-      html += `<span style="padding:2px 5px;border-radius:4px;background:rgba(30,41,59,0.08);color:#1e293b;font-weight:600">📊行业</span>`;
+ html += `<span style="padding:2px 5px;border-radius:4px;background:rgba(30,41,59,0.08);color:#1e293b;font-weight:600">行业</span>`;
       const topSectors = Object.entries(sectorExp).sort((a,b) => b[1] - a[1]).filter(([,w]) => w >= 0.05);
       topSectors.forEach(([sec, weight]) => {
         const pct = (weight * 100).toFixed(0);
@@ -7118,9 +7120,6 @@ function renderActionGuide(){
       html += `</div>`;
     }
 
-    // 盘中估值曲线
-    html += renderIntradaySVG(code);
-
     // 操作理由 (使用智能生成)
     const reason = generateSmartReason(p, capFlow, ds);
     // swingAnalysis 已在前面计算，直接复用
@@ -7134,7 +7133,7 @@ function renderActionGuide(){
     }
     html += `<div class="ag-reason">${reason}`;
     if(geoReason) html += `<br><span style="font-size:9px;color:#1e40af">${geoReason}</span>`;
-    if(vote._sectorNote) html += `<br><span style="font-size:9px;color:#f59e0b">📊 板块一致性: ${vote._sectorNote}</span>`;
+ if(vote._sectorNote) html += `<br><span style="font-size:9px;color:#f59e0b"> 板块一致性: ${vote._sectorNote}</span>`;
     html += `</div>`;
 
     // 波段操作分析模块
@@ -7147,16 +7146,16 @@ function renderActionGuide(){
 
   // 3. 执行摘要 & 对比模拟盘
   html += `<div class="ag-summary">`;
-  html += `<div class="ag-summary-title">📊 执行摘要</div>`;
+ html += `<div class="ag-summary-title"> 执行摘要</div>`;
   html += `<div class="ag-summary-text">`;
   html += `今日建议：<b style="color:var(--red)">${totalBuy}只加仓</b> · <b style="color:var(--green)">${totalSell}只减仓</b> · <b>${totalHold}只持有</b><br>`;
 
   // 优先行动清单
   const actionFunds = plans.filter(p => p.vote.action !== 'hold');
   if(actionFunds.length > 0){
-    html += `<b>📋 执行优先序：</b><br>`;
+ html += `<b> 执行优先序：</b><br>`;
     actionFunds.forEach((p, i) => {
-      const emoji = p.vote.action === 'sell' ? '�' : '🔴';
+ const emoji = p.vote.action === 'sell' ? '�' : '';
       const act = p.vote.action === 'sell' ? '减仓' : '加仓';
       const kellyStr = p.vote.action === 'buy' ? ` Kelly${(p.vote.bt.kelly*100).toFixed(0)}%` : ' 减30-50%';
       html += `${emoji} #${i+1} ${fundName(p.code).slice(0,8)} → ${act}${kellyStr}<br>`;
@@ -7170,7 +7169,7 @@ function renderActionGuide(){
     if(todayTrades.length > 0){
       html += `<b>模拟盘今日操作：</b>${todayTrades.length}笔 — `;
       todayTrades.slice(0,3).forEach(t => {
-        html += `${t.action==='buy'?'�买':'🟢卖'}${fundName(t.code).slice(0,4)} `;
+ html += `${t.action==='buy'?'�买':'卖'}${fundName(t.code).slice(0,4)} `;
       });
       if(todayTrades.length > 3) html += `…等${todayTrades.length}笔`;
       html += '<br>';
@@ -7183,14 +7182,14 @@ function renderActionGuide(){
   // TOP50基金经理 × 社交热词 趋势共振分析
   const fmData = _fmSocialTrendData || analyzeFMSocialCoupling();
   if(fmData && fmData.topTrends.length > 0){
-    html += `<br><b>📊 TOP50基金经理 × 社交热词 趋势共振</b><br>`;
+ html += `<br><b> TOP50基金经理 × 社交热词 趋势共振</b><br>`;
     html += `<span style="font-size:10px;color:var(--sub)">数据源: TOP500基金经理前50名(季报持仓+调研) × 微博/雪球/东财/同花顺</span><br>`;
 
     // 强共振板块
     const resonated = fmData.topTrends.filter(t => t.resonance === '强共振').slice(0, 5);
     if(resonated.length > 0){
       html += `<div style="margin:6px 0;padding:6px 10px;background:#f0f9ff;border-radius:8px;border:1px solid #bae6fd">`;
-      html += `<b style="font-size:11px;color:#0369a1">🔥 强共振板块</b> <span style="font-size:10px;color:#64748b">经理集中配置 + 社交热度飙升</span><br>`;
+ html += `<b style="font-size:11px;color:#0369a1"> 强共振板块</b> <span style="font-size:10px;color:#64748b">经理集中配置 + 社交热度飙升</span><br>`;
       resonated.forEach(t => {
         const trendIcon = t.socialTrend === 'up' ? '🔺' : t.socialTrend === 'down' ? '🔻' : '➡️';
         const barW = Math.round(t.couplingScore * 0.8);
@@ -7211,7 +7210,7 @@ function renderActionGuide(){
     const keyMoves = fmData.recentMoves.slice(0, 4);
     if(keyMoves.length > 0){
       html += `<div style="margin:4px 0;font-size:10px">`;
-      html += `<b>🏆 顶级经理最新动向: </b>`;
+ html += `<b> 顶级经理最新动向: </b>`;
       keyMoves.forEach(m => {
         html += `<span style="color:#1e293b">${m.name}</span><span style="color:var(--sub)">(${m.firm}): </span><span style="color:#0369a1">${m.recent}</span> `;
       });
@@ -7232,13 +7231,13 @@ function renderActionGuide(){
     const matchedTrends = fmData.topTrends.filter(t => holdingSectors.has(t.sector) && t.resonance === '强共振');
     if(matchedTrends.length > 0){
       html += `<div style="margin:4px 0;padding:4px 8px;background:#f0fdf4;border-radius:6px;border:1px solid #bbf7d0;font-size:10px">`;
-      html += `✅ 您的持仓与以下强共振方向吻合: <b>${matchedTrends.map(t=>t.sector).join('、')}</b> — 建议持有或适当加仓`;
+ html += ` 您的持仓与以下强共振方向吻合: <b>${matchedTrends.map(t=>t.sector).join('、')}</b> — 建议持有或适当加仓`;
       html += `</div>`;
     }
   }
 
   // 数据融合说明
-  html += `<br><b>📐 本次分析融合数据源：</b><br>`;
+ html += `<br><b> 本次分析融合数据源：</b><br>`;
   const dataSources = [];
   if(_analysisResult) dataSources.push(`AI(${_analysisResult.engineCount}引擎)`);
   if(btSummary) dataSources.push('回测');
@@ -7250,14 +7249,14 @@ function renderActionGuide(){
   if(_fmSocialTrendData) dataSources.push('TOP50基金经理×社交热词');
   html += `${dataSources.join(' × ')}<br>`;
 
-  html += `<br><b>⚠️ 操作原则：</b><br>`;
+ html += `<br><b> 操作原则：</b><br>`;
   html += `① 分批执行：单次操作不超总仓位5%，分2-3次完成<br>`;
   html += `② 核心仓优先：核心仓(宽基/债基)保持60%底仓，卫星仓灵活调整<br>`;
   html += `③ 双引擎分歧时不动：AI与回测方向不一致时，观望为主<br>`;
   html += `④ 止损优先：任何品种亏损超5%立即减仓，不等信号`;
   html += `</div></div>`;
 
-  html += `<div class="ag-disclaimer">⚠️ 以上建议基于AI/回测双引擎量化分析，仅供参考，不构成投资建议。投资有风险，决策需谨慎。</div>`;
+ html += `<div class="ag-disclaimer"> 以上建议基于AI/回测双引擎量化分析，仅供参考，不构成投资建议。投资有风险，决策需谨慎。</div>`;
 
   container.innerHTML = html;
 }
@@ -7523,25 +7522,25 @@ function renderPlainAdvisor(){
     html += `</div>`;
 
     html += `<div style="margin-top:10px">`;
-    html += `<div style="font-size:14px;font-weight:800;margin-bottom:8px">🎯 一句话诊断 (TL;DR)</div>`;
+ html += `<div style="font-size:14px;font-weight:800;margin-bottom:8px"> 一句话诊断 (TL;DR)</div>`;
     html += `<div style="font-size:13px;font-weight:700;color:#1e293b;margin-bottom:10px">${tldr}</div>`;
 
-    html += `<div style="font-size:14px;font-weight:800;margin-bottom:8px">🩺 多维体检报告</div>`;
+ html += `<div style="font-size:14px;font-weight:800;margin-bottom:8px"> 多维体检报告</div>`;
     html += `<div style="font-size:12px;line-height:1.7;color:#1e293b">`;
-    html += `- 🌡️ <b>当前温度 (估值与位置)</b>：${valuation}。${valuation==='极度低估'?'现在买更像打折区。':valuation==='估值偏高'?'现在买偏贵，容易买在情绪高点。':'价格不算便宜也不算贵，适合分批。'}<br>`;
-    html += `- 📈 <b>动量趋势 (技术面状态)</b>：${trend}。${trend==='强势上涨'?'趋势在上，但别追高。':trend==='跌跌不休'?'下坡还没走完，先等止跌。':'正在磨底，适合慢慢布局。'}<br>`;
-    html += `- 📰 <b>风向判定 (宏观与基本面)</b>：${wind}。${wind==='顺风'?'政策/流动性对该方向更友好。':wind==='逆风'?'宏观压力还在，反弹容易被压制。':'利好和利空并存，容易来回打脸。'}<br>`;
-    html += `- ⚠️ <b>最大隐患 (排雷)</b>：${riskPoint}`;
+ html += `- <b>当前温度 (估值与位置)</b>：${valuation}。${valuation==='极度低估'?'现在买更像打折区。':valuation==='估值偏高'?'现在买偏贵，容易买在情绪高点。':'价格不算便宜也不算贵，适合分批。'}<br>`;
+ html += `- <b>动量趋势 (技术面状态)</b>：${trend}。${trend==='强势上涨'?'趋势在上，但别追高。':trend==='跌跌不休'?'下坡还没走完，先等止跌。':'正在磨底，适合慢慢布局。'}<br>`;
+ html += `- <b>风向判定 (宏观与基本面)</b>：${wind}。${wind==='顺风'?'政策/流动性对该方向更友好。':wind==='逆风'?'宏观压力还在，反弹容易被压制。':'利好和利空并存，容易来回打脸。'}<br>`;
+ html += `- <b>最大隐患 (排雷)</b>：${riskPoint}`;
     html += `</div>`;
 
-    html += `<div style="font-size:14px;font-weight:800;margin:12px 0 8px">💡 行动指南 (Action Plan)</div>`;
+ html += `<div style="font-size:14px;font-weight:800;margin:12px 0 8px"> 行动指南 (Action Plan)</div>`;
     html += `<div style="font-size:12px;line-height:1.7;color:#1e293b">`;
     html += `- <b>操作建议</b>：${op}<br>`;
     html += `- <b>战术安排</b>：${tactic}<br>`;
     html += `- <b>止损/观察线</b>：${stopLine}`;
     html += `</div>`;
 
-    html += `<div style="font-size:14px;font-weight:800;margin:12px 0 8px">📊 雷达图数据</div>`;
+ html += `<div style="font-size:14px;font-weight:800;margin:12px 0 8px"> 雷达图数据</div>`;
     html += _renderPlainRadarChart(radar.radar_scores, riskScore);
     html += `</div></div>`;
   });
@@ -7596,7 +7595,7 @@ function renderWatchlist(){
     const sigText = sig ? (sig.action==='buy'?'建议买入':sig.action==='sell'?'暂不建议':'可关注') : '';
     const sigColor = sig ? (sig.action==='buy'?'background:var(--green-bg);color:var(--green)':sig.action==='sell'?'background:var(--red-bg);color:var(--red)':'background:var(--gray-bg);color:var(--sub)') : '';
     const wTrend = fundHistoryData[w.code]?.trend;
-    const trendBrief = wTrend ? ` · ${wTrend.trendDir==='strong_up'||wTrend.trendDir==='up'?'📈':'📉'}60日${wTrend.chg60d>0?'+':''}${wTrend.chg60d}%` : '';
+ const trendBrief = wTrend ? ` · ${wTrend.trendDir==='strong_up'||wTrend.trendDir==='up'?'':''}60日${wTrend.chg60d>0?'+':''}${wTrend.chg60d}%` : '';
 
     const wNavHtml = buildNavDisplay(f, true);
     html += `<div class="watch-item">
@@ -7609,7 +7608,7 @@ function renderWatchlist(){
         ${wNavHtml}
       </div>
       ${sigText?`<span class="watch-signal" style="${sigColor}">${sigText}</span>`:''}
-      <button class="watch-del" onclick="removeWatch(${i})">✕</button>
+ <button class="watch-del" onclick="removeWatch(${i})"></button>
     </div>`;
   });
   container.innerHTML = html;
@@ -7648,14 +7647,14 @@ function renderMarketSummary(){
 
   const pa = _analysisResult.portfolioAdvice;
   const portHtml = pa ? `<div style="margin-top:10px;padding:10px 14px;background:#f8fafc;border-radius:10px;border:1px solid #e2e8f0">
-    <b style="font-size:12px;color:#1e293b">💼 仓位建议</b><br>
-    <span style="display:inline-flex;align-items:center;gap:6px;margin:6px 0"><span style="font-size:10px;padding:2px 8px;border-radius:6px;background:#f0f4ff;color:#3b5998;border:1px solid #d6e0f5">🛡️核心仓 ${pa.coreRatio||'60%'}</span>
-    <span style="font-size:10px;padding:2px 8px;border-radius:6px;background:#fef9ee;color:#b8860b;border:1px solid #f0e4c4">🚀卫星仓 ${pa.satRatio||'40%'}</span></span><br>
+ <b style="font-size:12px;color:#1e293b"> 仓位建议</b><br>
+ <span style="display:inline-flex;align-items:center;gap:6px;margin:6px 0"><span style="font-size:10px;padding:2px 8px;border-radius:6px;background:#f0f4ff;color:#3b5998;border:1px solid #d6e0f5">核心仓 ${pa.coreRatio||'60%'}</span>
+ <span style="font-size:10px;padding:2px 8px;border-radius:6px;background:#fef9ee;color:#b8860b;border:1px solid #f0e4c4">卫星仓 ${pa.satRatio||'40%'}</span></span><br>
     <span style="font-size:11px;color:#475569;line-height:1.5">${pa.advice||''}</span>
   </div>` : '';
 
   container.innerHTML = `<div class="market-summary">
-    <b>📈 市场研判</b><span class="provider-tag">${_aiProvider.name}</span><br>
+ <b> 市场研判</b><span class="provider-tag">${_aiProvider.name}</span><br>
     ${_analysisResult.marketSummary}
     ${_analysisResult.benchmarkView?`<br><b>沪深300展望：</b>${_analysisResult.benchmarkView}`:''}
     ${portHtml}
@@ -7678,7 +7677,7 @@ async function triggerAI(){
     _analysisResult = await runAIAnalysis((msg, count)=>{
       progress.textContent = msg;
     });
-    progress.textContent = `✅ ${_analysisResult.engineCount}个引擎分析完成`;
+ progress.textContent = ` ${_analysisResult.engineCount}个引擎分析完成`;
     saveTodayPredictions();
     // 模拟盘自动交易
     const simTrades = simAutoTrade();
@@ -7691,11 +7690,11 @@ async function triggerAI(){
     renderSimPortfolio();
     if(simTrades > 0) progress.textContent += ` · 模拟盘执行${simTrades}笔交易`;
   } catch(e) {
-    progress.textContent = `❌ ${e.message}`;
+ progress.textContent = ` ${e.message}`;
   } finally {
     _analyzing = false;
     btn.disabled = false;
-    btn.innerHTML = '🧠 一键AI分析 · 4引擎研判';
+ btn.innerHTML = ' 一键AI分析 · 4引擎研判';
   }
 }
 
@@ -7706,7 +7705,7 @@ function openAddModal(mode){
   _addMode = mode;
   _selectedFund = null;
   document.getElementById('add-modal').style.display = 'flex';
-  document.getElementById('add-modal-title').innerHTML = (mode==='holding'?'➕ 添加持仓':'➕ 添加自选') + ' <button onclick="closeAddModal()">✕</button>';
+ document.getElementById('add-modal-title').innerHTML = (mode==='holding'?' 添加持仓':' 添加自选') + ' <button onclick="closeAddModal()"></button>';
   document.getElementById('add-search-area').style.display = '';
   document.getElementById('add-selected-area').style.display = 'none';
   document.getElementById('add-search-input').value = '';
@@ -7743,7 +7742,7 @@ function onFundSearchInput(){
     const isStale = ()=> (document.getElementById('add-search-input').value||'').trim() !== q;
     if(/^\d{3,6}$/.test(q)){
       // 数字代码：优先用搜索接口（独立回调，不阻塞）
-      if(localResults.length===0) resultsEl.innerHTML = '<div class="fund-search-hint">🔍 正在查询...</div>';
+ if(localResults.length===0) resultsEl.innerHTML = '<div class="fund-search-hint"> 正在查询...</div>';
       try {
         const results = [];
         // 搜索接口（独立回调名，无冲突）作为主要来源
@@ -7762,10 +7761,10 @@ function onFundSearchInput(){
         if(results.length > 0){
           renderSearchResults(dedupeResults(results, localResults));
         } else if(localResults.length===0){
-          resultsEl.innerHTML = '<div class="fund-search-hint">❌ 未找到匹配的基金，请检查代码</div>';
+ resultsEl.innerHTML = '<div class="fund-search-hint"> 未找到匹配的基金，请检查代码</div>';
         }
       } catch(e){
-        if(!isStale() && localResults.length===0) resultsEl.innerHTML = '<div class="fund-search-hint">❌ 未找到匹配的基金</div>';
+ if(!isStale() && localResults.length===0) resultsEl.innerHTML = '<div class="fund-search-hint"> 未找到匹配的基金</div>';
       }
     } else if(q.length >= 2){
       // 关键字搜索 — 尝试在线模糊搜索
@@ -7946,7 +7945,7 @@ function switchManageTab(tab){
   document.getElementById('manage-tab-watch').classList.toggle('active', tab==='watch');
   document.getElementById('manage-holding-count').textContent = holdings.length;
   document.getElementById('manage-watch-count').textContent = watchlist.length;
-  document.getElementById('manage-search').placeholder = tab==='holding' ? '🔍 搜索持仓基金...' : '🔍 搜索自选基金...';
+ document.getElementById('manage-search').placeholder = tab==='holding' ? ' 搜索持仓基金...' : ' 搜索自选基金...';
   renderManageList();
 }
 
@@ -7954,7 +7953,7 @@ function renderManageList(){
   const body = document.getElementById('manage-body');
   const query = (document.getElementById('manage-search').value||'').trim().toLowerCase();
   const list = _manageTab==='holding' ? holdings : watchlist;
-  const emptyIcon = _manageTab==='holding' ? '💼' : '👁';
+ const emptyIcon = _manageTab==='holding' ? '' : '';
   const emptyLabel = _manageTab==='holding' ? '持仓' : '自选';
 
   // 更新计数
@@ -7979,7 +7978,7 @@ function renderManageList(){
 
   if(filtered.length===0){
     body.innerHTML = `<div class="manage-empty">
-      <div class="manage-empty-icon">🔍</div>
+ <div class="manage-empty-icon"></div>
       <div class="manage-empty-text">未找到匹配 "${query}" 的基金</div>
     </div>`;
     return;
@@ -8017,12 +8016,12 @@ function renderManageList(){
     if(_manageTab === 'holding'){
       actionsHtml = `<div class="manage-fund-actions">
         <button class="manage-action-btn" onclick="moveToWatch(${idx})">→ 移至自选</button>
-        <button class="manage-action-btn danger" onclick="removeFromManage('holding',${idx})">🗑 删除</button>
+ <button class="manage-action-btn danger" onclick="removeFromManage('holding',${idx})"> 删除</button>
       </div>`;
     } else {
       actionsHtml = `<div class="manage-fund-actions">
         <button class="manage-action-btn" onclick="moveToHolding(${idx})">→ 移至持仓</button>
-        <button class="manage-action-btn danger" onclick="removeFromManage('watch',${idx})">🗑 删除</button>
+ <button class="manage-action-btn danger" onclick="removeFromManage('watch',${idx})"> 删除</button>
       </div>`;
     }
 
@@ -8041,7 +8040,7 @@ function renderManageList(){
             <div class="manage-fund-pct" style="color:${pctColor}">${pctSign}${pctVal.toFixed(2)}%</div>
             <div class="manage-fund-nav">${fd?.gztime||''}</div>
           </div>
-          <button class="manage-fund-del" onclick="removeFromManage('${_manageTab}',${idx})" title="删除">🗑</button>
+ <button class="manage-fund-del" onclick="removeFromManage('${_manageTab}',${idx})" title="删除"></button>
         </div>
       </div>
       ${trendHtml}
@@ -8443,9 +8442,9 @@ function renderPredictionTracker(){
 
   // === 操作栏 ===
   html += `<div style="display:flex;gap:6px;align-items:center;margin-bottom:8px;flex-wrap:wrap">`;
-  html += `<button onclick="snapshotPredictions(true)" style="padding:4px 10px;border-radius:6px;border:1px solid var(--border);background:rgba(59,130,246,0.15);color:#60a5fa;font-size:11px;cursor:pointer">📸 手动快照</button>`;
-  html += `<button onclick="verifyAndRender()" style="padding:4px 10px;border-radius:6px;border:1px solid var(--border);background:rgba(34,197,94,0.15);color:#4ade80;font-size:11px;cursor:pointer">✅ 手动验证</button>`;
-  if(todayEntry) html += `<span style="font-size:10px;color:#4ade80">✓ 今日已记录 (${todayEntry.timestamp})</span>`;
+ html += `<button onclick="snapshotPredictions(true)" style="padding:4px 10px;border-radius:6px;border:1px solid var(--border);background:rgba(59,130,246,0.15);color:#60a5fa;font-size:11px;cursor:pointer"> 手动快照</button>`;
+ html += `<button onclick="verifyAndRender()" style="padding:4px 10px;border-radius:6px;border:1px solid var(--border);background:rgba(34,197,94,0.15);color:#4ade80;font-size:11px;cursor:pointer"> 手动验证</button>`;
+ if(todayEntry) html += `<span style="font-size:10px;color:#4ade80"> 今日已记录 (${todayEntry.timestamp})</span>`;
   else html += `<span style="font-size:10px;color:var(--sub)">今日未记录 (14:50自动)</span>`;
   html += `</div>`;
 
@@ -8470,7 +8469,7 @@ function renderPredictionTracker(){
 
     // 三引擎分别准确率
     html += `<div style="display:flex;gap:6px;margin-bottom:10px">`;
-    [{name:'🤖AI', acc:stats.aiAccuracy}, {name:'🧠RL', acc:stats.rlAccuracy}, {name:'📈BT', acc:stats.btAccuracy}].forEach(eng => {
+ [{name:'AI', acc:stats.aiAccuracy}, {name:'RL', acc:stats.rlAccuracy}, {name:'BT', acc:stats.btAccuracy}].forEach(eng => {
       const c = eng.acc === null ? 'var(--sub)' : eng.acc >= 60 ? '#4ade80' : eng.acc >= 40 ? '#fbbf24' : '#f87171';
       html += `<div style="flex:1;text-align:center;padding:4px;background:rgba(255,255,255,0.03);border-radius:6px">`;
       html += `<span style="font-size:10px">${eng.name}</span> `;
@@ -8493,7 +8492,7 @@ function renderPredictionTracker(){
     const accColor = v.accuracy >= 65 ? '#4ade80' : v.accuracy >= 45 ? '#fbbf24' : '#f87171';
     html += `<div style="margin-top:8px;padding:8px 10px;background:rgba(255,255,255,0.02);border-radius:8px;border:1px solid var(--border)">`;
     html += `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">`;
-    html += `<span style="font-size:11px;font-weight:600;color:var(--text)">📋 最近验证: ${latestVerified.date} → ${v.verifyDate}</span>`;
+ html += `<span style="font-size:11px;font-weight:600;color:var(--text)"> 最近验证: ${latestVerified.date} → ${v.verifyDate}</span>`;
     html += `<span style="font-size:12px;font-weight:700;color:${accColor}">${v.accuracy}%</span>`;
     html += `</div>`;
 
@@ -8503,8 +8502,8 @@ function renderPredictionTracker(){
       return (o[a[1].verdict]||2) - (o[b[1].verdict]||2);
     });
     sortedResults.forEach(([code, r]) => {
-      const verdictIcon = r.verdict === 'correct' ? '✅' : r.verdict === 'wrong' ? '❌' : '➖';
-      const predIcon = r.predAction === 'buy' ? '🔴加仓' : r.predAction === 'sell' ? '🟢减仓' : '⚪持有';
+ const verdictIcon = r.verdict === 'correct' ? '' : r.verdict === 'wrong' ? '' : '';
+ const predIcon = r.predAction === 'buy' ? '加仓' : r.predAction === 'sell' ? '减仓' : '持有';
       const actColor = r.nextDayPct >= 0 ? '#f87171' : '#4ade80';
       html += `<div style="display:flex;align-items:center;gap:4px;padding:3px 0;border-bottom:1px solid rgba(255,255,255,0.04);font-size:10px">`;
       html += `<span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0">${r.name}</span>`;
@@ -8513,7 +8512,7 @@ function renderPredictionTracker(){
       html += `<span style="min-width:20px;text-align:center">${verdictIcon}</span>`;
       html += `</div>`;
       if(r.lesson){
-        html += `<div style="font-size:9px;color:#f59e0b;padding:1px 0 3px 8px">💡 ${r.lesson}</div>`;
+ html += `<div style="font-size:9px;color:#f59e0b;padding:1px 0 3px 8px"> ${r.lesson}</div>`;
       }
     });
 
@@ -8524,7 +8523,7 @@ function renderPredictionTracker(){
       html += `<div style="display:flex;gap:8px;margin-top:6px;font-size:10px;color:var(--sub)">`;
       html += `<span>策略收益: <b style="color:${rColor}">${v.avgPredReturn>=0?'+':''}${v.avgPredReturn}%</b></span>`;
       html += `<span>沪深300: <b style="color:${hColor}">${v.hs300Pct>=0?'+':''}${v.hs300Pct}%</b></span>`;
-      html += `<span>${v.beatBenchmark ? '🏆跑赢' : '📉跑输'}基准</span>`;
+ html += `<span>${v.beatBenchmark ? '跑赢' : '跑输'}基准</span>`;
       html += `</div>`;
     }
     html += `</div>`;
@@ -8534,7 +8533,7 @@ function renderPredictionTracker(){
   const recentEntries = predictionTracker.slice().reverse().slice(0, 10);
   if(recentEntries.length > 0){
     html += `<div style="margin-top:10px">`;
-    html += `<div style="font-size:11px;font-weight:600;color:var(--text);margin-bottom:4px;cursor:pointer" onclick="document.getElementById('pred-history-list').style.display=document.getElementById('pred-history-list').style.display==='none'?'':'none'">📅 历史记录 (${predictionTracker.length}天) ▾</div>`;
+ html += `<div style="font-size:11px;font-weight:600;color:var(--text);margin-bottom:4px;cursor:pointer" onclick="document.getElementById('pred-history-list').style.display=document.getElementById('pred-history-list').style.display==='none'?'':'none'"> 历史记录 (${predictionTracker.length}天) ▾</div>`;
     html += `<div id="pred-history-list" style="display:none">`;
     recentEntries.forEach(entry => {
       const isVerified = entry.verified && entry.verification;
@@ -8775,7 +8774,7 @@ function buildReviewContext(){
 
   const wrongOnes = review.reviews.filter(r=>r.verdict==='wrong');
   if(wrongOnes.length>0){
-    ctx += `\n⚠️ 判断失误需反思：\n`;
+ ctx += `\n 判断失误需反思：\n`;
     wrongOnes.forEach(r=>{
       ctx += `- ${r.name}(${r.code}): 预测${r.predAction==='buy'?'买入':r.predAction==='sell'?'减仓':'持有'} → 实际${r.actualPct>0?'+':''}${r.actualPct}%`;
       if(r.lesson) ctx += ` | 教训:${r.lesson}`;
@@ -8786,9 +8785,9 @@ function buildReviewContext(){
 
   const correctOnes = review.reviews.filter(r=>r.verdict==='correct');
   if(correctOnes.length>0){
-    ctx += `\n✅ 判断正确的经验：\n`;
+ ctx += `\n 判断正确的经验：\n`;
     correctOnes.slice(0,3).forEach(r=>{
-      ctx += `- ${r.name}: 预测${r.predAction==='buy'?'买入':r.predAction==='sell'?'减仓':'持有'} → 实际${r.actualPct>0?'+':''}${r.actualPct}% ✓\n`;
+ ctx += `- ${r.name}: 预测${r.predAction==='buy'?'买入':r.predAction==='sell'?'减仓':'持有'} → 实际${r.actualPct>0?'+':''}${r.actualPct}% \n`;
     });
   }
 
@@ -8823,13 +8822,13 @@ function renderReview(){
 
   let html = `<div class="review-card">
     <div class="review-header">
-      <div class="review-date">📅 ${review.reviewDate} → 今日验证</div>
+ <div class="review-date"> ${review.reviewDate} → 今日验证</div>
       <div class="review-pnl" style="color:${review.yesterdayAvg>=0?'var(--red)':'var(--green)'}">${review.yesterdayAvg>=0?'+':''}${review.yesterdayAvg}%</div>
     </div>
     <div class="review-stats">
       <div class="review-stat"><span class="review-stat-label">准确率</span><span class="review-stat-val" style="color:${accColor}">${review.accuracy}%</span></div>
-      <div class="review-stat"><span class="review-stat-label">✅正确</span><span class="review-stat-val" style="color:var(--green)">${review.correct}</span></div>
-      <div class="review-stat"><span class="review-stat-label">❌失误</span><span class="review-stat-val" style="color:var(--red)">${review.wrong}</span></div>
+ <div class="review-stat"><span class="review-stat-label">正确</span><span class="review-stat-val" style="color:var(--green)">${review.correct}</span></div>
+ <div class="review-stat"><span class="review-stat-label">失误</span><span class="review-stat-val" style="color:var(--red)">${review.wrong}</span></div>
       <div class="review-stat"><span class="review-stat-label">总数</span><span class="review-stat-val">${review.total}</span></div>
     </div>`;
 
@@ -8838,7 +8837,7 @@ function renderReview(){
   // 先显示错误的（重点关注）
   [...wrongOnes, ...review.reviews.filter(r=>r.verdict!=='wrong')].forEach(r=>{
     const predText = r.predAction==='buy'?'加仓':r.predAction==='sell'?'减仓':'持有';
-    const verdictText = r.verdict==='correct'?'✓对':r.verdict==='wrong'?'✗错':'—';
+ const verdictText = r.verdict==='correct'?'对':r.verdict==='wrong'?'错':'—';
     const verdictClass = r.verdict;
     html += `<div class="review-item">
       <span class="review-fund-name">${r.name}</span>
@@ -8853,7 +8852,7 @@ function renderReview(){
   if(wrongOnes.length>0){
     const lessons = wrongOnes.filter(r=>r.lesson).map(r=>`• ${r.name}: ${r.lesson}`).join('<br>');
     if(lessons){
-      html += `<div class="review-lesson">📌 <b>教训总结</b><br>${lessons}</div>`;
+ html += `<div class="review-lesson"> <b>教训总结</b><br>${lessons}</div>`;
     }
   }
 
@@ -8896,7 +8895,7 @@ function renderReviewHistory(){
     </div>`;
   });
   histEl.innerHTML = `<div style="background:var(--card);border-radius:var(--radius);padding:10px 14px;margin-top:4px;box-shadow:var(--shadow)">
-    <div style="font-size:12px;font-weight:600;margin-bottom:6px;color:var(--text)">📊 最近盈亏记录</div>
+ <div style="font-size:12px;font-weight:600;margin-bottom:6px;color:var(--text)"> 最近盈亏记录</div>
     ${html}
   </div>`;
 }
@@ -9141,12 +9140,12 @@ function simAutoTrade(){
     const pnlPct = (nav - pos.avgCost) / pos.avgCost * 100;
     if(pnlPct <= dynStopLoss && pos.group === 'satellite'){
       const sellPct = Math.min(0.9, 0.7 * sellMult);
-      simTrade(pos.code, 'sell', sellPct, `⛔止损: 亏${pnlPct.toFixed(1)}%超线${dynStopLoss}% [数据信号${dsScore}]`);
+ simTrade(pos.code, 'sell', sellPct, `止损: 亏${pnlPct.toFixed(1)}%超线${dynStopLoss}% [数据信号${dsScore}]`);
       tradesExecuted++;
     }
     if(pnlPct >= dynTakeProfit && pos.group === 'satellite'){
       const sellPct = Math.min(0.6, 0.4 * sellMult);
-      simTrade(pos.code, 'sell', sellPct, `✅止盈: 赚${pnlPct.toFixed(1)}%达${dynTakeProfit}% [数据信号${dsScore}]`);
+ simTrade(pos.code, 'sell', sellPct, `止盈: 赚${pnlPct.toFixed(1)}%达${dynTakeProfit}% [数据信号${dsScore}]`);
       tradesExecuted++;
     }
   });
@@ -9684,7 +9683,7 @@ function renderRLBrain(){
 
   let html='';
   // Status + Metrics card
-  html+=`<div class="rl-card"><div class="rl-card-title">🧠 Rainbow DQN 强化学习引擎</div>`;
+ html+=`<div class="rl-card"><div class="rl-card-title"> Rainbow DQN 强化学习引擎</div>`;
   html+=`<div class="rl-status"><span class="rl-status-dot ${sClass}"></span><span class="rl-status-text">${sTxt}</span></div>`;
   if(_rlTraining&&rlTrainer){
     const pct=Math.round((rlTrainer.episode+1)/rlTrainer.maxEpisodes*100);
@@ -9711,14 +9710,14 @@ function renderRLBrain(){
   }else{
     const dc=Object.keys(fundHistoryData).length;
     html+=`<button class="rl-train-btn start" onclick="startRLTraining()" ${dc<1?'disabled title="需要先加载历史数据"':''}>`;
-    html+=hasModel?'🔄 重新训练 (Rainbow DQN)':'🚀 开始训练 (Rainbow DQN)';
+ html+=hasModel?' 重新训练 (Rainbow DQN)':' 开始训练 (Rainbow DQN)';
     html+=`</button>`;
   }
   html+=`</div>`;
 
   // RL Signals card
   if(hasModel&&Object.keys(_rlSignals).length>0){
-    html+=`<div class="rl-card"><div class="rl-card-title">📊 RL集成决策信号 <span style="font-size:9px;color:var(--sub);font-weight:400">Ensemble投票 · 置信度仓位</span></div>`;
+ html+=`<div class="rl-card"><div class="rl-card-title"> RL集成决策信号 <span style="font-size:9px;color:var(--sub);font-weight:400">Ensemble投票 · 置信度仓位</span></div>`;
     for(const code of Object.keys(_rlSignals)){
       const sig=_rlSignals[code];
       const name=fundName(code);
@@ -9742,7 +9741,7 @@ function renderRLBrain(){
   }
 
   // Architecture info
-  html+=`<div class="rl-card"><div class="rl-card-title">⚙️ Rainbow DQN 架构</div>`;
+ html+=`<div class="rl-card"><div class="rl-card-title"> Rainbow DQN 架构</div>`;
   html+=`<div style="font-size:10px;color:var(--sub);line-height:1.6">`;
   html+=`<b>算法:</b> <b style="color:#f59e0b">Dueling</b> + Double + <b style="color:#f59e0b">PER</b> + <b style="color:#8b5cf6">N-Step(3)</b> + <b style="color:#22d3ee">Bootstrapped Ensemble(×${RL_ENSEMBLE_K})</b> + Adam + 梯度裁剪 + LR衰减<br>`;
   html+=`<b>网络:</b> [${RL_STATE_SIZE}] → 128(ReLU) → 64(ReLU) → <b style="color:#f59e0b">V(s)[1] + A(s,a)[${RL_ACTION_SIZE}]</b> × ${RL_ENSEMBLE_K}头<br>`;
@@ -9754,7 +9753,7 @@ function renderRLBrain(){
   html+=`</div>`;
   // 新增: Regime + 引擎准确率展示
   html+=`<div style="margin-top:8px;font-size:10px;line-height:1.5">`;
-  const regimeLabels = { bull:'🐂 牛市趋势', bear:'🐻 熊市防御', volatile:'⚡ 高波震荡', sideways:'↔️ 横盘震荡', unknown:'❓ 未知' };
+ const regimeLabels = { bull:' 牛市趋势', bear:' 熊市防御', volatile:' 高波震荡', sideways:'↔ 横盘震荡', unknown:' 未知' };
   html+=`<b>市场Regime:</b> <span style="color:#f59e0b">${regimeLabels[_marketRegime]||_marketRegime}</span> `;
   html+=`<span style="color:var(--sub)">(AI×${_regimeWeights.ai} RL×${_regimeWeights.rl} BT×${_regimeWeights.bt})</span><br>`;
   html+=`<b>引擎准确率:</b> `;
@@ -9834,7 +9833,7 @@ function stopRLTraining(){
 // Build RL context for AI prompt
 function buildRLContext(){
   if(!_rlModelLoaded||!rlTrainer?.agent||!Object.keys(_rlSignals).length)return'';
-  let ctx='\n【🧠 Rainbow DQN 强化学习信号 (Dueling+Ensemble+40维)】\n';
+ let ctx='\n【 Rainbow DQN 强化学习信号 (Dueling+Ensemble+40维)】\n';
   ctx+=`模型: Rainbow DQN(40维·Dueling·PER·N-Step·${rlTrainer.agent.nHeads}头Ensemble) · 已训练${rlTrainer.episode+1}轮 · ${rlTrainer.agent.trainSteps}步 · 课程学习\n`;
   ctx+=`指标: 胜率${(rlTrainer.metrics.winRate||0).toFixed(0)}% · 平均收益${(rlTrainer.metrics.avgReturn||0).toFixed(1)}% · Sharpe${(rlTrainer.metrics.sharpe||0).toFixed(2)} · Sortino${(rlTrainer.metrics.sortino||0).toFixed(2)} · MDD${(rlTrainer.metrics.mdd||0).toFixed(1)}%\n`;
   ctx+=`在线学习: ${Object.keys(_rlPendingRewards).length}条延迟奖励待结算 · BT参数自适应: RSI买=${BT_RSI_BUY}/卖=${BT_RSI_SELL} 动量=${BT_MOMENTUM_BUY.toFixed(4)}\n`;
@@ -9856,10 +9855,10 @@ function buildRLContext(){
     }
     ctx+=`  ${name}(${code}): ${sig.actionName} 置信=${sig.conviction}(仓位${sig.positionPct}%) 投票=[${votes}] 不确定性=${(sig.uncertainty||0).toFixed(3)} Q=[${qStr}]${triInfo}\n`;
   }
-  ctx+='⚠️ 闭环联动: RL逐步信号融入回测(消除前瞻偏差) → 回测指标注入RL 40维状态(含组合DD/现金/集中度/权重) → Regime自适应引擎权重 → 引擎准确率EMA动态调权 → 反羊群RSI极端校正 → 时序一致性+滞回防翻转 → 组合风险约束 → 延迟奖励在线学习 → Sim绩效自适应BT参数 → RL训练完成自动重跑回测。\n';
+ ctx+=' 闭环联动: RL逐步信号融入回测(消除前瞻偏差) → 回测指标注入RL 40维状态(含组合DD/现金/集中度/权重) → Regime自适应引擎权重 → 引擎准确率EMA动态调权 → 反羊群RSI极端校正 → 时序一致性+滞回防翻转 → 组合风险约束 → 延迟奖励在线学习 → Sim绩效自适应BT参数 → RL训练完成自动重跑回测。\n';
   // 宏观地缘事件上下文
   const geoCtx = getMacroGeoAnalysis();
-  ctx+='\n【🌍 宏观地缘事件分析】\n';
+ ctx+='\n【 宏观地缘事件分析】\n';
   ctx+=`综合地缘评分: ${geoCtx.score}/100 (${geoCtx.label})\n`;
   ctx+=`三个月展望(${geoCtx.outlook.period}): ${geoCtx.outlook.overall}\n`;
   ctx+='关键事件:\n';
@@ -9877,7 +9876,7 @@ function buildRLContext(){
     ctx+=`  ${arrow} ${t.name}(${t.conviction}): ${t.reason}\n`;
   });
   ctx+=`建议配置: 进攻=${geoCtx.outlook.allocation.offensive} / 核心=${geoCtx.outlook.allocation.core} / 防御=${geoCtx.outlook.allocation.hedge}\n`;
-  ctx+='⚠️ 请结合以上地缘事件和三个月展望，对每只基金给出是否受益/受损的具体判断，并在操作建议中体现宏观逻辑。\n';
+ ctx+=' 请结合以上地缘事件和三个月展望，对每只基金给出是否受益/受损的具体判断，并在操作建议中体现宏观逻辑。\n';
   return ctx;
 }
 
@@ -9906,7 +9905,7 @@ function renderSimBrief(){
   let liveCount = 0;
   simPortfolio.positions.forEach(p => { if(getFundData(p.code)?._live) liveCount++; });
   const total = simPortfolio.positions.length;
-  const liveTag = liveCount===total ? '🟢' : liveCount>0 ? '🟡' : '🔴';
+ const liveTag = liveCount===total ? '' : liveCount>0 ? '' : '';
   const color = cumProfit >= 0 ? 'var(--red)' : 'var(--green)';
   brief.innerHTML = `<span style="color:${color}">${cumProfit>=0?'+':''}${cumProfit.toFixed(0)}元</span> <span style="font-size:9px">${liveTag}${liveCount}/${total}</span>`;
 }
@@ -9916,8 +9915,8 @@ function renderSimPortfolio(){
   if(!simPortfolio || !simPortfolio.positions || simPortfolio.positions.length===0){
     const msg = holdings.length===0
       ? '请先添加持仓基金<br><span style="font-size:11px;color:var(--sub)">模拟盘将基于您的持仓自动建仓</span>'
-      : '<span>持仓已就绪，点击建仓开始模拟</span><br><button class="form-btn" style="width:auto;padding:8px 20px;margin-top:10px;font-size:12px" onclick="syncSimFromHoldings()">🚀 从持仓开始建仓</button>';
-    container.innerHTML = `<div class="empty"><div class="empty-icon">📊</div>${msg}</div>`;
+ : '<span>持仓已就绪，点击建仓开始模拟</span><br><button class="form-btn" style="width:auto;padding:8px 20px;margin-top:10px;font-size:12px" onclick="syncSimFromHoldings()"> 从持仓开始建仓</button>';
+ container.innerHTML = `<div class="empty"><div class="empty-icon"></div>${msg}</div>`;
     return;
   }
 
@@ -9953,7 +9952,7 @@ function renderSimPortfolio(){
       <div style="display:flex;justify-content:space-between;font-size:10px;margin-bottom:4px">
         <span>月目标: +¥${SIM_TARGET_MONTHLY.toLocaleString()} (${targetPct.toFixed(1)}%)</span>
         <span style="font-weight:600;color:${cumProfit>=SIM_TARGET_MONTHLY?'#22c55e':'rgba(255,255,255,0.5)'}">
-          ${cumProfit>=SIM_TARGET_MONTHLY?'✅ 已达成':'进度 '+progressPct.toFixed(0)+'%'}
+ ${cumProfit>=SIM_TARGET_MONTHLY?' 已达成':'进度 '+progressPct.toFixed(0)+'%'}
         </span>
       </div>
       <div class="sim-progress"><div class="sim-progress-fill" style="width:${progressPct}%;background:${cumProfit>=SIM_TARGET_MONTHLY?'#22c55e':'linear-gradient(90deg,#f59e0b,#ef4444)'}"></div></div>
@@ -9962,18 +9961,18 @@ function renderSimPortfolio(){
 
   // 对比卡片
   html += `<div class="sim-compare">
-    <div class="sim-compare-title">📊 今日对比</div>
+ <div class="sim-compare-title"> 今日对比</div>
     <div class="sim-compare-row">
       <div class="sim-compare-item">
-        <span class="sim-compare-label">🤖 模拟盘</span>
+ <span class="sim-compare-label"> 模拟盘</span>
         <span class="sim-compare-val" style="color:${todayReturn>=0?'var(--red)':'var(--green)'}">${todayReturn>=0?'+':''}${todayReturn.toFixed(2)}%</span>
       </div>
       <div class="sim-compare-item">
-        <span class="sim-compare-label">💼 真实持仓</span>
+ <span class="sim-compare-label"> 真实持仓</span>
         <span class="sim-compare-val" style="color:${realPnlPct>=0?'var(--red)':'var(--green)'}">${holdings.length>0?(realPnlPct>=0?'+':'')+realPnlPct.toFixed(2)+'%':'--'}</span>
       </div>
       <div class="sim-compare-item">
-        <span class="sim-compare-label">📈 沪深300</span>
+ <span class="sim-compare-label"> 沪深300</span>
         <span class="sim-compare-val" style="color:${hs300.pct>=0?'var(--red)':'var(--green)'}">${hs300.pct>=0?'+':''}${fmt(hs300.pct)}%</span>
       </div>
     </div>
@@ -9992,7 +9991,7 @@ function renderSimPortfolio(){
   // 持仓明细
   const syncLabel = simPortfolio.syncSource==='holdings' ? ' · 来自持仓' : '';
   html += `<div style="font-size:11px;font-weight:600;margin:10px 0 6px;display:flex;justify-content:space-between">
-    <span>📋 模拟持仓 (${simPortfolio.positions.length}只)</span>
+ <span> 模拟持仓 (${simPortfolio.positions.length}只)</span>
     <span style="font-weight:400;color:var(--sub);font-size:10px">建仓: ${simPortfolio.created}${syncLabel}</span>
   </div>`;
 
@@ -10003,7 +10002,7 @@ function renderSimPortfolio(){
     const tp=simPortfolio.positions.length;
     const ls=snapshots.length>0?snapshots[snapshots.length-1]:null;
     html += `<div style="font-size:9px;color:var(--sub);text-align:center;margin:6px 0;padding:4px 8px;background:rgba(255,255,255,0.03);border-radius:6px">
-      数据源: 🟢实时${lc} ${hc>0?'🟡历史'+hc+' ':''}${fc>0?'🔴待校准'+fc+' ':''}· 共${tp}只 ${ls?.updatedAt?'· 更新 '+ls.updatedAt:''}
+ 数据源: 实时${lc} ${hc>0?'历史'+hc+' ':''}${fc>0?'待校准'+fc+' ':''}· 共${tp}只 ${ls?.updatedAt?'· 更新 '+ls.updatedAt:''}
     </div>`;
   }
 
@@ -10017,8 +10016,8 @@ function renderSimPortfolio(){
       const pnlPct = pos.investedAmount > 0 ? (pnl / pos.investedAmount * 100) : 0;
       const todayPct = fd?.gszzl || 0;
       const weight = currentValue / totalValue * 100;
-      const g = pos.group === 'core' ? '🛡️' : '🚀';
-      const dataBadge = fd?._live ? '🟢' : fd?._histFallback ? '🟡' : '🔴';
+ const g = pos.group === 'core' ? '' : '';
+ const dataBadge = fd?._live ? '' : fd?._histFallback ? '' : '';
       const _simPLabel = pctLabel(fd);
       const _simNoData = fd?._noData;
       html += `<div class="sim-pos-card">
@@ -10043,7 +10042,7 @@ function renderSimPortfolio(){
 
   // 策略参数
   html += `<div class="sim-strategy-card">
-    <div style="font-size:11px;font-weight:600;margin-bottom:6px">⚙️ 当前策略参数 <span style="font-weight:400;color:var(--sub);font-size:9px">AI自动学习调优</span></div>
+ <div style="font-size:11px;font-weight:600;margin-bottom:6px"> 当前策略参数 <span style="font-weight:400;color:var(--sub);font-size:9px">AI自动学习调优</span></div>
     <div class="sim-param-grid">
       <div class="sim-param"><span class="sp-label">核心/卫星</span><span class="sp-val">${(simPortfolio.strategy.coreRatio*100).toFixed(0)}/${(simPortfolio.strategy.satRatio*100).toFixed(0)}</span></div>
       <div class="sim-param"><span class="sp-label">止损线</span><span class="sp-val" style="color:var(--green)">${simPortfolio.strategy.stopLoss}%</span></div>
@@ -10056,14 +10055,14 @@ function renderSimPortfolio(){
 
   // 学习日志
   if(simPortfolio.learningLog && simPortfolio.learningLog.length > 0){
-    html += `<div style="font-size:11px;font-weight:600;margin:10px 0 6px">🧠 策略学习日志</div>`;
+ html += `<div style="font-size:11px;font-weight:600;margin:10px 0 6px"> 策略学习日志</div>`;
     simPortfolio.learningLog.slice(-5).reverse().forEach(log => {
       html += `<div class="sim-learn-card">
         <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--sub)">
           <span>${log.date}</span><span>累计${log.cumReturn>=0?'+':''}${log.cumReturn}%</span>
         </div>
-        ${log.lesson ? `<div style="font-size:11px;margin-top:4px;line-height:1.5">📌 ${log.lesson}</div>` : ''}
-        ${log.strategyChange ? `<div style="font-size:10px;color:var(--primary);margin-top:2px">⚙️ ${log.strategyChange}</div>` : ''}
+ ${log.lesson ? `<div style="font-size:11px;margin-top:4px;line-height:1.5"> ${log.lesson}</div>` : ''}
+ ${log.strategyChange ? `<div style="font-size:10px;color:var(--primary);margin-top:2px"> ${log.strategyChange}</div>` : ''}
       </div>`;
     });
   }
@@ -10071,10 +10070,10 @@ function renderSimPortfolio(){
   // 交易记录
   const recentTrades = (simPortfolio.history || []).slice(-8).reverse();
   if(recentTrades.length > 0){
-    html += `<div style="font-size:11px;font-weight:600;margin:10px 0 6px">📜 最近交易 <span style="font-weight:400;color:var(--sub)">(共${simPortfolio.history.length}笔)</span></div>`;
+ html += `<div style="font-size:11px;font-weight:600;margin:10px 0 6px"> 最近交易 <span style="font-weight:400;color:var(--sub)">(共${simPortfolio.history.length}笔)</span></div>`;
     recentTrades.forEach(t => {
       const actionColor = t.action==='buy'?'var(--red)':'var(--green)';
-      const actionIcon = t.action==='buy'?'�买':'🟢卖';
+ const actionIcon = t.action==='buy'?'�买':'卖';
       html += `<div class="sim-trade-item">
         <span style="color:${actionColor};font-weight:600;min-width:36px">${actionIcon}</span>
         <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${t.name||t.code}</span>
@@ -10086,7 +10085,7 @@ function renderSimPortfolio(){
 
   // 收益走势
   if(snapshots.length >= 2){
-    html += `<div style="font-size:11px;font-weight:600;margin:10px 0 6px">📈 收益走势 (${snapshots.length}天)</div><div class="sim-chart">`;
+ html += `<div style="font-size:11px;font-weight:600;margin:10px 0 6px"> 收益走势 (${snapshots.length}天)</div><div class="sim-chart">`;
     const displaySnaps = snapshots.slice(-15);
     const maxRet = Math.max(...displaySnaps.map(s => Math.abs(s.cumReturn)), 0.1);
     displaySnaps.forEach(s => {
@@ -10103,11 +10102,11 @@ function renderSimPortfolio(){
 
   // 交易日/休市状态
   const msSim = getMarketStatus();
-  const tradingTag = isTradingDay() ? (msSim.status==='open'?'🟢 交易中':'⏸ '+msSim.text) : '🔴 今日休市';
+ const tradingTag = isTradingDay() ? (msSim.status==='open'?' 交易中':'⏸ '+msSim.text) : ' 今日休市';
   html += `<div style="text-align:center;margin:10px 0 4px;font-size:10px;color:var(--sub)">${tradingTag}${msSim.isHoliday?' (节假日)':''}</div>`;
 
   html += `<div style="text-align:center;margin-top:8px;display:flex;gap:10px;justify-content:center">
-    <span style="font-size:10px;color:var(--primary);cursor:pointer;text-decoration:underline" onclick="syncSimFromHoldings()">🔄 同步持仓重建</span>
+ <span style="font-size:10px;color:var(--primary);cursor:pointer;text-decoration:underline" onclick="syncSimFromHoldings()"> 同步持仓重建</span>
     <span style="font-size:10px;color:var(--sub);cursor:pointer;text-decoration:underline" onclick="resetSimPortfolio()">↩ 重置模拟盘</span>
   </div>`;
 
@@ -10128,7 +10127,7 @@ function resetSimPortfolio(){
 
 function syncSimFromHoldings(){
   if(holdings.length === 0){ alert('请先添加持仓基金'); return; }
-  if(!confirm(`同步持仓到模拟盘？\n\n将重置模拟盘，以50万资金按您当前${holdings.length}只持仓重新建仓。\n⚠️ 所有模拟交易记录将被清除。`)) return;
+ if(!confirm(`同步持仓到模拟盘？\n\n将重置模拟盘，以50万资金按您当前${holdings.length}只持仓重新建仓。\n 所有模拟交易记录将被清除。`)) return;
   localStorage.removeItem('fa_sim_portfolio');
   simPortfolio = null;
   buildSimFromHoldings();
@@ -10668,7 +10667,7 @@ function renderBacktest(){
   let html = '';
 
   // Run Button + Status
-  html += `<div class="bt-card"><div class="bt-card-title">📊 策略回测引擎</div>`;
+ html += `<div class="bt-card"><div class="bt-card-title"> 策略回测引擎</div>`;
   html += `<div style="font-size:10px;color:var(--sub);margin-bottom:6px">`;
   html += `策略: 预测涨幅>1% + RSI<${BT_RSI_BUY} → 买入 | RSI>${BT_RSI_SELL}或趋势反转 → 卖出<br>`;
   html += `仓位: Kelly f*=(bp-q)/b · 单次最大25%(半Kelly) · 总仓位≤95%`;
@@ -10678,7 +10677,7 @@ function renderBacktest(){
   } else {
     const dc = Object.keys(fundHistoryData).length;
     html += `<button class="bt-run-btn" onclick="runBacktest()" ${dc<1?'disabled title="需要先加载历史数据"':''}>`;
-    html += hasResults ? '🔄 重新回测 (RSI+Kelly)' : '🚀 开始回测 (RSI+Kelly)';
+ html += hasResults ? ' 重新回测 (RSI+Kelly)' : ' 开始回测 (RSI+Kelly)';
     html += `</button>`;
   }
   html += `</div>`;
@@ -10692,7 +10691,7 @@ function renderBacktest(){
   const results = Object.values(btResults);
 
   // Summary Metrics
-  html += `<div class="bt-card"><div class="bt-card-title">📈 组合回测概览 <span style="font-size:9px;color:var(--sub);font-weight:400">${s.fundCount}只基金</span></div>`;
+ html += `<div class="bt-card"><div class="bt-card-title"> 组合回测概览 <span style="font-size:9px;color:var(--sub);font-weight:400">${s.fundCount}只基金</span></div>`;
   html += `<div class="bt-metrics">`;
   html += btMetricHTML('平均收益', (s.avgReturn*100).toFixed(1)+'%', s.avgReturn>=0?'var(--red)':'var(--green)');
   html += btMetricHTML('Sharpe', s.avgSharpe.toFixed(2), s.avgSharpe>=1?'var(--red)':s.avgSharpe>=0?'#f59e0b':'var(--green)');
@@ -10715,7 +10714,7 @@ function renderBacktest(){
   // Equity Chart (组合平均净值曲线)
   const bestResult = btResults[s.bestFund];
   if(bestResult && bestResult.equity.length > 2){
-    html += `<div class="bt-card"><div class="bt-card-title">📉 净值 & 回撤曲线 <span style="font-size:9px;color:var(--sub);font-weight:400">${fundName(s.bestFund)}(最优Sharpe)</span></div>`;
+ html += `<div class="bt-card"><div class="bt-card-title"> 净值 & 回撤曲线 <span style="font-size:9px;color:var(--sub);font-weight:400">${fundName(s.bestFund)}(最优Sharpe)</span></div>`;
     html += renderBTChart(bestResult.equity, bestResult.bhReturn);
     html += `<div style="margin-top:4px">`;
     html += renderBTDDChart(bestResult.drawdown);
@@ -10723,7 +10722,7 @@ function renderBacktest(){
   }
 
   // Per-fund results
-  html += `<div class="bt-card"><div class="bt-card-title">📋 各基金回测详情</div>`;
+ html += `<div class="bt-card"><div class="bt-card-title"> 各基金回测详情</div>`;
   html += `<div style="display:flex;gap:4px;padding:3px 0;border-bottom:1px solid var(--border);margin-bottom:4px">`;
   html += `<span style="font-size:9px;color:var(--sub);flex:1">基金</span>`;
   html += `<span style="font-size:9px;color:var(--sub);min-width:50px;text-align:right">收益率</span>`;
@@ -10753,9 +10752,9 @@ function renderBacktest(){
   allTrades.sort((a,b) => b.date.localeCompare(a.date));
 
   if(allTrades.length > 0){
-    html += `<div class="bt-card"><div class="bt-card-title">📝 最近交易记录 <span style="font-size:9px;color:var(--sub);font-weight:400">${s.totalTrades}笔总交易</span></div>`;
+ html += `<div class="bt-card"><div class="bt-card-title"> 最近交易记录 <span style="font-size:9px;color:var(--sub);font-weight:400">${s.totalTrades}笔总交易</span></div>`;
     allTrades.slice(0, 10).forEach(t => {
-      const ac = t.action === 'buy' ? '�买' : '🟢卖';
+ const ac = t.action === 'buy' ? '�买' : '卖';
       const extra = t.action === 'sell' ? ` ${t.pnl} ${t.reason||''}` : ` RSI:${t.rsi?.toFixed(0)} Kelly:${(t.kelly*100)?.toFixed(0)}%`;
       html += `<div class="bt-trade-row">`;
       html += `<span style="min-width:60px">${t.date?.slice(5)}</span>`;
@@ -10768,7 +10767,7 @@ function renderBacktest(){
   }
 
   // Architecture
-  html += `<div class="bt-card"><div class="bt-card-title">⚙️ 回测参数</div>`;
+ html += `<div class="bt-card"><div class="bt-card-title"> 回测参数</div>`;
   html += `<div style="font-size:10px;color:var(--sub);line-height:1.6">`;
   html += `<b>数据:</b> 基金历史NAV(近1年~250交易日)<br>`;
   html += `<b>买入条件:</b> 预测涨幅>1% + RSI(14)<${BT_RSI_BUY} + MA5>MA20<br>`;
@@ -10852,7 +10851,7 @@ function renderBTDDChart(drawdown){
 // Build backtest context for AI prompt
 function buildBTContext(){
   if(!btSummary || Object.keys(btResults).length === 0) return '';
-  let ctx = '\n【📈 策略回测结果 (RSI+Kelly+RL融合)】\n';
+ let ctx = '\n【 策略回测结果 (RSI+Kelly+RL融合)】\n';
   ctx += `策略: 预测涨幅>1%且RSI<${BT_RSI_BUY}买入 | RSI>${BT_RSI_SELL}或趋势反转卖出 | Kelly仓位管理 | RL信号辅助\n`;
   ctx += `共识: 三引擎(AI+RL+回测)加权投票 · 全票一致×1.4 · 多数票×1.15 · 分歧×0.4\n`;
   ctx += `组合: 平均收益${(btSummary.avgReturn*100).toFixed(1)}% · Sharpe ${btSummary.avgSharpe.toFixed(2)} · 最大回撤${(btSummary.worstDD*100).toFixed(1)}% · 胜率${(btSummary.avgWinRate*100).toFixed(0)}%\n`;
@@ -10862,7 +10861,7 @@ function buildBTContext(){
   Object.values(btResults).sort((a,b)=>b.sharpe-a.sharpe).forEach(r => {
     ctx += `  ${fundName(r.code)}(${r.code}): 收益${(r.totalReturn*100).toFixed(1)}% · Sharpe ${r.sharpe.toFixed(2)} · 回撤${(r.maxDD*100).toFixed(1)}% · 胜率${(r.winRate*100).toFixed(0)}% · Kelly仓位${(r.finalKelly*100).toFixed(0)}% · 当前RSI ${r.lastRSI?.toFixed(0)}\n`;
   });
-  ctx += '⚠️ 回测已融合RL信号。三引擎投票共识系统: AI/RL/回测多数票→加大仓位, 分歧→缩减仓位。高Sharpe基金可加配，Sharpe<0需谨慎。\n';
+ ctx += ' 回测已融合RL信号。三引擎投票共识系统: AI/RL/回测多数票→加大仓位, 分歧→缩减仓位。高Sharpe基金可加配，Sharpe<0需谨慎。\n';
   return ctx;
 }
 

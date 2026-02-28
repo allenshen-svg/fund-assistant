@@ -11,18 +11,18 @@
 
 <!-- Loading Overlay -->
 <div class="loading-overlay" id="loading-overlay">
-  <div class="loading-icon">📡</div>
+ <div class="loading-icon"></div>
   <div class="loading-title">舆情逆向分析引擎</div>
   <div class="loading-sub">后端采集多平台数据，AI 情绪博弈分析中...</div>
   <div class="loading-bar"><div class="loading-fill" id="loading-fill" style="width:0%"></div></div>
   <div class="loading-status" id="loading-status">初始化...</div>
   <div class="loading-sources" id="loading-sources">
-    <span class="loading-src" data-src="douyin">📱 抖音</span>
-    <span class="loading-src" data-src="weibo">🐦 微博</span>
-    <span class="loading-src" data-src="eastmoney">💹 东方财富</span>
-    <span class="loading-src" data-src="tophub">🔥 聚合热榜</span>
-    <span class="loading-src" data-src="xhs">📕 小红书</span>
-    <span class="loading-src" data-src="ai">🧠 AI分析</span>
+ <span class="loading-src" data-src="douyin"> 抖音</span>
+ <span class="loading-src" data-src="weibo"> 微博</span>
+ <span class="loading-src" data-src="eastmoney"> 东方财富</span>
+ <span class="loading-src" data-src="tophub"> 聚合热榜</span>
+ <span class="loading-src" data-src="xhs"> 小红书</span>
+ <span class="loading-src" data-src="ai"> AI分析</span>
   </div>
 </div>
 
@@ -30,7 +30,7 @@
 <div class="page-header">
   <div class="ph-row">
     <a class="ph-back" href="index.html">← 返回</a>
-    <span class="ph-title">⚖️ KOL vs 散户 情绪博弈</span>
+ <span class="ph-title"> KOL vs 散户 情绪博弈</span>
     <span class="ph-status"><span class="ph-dot" id="live-dot"></span> <span id="header-status">抓取中...</span></span>
   </div>
   <div class="ph-time" id="header-time"></div>
@@ -46,7 +46,7 @@
       <div class="signal-text" id="signal-text">等待AI分析...</div>
     </div>
     <div class="summary-meta">
-      <div class="meta-temp" id="meta-temp">🌡️ --</div>
+ <div class="meta-temp" id="meta-temp"> --</div>
       <div class="meta-radar" id="meta-radar">等待分析...</div>
     </div>
     <div class="summary-assets" id="summary-assets"></div>
@@ -70,14 +70,14 @@
 
   <!-- Action Bar -->
   <div class="action-bar">
-    <button class="btn-action primary" id="btn-refresh" onclick="runFullPipeline()">🔄 重新采集分析</button>
+ <button class="btn-action primary" id="btn-refresh" onclick="runFullPipeline()"> 重新采集分析</button>
   </div>
   <div class="progress-text" id="progress-text"></div>
 
   <!-- 隔夜美股行情 -->
   <div class="section" id="sec-usmarket">
     <div class="sec-header" onclick="toggleSection('usmarket-body')">
-      <div class="sec-icon">🇺🇸</div>
+ <div class="sec-icon"></div>
       <div class="sec-title">隔夜美股行情</div>
       <div class="sec-badge" id="us-update-time">--</div>
       <div class="sec-toggle" id="toggle-usmarket-body">▾</div>
@@ -91,7 +91,7 @@
   <!-- KOL vs 散户 博弈拆解 -->
   <div class="section" id="sec-hotspot">
     <div class="sec-header" onclick="toggleSection('hotspot-body')">
-      <div class="sec-icon">⚖️</div>
+ <div class="sec-icon"></div>
       <div class="sec-title">KOL vs 散户 博弈拆解</div>
       <div class="sec-badge">预期差</div>
       <div class="sec-toggle" id="toggle-hotspot-body">▾</div>
@@ -104,7 +104,7 @@
   <!-- 热度雷达 -->
   <div class="section" id="sec-radar">
     <div class="sec-header" onclick="toggleSection('radar-body')">
-      <div class="sec-icon">🔥</div>
+ <div class="sec-icon"></div>
       <div class="sec-title">热度雷达</div>
       <div class="sec-toggle" id="toggle-radar-body">▾</div>
     </div>
@@ -116,7 +116,7 @@
   <!-- 极简操作指南 -->
   <div class="section" id="sec-action">
     <div class="sec-header" onclick="toggleSection('action-body')">
-      <div class="sec-icon">💡</div>
+ <div class="sec-icon"></div>
       <div class="sec-title">极简操作指南</div>
       <div class="sec-badge">反人性</div>
       <div class="sec-toggle" id="toggle-action-body">▾</div>
@@ -129,7 +129,7 @@
   <!-- 原始数据流 (collapsed by default) -->
   <div class="section" id="sec-videos">
     <div class="sec-header" onclick="toggleSection('video-body')">
-      <div class="sec-icon">📱</div>
+ <div class="sec-icon"></div>
       <div class="sec-title">原始数据流</div>
       <div class="sec-badge" id="video-count">0条</div>
       <div class="sec-toggle" id="toggle-video-body">▸</div>
@@ -145,7 +145,7 @@
   <!-- AI 完整报告 (collapsed by default) -->
   <div class="section" id="sec-raw">
     <div class="sec-header" onclick="toggleSection('raw-body')">
-      <div class="sec-icon">📋</div>
+ <div class="sec-icon"></div>
       <div class="sec-title">AI 完整报告</div>
       <div class="sec-toggle" id="toggle-raw-body">▸</div>
     </div>
@@ -157,12 +157,12 @@
 </div>
 
 <!-- Settings FAB -->
-<button class="fab" onclick="openSettings()">⚙️</button>
+<button class="fab" onclick="openSettings()"></button>
 
 <!-- Settings Modal -->
 <div class="modal-overlay" id="settings-modal">
   <div class="modal">
-    <h3>⚙️ AI 引擎设置 <button onclick="closeSettings()">✕</button></h3>
+ <h3> AI 引擎设置 <button onclick="closeSettings()"></button></h3>
     <div class="form-row"><label>AI 服务商</label><select id="set-provider" onchange="onProviderChange()">
       <option value="siliconflow">硅基流动 (免费)</option>
       <option value="deepseek">DeepSeek 官方 (极低价)</option>
