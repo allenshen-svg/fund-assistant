@@ -2,8 +2,7 @@ name: 📡 宏观事件自动追踪
 
 on:
   schedule:
-    - cron: '0,30 0-12 * * 1-5'
-    - cron: '0 0,3,6,9 * * 0,6'
+    - cron: '*/30 * * * *'
   workflow_dispatch:
 
 permissions:
