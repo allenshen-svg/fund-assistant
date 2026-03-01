@@ -99,7 +99,6 @@
 
 /* ====== 数据源统计条 ====== */
 .src-bar {
-  display: flex;
   white-space: nowrap;
   padding: 12rpx 0;
   margin-bottom: 16rpx;
@@ -107,6 +106,7 @@
 .src-pill {
   display: inline-flex;
   align-items: center;
+  flex-shrink: 0;
   gap: 6rpx;
   padding: 8rpx 16rpx;
   margin-right: 10rpx;
@@ -425,21 +425,20 @@
 }
 
 .filter-chip {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+  display: inline-block;
+  flex-shrink: 0;
   height: 56rpx;
-  line-height: 1;
+  line-height: 56rpx;
   box-sizing: border-box;
   padding: 0 22rpx;
   border-radius: 999rpx;
   font-size: 24rpx;
+  text-align: center;
   white-space: nowrap;
   color: var(--text-sub);
   background: var(--elevated-3);
   margin-right: 12rpx;
   border: 1rpx solid transparent;
-  vertical-align: middle;
 }
 
 .filter-chip.active {

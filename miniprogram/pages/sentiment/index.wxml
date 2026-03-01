@@ -48,7 +48,7 @@
   </view>
 
   <!-- ====== 数据源统计 ====== -->
-  <scroll-view class="src-bar" scroll-x enable-flex wx:if="{{sourcePills.length > 0}}">
+  <scroll-view class="src-bar" scroll-x wx:if="{{sourcePills.length > 0}}">
     <view class="src-pill" wx:for="{{sourcePills}}" wx:key="name">
       <text class="src-name">{{item.short}}</text>
       <text class="src-count">{{item.count}}</text>
@@ -225,7 +225,7 @@
   </view>
 
   <!-- ====== 筛选条 (事件) ====== -->
-  <scroll-view class="filter-scroll" scroll-x enable-flex wx:if="{{events.length > 0}}">
+  <scroll-view class="filter-scroll" scroll-x wx:if="{{events.length > 0}}">
     <view class="filter-chip {{activeFilter === item.key ? 'active' : ''}}"
           wx:for="{{filters}}" wx:key="key"
           data-key="{{item.key}}" bindtap="onFilterTap">
