@@ -1,0 +1,81 @@
+name: 📊 舆情采集 & AI分析
+
+on:
+  schedule:
+    # 每小时整点运行 (UTC)，脚本内部判断交易日/非交易日频率
+    - cron: '0 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install requests
+
+      - name: Check schedule (trading day 1h / non-trading 2h)
+        id: schedule
+        run: |
+          python3 - <<'PYEOF'
+          import datetime, os
+
+          # 北京时间
+          utc_now = datetime.datetime.now(datetime.timezone.utc)
+          cst = utc_now + datetime.timedelta(hours=8)
+          weekday = cst.weekday()   # 0=Monday ... 6=Sunday
+          hour = cst.hour
+
+          # A股交易日判定: 周一至周五 (不含法定假日，假日需手动维护)
+          # 简单规则: Mon-Fri = 交易日
+          is_trading_day = weekday < 5
+
+          # 交易日: 每 1 小时运行 (07:00 - 23:00 CST)
+          # 非交易日: 每 2 小时运行 (偶数小时: 08, 10, 12, 14, 16, 18, 20, 22)
+          if is_trading_day:
+              should_run = 7 <= hour <= 23
+          else:
+              should_run = (hour % 2 == 0) and (8 <= hour <= 22)
+
+          print(f"CST: {cst.strftime('%Y-%m-%d %H:%M')} weekday={weekday} trading={is_trading_day} run={should_run}")
+
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
+              f.write(f"should_run={'true' if should_run else 'false'}\n")
+          PYEOF
+
+      - name: Collect & Analyze
+        if: steps.schedule.outputs.should_run == 'true'
+        env:
+          AI_API_KEY: ${{ secrets.AI_API_KEY }}
+          AI_API_BASE: ${{ secrets.AI_API_BASE }}
+          AI_MODEL: ${{ secrets.AI_MODEL }}
+          AI_PROVIDER: ${{ secrets.AI_PROVIDER }}
+        run: |
+          cd scripts
+          python3 -c "
+          from collector import collect_and_save
+          data = collect_and_save(run_analysis=True)
+          print(f'Done: {data[\"total\"]} items, time: {data[\"fetch_time\"]}')
+          "
+
+      - name: Commit & Push
+        if: steps.schedule.outputs.should_run == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/sentiment_cache.json data/analysis_cache.json data/us_market_cache.json
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "data: 更新舆情分析 $(TZ=Asia/Shanghai date '+%m-%d %H:%M')"
+            git push
+          fi
