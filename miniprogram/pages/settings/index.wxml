@@ -41,6 +41,13 @@
              placeholder="https://allenshen-svg.github.io/fund-assistant" />
     </view>
 
+    <view class="form-item" style="margin-top:16rpx;">
+      <text class="label">舆情分析服务器地址</text>
+      <input class="input" value="{{serverUrl}}" bindinput="onServerUrlInput"
+             placeholder="http://your-server.com" />
+      <text class="sub" style="margin-top:6rpx;font-size:22rpx;">ℹ️ 用于手动刷新舆情分析。填写云服务器公网地址，如 http://1.2.3.4</text>
+    </view>
+
     <view class="btn-row">
       <button class="btn" size="mini" bindtap="save">💾 保存</button>
       <button class="btn ghost" size="mini" bindtap="testConnection">🔍 测试连接</button>

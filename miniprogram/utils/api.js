@@ -253,6 +253,65 @@ function fetchCommodities(codes) {
   });
 }
 
+/**
+ * 获取后端 API 基址（Flask 服务器）
+ * 优先用 settings.serverUrl（云服务器 / 本地开发地址），
+ * 如果未配置则返回空串（此时手动刷新不可用）
+ */
+function _getServerBase(settings) {
+  if (settings && settings.serverUrl) return settings.serverUrl.replace(/\/$/, '');
+  // apiBase 指向 GitHub Pages 的不作为服务器地址
+  const base = String((settings && settings.apiBase) || '').replace(/\/$/, '');
+  if (!base || /github\.io/i.test(base)) return '';
+  return base;
+}
+
+/**
+ * 触发后端重新采集舆情数据 (POST /api/refresh)
+ */
+function triggerRefresh(settings) {
+  const base = _getServerBase(settings);
+  const url = `${base}/api/refresh`;
+  return new Promise((resolve) => {
+    wx.request({
+      url,
+      method: 'POST',
+      timeout: 10000,
+      success(res) {
+        if (res.statusCode >= 200 && res.statusCode < 300 && res.data) {
+          resolve(res.data);
+        } else {
+          resolve({ status: 'error', message: '请求失败' });
+        }
+      },
+      fail() { resolve({ status: 'error', message: '网络错误' }); }
+    });
+  });
+}
+
+/**
+ * 触发后端重新 AI 分析 (POST /api/reanalyze)
+ */
+function triggerReanalyze(settings) {
+  const base = _getServerBase(settings);
+  const url = `${base}/api/reanalyze`;
+  return new Promise((resolve) => {
+    wx.request({
+      url,
+      method: 'POST',
+      timeout: 10000,
+      success(res) {
+        if (res.statusCode >= 200 && res.statusCode < 300 && res.data) {
+          resolve(res.data);
+        } else {
+          resolve({ status: 'error', message: '请求失败' });
+        }
+      },
+      fail() { resolve({ status: 'error', message: '网络错误' }); }
+    });
+  });
+}
+
 module.exports = {
   fetchHotEvents,
   fetchIndices,
@@ -265,6 +324,9 @@ module.exports = {
   fetchSentimentData,
   fetchAnalysisData,
   fetchUSMarketData,
+  triggerRefresh,
+  triggerReanalyze,
+  getServerBase: _getServerBase,
 };
 
 /**

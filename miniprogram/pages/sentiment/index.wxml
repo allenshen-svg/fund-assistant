@@ -45,6 +45,13 @@
       <text class="chip {{sourceLabel === '远程分析' ? 'blue' : 'gray'}}">{{sourceLabel}}</text>
       <text class="sub">更新：{{updatedAt}}</text>
     </view>
+    <!-- 手动刷新按钮 -->
+    <view class="refresh-bar">
+      <button class="btn-refresh {{refreshing ? 'disabled' : ''}}" bindtap="onManualRefresh" disabled="{{refreshing}}">
+        <text wx:if="{{!refreshing}}">🔄 手动刷新舆情分析</text>
+        <text wx:else>⏳ {{refreshMsg}}</text>
+      </button>
+    </view>
   </view>
 
   <!-- ====== 数据源统计 ====== -->

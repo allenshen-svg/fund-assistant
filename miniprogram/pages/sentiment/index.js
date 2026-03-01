@@ -1,27 +1,40 @@
 const { getSettings } = require('../../utils/storage');
-const { fetchHotEvents, fetchSentimentData, fetchAnalysisData, fetchUSMarketData } = require('../../utils/api');
+const { fetchHotEvents, fetchSentimentData, fetchAnalysisData, fetchUSMarketData, triggerRefresh, triggerReanalyze, getServerBase } = require('../../utils/api');
 
 /* ====== 金融关键词 (与 H5 sa-config 同步) ====== */
 const FINANCE_KW = [
-  'A股','沪指','上证','深成','创业板','科创板','沪深300','恒生','港股','美股','纳斯达克',
-  'AI','半导体','芯片','机器人','新能源','光伏','军工','白酒','医药','黄金','原油','铜',
-  '央行','降息','CPI','GDP','PMI','美联储','关税','贸易战',
-  '基金','ETF','牛市','熊市','涨停','跌停','抄底','仓位','主力','北向',
-  '茅台','比亚迪','宁德','英伟达','特斯拉','消费','红利','债市',
-  '盘','大盘','行情','股市','板块','概念','龙头','资金','散户','机构',
+  'A股','股市','大盘','沪指','上证','深成','创业板','科创板','沪深300','恒生','港股','美股','纳斯达克',
+  'AI','人工智能','算力','芯片','半导体','光模块','CPO','大模型','DeepSeek',
+  '机器人','自动驾驶','新能源','光伏','锂电','碳酸锂','储能',
+  '军工','国防','航天','白酒','消费','医药','创新药','CXO',
+  '黄金','金价','原油','油价','有色金属','铜','铝','稀土',
+  '红利','高股息','银行','保险','券商','地产',
+  '央行','降息','降准','LPR','利率','通胀','CPI','GDP','PMI',
+  '美联储','加息','国债','债券','汇率','人民币',
+  '关税','贸易战','制裁','地缘','中东','俄乌',
+  '基金','ETF','牛市','熊市','涨停','跌停','抄底','追高',
+  '仓位','加仓','减仓','定投','主力','资金','北向',
+  '茅台','比亚迪','宁德','英伟达','NVIDIA','特斯拉',
+  'IPO','分红','回购','并购','重组','股','基','市场','经济','投资','收益','行情',
+  '板块','指数','概念','题材','龙头','主线','赛道',
+  '盘','散户','机构','债市',
 ];
 const _kwRe = new RegExp(FINANCE_KW.join('|'), 'i');
 function isFinance(text) { return _kwRe.test(text || ''); }
 
 /* ====== 噪音检测 ====== */
-const NOISE_RE = /震惊|全仓梭哈|赶紧|速看|神秘主力|涨疯了|暴涨|必看|百倍/;
+const NOISE_RE = /震惊|全仓梭哈|赶紧|速看|神秘主力|涨疯了|暴涨|必看|百倍|日赚|翻倍|内幕|绝密|私募推荐/;
 
-/* ====== 热度雷达关键词 ====== */
+/* ====== 热度雷达关键词 (与 H5 sa-render 同步) ====== */
 const HEAT_KEYWORDS = [
-  '黄金','白银','原油','半导体','芯片','AI','人工智能','机器人',
-  '新能源','光伏','军工','白酒','消费','医药','比亚迪','英伟达',
-  '特斯拉','茅台','宁德','ETF','A股','创业板','科技','红利',
-  '降息','美联储','央行','贸易战','关税','CPI','PMI',
+  'AI算力','人工智能','半导体','军工','黄金','碳酸锂','新能源','港股','机器人',
+  '消费','医药','原油','白酒','芯片','锂电','红利','ETF','基金','券商','银行',
+  '地产','光伏','储能','稀土','CXO','关税','自动驾驶',
+  '有色金属','铜','铝','创新药','保险','国债','债券',
+  '大模型','DeepSeek','比亚迪','宁德','英伟达','特斯拉','茅台',
+  '降息','降准','美联储','通胀','汇率','人民币',
+  '贸易战','制裁','中东','俄乌',
+  '科创板','创业板','北向','主力','龙头',
 ];
 
 Page({
@@ -92,6 +105,10 @@ Page({
     secReport: false,
     secHeatmap: true,
     secEvents: true,
+
+    // —— 手动刷新 ——
+    refreshing: false,
+    refreshMsg: '',
   },
 
   onLoad() {},
@@ -109,15 +126,103 @@ Page({
     if (key) this.setData({ [key]: !this.data[key] });
   },
 
+  /* ====== 手动触发舆情采集 + AI 分析 ====== */
+  async onManualRefresh() {
+    if (this.data.refreshing) return;
+    this.setData({ refreshing: true, refreshMsg: '正在触发采集...' });
+    const settings = getSettings();
+    // 轮询时必须从 Flask 服务器读取数据，而不是 GitHub Pages
+    const serverBase = getServerBase(settings);
+
+    // 检查是否已配置服务器地址
+    if (!serverBase) {
+      this.setData({
+        refreshMsg: '❌ 未配置服务器地址，请在「设置」中填写舆情分析服务器地址'
+      });
+      setTimeout(() => this.setData({ refreshing: false, refreshMsg: '' }), 4000);
+      return;
+    }
+
+    const serverSettings = { ...settings, apiBase: serverBase };
+
+    try {
+      // 1. 触发后端采集
+      const refreshRes = await triggerRefresh(settings);
+      if (refreshRes.status === 'busy') {
+        this.setData({ refreshMsg: '采集进行中，请稍候...' });
+      } else if (refreshRes.status === 'started') {
+        this.setData({ refreshMsg: '采集已启动，等待完成...' });
+      } else {
+        // 触发失败，提前结束
+        this.setData({ refreshMsg: '❌ ' + (refreshRes.message || '无法连接后端服务器，请确认 Flask 服务已启动') });
+        setTimeout(() => this.setData({ refreshing: false, refreshMsg: '' }), 4000);
+        return;
+      }
+
+      // 2. 轮询等待采集完成（最多120秒）—— 从 Flask 服务器读取
+      let ready = false;
+      for (let i = 0; i < 40; i++) {
+        await _sleep(3000);
+        const data = await fetchSentimentData(serverSettings);
+        if (data && data.fetch_ts) {
+          const age = Math.floor(Date.now() / 1000) - data.fetch_ts;
+          if (age < 120) { ready = true; break; }
+        }
+        this.setData({ refreshMsg: `采集中... (${(i + 1) * 3}s)` });
+      }
+
+      if (!ready) {
+        this.setData({ refreshMsg: '采集超时，请稍后重试' });
+        setTimeout(() => this.setData({ refreshing: false, refreshMsg: '' }), 3000);
+        return;
+      }
+
+      // 3. 触发 AI 分析
+      this.setData({ refreshMsg: '采集完成，正在 AI 分析...' });
+      const analyzeRes = await triggerReanalyze(settings);
+      if (analyzeRes.status === 'error') {
+        // AI 分析触发失败，仅刷新采集数据
+        this.setData({ refreshMsg: '采集完成，AI 分析触发失败' });
+        await this.loadAll();
+        setTimeout(() => this.setData({ refreshing: false, refreshMsg: '' }), 3000);
+        return;
+      }
+
+      // 4. 等待分析完成（最多60秒）—— 从 Flask 服务器读取
+      for (let i = 0; i < 20; i++) {
+        await _sleep(3000);
+        const analysis = await fetchAnalysisData(serverSettings);
+        if (analysis && analysis.analysis_ts) {
+          const age = Math.floor(Date.now() / 1000) - analysis.analysis_ts;
+          if (age < 120) break;
+        }
+        this.setData({ refreshMsg: `AI 分析中... (${(i + 1) * 3}s)` });
+      }
+
+      // 5. 刷新页面数据
+      this.setData({ refreshMsg: '✅ 更新完成！' });
+      await this.loadAll();
+    } catch (e) {
+      console.error('Manual refresh failed:', e);
+      this.setData({ refreshMsg: '❌ 刷新失败: ' + (e.message || e) });
+    } finally {
+      setTimeout(() => this.setData({ refreshing: false, refreshMsg: '' }), 2500);
+    }
+  },
+
   async loadAll() {
     this.setData({ loading: true });
     const settings = getSettings();
+    // 如果配置了服务器地址，优先从 Flask 服务器获取最新数据
+    // 否则从 GitHub Pages（apiBase）读取静态缓存
+    const serverBase = getServerBase(settings);
+    const dataSettings = serverBase ? { ...settings, apiBase: serverBase } : settings;
 
     // 并行获取：舆情 + AI分析 + 美股 + 热点事件
     const [sentimentRes, analysisRes, usRes, hotRes] = await Promise.allSettled([
-      fetchSentimentData(settings),
-      fetchAnalysisData(settings),
-      fetchUSMarketData(settings),
+      fetchSentimentData(dataSettings),
+      fetchAnalysisData(dataSettings),
+      fetchUSMarketData(dataSettings),
       fetchHotEvents(settings),
     ]);
 
@@ -289,6 +394,8 @@ Page({
 
 /* ====== 辅助函数 ====== */
 
+function _sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
 function dedup(items) {
   const seen = new Set();
   return items.filter(v => {
@@ -307,14 +414,14 @@ function formatNum(n) {
 
 function sentClass(s) {
   if (!s) return 'neu';
-  if (/看多|偏多|乐观|积极/.test(s)) return 'pos';
-  if (/看空|偏空|悲观|恐慌/.test(s)) return 'neg';
+  if (/看多|偏多|乐观|积极|追多|贪婪|狂热|极度看多/.test(s)) return 'pos';
+  if (/看空|偏空|悲观|恐慌|谨慎|极度悲观/.test(s)) return 'neg';
   return 'neu';
 }
 
 function classifyDivergence(text) {
-  if (/亢奋|过热|追高|警惕回调|FOMO|泡沫/.test(text)) return 'fomo';
-  if (/恐慌|抄底|超卖|低估|底部/.test(text)) return 'panic';
+  if (/逆向|抄底|做多|低估|反转|背离做多|散户恐慌.*KOL看多/.test(text)) return 'fomo';
+  if (/见顶|泡沫|过热|高估|回撤|背离做空|散户狂热.*KOL谨慎|亢奋|追高|警惕回调|FOMO/.test(text)) return 'panic';
   return 'neutral';
 }
 
@@ -340,11 +447,16 @@ function buildHeatbar(items) {
     .slice(0, 8);
   if (sorted.length === 0) return [];
   const maxVal = Math.sqrt(sorted[0][1]);
-  return sorted.map(([kw, v]) => ({
-    keyword: kw,
-    heat: v,
-    heatStr: v >= 1 ? v.toFixed(1) + '万' : (v * 10000).toFixed(0),
-    barWidth: Math.round(Math.sqrt(v) / maxVal * 100),
-    barClass: v === sorted[0][1] ? 'heat-top' : 'heat-normal',
-  }));
+  return sorted.map(([kw, v]) => {
+    let barWidth = Math.round(Math.sqrt(v) / maxVal * 100);
+    // Floor at 15% so even small entries are visible (与 H5 同步)
+    if (barWidth < 15) barWidth = 15;
+    return {
+      keyword: kw,
+      heat: v,
+      heatStr: v >= 1 ? v.toFixed(1) + '万' : (v * 10000).toFixed(0),
+      barWidth: barWidth,
+      barClass: v === sorted[0][1] ? 'heat-top' : 'heat-normal',
+    };
+  });
 }

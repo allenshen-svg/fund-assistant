@@ -7,6 +7,7 @@ Page({
   data: {
     useRemote: true,
     apiBase: '',
+    serverUrl: '',
     status: '',
     statusColor: '',
     // 统计
@@ -36,6 +37,7 @@ Page({
     this.setData({
       useRemote: !!settings.useRemote,
       apiBase: settings.apiBase || '',
+      serverUrl: settings.serverUrl || '',
       status: '',
       holdingsCount: getHoldings().length,
       watchlistCount: getWatchlist().length,
@@ -56,10 +58,15 @@ Page({
     this.setData({ apiBase: (e.detail.value || '').trim() });
   },
 
+  onServerUrlInput(e) {
+    this.setData({ serverUrl: (e.detail.value || '').trim() });
+  },
+
   save() {
     setSettings({
       useRemote: this.data.useRemote,
-      apiBase: this.data.apiBase
+      apiBase: this.data.apiBase,
+      serverUrl: this.data.serverUrl
     });
     wx.showToast({ title: '设置已保存', icon: 'success' });
   },

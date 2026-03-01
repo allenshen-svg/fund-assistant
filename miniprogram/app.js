@@ -7,7 +7,8 @@ App({
     },
     defaultSettings: {
       useRemote: true,
-      apiBase: 'https://allenshen-svg.github.io/fund-assistant'
+      apiBase: 'https://allenshen-svg.github.io/fund-assistant',
+      serverUrl: ''  // 填入你的云服务器地址，如 http://1.2.3.4 或 http://your-domain.com
     },
     // 内置基金数据库 (与 H5 同步)
     FUND_DB: {

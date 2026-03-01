@@ -8,7 +8,7 @@ fund-assistant 后端服务器
 """
 
 import os, sys, json, time, threading
-from datetime import datetime
+from datetime import datetime, date
 
 # 将项目根目录加入 path
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -19,6 +19,16 @@ from scripts.collector import collect_and_save, load_cache, load_us_market_cache
 from scripts.analyzer import load_analysis_cache, analyze_and_save, ANALYSIS_CACHE
 
 app = Flask(__name__, static_folder=None)
+
+# ==================== CORS（跨域支持）====================
+@app.after_request
+def add_cors_headers(response):
+    response.headers['Access-Control-Allow-Origin'] = '*'
+    response.headers['Access-Control-Allow-Methods'] = 'GET, POST, OPTIONS'
+    response.headers['Access-Control-Allow-Headers'] = 'Content-Type'
+    if request.method == 'OPTIONS':
+        response.status_code = 204
+    return response
 
 # ==================== 配置 ====================
 PORT = int(os.environ.get('PORT', 8000))
@@ -137,29 +147,75 @@ def static_files(path):
         return send_from_directory(directory, filename)
     return 'Not Found', 404
 
+# ==================== 交易日判定 ====================
+
+def is_trading_day(d=None):
+    """判断是否为 A 股交易日（周一~周五且非法定节假日）
+    简易版：只判断工作日，不含节假日日历（如需精确可接入第三方日历）"""
+    if d is None:
+        d = date.today()
+    return d.weekday() < 5  # 0=周一 ... 4=周五
+
+def is_trading_hours():
+    """判断当前是否处于交易时段 (09:15~15:30)"""
+    now = datetime.now()
+    h, m = now.hour, now.minute
+    return is_trading_day() and ((h == 9 and m >= 15) or (10 <= h <= 14) or (h == 15 and m <= 30))
+
+def get_collect_interval():
+    """根据交易日/非交易日动态调整采集间隔
+    - 交易时段：COLLECT_INTERVAL（默认1小时）
+    - 非交易日/非交易时段：7200秒（2小时）"""
+    if is_trading_hours():
+        return COLLECT_INTERVAL
+    return max(COLLECT_INTERVAL, 7200)  # 非交易时段至少2小时
+
 # ==================== 后台定时采集 ====================
 
 def scheduler_loop():
-    """每 COLLECT_INTERVAL 秒执行一次采集"""
+    """动态间隔采集：交易时段按 COLLECT_INTERVAL，非交易日/时段每2小时"""
     global _collecting
     # 启动后先等5秒再首次采集
     time.sleep(5)
     while True:
         if not _collecting:
+            interval = get_collect_interval()
+            trading_label = '交易时段' if is_trading_hours() else '非交易时段'
             with _collecting_lock:
                 _collecting = True
                 try:
-                    print(f'\n[定时任务] {datetime.now().strftime("%Y-%m-%d %H:%M:%S")} 开始自动采集...')
+                    print(f'\n[定时任务] {datetime.now().strftime("%Y-%m-%d %H:%M:%S")} [{trading_label}] 开始自动采集...')
                     collect_and_save()
-                    print(f'[定时任务] 采集完成，下次: {COLLECT_INTERVAL}秒后\n')
+                    print(f'[定时任务] 采集完成，下次: {interval}秒({interval//60}分钟)后\n')
                 except Exception as e:
                     print(f'[定时任务] 采集异常: {e}')
                 finally:
                     _collecting = False
-        time.sleep(COLLECT_INTERVAL)
+            time.sleep(interval)
+        else:
+            time.sleep(10)
 
 
-# ==================== 启动 ====================
+# ==================== 启动后台采集线程 ====================
+_scheduler_started = False
+def _ensure_scheduler():
+    global _scheduler_started
+    if _scheduler_started:
+        return
+    _scheduler_started = True
+    t = threading.Thread(target=scheduler_loop, daemon=True)
+    t.start()
+    print('[scheduler] 定时采集线程已启动')
+
+# gunicorn 兼容：通过 before_first_request 在第一次请求时启动采集线程
+# 避免多 worker fork 时重复启动
+@app.before_request
+def _lazy_start_scheduler():
+    _ensure_scheduler()
+    # 只需执行一次，之后移除此 hook
+    app.before_request_funcs[None].remove(_lazy_start_scheduler)
+
+# ==================== 入口 ======================================
 if __name__ == '__main__':
     print(f'''
 ╔══════════════════════════════════════════════════╗
@@ -174,9 +230,4 @@ if __name__ == '__main__':
 ║    GET  /api/status     → 服务状态               ║
 ╚══════════════════════════════════════════════════╝
 ''')
-
-    # 启动后台定时采集线程
-    scheduler = threading.Thread(target=scheduler_loop, daemon=True)
-    scheduler.start()
-
     app.run(host='0.0.0.0', port=PORT, debug=False)

@@ -1,5 +1,31 @@
 /* ====== 总览信号卡 ====== */
 .summary-card { padding-bottom: 20rpx; }
+
+/* ====== 手动刷新按钮 ====== */
+.refresh-bar {
+  margin-top: 16rpx;
+  display: flex;
+  justify-content: center;
+}
+.btn-refresh {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 16rpx 0;
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #fff;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  border: none;
+  border-radius: 16rpx;
+  letter-spacing: 2rpx;
+}
+.btn-refresh.disabled {
+  background: linear-gradient(135deg, #64748b, #94a3b8);
+  color: rgba(255,255,255,0.7);
+}
+.btn-refresh::after { border: none; }
 .summary-top {
   display: flex;
   justify-content: space-between;
