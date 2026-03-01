@@ -1,33 +1,26 @@
 {
+    // =================== Fund-Assistant 工作区配置 ===================
+    // 基础设施信息:  infra.json（非敏感）  .env（敏感，已 gitignore）
+    // Python 辅助:   from scripts.infra import infra, env
+    // 服务器:        47.83.165.131 (香港)  →  https://xiaoniqiu.top
+    // 小程序 AppID:  wxdff3c1b4fad3158c
+    //
+    // 常用命令:
+    //   python3 scripts/infra.py          # 查看基础设施摘要
+    //   python3 server.py                 # 本地启动 Flask
+    //   python3 scripts/collector.py      # 手动采集舆情
+    //   python3 scripts/analyzer.py       # 手动 AI 分析
+    //   ssh root@47.83.165.131            # 登录服务器
+    //   sudo systemctl restart fund-assistant  # 重启远程服务
+    // =================================================================
+
+    "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python3",
+    "python.envFile": "${workspaceFolder}/.env",
+    "files.exclude": {
+        "**/__pycache__": true,
+        "**/*.pyc": true
+    },
     "chat.tools.terminal.autoApprove": {
-        "/^cd ~/news-app && python3 -c \"\nfrom deep_translator import MyMemoryTranslator\nt = MyMemoryTranslator\\(source='en-GB', target='zh-CN'\\)\nresult = t\\.translate\\('Trump signs new executive order on Ukraine'\\)\nprint\\('Result:', result\\)\n\" 2>&1$/": {
-            "approve": true,
-            "matchCommandLine": true
-        },
-        "/^cd ~/news-app && python3 -c \"\nimport requests\n# Try Google Translate via direct API\nurl = 'https://translate\\.googleapis\\.com/translate_a/single'\nparams = \\{\n    'client': 'gtx',\n    'sl': 'en',\n    'tl': 'zh-CN',\n    'dt': 't',\n    'q': 'Trump signs new executive order on Ukraine'\n\\}\nr = requests\\.get\\(url, params=params, timeout=10\\)\nprint\\('Status:', r\\.status_code\\)\nimport json\ndata = json\\.loads\\(r\\.text\\)\nresult = ''\\.join\\(\\[s\\[0\\] for s in data\\[0\\]\\]\\)\nprint\\('Result:', result\\)\n\" 2>&1$/": {
-            "approve": true,
-            "matchCommandLine": true
-        },
-        "/^cd ~/news-app && python3 -c \"\nimport requests\nurl = 'https://translate\\.googleapis\\.com/translate_a/single'\nparams = \\{\n    'client': 'gtx',\n    'sl': 'en',\n    'tl': 'zh-CN',\n    'dt': 't',\n    'q': 'Trump signs new executive order on Ukraine'\n\\}\nr = requests\\.get\\(url, params=params, timeout=10\\)\nprint\\('Status:', r\\.status_code\\)\nprint\\('Content type:', r\\.headers\\.get\\('content-type'\\)\\)\nprint\\('Text\\[:200\\]:', repr\\(r\\.text\\[:200\\]\\)\\)\n\" 2>&1$/": {
-            "approve": true,
-            "matchCommandLine": true
-        },
-        "/^cd ~/news-app && python3 scripts/fetch_news\\.py --api-key sk-njqerftsrrnojbsdagigsrzbwwxgtuhrsyihphcxvsdpbaxl 2>&1$/": {
-            "approve": true,
-            "matchCommandLine": true
-        },
-        "/^cd ~/news-app && python3 -c \"\nimport requests,json\nr=requests\\.get\\('https://www\\.douyin\\.com/aweme/v1/web/hot/search/list/', \n    headers=\\{'User-Agent':'Mozilla/5\\.0 \\(Macintosh; Intel Mac OS X 10_15_7\\) AppleWebKit/537\\.36','Referer':'https://www\\.douyin\\.com/'\\}, timeout=10\\)\nd=r\\.json\\(\\)\nwl=d\\.get\\('data',\\{\\}\\)\\.get\\('word_list',\\[\\]\\)\nif wl:\n    item=wl\\[0\\]\n    print\\('keys:', list\\(item\\.keys\\(\\)\\)\\)\n    print\\('word:', item\\.get\\('word',''\\)\\)\n    print\\('hot_value:', item\\.get\\('hot_value',''\\)\\)\n    print\\('event_time:', item\\.get\\('event_time',''\\)\\)\n    print\\('sentence_id:', item\\.get\\('sentence_id',''\\)\\)\n    print\\('total:', len\\(wl\\)\\)\n\" 2>&1 \\| tail -8$/": {
-            "approve": true,
-            "matchCommandLine": true
-        },
-        "/^cd ~/news-app && python3 -c \"\nimport requests\n# Try Xiaohongshu hot search via web\nr=requests\\.get\\('https://edith\\.xiaohongshu\\.com/api/sns/v10/search/hot_list', \n    headers=\\{'User-Agent':'Mozilla/5\\.0','Origin':'https://www\\.xiaohongshu\\.com','Referer':'https://www\\.xiaohongshu\\.com/'\\}, timeout=10\\)\nprint\\('xhs edith:', r\\.status_code, r\\.text\\[:200\\]\\)\n\" 2>&1 \\| tail -3$/": {
-            "approve": true,
-            "matchCommandLine": true
-        },
-        "/^cd ~/news-app && python3 -c \"\nimport requests,re,json\nr=requests\\.get\\('https://www\\.xiaohongshu\\.com/explore', headers=\\{'User-Agent':'Mozilla/5\\.0 \\(Macintosh; Intel Mac OS X 10_15_7\\) AppleWebKit/537\\.36 \\(KHTML, like Gecko\\) Chrome/120\\.0\\.0\\.0 Safari/537\\.36'\\}, timeout=10\\)\nm = re\\.search\\(r'window\\\\\\.__INITIAL_STATE__\\\\s\\*=\\\\s\\*\\(\\.\\+\\?\\)</script>', r\\.text, re\\.DOTALL\\)\nif m:\n    raw=m\\.group\\(1\\)\\.strip\\(\\)\\.rstrip\\(';'\\)\n    # XHS uses undefined in JS, replace it\n    raw = raw\\.replace\\('undefined','null'\\)\n    d=json\\.loads\\(raw\\)\n    print\\('Top keys:', list\\(d\\.keys\\(\\)\\)\\)\n    # Look for feed/note data\n    feed = d\\.get\\('feed',\\{\\}\\)\n    if feed:\n        print\\('feed keys:', list\\(feed\\.keys\\(\\)\\)\\[:10\\]\\)\n        notes = feed\\.get\\('feeds',feed\\.get\\('noteList',feed\\.get\\('notes',\\[\\]\\)\\)\\)\n        if notes:\n            print\\(f'Found \\{len\\(notes\\)\\} items'\\)\n            if isinstance\\(notes, list\\):\n                for n in notes\\[:3\\]:\n                    if isinstance\\(n,dict\\):\n                        print\\(' -', n\\.get\\('display_title',n\\.get\\('title',n\\.get\\('noteCard',\\{\\}\\)\\.get\\('displayTitle',str\\(list\\(n\\.keys\\(\\)\\)\\)\\[:80\\]\\)\\)\\)\\)\n            elif isinstance\\(notes, dict\\):\n                for k in list\\(notes\\.keys\\(\\)\\)\\[:3\\]:\n                    v = notes\\[k\\]\n                    if isinstance\\(v,dict\\):\n                        nc=v\\.get\\('noteCard',\\{\\}\\)\n                        print\\(' -', nc\\.get\\('displayTitle','\\?'\\)\\)\n\" 2>&1 \\| tail -10$/": {
-            "approve": true,
-            "matchCommandLine": true
-        },
         "/usr/bin/python3": true
     }
 }

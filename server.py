@@ -14,6 +14,9 @@ from datetime import datetime, date
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, ROOT_DIR)
 
+# 自动加载 .env 环境变量 & infra.json 配置
+from scripts.infra import infra, env  # noqa: F401
+
 from flask import Flask, jsonify, send_from_directory, request
 from scripts.collector import collect_and_save, load_cache, load_us_market_cache, fetch_us_market, CACHE_FILE
 from scripts.analyzer import load_analysis_cache, analyze_and_save, ANALYSIS_CACHE
