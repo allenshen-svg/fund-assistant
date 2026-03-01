@@ -18,6 +18,11 @@ ANALYSIS_CACHE = os.path.join(DATA_DIR, 'analysis_cache.json')
 
 # ==================== AI 配置 ====================
 AI_PROVIDERS = {
+    'zhipu': {
+        'name': '智谱AI',
+        'base': 'https://open.bigmodel.cn/api/paas/v4/chat/completions',
+        'models': ['GLM-4-Flash', 'GLM-4-Air', 'GLM-4'],
+    },
     'siliconflow': {
         'name': '硅基流动(免费)',
         'base': 'https://api.siliconflow.cn/v1/chat/completions',
@@ -35,9 +40,9 @@ AI_PROVIDERS = {
     },
 }
 
-DEFAULT_PROVIDER = os.environ.get('AI_PROVIDER', 'siliconflow')
-DEFAULT_API_KEY = os.environ.get('AI_API_KEY', 'sk-njqerftsrrnojbsdagigsrzbwwxgtuhrsyihphcxvsdpbaxl')
-DEFAULT_MODEL = os.environ.get('AI_MODEL', 'deepseek-ai/DeepSeek-V3')
+DEFAULT_PROVIDER = os.environ.get('AI_PROVIDER', 'zhipu')
+DEFAULT_API_KEY = os.environ.get('AI_API_KEY', '4511f9dee1e64b7da49a539ddef85dfd.Z6HgN8s8cDhL2LeQ')
+DEFAULT_MODEL = os.environ.get('AI_MODEL', 'GLM-4-Flash')
 
 # ==================== Prompt ====================
 SYSTEM_PROMPT = """# 角色定义 (Role)
@@ -137,29 +142,39 @@ def call_ai(items, provider_id=None, api_key=None, model=None, temperature=0.6):
         raise ValueError(f'Unknown AI provider: {provider_id}')
 
     base_url = provider['base']
-    video_data_str = json.dumps(items[:100], ensure_ascii=False, indent=2)
+    video_data_str = json.dumps(items[:60], ensure_ascii=False, indent=2)
     user_prompt = build_user_prompt(video_data_str)
 
     print(f'  🧠 调用 AI: {provider["name"]} / {model}')
 
-    resp = requests.post(
-        base_url,
-        headers={
-            'Content-Type': 'application/json',
-            'Authorization': f'Bearer {api_key}',
-        },
-        json={
-            'model': model,
-            'messages': [
-                {'role': 'system', 'content': SYSTEM_PROMPT},
-                {'role': 'user', 'content': user_prompt},
-            ],
-            'temperature': temperature,
-            'max_tokens': 4096,
-        },
-        timeout=120,
-    )
-    resp.raise_for_status()
+    max_retries = 3
+    for attempt in range(max_retries):
+        resp = requests.post(
+            base_url,
+            headers={
+                'Content-Type': 'application/json',
+                'Authorization': f'Bearer {api_key}',
+            },
+            json={
+                'model': model,
+                'messages': [
+                    {'role': 'system', 'content': SYSTEM_PROMPT},
+                    {'role': 'user', 'content': user_prompt},
+                ],
+                'temperature': temperature,
+                'max_tokens': 4096,
+            },
+            timeout=120,
+        )
+        if resp.status_code == 429:
+            wait = (attempt + 1) * 30
+            print(f'  ⏳ 限频，等待 {wait}s 后重试 ({attempt+1}/{max_retries})...')
+            time.sleep(wait)
+            continue
+        resp.raise_for_status()
+        break
+    else:
+        resp.raise_for_status()  # raise the last 429
     data = resp.json()
     content = data.get('choices', [{}])[0].get('message', {}).get('content', '')
     if not content:
