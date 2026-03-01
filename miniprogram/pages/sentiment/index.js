@@ -84,7 +84,7 @@ Page({
     ],
 
     // —— 折叠控制 ——
-    secUsMarket: true,
+    secUsMarket: false,
     secKol: true,
     secHeatbar: true,
     secAction: true,
