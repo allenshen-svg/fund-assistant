@@ -82,7 +82,7 @@
       <text class="toggle-icon">{{secKol ? '▼' : '▶'}}</text>
     </view>
     <view wx:if="{{secKol}}">
-      <view class="kol-card {{item.divClass}}" wx:for="{{kolSections}}" wx:key="target">
+      <view class="kol-card" wx:for="{{kolSections}}" wx:key="target">
         <text class="kol-target">🎯 {{item.target}}</text>
         <view class="kol-section">
           <text class="kol-label">🎙️ KOL观点</text>

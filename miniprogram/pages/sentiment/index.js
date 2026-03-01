@@ -270,7 +270,7 @@ Page({
             kol: `板块热度 ${h.temperature}°，${trendText}，市场关注度${tempText}。`,
             retail: h.temperature >= 70 ? '散户讨论度较高，跟风情绪明显。' : '散户关注度一般，情绪中性。',
             conclusion: advice,
-            divClass: h.temperature >= 85 ? 'fomo top-heat' : 'neutral',
+            divClass: '',
           };
         });
       batch.kolSections = (batch.kolSections || []).concat(heatKols);

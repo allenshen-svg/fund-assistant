@@ -147,16 +147,9 @@
   padding: 18rpx;
   margin-bottom: 16rpx;
   border-radius: 14rpx;
-  background: var(--elevated);
-  border-left: 6rpx solid var(--text-faint);
-}
-.kol-card.fomo    { border-left-color: #ef4444; }
-.kol-card.panic   { border-left-color: #22c55e; }
-.kol-card.neutral { border-left-color: var(--text-faint); }
-.kol-card.top-heat {
-  background: rgba(239,68,68,0.06);
-  border: 1rpx solid rgba(239,68,68,0.12);
-  border-left: 6rpx solid #ef4444;
+  background: rgba(99,102,241,0.06);
+  border: 1rpx solid rgba(99,102,241,0.10);
+  border-left: 6rpx solid rgba(99,102,241,0.35);
 }
 
 .kol-target {
