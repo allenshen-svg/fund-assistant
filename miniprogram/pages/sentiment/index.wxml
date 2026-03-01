@@ -84,7 +84,6 @@
     <view wx:if="{{secKol}}">
       <view class="kol-card {{item.divClass}}" wx:for="{{kolSections}}" wx:key="target">
         <text class="kol-target">🎯 {{item.target}}</text>
-        <text class="kol-source-tag" wx:if="{{item.fromHeatmap}}">📊 热力图</text>
         <view class="kol-section">
           <text class="kol-label">🎙️ KOL观点</text>
           <text class="kol-body">{{item.kol}}</text>

@@ -271,7 +271,6 @@ Page({
             retail: h.temperature >= 70 ? '散户讨论度较高，跟风情绪明显。' : '散户关注度一般，情绪中性。',
             conclusion: advice,
             divClass: h.temperature >= 80 ? 'fomo' : h.temperature <= 40 ? 'panic' : 'neutral',
-            fromHeatmap: true,
           };
         });
       batch.kolSections = (batch.kolSections || []).concat(heatKols);
