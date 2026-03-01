@@ -35,14 +35,16 @@ jobs:
           weekday = cst.weekday()   # 0=Monday ... 6=Sunday
           hour = cst.hour
 
-          # A股交易日判定: 周一至周五 (不含法定假日，假日需手动维护)
-          # 简单规则: Mon-Fri = 交易日
+          # A股交易时段: 周一~五 9:00-11:30, 13:00-15:00
           is_trading_day = weekday < 5
+          minute = cst.minute
+          in_trading_session = is_trading_day and (
+              (9 <= hour <= 11) or (13 <= hour <= 14) or (hour == 15 and minute == 0)
+          )
 
-          # 交易日: 每 1 小时运行 (07:00 - 23:00 CST)
-          # 非交易日: 每 2 小时运行 (偶数小时: 08, 10, 12, 14, 16, 18, 20, 22)
-          if is_trading_day:
-              should_run = 7 <= hour <= 23
+          # 交易时段: 每 1 小时 | 其余时间(含交易日盘后+周末): 每 2 小时(偶数点, 08-22)
+          if in_trading_session:
+              should_run = True
           else:
               should_run = (hour % 2 == 0) and (8 <= hour <= 22)
 
