@@ -94,14 +94,10 @@ Page({
     secEvents: true,
   },
 
-  onLoad() {
-    this.loadAll();
-  },
+  onLoad() {},
 
   onShow() {
-    if (!this.data.loading && this.data.totalItems === 0 && this.data.kolSections.length === 0) {
-      this.loadAll();
-    }
+    this.loadAll();
   },
 
   onPullDownRefresh() {
