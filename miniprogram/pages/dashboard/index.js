@@ -4,6 +4,23 @@ const { buildPlans, buildOverview, MODEL_PORTFOLIO } = require('../../utils/advi
 const { getMarketStatus, isMarketOpen, formatPct, pctClass, formatTime, isTradingDay, formatMoney } = require('../../utils/market');
 const { runAIAnalysis, getCachedAIResult, getAIConfig } = require('../../utils/ai');
 
+function buildAnalystFallback(item) {
+  const title = String(item && item.title || '');
+  const category = String(item && item.category || '');
+  const impact = Number(item && item.impact || 0);
+  if (/(伊朗|中东|红海|霍尔木兹|地缘|冲突|战争)/.test(title) || category === 'geopolitics') {
+    return '地缘风险升温，优先控制仓位并跟踪油气与黄金联动强度';
+  }
+  if (/(原油|油气|OPEC|黄金|有色|铜|铝|贵金属|锂)/.test(title) || category === 'commodity' || category === 'commodity_anomaly') {
+    return impact >= 0
+      ? '短线情绪偏热，建议分批兑现并观察成交持续性'
+      : '波动放大期以防守为主，等待价格与资金共振再加仓';
+  }
+  return impact >= 0
+    ? '事件驱动偏强但拥挤度上升，建议回撤分批而非追涨'
+    : '风险偏好回落，建议降低杠杆并等待二次确认信号';
+}
+
 Page({
   data: {
     // 市场状态
@@ -145,20 +162,34 @@ Page({
     // 热点事件
     const hotData = hotResult.status === 'fulfilled' ? hotResult.value : { source: 'local', data: { heatmap: [], events: [] } };
     const heatmap = (hotData.data.heatmap || []).slice(0, 14);
-    const allEvents = (hotData.data.events || []).map(item => ({
-      id: item.id, title: item.title, advice: item.advice || '保持观察',
-      reason: item.reason || '',
-      category: item.category || '',
-      concepts: item.concepts || [],
-      sectorsPos: (item.sectors_positive || []).join('、'),
-      sectorsNeg: (item.sectors_negative || []).join('、'),
-      impact: Number(item.impact || 0),
-      impactClass: Number(item.impact || 0) >= 0 ? 'up' : 'down',
-      impactAbs: Math.abs(Number(item.impact || 0)),
-      confidence: Number(item.confidence || 0),
-      isGeo: item.category === 'geopolitics',
-      isCommodity: item.category === 'commodity',
-    }));
+    const allEvents = (hotData.data.events || []).map(item => {
+      const rawReason = item.reason || '';
+      const reasonHasAnalyst = rawReason.indexOf('分析师观点：') >= 0;
+      const analystViewFromReason = reasonHasAnalyst
+        ? rawReason.split('分析师观点：').slice(1).join('分析师观点：').trim()
+        : '';
+      const cleanReason = reasonHasAnalyst
+        ? rawReason.split('分析师观点：')[0].replace(/[；;，,\s]+$/, '')
+        : rawReason;
+
+      const analystView = item.analyst_view || analystViewFromReason || buildAnalystFallback(item);
+
+      return {
+        id: item.id, title: item.title, advice: item.advice || '保持观察',
+        reason: cleanReason,
+        analystView,
+        category: item.category || '',
+        concepts: item.concepts || [],
+        sectorsPos: (item.sectors_positive || []).join('、'),
+        sectorsNeg: (item.sectors_negative || []).join('、'),
+        impact: Number(item.impact || 0),
+        impactClass: Number(item.impact || 0) >= 0 ? 'up' : 'down',
+        impactAbs: Math.abs(Number(item.impact || 0)),
+        confidence: Number(item.confidence || 0),
+        isGeo: item.category === 'geopolitics',
+        isCommodity: item.category === 'commodity',
+      };
+    });
     const topEvents = allEvents.slice(0, 5);
 
     // 热点异动: 地缘政治+商品事件 + 商品价格异动

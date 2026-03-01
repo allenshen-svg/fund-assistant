@@ -65,6 +65,7 @@
           <text class="chip sm {{item.impactClass}}">{{item.impact >= 0 ? '+' : ''}}{{item.impact}}</text>
         </view>
         <text class="breaking-reason" wx:if="{{item.reason}}">{{item.reason}}</text>
+        <text class="breaking-analyst" wx:if="{{item.analystView}}">🧭 分析师观点：{{item.analystView}}</text>
         <view class="breaking-bottom" wx:if="{{item.sectorsPos || item.sectorsNeg}}">
           <text class="breaking-pos" wx:if="{{item.sectorsPos}}">▲ {{item.sectorsPos}}</text>
           <text class="breaking-neg" wx:if="{{item.sectorsNeg}}">▼ {{item.sectorsNeg}}</text>

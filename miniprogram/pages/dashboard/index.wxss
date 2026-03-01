@@ -196,6 +196,18 @@
   line-height: 1.5;
 }
 
+.breaking-analyst {
+  display: block;
+  font-size: 20rpx;
+  color: var(--text-sub);
+  margin-top: 6rpx;
+  line-height: 1.5;
+  background: var(--surface);
+  border: 1rpx solid var(--border-subtle);
+  border-radius: 10rpx;
+  padding: 8rpx 10rpx;
+}
+
 .breaking-bottom {
   display: flex;
   flex-wrap: wrap;

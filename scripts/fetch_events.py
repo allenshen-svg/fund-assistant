@@ -35,6 +35,8 @@ API_KEY = os.environ.get('AI_API_KEY', '')
 API_BASE = os.environ.get('AI_API_BASE', 'https://api.siliconflow.cn/v1')
 MODEL = os.environ.get('AI_MODEL', 'deepseek-ai/DeepSeek-V3')
 OUTPUT_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data', 'hot_events.json')
+SENTIMENT_CACHE_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data', 'sentiment_cache.json')
+ANALYSIS_CACHE_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data', 'analysis_cache.json')
 XUEQIU_COOKIE = os.environ.get('XUEQIU_COOKIE', '').strip()
 
 # 20个核心市场标签 (前端fund标签体系对齐)
@@ -74,6 +76,90 @@ CATEGORY_ICONS = {
     'technology': '🤖', 'geopolitics': '🌍', 'monetary': '🏦',
     'policy': '📜', 'commodity': '🛢️', 'market': '📊',
 }
+
+_ANALYST_HINT_WORDS = ['分析师', '首席', '基金经理', '策略', '研报', '观点', '解读', '看多', '看空', '建议']
+
+
+def _safe_read_json(path):
+    try:
+        if not os.path.exists(path):
+            return None
+        with open(path, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    except Exception:
+        return None
+
+
+def _clean_text(text, max_len=140):
+    t = re.sub(r'\s+', ' ', str(text or '')).strip()
+    return t[:max_len]
+
+
+def _extract_analyst_views(max_items=16):
+    """从 analysis_cache + sentiment_cache 抽取热门分析师观点"""
+    views = []
+
+    analysis_cache = _safe_read_json(ANALYSIS_CACHE_PATH) or {}
+    for sec in (analysis_cache.get('kol_sections') or [])[:8]:
+        target = _clean_text(sec.get('target', ''), 32)
+        kol = _clean_text(sec.get('kol', ''), 180)
+        if not (target and kol):
+            continue
+        views.append({
+            'target': target,
+            'text': f"{target}: {kol}",
+            'likes': 100000,
+            'source': 'KOL分析缓存',
+        })
+
+    sentiment_cache = _safe_read_json(SENTIMENT_CACHE_PATH) or {}
+    for item in (sentiment_cache.get('items') or []):
+        title = _clean_text(item.get('title', ''), 90)
+        summary = _clean_text(item.get('summary', ''), 110)
+        creator_type = _clean_text(item.get('creator_type', ''), 24)
+        text_join = f"{title} {summary}"
+        if not title:
+            continue
+        if creator_type not in ['财经频道', '财经资讯平台', '视频社区', '微博热搜', '社交热搜']:
+            continue
+        if not any(k in text_join for k in _ANALYST_HINT_WORDS):
+            continue
+        likes = int(item.get('likes') or 0)
+        if likes < 1000:
+            continue
+        views.append({
+            'target': '',
+            'text': text_join,
+            'likes': likes,
+            'source': item.get('platform', '舆情源'),
+        })
+
+    # 去重 + 按热度排序
+    dedup = {}
+    for v in views:
+        key = _clean_text(v.get('text', ''), 120)
+        if not key:
+            continue
+        old = dedup.get(key)
+        if not old or int(v.get('likes', 0)) > int(old.get('likes', 0)):
+            dedup[key] = v
+    out = sorted(dedup.values(), key=lambda x: int(x.get('likes', 0)), reverse=True)
+    return out[:max_items]
+
+
+def _analyst_snippet(views, keywords, limit=2):
+    if not views:
+        return ''
+    matched = []
+    for v in views:
+        txt = (v.get('text') or '').lower()
+        if any(k.lower() in txt for k in keywords):
+            matched.append(v)
+    if not matched:
+        return ''
+    top = matched[:limit]
+    pieces = [f"{_clean_text(v.get('text', ''), 60)}（{v.get('source', '舆情源')}）" for v in top]
+    return '；'.join(pieces)
 
 
 def _ssl_ctx():
@@ -908,7 +994,124 @@ def _ensure_geopolitical_events(events, all_news, now):
     return events
 
 
-def build_output(llm_result, prev_data, now, all_news=None, xueqiu_data=None):
+_KEY_EVENT_TEMPLATES = [
+    {
+        'name': '中东冲突',
+        'keywords': ['中东', '伊朗', '以色列', '伊以', '霍尔木兹', '红海', 'houthi', 'iran', 'israel'],
+        'title': '中东局势升级扰动市场',
+        'category': 'geopolitics',
+        'concepts': ['原油', '黄金', '军工'],
+        'sectors_positive': ['原油', '油气', '能源', '黄金', '贵金属', '军工', '国防'],
+        'sectors_negative': ['消费', '航空'],
+        'fund_keywords': ['原油', '油气', '能源', '黄金', '军工'],
+        'sentiment': -0.35,
+        'impact': 4,
+        'reason': '地缘冲突抬升避险与通胀预期，油气与黄金波动放大',
+        'advice': '油气+黄金防御配置，避免追涨杀跌',
+    },
+    {
+        'name': '伊朗高层突发',
+        'keywords': ['伊朗领导人', '伊朗总统', '伊朗高层', '伊朗 领导人', 'tehran', 'assassinated', '死亡', '遇袭', '坠机'],
+        'title': '伊朗高层突发事件引发避险交易',
+        'category': 'geopolitics',
+        'concepts': ['黄金', '原油'],
+        'sectors_positive': ['黄金', '贵金属', '原油', '油气', '军工'],
+        'sectors_negative': ['消费', '航空'],
+        'fund_keywords': ['黄金', '原油', '油气', '军工', '避险'],
+        'sentiment': -0.45,
+        'impact': 4,
+        'reason': '中东政治不确定性上升，风险资产风险偏好下降',
+        'advice': '提高防御仓位，重点观察油价与金价共振',
+    },
+]
+
+
+def _inject_key_events_with_analyst_views(events, all_news, analyst_views, now):
+    """注入重点事件，并融合热门分析师实时观点"""
+    all_text = ' '.join(n.get('title', '') for n in (all_news or [])).lower()
+    existing_titles = {e.get('title', '') for e in events}
+    added = 0
+
+    for tpl in _KEY_EVENT_TEMPLATES:
+        if not any(kw.lower() in all_text for kw in tpl['keywords']):
+            continue
+
+        # 已有相同主题则仅增强观点字段
+        existing = next((e for e in events if tpl['title'] in (e.get('title') or '') or any(c in (e.get('concepts') or []) for c in tpl['concepts'])), None)
+        analyst_note = _analyst_snippet(analyst_views, tpl['keywords'], limit=2)
+
+        if existing:
+            if analyst_note and '分析师观点' not in (existing.get('reason') or ''):
+                existing['reason'] = f"{existing.get('reason', '')}；分析师观点：{analyst_note}".strip('；')
+            if analyst_note and not existing.get('analyst_view'):
+                existing['analyst_view'] = analyst_note
+            continue
+
+        idx = len(events)
+        evt = {
+            'id': f"evt_{now.strftime('%Y%m%d')}_key_{idx+1:03d}",
+            'title': tpl['title'],
+            'category': tpl['category'],
+            'concepts': tpl['concepts'],
+            'sentiment': round(tpl['sentiment'], 2),
+            'impact': int(tpl['sentiment'] * tpl['impact'] * 4),
+            'confidence': 0.78,
+            'sectors_positive': tpl['sectors_positive'],
+            'sectors_negative': tpl['sectors_negative'],
+            'fund_keywords': tpl['fund_keywords'],
+            'reason': tpl['reason'],
+            'advice': tpl['advice'],
+            'source': '重点事件追踪',
+            'time': now.isoformat(),
+        }
+        if analyst_note:
+            evt['reason'] = f"{evt['reason']}；分析师观点：{analyst_note}"
+            evt['advice'] = f"{evt['advice']}（参考热门分析师实时观点）"
+            evt['analyst_view'] = analyst_note
+
+        if evt['title'] not in existing_titles:
+            events.append(evt)
+            existing_titles.add(evt['title'])
+            added += 1
+
+    if added:
+        print(f"  🧩 注入重点事件: {added} 条（含分析师观点融合）")
+    return events
+
+
+def _attach_analyst_views_to_events(events, analyst_views):
+    """为事件补充分析师观点（即使不是重点事件）"""
+    if not events or not analyst_views:
+        return events
+
+    for evt in events:
+        if evt.get('analyst_view'):
+            continue
+        keywords = []
+        title = (evt.get('title') or '').strip()
+        if title:
+            keywords.append(title)
+        for c in (evt.get('concepts') or []):
+            if c:
+                keywords.append(str(c))
+        for k in (evt.get('fund_keywords') or []):
+            if k:
+                keywords.append(str(k))
+
+        # 关键词过少时，用类别兜底
+        if not keywords and evt.get('category'):
+            keywords.append(str(evt.get('category')))
+
+        note = _analyst_snippet(analyst_views, keywords, limit=1)
+        if note:
+            evt['analyst_view'] = note
+            if '分析师观点' not in (evt.get('reason') or ''):
+                evt['reason'] = f"{evt.get('reason', '')}；分析师观点：{note}".strip('；')
+
+    return events
+
+
+def build_output(llm_result, prev_data, now, all_news=None, xueqiu_data=None, analyst_views=None):
     """组装最终JSON输出"""
     events = []
     for i, e in enumerate(llm_result.get('events', [])[:12]):
@@ -920,6 +1123,13 @@ def build_output(llm_result, prev_data, now, all_news=None, xueqiu_data=None):
     # === 补充地缘政治事件(新闻中有关键词but LLM未提取的) ===
     if all_news:
         events = _ensure_geopolitical_events(events, all_news, now)
+
+    # === 注入重点事件 + 热门分析师实时观点 ===
+    if all_news:
+        events = _inject_key_events_with_analyst_views(events, all_news, analyst_views or [], now)
+
+    # === 全量事件补充分析师观点 ===
+    events = _attach_analyst_views_to_events(events, analyst_views or [])
 
     # 热度图: 补充趋势
     heatmap = []
@@ -963,6 +1173,8 @@ def build_output(llm_result, prev_data, now, all_news=None, xueqiu_data=None):
             "news_count": 0,  # filled by main
             "sources": [],
             "model": MODEL,
+            "refresh_interval_minutes": 30,
+            "analyst_views_count": len(analyst_views or []),
         }
     }
 
@@ -1026,6 +1238,13 @@ def main():
             deduped.append(n)
     print(f"\n  总计: {len(all_news)} 条, 去重后: {len(deduped)} 条")
 
+    # 1.5 读取热门分析师实时观点（用于重点事件增强）
+    analyst_views = _extract_analyst_views(max_items=16)
+    if analyst_views:
+        print(f"  🧠 热门分析师观点: {len(analyst_views)} 条")
+    else:
+        print("  ⚠️ 热门分析师观点: 0 条（将仅使用新闻语义）")
+
     # 2. LLM 结构化
     print("\n🧠 [2/3] AI结构化提取...")
     llm_result = call_llm(deduped)
@@ -1046,7 +1265,14 @@ def main():
             xueqiu_data = prev_xq
             print(f"  ♻️ 使用上次雪球缓存: {len(xueqiu_data.get('hotwords', []))} 热词")
 
-    output = build_output(llm_result, prev_data, now, all_news=deduped, xueqiu_data=xueqiu_data)
+    output = build_output(
+        llm_result,
+        prev_data,
+        now,
+        all_news=deduped,
+        xueqiu_data=xueqiu_data,
+        analyst_views=analyst_views,
+    )
     output['meta']['news_count'] = len(deduped)
     output['meta']['sources'] = list(sources_ok)
 

@@ -315,6 +315,21 @@ function buildPlainAdvisor(fund, td, heatInfo, vote) {
       else tldr = '短线震荡，建议分批小额操作';
     }
 
+    // 无历史净值时，基于当日估值和板块热度生成差异化雷达值
+    const sentimentScore = heatInfo ? Math.max(10, Math.min(90, Math.round(heat * 0.9 + (heatInfo.sentiment || 0) * 15))) : 50;
+    const macroScore = heatInfo ? Math.max(15, Math.min(85, Math.round(heat * 0.7 + (heatInfo.sentiment || 0) * 20 + 15))) : 50;
+    let valuationScore = 50;
+    let momentumScore = 50;
+    let defenseScore = 55;
+    if (todayPct !== null) {
+      // 估值力: 跌得多→估值更便宜→高分
+      valuationScore = Math.max(15, Math.min(85, Math.round(50 - todayPct * 10)));
+      // 爆发力: 涨得多→动量强→高分
+      momentumScore = Math.max(10, Math.min(90, Math.round(50 + todayPct * 12)));
+      // 防御力: 波动小→防御好
+      defenseScore = Math.max(20, Math.min(80, Math.round(65 - Math.abs(todayPct) * 8)));
+    }
+
     return {
       code: fund.code, name: fund.name, type: fund.type,
       riskScore: heat >= 70 ? 55 : heat <= 35 ? 45 : 50,
@@ -327,7 +342,7 @@ function buildPlainAdvisor(fund, td, heatInfo, vote) {
       operation: todayPct !== null && todayPct <= -1 ? '小额试探' : '轻仓观望',
       tactics: `今日估值 ${todayPctStr}，板块温度 ${heat}°。建议分批、小仓位，待历史净值恢复后再做趋势仓位决策。`,
       stopLoss: '单次加仓不超过总仓位5%，连续走弱暂停加仓',
-      radar: { valuation: 50, momentum: 50, macro: 50, defense: 50, sentiment: 50 },
+      radar: { valuation: valuationScore, momentum: momentumScore, macro: macroScore, defense: defenseScore, sentiment: sentimentScore },
     };
   }
 
@@ -381,13 +396,40 @@ function buildPlainAdvisor(fund, td, heatInfo, vote) {
     stopLoss = td.ma20 ? `MA20: ${td.ma20.toFixed(4)}` : '设定-5%止损';
   }
 
-  // 雷达图数据 (0-100)
+  // 雷达图数据 (0-100) — 连续计算，让每只基金产生差异化的值
+  // 估值力: 回撤越深+热度越低 → 越低估 → 分数越高
+  const drawdownNorm = Math.max(0, Math.min(100, 50 - td.drawdownFromHigh * 1.8));
+  const heatPenalty = Math.max(0, (heat - 50) * 0.5);
+  const radarValuation = Math.round(Math.max(5, Math.min(95, drawdownNorm - heatPenalty)));
+
+  // 爆发力: 基于趋势得分 + 60日涨跌 + RSI动量
+  const trendNorm = Math.max(0, Math.min(100, 50 + td.trendScore * 0.7));
+  const chg60Norm = td.chg60d !== null ? Math.max(-30, Math.min(30, td.chg60d * 0.6)) : 0;
+  const rsiMomentum = td.rsi > 50 ? (td.rsi - 50) * 0.3 : (td.rsi - 50) * 0.4;
+  const radarMomentum = Math.round(Math.max(5, Math.min(95, trendNorm + chg60Norm * 0.3 + rsiMomentum)));
+
+  // 顺风度: 板块热度+情绪+趋势方向
+  const sentVal = heatInfo ? (heatInfo.sentiment || 0) : 0;
+  const heatNorm = Math.max(0, Math.min(100, heat));
+  const windBase = heatNorm * 0.6 + sentVal * 30 + (td.trendScore > 0 ? 15 : td.trendScore < 0 ? -10 : 0);
+  const radarMacro = Math.round(Math.max(5, Math.min(95, windBase)));
+
+  // 防御力: 波动率越低+回撤越小 → 防御越好
+  const volNorm = Math.max(5, Math.min(95, 85 - td.volatility * 1.8));
+  const ddNorm = Math.max(0, Math.min(30, Math.abs(td.drawdownFromHigh) * 0.6));
+  const radarDefense = Math.round(Math.max(5, Math.min(95, volNorm - ddNorm)));
+
+  // 情绪度: 板块温度为主 + RSI极端值修正
+  let radarSentiment = Math.round(Math.max(5, Math.min(95, heat * 0.85 + sentVal * 15)));
+  if (td.rsi > 75) radarSentiment = Math.min(95, radarSentiment + 10);
+  else if (td.rsi < 30) radarSentiment = Math.max(5, radarSentiment - 10);
+
   const radar = {
-    valuation: val.label.includes('低估') ? 85 : val.label === '估值偏高' ? 25 : 55,
-    momentum: td.trendDir === 'strong_up' ? 90 : td.trendDir === 'up' ? 70 : td.trendDir === 'down' ? 30 : td.trendDir === 'strong_down' ? 15 : 50,
-    macro: windDir === '顺风' ? 80 : windDir === '逆风' ? 25 : 50,
-    defense: td.volatility > 30 ? 20 : td.volatility > 20 ? 45 : 75,
-    sentiment: heat >= 70 ? Math.min(90, heat) : heat <= 30 ? Math.max(10, heat) : 50,
+    valuation: radarValuation,
+    momentum: radarMomentum,
+    macro: radarMacro,
+    defense: radarDefense,
+    sentiment: radarSentiment,
   };
 
   return {

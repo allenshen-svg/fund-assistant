@@ -32,7 +32,7 @@
     </view>
     <view class="row switch-row">
       <text class="set-label">优先使用远程数据</text>
-      <switch checked="{{useRemote}}" bindchange="onSwitchRemote" color="#6c8aff" />
+      <switch checked="{{useRemote}}" bindchange="onSwitchRemote" color="#6c8aff"></switch>
     </view>
 
     <view class="form-item" style="margin-top:16rpx;">

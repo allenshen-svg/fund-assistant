@@ -148,6 +148,9 @@ miniprogram/
 1. ✅ 微信公众平台 → 开发管理 → 服务器域名 → 添加 request 合法域名：
    - `https://allenshen-svg.github.io`
    - `https://push2.eastmoney.com`
+   - `https://push2his.eastmoney.com`
+   - `https://fundmobapi.eastmoney.com`
    - `https://fundgz.1234567.com.cn`
+   - 若遗漏 `fundmobapi.eastmoney.com`，真机端会拿不到历史净值，导致“行动指南”中 RSI/趋势/空头排列等标签显著减少
 2. ✅ `project.config.json` 替换真实 AppID
 3. ✅ 按需调整 `utils/advisor.js` 中的策略参数

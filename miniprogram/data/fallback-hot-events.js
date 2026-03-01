@@ -17,10 +17,12 @@ const fallbackHotEvents = {
     {
       id: 'fallback_evt_1',
       title: '本地回退：宏观地缘事件加载中',
+      category: 'geopolitics',
       impact: 0,
       confidence: 0.5,
       reason: '远程数据不可用时使用本地样本',
-      advice: '请在设置页配置可访问的数据地址'
+      advice: '请在设置页配置可访问的数据地址',
+      analyst_view: '市场关注地缘风险升温，建议先控仓再跟踪油气与黄金联动'
     }
   ]
 };

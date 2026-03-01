@@ -419,21 +419,27 @@
 
 /* ====== 筛选条 ====== */
 .filter-scroll {
-  display: flex;
   white-space: nowrap;
   margin-bottom: 20rpx;
   padding: 0 4rpx;
 }
 
 .filter-chip {
-  display: inline-block;
-  padding: 10rpx 22rpx;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 56rpx;
+  line-height: 1;
+  box-sizing: border-box;
+  padding: 0 22rpx;
   border-radius: 999rpx;
   font-size: 24rpx;
+  white-space: nowrap;
   color: var(--text-sub);
   background: var(--elevated-3);
   margin-right: 12rpx;
   border: 1rpx solid transparent;
+  vertical-align: middle;
 }
 
 .filter-chip.active {
