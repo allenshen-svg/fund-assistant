@@ -1,0 +1,49 @@
+{
+  "_comment": "基础设施配置（代码可读取），敏感信息在 .env 中",
+  "server": {
+    "provider": "阿里云",
+    "region": "香港",
+    "host": "47.83.165.131",
+    "os": "Ubuntu 24.04",
+    "services": {
+      "nginx": { "ports": [80, 443], "config": "/etc/nginx/sites-enabled/fund-assistant.conf" },
+      "gunicorn": { "port": 8080, "workers": 1, "threads": 4, "service": "fund-assistant.service" },
+      "certbot": { "domains": ["xiaoniqiu.top", "www.xiaoniqiu.top"], "expires": "2026-05-30", "auto_renew": true }
+    },
+    "deploy_path": "/opt/fund-assistant",
+    "venv_path": "/opt/fund-assistant/.venv"
+  },
+  "domain": {
+    "name": "xiaoniqiu.top",
+    "registrar": "阿里云万网",
+    "dns": ["dns29.hichina.com", "dns30.hichina.com"],
+    "records": [
+      { "type": "A", "host": "@", "value": "47.83.165.131" },
+      { "type": "A", "host": "www", "value": "47.83.165.131" }
+    ],
+    "urls": {
+      "https": "https://xiaoniqiu.top",
+      "api": "https://xiaoniqiu.top/api"
+    }
+  },
+  "wechat_miniprogram": {
+    "appid": "wxdff3c1b4fad3158c",
+    "project_name": "fund-assistant-mini",
+    "request_domains": ["https://xiaoniqiu.top"],
+    "lib_version": "2.30.4"
+  },
+  "github": {
+    "repo": "allenshen-svg/fund-assistant",
+    "pages_base": "https://allenshen-svg.github.io/fund-assistant",
+    "branch": "main"
+  },
+  "ai": {
+    "default_provider": "zhipu",
+    "default_model": "GLM-4-Flash",
+    "providers": {
+      "zhipu": { "name": "智谱AI", "base": "https://open.bigmodel.cn/api/paas/v4/chat/completions" },
+      "siliconflow": { "name": "硅基流动", "base": "https://api.siliconflow.cn/v1/chat/completions" },
+      "deepseek": { "name": "DeepSeek", "base": "https://api.deepseek.com/chat/completions" }
+    }
+  }
+}
