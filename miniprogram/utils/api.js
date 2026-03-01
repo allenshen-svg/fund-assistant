@@ -312,6 +312,76 @@ function triggerReanalyze(settings) {
   });
 }
 
+/**
+ * 按基金代码查找基金信息
+ * 先查本地 FUND_DB，再查天天基金实时接口
+ * 返回 { code, name, type, nav, estimate, pct, source } 或 null
+ */
+function searchFundByCode(fundCode) {
+  if (!fundCode || !/^\d{6}$/.test(fundCode)) {
+    return Promise.resolve(null);
+  }
+  // 1. 先查内置数据库
+  const app = getApp();
+  const db = (app && app.globalData && app.globalData.FUND_DB) || {};
+  const local = db[fundCode];
+  if (local) {
+    return Promise.resolve({
+      code: fundCode,
+      name: local.name,
+      type: local.type || _guessType(local.name),
+      nav: null,
+      estimate: null,
+      pct: null,
+      source: 'local',
+    });
+  }
+  // 2. 调天天基金实时估值接口
+  return fetchFundEstimate(fundCode).then(r => {
+    if (r && r.name) {
+      return {
+        code: r.code || fundCode,
+        name: r.name,
+        type: _guessType(r.name),
+        nav: r.nav,
+        estimate: r.estimate,
+        pct: r.pct,
+        source: 'remote',
+      };
+    }
+    return null;
+  });
+}
+
+/**
+ * 根据基金名称猜测基金类型
+ */
+function _guessType(name) {
+  if (!name) return '其他';
+  const rules = [
+    [/黄金/,         '黄金'],
+    [/白银/,         '有色金属'],
+    [/有色|铜|铝|稀土/, '有色金属'],
+    [/原油|石油|能源化工/, '原油'],
+    [/半导体|芯片/,    '半导体'],
+    [/军工|国防/,      '军工'],
+    [/白酒|消费|食品/,  '白酒/消费'],
+    [/医药|医疗|生物|创新药/, '医药'],
+    [/新能源|光伏|锂电|碳中和/, '新能源'],
+    [/科技|人工智能|AI|云计算|大数据|信息|互联网|计算机|软件/, 'AI/科技'],
+    [/红利|股息|高息/,  '红利'],
+    [/港股|恒生|H股/,  '港股科技'],
+    [/债|纯债|信用|利率/, '债券'],
+    [/沪深300|中证500|中证1000|A500|上证50|创业板|科创|中证100|万得全A|MSCI/, '宽基'],
+    [/蓝筹|价值|龙头/,  '蓝筹'],
+    [/QDII|纳斯达克|标普|美股|中概/, '蓝筹/QDII'],
+  ];
+  for (const [re, type] of rules) {
+    if (re.test(name)) return type;
+  }
+  return '其他';
+}
+
 module.exports = {
   fetchHotEvents,
   fetchIndices,
@@ -327,6 +397,7 @@ module.exports = {
   triggerRefresh,
   triggerReanalyze,
   getServerBase: _getServerBase,
+  searchFundByCode,
 };
 
 /**

@@ -182,29 +182,58 @@
 
   <!-- ====== 操作按钮 ====== -->
   <view class="action-btns">
-    <button class="btn" bindtap="toggleAdd">✏️ 手动添加</button>
+    <button class="btn" bindtap="toggleAdd">➕ 添加基金</button>
   </view>
 
-  <!-- ====== 手动添加面板 ====== -->
+  <!-- ====== 添加基金面板 ====== -->
   <view class="card add-panel" wx:if="{{showAdd}}">
     <view class="card-header">
-      <text class="title">✏️ 手动添加</text>
+      <text class="title">➕ 添加基金</text>
     </view>
-    <view class="form-item">
-      <text class="label">基金代码</text>
-      <input class="input" placeholder="例如 000216" value="{{code}}" bindinput="onCodeInput" />
+
+    <!-- 搜索区域 -->
+    <view class="search-row">
+      <input class="input search-input" type="number" maxlength="6"
+             placeholder="输入6位基金代码" value="{{code}}"
+             bindinput="onCodeInput" bindconfirm="doSearchFund" />
+      <button class="btn small search-btn" bindtap="doSearchFund"
+              disabled="{{searching}}">{{searching ? '查询中...' : '🔍 查找'}}</button>
     </view>
-    <view class="form-item">
-      <text class="label">基金名称</text>
-      <input class="input" placeholder="例如 华安黄金ETF联接A" value="{{name}}" bindinput="onNameInput" />
+
+    <!-- 搜索结果 -->
+    <view wx:if="{{searchResult}}" class="search-result">
+      <view class="sr-info">
+        <text class="sr-name">{{searchResult.name}}</text>
+        <text class="sub">{{searchResult.code}} · {{searchResult.type}}</text>
+        <text wx:if="{{searchResult.pct !== null}}" class="sr-pct pct-{{searchResult.pct >= 0 ? 'up' : 'down'}}">
+          今日估值: {{searchResult.pct >= 0 ? '+' : ''}}{{searchResult.pct}}%
+        </text>
+      </view>
+      <button class="btn sr-add-btn" bindtap="addFromSearch">✅ 确认添加</button>
     </view>
-    <view class="form-item">
-      <text class="label">基金类型</text>
-      <picker mode="selector" range="{{typeOptions}}" value="{{typeIndex}}" bindchange="onTypeChange">
-        <view class="input picker-val">{{typeOptions[typeIndex]}} ▾</view>
-      </picker>
+
+    <!-- 搜索错误 -->
+    <view wx:if="{{searchError}}" class="search-error">
+      <text class="sub">{{searchError}}</text>
     </view>
-    <button class="btn" style="margin-top:16rpx;" bindtap="addHolding">确认添加</button>
+
+    <!-- 手动输入（搜索未果时展开） -->
+    <view wx:if="{{searchError || (!searchResult && code.length === 6)}}" class="manual-section">
+      <view class="manual-divider">
+        <text class="sub">── 或手动填写 ──</text>
+      </view>
+      <view class="form-item">
+        <text class="label">基金名称</text>
+        <input class="input" placeholder="例如 华安黄金ETF联接A" value="{{name}}" bindinput="onNameInput" />
+      </view>
+      <view class="form-item">
+        <text class="label">基金类型</text>
+        <picker mode="selector" range="{{typeOptions}}" value="{{typeIndex}}" bindchange="onTypeChange">
+          <view class="input picker-val">{{typeOptions[typeIndex]}} ▾</view>
+        </picker>
+      </view>
+      <button class="btn" style="margin-top:16rpx;" bindtap="addHolding">确认添加</button>
+    </view>
   </view>
 
 </view>

@@ -395,4 +395,86 @@
   justify-content: space-between;
 }
 
+/* ====== 搜索区域 ====== */
+.search-row {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  margin-bottom: 16rpx;
+}
+
+.search-input {
+  flex: 1;
+  font-size: 32rpx !important;
+  letter-spacing: 4rpx;
+}
+
+.search-btn {
+  flex-shrink: 0;
+  min-width: 160rpx;
+  font-size: 26rpx !important;
+  padding: 0 20rpx !important;
+  height: 72rpx;
+  line-height: 72rpx;
+}
+
+/* ====== 搜索结果 ====== */
+.search-result {
+  background: var(--elevated);
+  border-radius: 16rpx;
+  padding: 20rpx;
+  margin-bottom: 16rpx;
+  border-left: 6rpx solid #34d399;
+}
+
+.sr-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4rpx;
+  margin-bottom: 16rpx;
+}
+
+.sr-name {
+  font-size: 30rpx;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.sr-pct {
+  font-size: 26rpx;
+  font-weight: 600;
+  margin-top: 4rpx;
+}
+
+.sr-add-btn {
+  width: 100%;
+  background: #34d399 !important;
+  color: #000 !important;
+  font-weight: 700;
+}
+
+/* ====== 搜索错误 ====== */
+.search-error {
+  padding: 16rpx 20rpx;
+  background: rgba(248,113,113,0.1);
+  border-radius: 12rpx;
+  margin-bottom: 16rpx;
+  text-align: center;
+}
+
+.search-error .sub {
+  color: #f87171;
+}
+
+/* ====== 手动输入分割线 ====== */
+.manual-divider {
+  text-align: center;
+  padding: 16rpx 0;
+}
+
+.manual-section {
+  border-top: 1rpx solid var(--border-subtle);
+  padding-top: 8rpx;
+}
+
 

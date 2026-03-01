@@ -1,5 +1,5 @@
 const { getHoldings, setHoldings } = require('../../utils/storage');
-const { fetchMultiFundEstimates, fetchMultiFundHistory } = require('../../utils/api');
+const { fetchMultiFundEstimates, fetchMultiFundHistory, searchFundByCode } = require('../../utils/api');
 const { formatPct, pctClass, isTradingDay, todayStr, getPrevTradingDay } = require('../../utils/market');
 const { analyzeTrend, computeVote } = require('../../utils/analyzer');
 const { pickHeatForType } = require('../../utils/advisor');
@@ -19,6 +19,9 @@ Page({
     typeOptions: TYPE_OPTIONS,
     showAdd: false,
     loading: false,
+    searching: false,
+    searchResult: null,    // { code, name, type, nav, pct, source }
+    searchError: '',       // 搜索失败提示
 
 
     // ====== 波段组合 ======
@@ -461,11 +464,21 @@ Page({
 
   // ====== 添加相关 ======
   toggleAdd() {
-    this.setData({ showAdd: !this.data.showAdd });
+    const show = !this.data.showAdd;
+    this.setData({
+      showAdd: show,
+      // 重置搜索状态
+      ...(show ? {} : { code: '', name: '', searchResult: null, searchError: '', searching: false }),
+    });
   },
 
   onCodeInput(e) {
-    this.setData({ code: e.detail.value.trim() });
+    const code = e.detail.value.trim();
+    this.setData({ code, searchResult: null, searchError: '' });
+    // 输入满6位后自动搜索
+    if (/^\d{6}$/.test(code)) {
+      this.doSearchFund();
+    }
   },
 
   onNameInput(e) {
@@ -474,6 +487,63 @@ Page({
 
   onTypeChange(e) {
     this.setData({ typeIndex: Number(e.detail.value) });
+  },
+
+  // 搜索基金
+  async doSearchFund() {
+    const code = this.data.code;
+    if (!/^\d{6}$/.test(code)) {
+      this.setData({ searchError: '请输入6位基金代码', searchResult: null });
+      return;
+    }
+    // 检查是否已持有
+    const current = getHoldings();
+    if (current.some(item => item.code === code)) {
+      this.setData({ searchError: '该基金已在持仓中', searchResult: null });
+      return;
+    }
+    this.setData({ searching: true, searchError: '', searchResult: null });
+    try {
+      const result = await searchFundByCode(code);
+      if (result) {
+        // 找到对应类型的 index
+        let typeIdx = TYPE_OPTIONS.indexOf(result.type);
+        if (typeIdx < 0) typeIdx = TYPE_OPTIONS.length - 1; // '其他'
+        this.setData({
+          searching: false,
+          searchResult: result,
+          name: result.name,
+          typeIndex: typeIdx,
+        });
+      } else {
+        this.setData({
+          searching: false,
+          searchError: '未找到该基金，请检查代码或手动输入名称',
+          searchResult: null,
+        });
+      }
+    } catch (err) {
+      this.setData({
+        searching: false,
+        searchError: '查询失败，请手动输入',
+        searchResult: null,
+      });
+    }
+  },
+
+  // 从搜索结果一键添加
+  addFromSearch() {
+    const r = this.data.searchResult;
+    if (!r) return;
+    const current = getHoldings();
+    if (current.some(item => item.code === r.code)) {
+      wx.showToast({ title: '该基金已存在', icon: 'none' });
+      return;
+    }
+    setHoldings([...current, { code: r.code, name: r.name, type: r.type }]);
+    this.setData({ code: '', name: '', searchResult: null, searchError: '', showAdd: false });
+    wx.showToast({ title: '已添加', icon: 'success' });
+    this.reload();
   },
 
   addHolding() {
@@ -490,7 +560,7 @@ Page({
       return;
     }
     setHoldings([...current, { code, name, type }]);
-    this.setData({ code: '', name: '', showAdd: false });
+    this.setData({ code: '', name: '', searchResult: null, searchError: '', showAdd: false });
     wx.showToast({ title: '已添加', icon: 'success' });
     this.reload();
   },
