@@ -8,7 +8,7 @@ App({
     defaultSettings: {
       useRemote: true,
       apiBase: 'https://allenshen-svg.github.io/fund-assistant',
-      serverUrl: 'http://47.83.165.131:8080'  // 香港云服务器地址
+      serverUrl: 'https://xiaoniqiu.top'  // 正式域名（HTTPS）
     },
     // 内置基金数据库 (与 H5 同步)
     FUND_DB: {
