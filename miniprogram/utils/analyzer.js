@@ -303,12 +303,30 @@ function computeVote(td, heatInfo, sectorFlow) {
 /* ====== 白话研判 ====== */
 function buildPlainAdvisor(fund, td, heatInfo, vote) {
   if (!td) {
+    const todayPct = typeof fund.pct === 'number' ? fund.pct : null;
+    const todayPctStr = todayPct === null ? '--' : `${todayPct >= 0 ? '+' : ''}${todayPct.toFixed(2)}%`;
+    const heat = heatInfo ? heatInfo.temperature : 50;
+    const windDir = heat >= 65 ? '顺风' : heat <= 40 ? '逆风' : '中性';
+
+    let tldr = '历史净值暂不可用，先按当日估值轻仓观察';
+    if (todayPct !== null) {
+      if (todayPct >= 1.2 && heat >= 60) tldr = '短线偏强，可小仓位顺势跟踪';
+      else if (todayPct <= -1.2 && heat <= 45) tldr = '短线偏弱，建议控制仓位等待企稳';
+      else tldr = '短线震荡，建议分批小额操作';
+    }
+
     return {
       code: fund.code, name: fund.name, type: fund.type,
-      riskScore: 50, riskLevel: '数据不足', valuation: { label: '--', color: '#8b8fa3' },
-      trendLabel: { label: '--', color: '#8b8fa3' }, windDir: '未知',
-      biggestRisk: '数据不足', tldr: '暂无足够数据进行分析',
-      operation: '观望', tactics: '等待更多数据', stopLoss: '--',
+      riskScore: heat >= 70 ? 55 : heat <= 35 ? 45 : 50,
+      riskLevel: heat >= 70 ? '中风险' : heat <= 35 ? '低风险' : '中风险',
+      valuation: { label: todayPct === null ? '估值未知' : (todayPct <= -1 ? '短线回调' : todayPct >= 1 ? '短线偏热' : '估值中性'), color: '#8b8fa3' },
+      trendLabel: { label: '短线估值模式', color: '#8b8fa3' },
+      windDir,
+      biggestRisk: '历史净值接口受限，趋势判断精度下降',
+      tldr,
+      operation: todayPct !== null && todayPct <= -1 ? '小额试探' : '轻仓观望',
+      tactics: `今日估值 ${todayPctStr}，板块温度 ${heat}°。建议分批、小仓位，待历史净值恢复后再做趋势仓位决策。`,
+      stopLoss: '单次加仓不超过总仓位5%，连续走弱暂停加仓',
       radar: { valuation: 50, momentum: 50, macro: 50, defense: 50, sentiment: 50 },
     };
   }
