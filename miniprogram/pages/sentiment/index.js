@@ -251,6 +251,30 @@ Page({
         sectorsNeg: (item.sectors_negative || []).join('、') || '--',
       }));
       batch.outlook = hd.outlook || null;
+
+      // ========== 5. 补充热力图板块到 KOL 博弈拆解 ==========
+      const existingTargets = new Set((batch.kolSections || []).map(s => s.target));
+      const topHeat = (hd.heatmap || []).slice(0, 10);
+      const heatKols = topHeat
+        .filter(h => !existingTargets.has(h.tag))
+        .map(h => {
+          const trendText = h.trend === 'up' ? '热度上升' : h.trend === 'down' ? '热度回落' : '热度持平';
+          const tempText = h.temperature >= 80 ? '极度拥挤' : h.temperature >= 60 ? '偏热' : '适中';
+          const advice = h.temperature >= 80
+            ? `${h.tag}板块热度${h.temperature}°，交易拥挤度高，追涨风险大，建议等回调再介入。`
+            : h.temperature >= 60
+            ? `${h.tag}关注度${trendText}，当前热度${h.temperature}°，可适度参与但注意仓位控制。`
+            : `${h.tag}热度${h.temperature}°，关注度一般，${h.trend === 'up' ? '但有升温趋势可关注' : '暂无明显机会'}。`;
+          return {
+            target: h.tag,
+            kol: `板块热度 ${h.temperature}°，${trendText}，市场关注度${tempText}。`,
+            retail: h.temperature >= 70 ? '散户讨论度较高，跟风情绪明显。' : '散户关注度一般，情绪中性。',
+            conclusion: advice,
+            divClass: h.temperature >= 80 ? 'fomo' : h.temperature <= 40 ? 'panic' : 'neutral',
+            fromHeatmap: true,
+          };
+        });
+      batch.kolSections = (batch.kolSections || []).concat(heatKols);
     }
 
     this.setData(batch);
