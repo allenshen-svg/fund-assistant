@@ -71,6 +71,8 @@ def api_refresh():
             try:
                 try:
                     fetch_hot_events()
+                except SystemExit:
+                    print('[手动刷新] ⚠️ 热点事件脚本调用了 sys.exit，已拦截')
                 except Exception as e:
                     print(f'[手动刷新] 热点事件采集失败: {e}')
                 collect_and_save()
@@ -222,11 +224,15 @@ def scheduler_loop():
                         print('[定时任务] 📡 采集热点事件...')
                         fetch_hot_events()
                         print('[定时任务] ✅ 热点事件采集完成')
+                    except SystemExit:
+                        print('[定时任务] ⚠️ 热点事件脚本调用了 sys.exit，已拦截')
                     except Exception as e:
                         print(f'[定时任务] ⚠️ 热点事件采集失败: {e}')
                     # 2. 采集舆情数据 + AI 分析
                     collect_and_save()
                     print(f'[定时任务] 采集完成，下次: {interval}秒({interval//60}分钟)后\n')
+                except SystemExit:
+                    print(f'[定时任务] ⚠️ 采集过程调用了 sys.exit，已拦截')
                 except Exception as e:
                     print(f'[定时任务] 采集异常: {e}')
                 finally:

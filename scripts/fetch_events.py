@@ -1226,7 +1226,7 @@ def main():
 
     if not all_news:
         print("\n❌ 没有获取到任何新闻, 保留上次数据")
-        sys.exit(0)
+        return
 
     # 去重
     seen = set()
@@ -1251,7 +1251,7 @@ def main():
 
     if not llm_result:
         print("\n❌ LLM分析失败, 保留上次数据")
-        sys.exit(0)
+        return
 
     print(f"  提取事件: {len(llm_result.get('events', []))} 条")
     print(f"  热度标签: {len(llm_result.get('heatmap', []))} 个")
