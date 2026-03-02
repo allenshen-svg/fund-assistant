@@ -200,6 +200,7 @@
     <view class="search-row">
       <input class="input search-input" type="number" maxlength="6"
              placeholder="输入6位基金代码" value="{{code}}" focus="{{showAdd}}"
+             placeholder-style="color: rgba(255,255,255,0.4);"
              bindinput="onCodeInput" bindconfirm="doSearchFund" />
       <button class="btn small search-btn" bindtap="doSearchFund"
               disabled="{{searching}}">{{searching ? '查询中...' : '🔍 查找'}}</button>
