@@ -212,6 +212,22 @@ function buildContext(holdings, estimates, historyMap, indices, extras) {
 
 /* ====== 调用 AI ====== */
 function callAI(apiBase, apiKey, model, systemPrompt, userPrompt, temperature = 0.7) {
+  // 构建请求体
+  const reqData = {
+    model,
+    messages: [
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: userPrompt },
+    ],
+    temperature,
+    max_tokens: 8192,
+  };
+  // 智谱 / 硅基流动 / DeepSeek-V3 支持 response_format 强制 JSON
+  // 避免 R1 推理模型使用 response_format（不兼容）
+  const isReasoner = /reasoner|r1/i.test(model);
+  if (!isReasoner) {
+    reqData.response_format = { type: 'json_object' };
+  }
   return new Promise((resolve, reject) => {
     wx.request({
       url: apiBase,
@@ -221,15 +237,7 @@ function callAI(apiBase, apiKey, model, systemPrompt, userPrompt, temperature = 
         'Content-Type': 'application/json',
         'Authorization': 'Bearer ' + apiKey,
       },
-      data: {
-        model,
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: userPrompt },
-        ],
-        temperature,
-        max_tokens: 8192,
-      },
+      data: reqData,
       success(res) {
         if (res.statusCode !== 200) {
           reject(new Error(`API错误 ${res.statusCode}: ${JSON.stringify(res.data)}`));
@@ -246,68 +254,112 @@ function callAI(apiBase, apiKey, model, systemPrompt, userPrompt, temperature = 
   });
 }
 
+/* ====== 清理 JSON 字符串中的常见问题 ====== */
+function _cleanJsonStr(s) {
+  // 去掉 <think>...</think> 块（DeepSeek-R1 推理过程）
+  s = s.replace(/<think>[\s\S]*?<\/think>/g, '').trim();
+  // 去掉 markdown 代码块标记
+  s = s.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
+  // 去掉行首 JSON 之前的说明文字（如 "以下是分析结果："）
+  const firstBrace = s.indexOf('{');
+  if (firstBrace > 0) {
+    const prefix = s.slice(0, firstBrace).trim();
+    // 如果前缀不含 { 或 [ 说明是纯文字前缀，可以去掉
+    if (!/[\{\[]/.test(prefix)) {
+      s = s.slice(firstBrace);
+    }
+  }
+  // 去掉不可见控制字符（保留 \n \r \t）
+  s = s.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, '');
+  // 修复常见 JSON 语法问题
+  s = s.replace(/,\s*([\]\}])/g, '$1');       // 尾逗号
+  s = s.replace(/([\{\[,])\s*,/g, '$1');       // 连续逗号
+  s = s.replace(/\\'/g, "'");                  // 错误转义单引号
+  return s;
+}
+
 /* ====== 解析 AI 返回的 JSON ====== */
 function parseAIResponse(raw) {
   if (!raw) return null;
-  // 去掉 <think>...</think> 块
-  let cleaned = raw.replace(/<think>[\s\S]*?<\/think>/g, '').trim();
-  // 去掉 markdown 代码块
-  cleaned = cleaned.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
+  let cleaned = _cleanJsonStr(raw);
 
   // 策略1: 直接解析
   try {
     return JSON.parse(cleaned);
   } catch (e) {
-    console.warn('[AI] 直接解析失败:', e.message);
+    console.warn('[AI] 策略1 直接解析失败:', e.message);
   }
 
-  // 策略2: 提取第一个 { ... }
+  // 策略2: 提取第一个 { ... }（贪婪匹配最外层）
   const m = cleaned.match(/\{[\s\S]*\}/);
   if (m) {
     try { return JSON.parse(m[0]); } catch (_) {
-      console.warn('[AI] 提取JSON对象解析失败');
+      // 也做一次清理
+      try { return JSON.parse(_cleanJsonStr(m[0])); } catch (__) {
+        console.warn('[AI] 策略2 提取JSON对象失败');
+      }
     }
   }
 
-  // 策略3: 尝试修复截断的JSON（AI输出被 max_tokens 截断）
+  // 策略3: 括号补全修复截断的 JSON
   const jsonStart = cleaned.indexOf('{');
   if (jsonStart >= 0) {
-    let partial = cleaned.slice(jsonStart);
-    // 尝试补全截断的JSON
-    for (let tries = 0; tries < 10; tries++) {
-      partial += tries === 0 ? ']}' : '}';
+    const lastBrace = cleaned.lastIndexOf('}');
+    if (lastBrace > jsonStart) {
+      let truncated = cleaned.slice(jsonStart, lastBrace + 1);
+      truncated = _cleanJsonStr(truncated);
+      let openBraces = 0, openBrackets = 0;
+      for (const ch of truncated) {
+        if (ch === '{') openBraces++;
+        else if (ch === '}') openBraces--;
+        else if (ch === '[') openBrackets++;
+        else if (ch === ']') openBrackets--;
+      }
+      while (openBrackets > 0) { truncated += ']'; openBrackets--; }
+      while (openBraces > 0) { truncated += '}'; openBraces--; }
       try {
-        const obj = JSON.parse(partial);
-        console.warn('[AI] 通过补全截断JSON成功解析');
+        const obj = JSON.parse(truncated);
+        console.warn('[AI] 策略3 括号补全成功');
         return obj;
       } catch (_) {}
     }
-    // 尝试截断到最后一个完整的 signal/recommendation 对象
-    try {
-      // 找到最后一个完整的 } 后的尾部，截断并补全
-      const lastBrace = cleaned.lastIndexOf('}');
-      if (lastBrace > jsonStart) {
-        let truncated = cleaned.slice(jsonStart, lastBrace + 1);
-        // 计算缺少的括号
-        let openBraces = 0, openBrackets = 0;
-        for (const ch of truncated) {
-          if (ch === '{') openBraces++;
-          else if (ch === '}') openBraces--;
-          else if (ch === '[') openBrackets++;
-          else if (ch === ']') openBrackets--;
-        }
-        // 补全括号
-        while (openBrackets > 0) { truncated += ']'; openBrackets--; }
-        while (openBraces > 0) { truncated += '}'; openBraces--; }
-        const obj = JSON.parse(truncated);
-        console.warn('[AI] 通过括号补全成功解析');
+
+    // 策略4: 暴力补全（从 jsonStart 开始逐步加括号）
+    let partial = cleaned.slice(jsonStart);
+    partial = _cleanJsonStr(partial);
+    const suffixes = [']}]}', ']}', ']}}}', '}}', '}'];
+    for (const suf of suffixes) {
+      try {
+        const obj = JSON.parse(partial + suf);
+        console.warn('[AI] 策略4 暴力补全成功:', suf);
         return obj;
+      } catch (_) {}
+    }
+    // 策略5: 去掉最后一个不完整的数组元素后再补全
+    // 找最后一个 },{ 或 },\n{ 的位置
+    const lastObjSep = Math.max(
+      partial.lastIndexOf('},{'),
+      partial.lastIndexOf('},\n{'),
+      partial.lastIndexOf('},\r\n{')
+    );
+    if (lastObjSep > 0) {
+      let cut = partial.slice(0, lastObjSep + 1); // 保留到 } 为止
+      let ob = 0, obk = 0;
+      for (const ch of cut) {
+        if (ch === '{') ob++; else if (ch === '}') ob--;
+        if (ch === '[') obk++; else if (ch === ']') obk--;
       }
-    } catch (_) {
-      console.warn('[AI] 括号补全解析也失败');
+      while (obk > 0) { cut += ']'; obk--; }
+      while (ob > 0) { cut += '}'; ob--; }
+      try {
+        const obj = JSON.parse(cut);
+        console.warn('[AI] 策略5 截断尾部补全成功');
+        return obj;
+      } catch (_) {}
     }
   }
 
+  console.error('[AI] 所有解析策略均失败');
   return null;
 }
 
