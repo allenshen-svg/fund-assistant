@@ -50,13 +50,37 @@ print(f'Total: {len(items)}/8')
 # Write and run on server
 run_cmd(f"cat > /tmp/test_etf.py << 'PYEOF'\n{test_script}\nPYEOF", timeout=5)
 # Force update server code
-run_cmd('cd /opt/fund-assistant && git stash && git pull origin main 2>&1', timeout=30)
-run_cmd('cd /opt/fund-assistant && git log --oneline -3', timeout=5)
-run_cmd("grep -c '515070' /opt/fund-assistant/scripts/fetch_events.py", timeout=5)
+run_cmd('cd /opt/fund-assistant && git stash 2>/dev/null; git pull origin main 2>&1', timeout=30)
+run_cmd('cd /opt/fund-assistant && git log --oneline -1', timeout=5)
 # Restart service
-run_cmd('kill -9 $(pgrep -f gunicorn) 2>/dev/null; sleep 1; echo killed', timeout=10)
-run_cmd('systemctl start fund-assistant && echo started', timeout=15)
+run_cmd('kill -9 $(pgreg -f gunicorn) 2>/dev/null; sleep 1; systemctl start fund-assistant && echo started', timeout=15)
 time.sleep(4)
 run_cmd('systemctl is-active fund-assistant', timeout=5)
+
+# Wait for scheduler initial run to complete
+import time as _t
+for i in range(90):
+    result = run_cmd('curl -s http://localhost:8080/api/status 2>/dev/null', timeout=10)
+    if '"collecting":false' in result and '"last_hot_events"' in result:
+        print('Initial run complete!')
+        break
+    print(f'Waiting... ({i+1}/90)')
+    _t.sleep(5)
+
+# Now trigger a fresh refresh to get new ETF data
+run_cmd('curl -s -X POST http://localhost:8080/api/refresh 2>&1', timeout=10)
+_t.sleep(2)
+
+# Wait for refresh
+for i in range(90):
+    result = run_cmd('curl -s http://localhost:8080/api/status 2>/dev/null', timeout=10)
+    if '"collecting":false' in result:
+        print('Refresh done!')
+        break
+    print(f'Refreshing... ({i+1}/90)')
+    _t.sleep(5)
+
+# Check heatmap
+run_cmd("curl -s http://localhost:8080/api/hot-events | python3 -c \"import sys,json; d=json.load(sys.stdin); hm=d.get('heatmap',[]); print(f'Total: {len(hm)} items'); [print(f\\\"{h['tag']:8s} trend={h['trend']:6s} pct={str(h.get('real_pct','N/A')):>7} temp={h['temperature']}\\\") for h in hm]\" 2>&1", timeout=15)
 ssh.close()
 print('Deploy done')
