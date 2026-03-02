@@ -112,7 +112,8 @@ const SYSTEM_PROMPT = `你是一位专业的基金波段操作+趋势跟踪投�
 - 只输出JSON，不要其他文字
 - action只能是buy/sell/hold三者之一
 - confidence为0-100的整数
-- signals覆盖用户所有持仓基金，每只都要给出详细analysis
+- **【最重要】signals 必须覆盖用户的每一只持仓基金，一只都不能遗漏！** 用户持仓列表中有几只基金，signals 数组就必须有几个元素，每个元素的 code 必须与持仓基金代码一一对应
+- 如果某只基金数据不足，也必须给出 hold 建议并在 analysis 中说明原因
 - recommendations从候选基金库中选出3-5只最值得关注的基金（不要推荐用户已持仓的）
 - 推荐基金要考虑：(1)当前市场环境 (2)板块轮动方向 (3)未来1个月催化剂 (4)风险收益比
 - marketTemperature: 0=极度恐慌 50=中性 100=极度贪婪`;
@@ -274,6 +275,9 @@ async function runAIAnalysis({ holdings, estimates, historyMap, indices, commodi
   });
   const userPrompt = context + `
 
+⚠️ 重要提醒：用户共持有 ${holdings.length} 只基金，代码分别为：${holdings.map(h => h.code).join('、')}。
+signals 数组必须包含这 ${holdings.length} 只基金的分析结果，不可遗漏任何一只！
+
 请基于以上全部数据（大盘指数、大宗商品、板块热力、热点事件、持仓基金技术面）和你的专业知识：
 
 1. 对每只持仓基金给出详细的AI分析（含analysis字段，80-150字深度分析），包括：
@@ -288,7 +292,9 @@ async function runAIAnalysis({ holdings, estimates, historyMap, indices, commodi
    - 风险收益比与回撤保护
    - 与现有持仓的互补性
 
-3. 给出未来1个月的市场展望（marketOutlook），以及板块轮动建议（sectorRotation）`;
+3. 给出未来1个月的市场展望（marketOutlook），以及板块轮动建议（sectorRotation）
+
+再次强调：signals 中必须包含全部 ${holdings.length} 只基金：${holdings.map(h => `${h.name}(${h.code})`).join('、')}`;
 
   const raw = await callAI(
     config.provider.base,
@@ -301,6 +307,38 @@ async function runAIAnalysis({ holdings, estimates, historyMap, indices, commodi
 
   const result = parseAIResponse(raw);
   if (!result) throw new Error('AI 返回格式异常，请重试');
+
+  // ====== 自动补全：检查并填充 AI 遗漏的基金 ======
+  if (result.signals && holdings.length > 0) {
+    const coveredCodes = new Set(result.signals.map(s => s.code));
+    const missing = holdings.filter(h => !coveredCodes.has(h.code));
+    if (missing.length > 0) {
+      console.warn(`[AI] AI遗漏了 ${missing.length} 只基金，自动补全: ${missing.map(m => m.code).join(',')}`);
+      missing.forEach(h => {
+        const est = estimates ? estimates[h.code] : null;
+        const navList = historyMap ? historyMap[h.code] : null;
+        const td = navList ? analyzeTrend(navList) : null;
+        const heatInfo = pickHeatForType(h.type, heatmap || []);
+        const vote = td ? computeVote(td, heatInfo, null) : null;
+
+        result.signals.push({
+          code: h.code,
+          name: h.name,
+          action: vote ? vote.action : 'hold',
+          urgency: '中',
+          confidence: vote ? vote.confidence : 40,
+          reason: vote ? `算法自动补全: ${vote.label}` : '数据不足，建议观望',
+          analysis: vote
+            ? `AI未覆盖此基金，由本地算法补全。趋势方向: ${td.trendDir}，RSI: ${td.rsi ? td.rsi.toFixed(0) : '--'}，波段位置: ${td.swingPos}。板块热度${heatInfo.temperature}°。${vote.consensus}，建议${vote.label}。`
+            : `AI未覆盖此基金且历史净值不足，暂按持有观望处理。板块热度${heatInfo.temperature}°，建议等待更多数据后再判断。`,
+          targetReturn: '--',
+          riskWarning: '此为算法自动补全，仅供参考',
+          bestTiming: '等待AI下次完整分析',
+          _autoFilled: true,
+        });
+      });
+    }
+  }
 
   // 缓存结果
   wx.setStorageSync('fa_mp_ai_result', {

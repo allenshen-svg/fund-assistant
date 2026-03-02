@@ -243,8 +243,11 @@
         <!-- AI 加减仓方案 -->
         <view wx:if="{{item.aiPlan}}" class="ai-fund-plan">
           <view class="ai-fund-plan-header">
-            <text class="ai-fund-plan-title">🤖 AI 加减仓方案</text>
+            <text class="ai-fund-plan-title">{{item.aiPlan.autoFilled ? '🤖 算法补充方案' : '🤖 AI 加减仓方案'}}</text>
             <text class="ai-fund-plan-badge ai-fp-{{item.aiPlan.finalAction}}">{{item.aiPlan.finalLabel}}</text>
+          </view>
+          <view wx:if="{{item.aiPlan.autoFilled}}" class="ai-fp-auto-note">
+            <text class="sub">⚠️ AI未覆盖此基金，已用本地算法自动补充</text>
           </view>
 
           <view class="ai-fp-compare">

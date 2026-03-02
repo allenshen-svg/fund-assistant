@@ -954,6 +954,19 @@
   border-radius: 10rpx;
 }
 
+.ai-fp-auto-note {
+  padding: 8rpx 16rpx;
+  margin-bottom: 8rpx;
+  background: rgba(234,179,8,0.1);
+  border-radius: 8rpx;
+  text-align: center;
+}
+
+.ai-fp-auto-note .sub {
+  color: #eab308;
+  font-size: 22rpx;
+}
+
 /* ====== AI 市场温度计 ====== */
 .ai-temp-bar {
   margin-bottom: 16rpx;

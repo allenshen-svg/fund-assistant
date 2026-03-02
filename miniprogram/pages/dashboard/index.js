@@ -453,6 +453,7 @@ Page({
     // 算法建议
     const algoAction = plan.action; // buy/sell/hold
     const aiAction = sig.action;    // buy/sell/hold
+    const autoFilled = !!sig._autoFilled;
 
     // 综合判定
     let finalAction, finalLabel, posAdj, reason;
@@ -491,6 +492,7 @@ Page({
       finalLabel,
       posAdj,
       reason,
+      autoFilled,
       algoLabel: algoAction === 'buy' ? '加仓' : algoAction === 'sell' ? '减仓' : '持有',
       aiLabel: sig.actionLabel,
       aiConfidence: sig.confidenceStr,
