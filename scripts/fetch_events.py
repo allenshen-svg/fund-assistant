@@ -718,17 +718,20 @@ fund_keywords 字段应包含能匹配到基金名称/类型的关键词，如: 
         }
     )
 
-    try:
-        with urlopen(req, timeout=90, context=_ssl_ctx()) as resp:
-            result = json.loads(resp.read().decode('utf-8'))
-            content = result['choices'][0]['message']['content']
-            # strip markdown code fences
-            content = re.sub(r'```json\s*', '', content)
-            content = re.sub(r'```\s*', '', content)
-            return json.loads(content.strip())
-    except Exception as e:
-        print(f"[ERROR] LLM call failed: {e}", file=sys.stderr)
-        return None
+    for attempt in range(2):
+        try:
+            with urlopen(req, timeout=180, context=_ssl_ctx()) as resp:
+                result = json.loads(resp.read().decode('utf-8'))
+                content = result['choices'][0]['message']['content']
+                # strip markdown code fences
+                content = re.sub(r'```json\s*', '', content)
+                content = re.sub(r'```\s*', '', content)
+                return json.loads(content.strip())
+        except Exception as e:
+            print(f"[ERROR] LLM call failed (attempt {attempt+1}/2): {e}", file=sys.stderr)
+            if attempt == 0:
+                import time as _t; _t.sleep(5)
+    return None
 
 
 # ==================== 数据组装 ====================
