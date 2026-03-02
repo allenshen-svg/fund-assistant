@@ -244,22 +244,29 @@ def scheduler_loop():
 
 # ==================== 启动后台采集线程 ====================
 _scheduler_started = False
+_scheduler_lock = threading.Lock()
+
 def _ensure_scheduler():
     global _scheduler_started
     if _scheduler_started:
         return
-    _scheduler_started = True
-    t = threading.Thread(target=scheduler_loop, daemon=True)
-    t.start()
-    print('[scheduler] 定时采集线程已启动')
+    with _scheduler_lock:
+        if _scheduler_started:          # double-check
+            return
+        _scheduler_started = True
+        t = threading.Thread(target=scheduler_loop, daemon=True)
+        t.start()
+        print('[scheduler] 定时采集线程已启动')
 
-# gunicorn 兼容：通过 before_first_request 在第一次请求时启动采集线程
-# 避免多 worker fork 时重复启动
+# gunicorn 兼容：通过 before_request 在第一次请求时启动采集线程
 @app.before_request
 def _lazy_start_scheduler():
     _ensure_scheduler()
-    # 只需执行一次，之后移除此 hook
-    app.before_request_funcs[None].remove(_lazy_start_scheduler)
+    # 安全移除：避免并发 remove 导致 ValueError
+    try:
+        app.before_request_funcs[None].remove(_lazy_start_scheduler)
+    except (ValueError, KeyError):
+        pass
 
 # ==================== 入口 ======================================
 if __name__ == '__main__':
