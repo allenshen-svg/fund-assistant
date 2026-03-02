@@ -206,46 +206,7 @@
   display: block;
 }
 
-/* ====== 热度雷达 ====== */
-.heatbar-list {
-  display: flex;
-  flex-direction: column;
-  gap: 14rpx;
-}
-.heatbar-row {
-  display: flex;
-  align-items: center;
-  gap: 12rpx;
-}
-.heatbar-kw {
-  width: 120rpx;
-  font-size: 24rpx;
-  font-weight: 600;
-  color: var(--text);
-}
-.heatbar-track {
-  flex: 1;
-  height: 20rpx;
-  background: var(--elevated-3);
-  border-radius: 10rpx;
-  overflow: hidden;
-}
-.heatbar-fill {
-  height: 100%;
-  border-radius: 10rpx;
-  transition: width 0.6s ease;
-}
-.heatbar-fill.heat-top    { background: linear-gradient(90deg, #ef4444, #f87171); }
-.heatbar-fill.heat-normal { background: linear-gradient(90deg, #6366f1, #818cf8); }
-.heatbar-val {
-  width: 80rpx;
-  text-align: right;
-  font-size: 22rpx;
-  color: var(--text-body);
-  font-weight: 600;
-}
-
-/* ====== 操作指南 ====== */
+/* ====== 操作指南 ====== -->
 .action-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);

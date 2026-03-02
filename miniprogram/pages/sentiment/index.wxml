@@ -107,23 +107,6 @@
     </view>
   </view>
 
-  <!-- ====== 热度雷达 ====== -->
-  <view class="card" wx:if="{{heatbars.length > 0}}">
-    <view class="card-header" bindtap="toggleSection" data-key="secHeatbar">
-      <text class="title">📊 热度雷达</text>
-      <text class="toggle-icon">{{secHeatbar ? '▼' : '▶'}}</text>
-    </view>
-    <view class="heatbar-list" wx:if="{{secHeatbar}}">
-      <view class="heatbar-row" wx:for="{{heatbars}}" wx:key="keyword">
-        <text class="heatbar-kw">{{item.keyword}}</text>
-        <view class="heatbar-track">
-          <view class="heatbar-fill {{item.barClass}}" style="width:{{item.barWidth}}%;"></view>
-        </view>
-        <text class="heatbar-val">{{item.heatStr}}</text>
-      </view>
-    </view>
-  </view>
-
   <!-- ====== 极简操作指南 ====== -->
   <view class="card" wx:if="{{holdingActions.length > 0}}">
     <view class="card-header" bindtap="toggleSection" data-key="secAction">

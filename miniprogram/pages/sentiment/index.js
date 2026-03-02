@@ -66,9 +66,6 @@ Page({
     // —— KOL vs 散户 ——
     kolSections: [],
 
-    // —— 热度雷达 ——
-    heatbars: [],
-
     // —— 操作指南 ——
     holdingActions: [],
     bullish: '',
@@ -99,7 +96,6 @@ Page({
     // —— 折叠控制 ——
     secUsMarket: false,
     secKol: true,
-    secHeatbar: true,
     secAction: true,
     secVideos: false,
     secReport: false,
@@ -317,8 +313,6 @@ Page({
         sentClass: sentClass(v.sentiment),
         isNoise: NOISE_RE.test(v.title || ''),
       }));
-
-      batch.heatbars = buildHeatbar(finItems);
     }
 
     // ========== 3. 隔夜美股 ==========
@@ -429,34 +423,4 @@ function classifyAction(advice) {
   if (/加仓|买入/.test(advice)) return 'bullish';
   if (/减仓|卖出|回避/.test(advice)) return 'bearish';
   return 'neutral';
-}
-
-function buildHeatbar(items) {
-  const heat = {};
-  HEAT_KEYWORDS.forEach(kw => { heat[kw] = 0; });
-  items.forEach(v => {
-    const text = (v.title || '') + (v.summary || '');
-    const likes = Math.max(1, (v.likes || 0) / 10000);
-    HEAT_KEYWORDS.forEach(kw => {
-      if (text.includes(kw)) heat[kw] += likes;
-    });
-  });
-  const sorted = Object.entries(heat)
-    .filter(([, v]) => v > 0)
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 8);
-  if (sorted.length === 0) return [];
-  const maxVal = Math.sqrt(sorted[0][1]);
-  return sorted.map(([kw, v]) => {
-    let barWidth = Math.round(Math.sqrt(v) / maxVal * 100);
-    // Floor at 15% so even small entries are visible (与 H5 同步)
-    if (barWidth < 15) barWidth = 15;
-    return {
-      keyword: kw,
-      heat: v,
-      heatStr: v >= 1 ? v.toFixed(1) + '万' : (v * 10000).toFixed(0),
-      barWidth: barWidth,
-      barClass: v === sorted[0][1] ? 'heat-top' : 'heat-normal',
-    };
-  });
 }
