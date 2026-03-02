@@ -463,6 +463,8 @@ Page({
   },
 
   // ====== 添加相关 ======
+  noop() {},
+
   toggleAdd() {
     const show = !this.data.showAdd;
     this.setData({
