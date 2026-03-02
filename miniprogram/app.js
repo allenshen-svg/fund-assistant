@@ -7,7 +7,7 @@ App({
     },
     defaultSettings: {
       useRemote: true,
-      apiBase: 'https://allenshen-svg.github.io/fund-assistant',
+      apiBase: 'https://xiaoniqiu.top',
       serverUrl: 'https://xiaoniqiu.top'  // 正式域名（HTTPS）
     },
     // 内置基金数据库 (与 H5 同步)
