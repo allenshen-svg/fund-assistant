@@ -52,22 +52,22 @@ run_cmd(f"cat > /tmp/test_etf.py << 'PYEOF'\n{test_script}\nPYEOF", timeout=5)
 # Force update server code
 run_cmd('cd /opt/fund-assistant && git stash 2>/dev/null; git pull origin main 2>&1', timeout=30)
 run_cmd('cd /opt/fund-assistant && git log --oneline -1', timeout=5)
-# Restart service
-run_cmd('kill -9 $(pgreg -f gunicorn) 2>/dev/null; sleep 1; systemctl start fund-assistant && echo started', timeout=15)
-time.sleep(4)
+run_cmd('kill -9 $(pgrep -f gunicorn) 2>/dev/null; sleep 2; systemctl start fund-assistant && echo started', timeout=15)
+time.sleep(5)
 run_cmd('systemctl is-active fund-assistant', timeout=5)
 
-# Wait for scheduler initial run to complete
+# Wait for the initial scheduler run
 import time as _t
 for i in range(90):
     result = run_cmd('curl -s http://localhost:8080/api/status 2>/dev/null', timeout=10)
-    if '"collecting":false' in result and '"last_hot_events"' in result:
+    if '"collecting":false' in result:
         print('Initial run complete!')
         break
-    print(f'Waiting... ({i+1}/90)')
+    if i > 0:
+        print(f'Waiting... ({i+1}/90)')
     _t.sleep(5)
 
-# Now trigger a fresh refresh to get new ETF data
+# Trigger fresh refresh
 run_cmd('curl -s -X POST http://localhost:8080/api/refresh 2>&1', timeout=10)
 _t.sleep(2)
 
@@ -77,10 +77,11 @@ for i in range(90):
     if '"collecting":false' in result:
         print('Refresh done!')
         break
-    print(f'Refreshing... ({i+1}/90)')
+    if i > 0:
+        print(f'Refreshing... ({i+1}/90)')
     _t.sleep(5)
 
-# Check heatmap
-run_cmd("curl -s http://localhost:8080/api/hot-events | python3 -c \"import sys,json; d=json.load(sys.stdin); hm=d.get('heatmap',[]); print(f'Total: {len(hm)} items'); [print(f\\\"{h['tag']:8s} trend={h['trend']:6s} pct={str(h.get('real_pct','N/A')):>7} temp={h['temperature']}\\\") for h in hm]\" 2>&1", timeout=15)
+# Check heatmap - all 20 tags
+run_cmd("curl -s http://localhost:8080/api/hot-events | python3 -c \"import sys,json; d=json.load(sys.stdin); hm=d.get('heatmap',[]); total=len(hm); has_pct=sum(1 for h in hm if h.get('real_pct') is not None); print(f'Total: {total} items, {has_pct}/{total} have real_pct'); [print(f\\\"{h['tag']:8s} trend={h['trend']:6s} pct={str(h.get('real_pct','N/A')):>7} temp={h['temperature']}\\\") for h in hm]\" 2>&1", timeout=15)
 ssh.close()
 print('Deploy done')

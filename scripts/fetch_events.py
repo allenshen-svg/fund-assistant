@@ -663,12 +663,14 @@ def call_llm(news_items):
 如果新闻中有涉及有色金属(铜、铝、锌、稀土、锂等)、原油/油气、黄金白银等大宗商品的内容，务必单独提取为事件。
 如果新闻中有涉及国际地缘冲突(美伊、俄乌、中美、红海等)的内容，务必单独提取为事件并标注影响的板块(如油气、军工、黄金等)。
 
-**极其重要的板块影响判定规则（必须遵守！）：**
+**极其重要的板块影响判定规则（必须遵守！违反将产生严重错误！）：**
+- 伊朗/以色列/中东战争/导弹/袭击 → sectors_positive 必须包含 ["原油", "黄金", "军工"]，绝对不能放在 sectors_negative
 - 地缘冲突(战争/袭击/制裁/封锁) → 原油/油气/能源 应放入 sectors_positive（供应中断=价格上涨=利好能源板块）
 - 地缘冲突 → 黄金/贵金属/军工 应放入 sectors_positive（避险需求+军费增加）
 - 地缘冲突 → 消费/贸易 可放入 sectors_negative（经济不确定性）
 - 战争/制裁导致石油供应紧张 = 油价上涨 = 能源公司受益 = sectors_positive: ["原油", "油气", "能源"]
 - 切记：不要把"油价上涨导致的能源成本增加"理解为对能源板块不利。能源板块就是卖油的，油价涨=利好能源。
+- ⚠️ 禁止将 "原油"/"油气"/"能源" 放入战争/地缘事件的 sectors_negative！
 
 sectors_positive 和 sectors_negative 字段应使用以下标准板块名：
 AI/科技、半导体、算力、AIGC、新能源、光伏、锂电、新能源车、消费、食品饮料、白酒、医药、创新药、
@@ -838,6 +840,49 @@ def enrich_event(evt, idx, now):
 
     if 'sectors_negative' not in evt:
         evt['sectors_negative'] = []
+
+    # ============ 板块归属强制修正 ============
+    # 1) 地缘冲突事件: 能源/原油/油气 必须在 sectors_positive（LLM常犯错）
+    _GEO_KEYWORDS = ['伊朗', '以色列', '中东', '战争', '袭击', '导弹',
+                      '军事', '冲突', '制裁', '封锁', '红海', '胡塞',
+                      '俄乌', '乌克兰', '轰炸', '战机', '伊以',
+                      '霍尔木兹', '美军', '空袭', '入侵']
+    _ENERGY_SECTORS = {'能源', '原油', '油气', '石油'}
+    _GEO_POSITIVE_SECTORS = _ENERGY_SECTORS | {'黄金', '贵金属', '军工', '国防'}
+    title = evt.get('title', '')
+    is_geo = any(kw in title for kw in _GEO_KEYWORDS) or evt.get('category') == 'geopolitics'
+    if is_geo:
+        neg = evt.get('sectors_negative', [])
+        pos = evt.get('sectors_positive', [])
+        # 把被误放到negative的能源/黄金/军工移到positive
+        moved = [s for s in neg if s in _GEO_POSITIVE_SECTORS]
+        if moved:
+            evt['sectors_negative'] = [s for s in neg if s not in _GEO_POSITIVE_SECTORS]
+            evt['sectors_positive'] = list(dict.fromkeys(pos + moved))
+        # 确保能源相关sector一定出现在positive
+        if not any(s in _ENERGY_SECTORS for s in evt['sectors_positive']):
+            evt['sectors_positive'].append('原油')
+
+    # 2) 板块名规范化 → 统一为 MARKET_TAGS 中的标准名
+    _SECTOR_NORMALIZE = {
+        '能源': '原油', '油气': '原油', '石油': '原油',
+        '贵金属': '黄金', '铜铝': '有色金属',
+        '国防': '军工', '大宗商品': '有色金属',
+        'AI/科技': '人工智能', '科技': '人工智能',
+        '算力': 'AI算力', 'AIGC': '大模型',
+        '芯片': '半导体', '食品饮料': '消费',
+        '创新药': '医药', '高股息': '红利',
+        '固收': '债券', '金融': '宽基', '银行': '宽基',
+        '港股互联网': '港股科技', '恒生科技': '港股科技',
+    }
+    for field in ('sectors_positive', 'sectors_negative'):
+        raw = evt.get(field, [])
+        normalized = []
+        for s in raw:
+            ns = _SECTOR_NORMALIZE.get(s, s)
+            if ns not in normalized:
+                normalized.append(ns)
+        evt[field] = normalized
 
     # 计算 confidence (sentiment强度 + impact级别)
     sentiment = evt.get('sentiment', 0)
