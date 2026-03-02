@@ -385,7 +385,14 @@ Page({
         aiMarketTemp: result.marketTemperature || 50,
       });
       this._mergeAIIntoPlans();
-      wx.showToast({ title: 'AI 分析完成 ✅', icon: 'success' });
+      const sigCount = (formatted.signals || []).length;
+      const recoCount = (formatted.recommendations || []).length;
+      wx.showModal({
+        title: '✅ AI 分析完成',
+        content: '已分析 ' + sigCount + ' 只持仓基金' + (recoCount > 0 ? '，并推荐 ' + recoCount + ' 只潜力基金' : '') + '。\n\n结果已自动合并到每只基金的行动方案中，可展开查看「AI 加减仓方案」。',
+        showCancel: false,
+        confirmText: '知道了',
+      });
     } catch (e) {
       this.setData({ aiLoading: false });
       const msg = e.message || '未知错误';
