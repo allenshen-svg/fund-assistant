@@ -185,16 +185,21 @@
     <button class="btn" bindtap="toggleAdd">➕ 添加基金</button>
   </view>
 
-  <!-- ====== 添加基金面板 ====== -->
-  <view class="card add-panel" wx:if="{{showAdd}}">
-    <view class="card-header">
+</view>
+
+<!-- ====== 添加基金弹窗（浮层） ====== -->
+<view class="modal-mask" wx:if="{{showAdd}}" bindtap="toggleAdd">
+  <view class="modal-panel" catchtap="">
+    <!-- 标题栏 -->
+    <view class="modal-header">
       <text class="title">➕ 添加基金</text>
+      <text class="modal-close" bindtap="toggleAdd">✕</text>
     </view>
 
     <!-- 搜索区域 -->
     <view class="search-row">
       <input class="input search-input" type="number" maxlength="6"
-             placeholder="输入6位基金代码" value="{{code}}"
+             placeholder="输入6位基金代码" value="{{code}}" focus="{{showAdd}}"
              bindinput="onCodeInput" bindconfirm="doSearchFund" />
       <button class="btn small search-btn" bindtap="doSearchFund"
               disabled="{{searching}}">{{searching ? '查询中...' : '🔍 查找'}}</button>
@@ -235,5 +240,4 @@
       <button class="btn" style="margin-top:16rpx;" bindtap="addHolding">确认添加</button>
     </view>
   </view>
-
 </view>
