@@ -20,6 +20,7 @@ from scripts.infra import infra, env  # noqa: F401
 from flask import Flask, jsonify, send_from_directory, request
 from scripts.collector import collect_and_save, load_cache, load_us_market_cache, fetch_us_market, CACHE_FILE
 from scripts.analyzer import load_analysis_cache, analyze_and_save, ANALYSIS_CACHE
+from scripts.fetch_events import main as fetch_hot_events
 
 app = Flask(__name__, static_folder=None)
 
@@ -68,6 +69,10 @@ def api_refresh():
         with _collecting_lock:
             _collecting = True
             try:
+                try:
+                    fetch_hot_events()
+                except Exception as e:
+                    print(f'[手动刷新] 热点事件采集失败: {e}')
                 collect_and_save()
             finally:
                 _collecting = False
@@ -77,11 +82,34 @@ def api_refresh():
     return jsonify({'status': 'started', 'message': '采集已启动'})
 
 
+@app.route('/api/hot-events')
+def api_hot_events():
+    """返回最新热点事件数据（与 /data/hot_events.json 相同内容，但走 API 路由）"""
+    hot_path = os.path.join(ROOT_DIR, 'data', 'hot_events.json')
+    if not os.path.exists(hot_path):
+        return jsonify({'error': '暂无热点数据'}), 404
+    try:
+        with open(hot_path, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+        return jsonify(data)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
 @app.route('/api/status')
 def api_status():
     """服务状态"""
     cache = load_cache()
     analysis = load_analysis_cache()
+    hot_path = os.path.join(ROOT_DIR, 'data', 'hot_events.json')
+    hot_updated = None
+    if os.path.exists(hot_path):
+        try:
+            with open(hot_path, 'r', encoding='utf-8') as f:
+                hd = json.load(f)
+            hot_updated = hd.get('updated_at')
+        except Exception:
+            pass
     return jsonify({
         'server': 'running',
         'collecting': _collecting,
@@ -89,6 +117,7 @@ def api_status():
         'analysis_exists': analysis is not None,
         'last_fetch': cache.get('fetch_time') if cache else None,
         'last_analysis': analysis.get('analysis_time') if analysis else None,
+        'last_hot_events': hot_updated,
         'total_items': cache.get('total', 0) if cache else 0,
         'interval_sec': COLLECT_INTERVAL,
     })
@@ -188,6 +217,14 @@ def scheduler_loop():
                 _collecting = True
                 try:
                     print(f'\n[定时任务] {datetime.now().strftime("%Y-%m-%d %H:%M:%S")} [{trading_label}] 开始自动采集...')
+                    # 1. 采集热点事件（宏观新闻 + AI结构化提取）
+                    try:
+                        print('[定时任务] 📡 采集热点事件...')
+                        fetch_hot_events()
+                        print('[定时任务] ✅ 热点事件采集完成')
+                    except Exception as e:
+                        print(f'[定时任务] ⚠️ 热点事件采集失败: {e}')
+                    # 2. 采集舆情数据 + AI 分析
                     collect_and_save()
                     print(f'[定时任务] 采集完成，下次: {interval}秒({interval//60}分钟)后\n')
                 except Exception as e:
