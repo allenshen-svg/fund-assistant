@@ -757,6 +757,54 @@ def compute_trend(current_temp, prev_data, tag):
     return 'stable'
 
 
+def _fetch_realtime_market_pct():
+    """获取关键 ETF/期货 实时涨跌幅，用于修正热力图趋势方向
+    返回 {tag: pct} 映射，tag 与 MARKET_TAGS 对齐"""
+    # ETF/指数代码 → 板块tag映射
+    etf_map = {
+        '1.512400': '有色金属',   # 有色金属ETF
+        '1.518880': '黄金',       # 黄金ETF
+        '1.161226': '白银',       # 白银LOF (归入贵金属)
+        '1.516380': '半导体',     # 半导体ETF
+        '1.159819': '人工智能',   # 人工智能ETF
+        '0.159792': '军工',       # 军工ETF
+        '1.512690': '白酒',       # 白酒LOF
+        '1.510300': '宽基',       # 沪深300ETF
+    }
+    # 期货主力 → tag映射
+    futures_map = {
+        '113.AU0': '黄金',
+        '113.AG0': '白银',
+        '113.SC0': '原油',
+        '113.CU0': '有色金属',
+    }
+    all_codes = list(etf_map.keys()) + list(futures_map.keys())
+    secids = ','.join(all_codes)
+    url = f'https://push2.eastmoney.com/api/qt/ulist.np/get?fltt=2&fields=f2,f3,f4,f12,f14&secids={secids}'
+    result = {}
+    try:
+        req = Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+        with urlopen(req, timeout=8, context=_ssl_ctx()) as resp:
+            data = json.loads(resp.read().decode())
+        items = (data.get('data') or {}).get('diff') or []
+        # 按原始secid顺序匹配
+        for item in items:
+            code_num = str(item.get('f12', ''))
+            pct = item.get('f3')
+            if pct is None:
+                continue
+            # 查找 code_num 对应的 secid (可能是 1.xxx 或 0.xxx 或 113.xxx)
+            for secid, tag in {**etf_map, **futures_map}.items():
+                if secid.split('.')[-1] == code_num or secid.endswith('.' + code_num):
+                    # ETF 优先于期货
+                    if tag not in result or secid in etf_map:
+                        result[tag] = float(pct)
+                    break
+    except Exception as e:
+        print(f'  [WARN] 实时行情获取失败: {e}')
+    return result
+
+
 def enrich_event(evt, idx, now):
     """补全事件字段, 计算impact/confidence, 生成id"""
     # 从concepts推导 sectors_positive/negative (如果LLM没返回)
@@ -1149,6 +1197,21 @@ def build_output(llm_result, prev_data, now, all_news=None, xueqiu_data=None, an
     for tag in MARKET_TAGS:
         if tag not in existing_tags:
             heatmap.append({"tag": tag, "temperature": 50, "sentiment": 0, "trend": "stable"})
+
+    # 用真实行情数据修正热力图趋势方向（LLM 温度对比不可靠）
+    real_pct = _fetch_realtime_market_pct()
+    if real_pct:
+        for h in heatmap:
+            pct = real_pct.get(h['tag'])
+            if pct is not None:
+                h['trend'] = 'up' if pct > 0.5 else ('down' if pct < -0.5 else 'stable')
+                h['real_pct'] = round(pct, 2)
+                # 涨跌明显时提高温度
+                if abs(pct) >= 2:
+                    h['temperature'] = max(h['temperature'], 75)
+                elif abs(pct) >= 1:
+                    h['temperature'] = max(h['temperature'], 60)
+
     heatmap.sort(key=lambda x: x['temperature'], reverse=True)
 
     # 市场总览分数

@@ -46,7 +46,7 @@ App({
       { code:'1.000300', name:'沪深300', short:'300' },
       { code:'1.518880', name:'黄金ETF', short:'金' },
       { code:'1.161226', name:'白银LOF', short:'银' },
-      { code:'0.159980', name:'有色50', short:'色' },
+      { code:'1.512400', name:'有色金属', short:'色' },
     ],
     // 大宗商品 (期货/ETF 实时行情)
     COMMODITIES: [

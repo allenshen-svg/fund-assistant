@@ -161,7 +161,8 @@ Page({
 
     // 热点事件
     const hotData = hotResult.status === 'fulfilled' ? hotResult.value : { source: 'local', data: { heatmap: [], events: [] } };
-    const heatmap = (hotData.data.heatmap || []).slice(0, 14);
+    // 用真实行情数据修正热力图趋势方向
+    const heatmap = this._fixHeatmapTrends((hotData.data.heatmap || []).slice(0, 14), commodities, indices);
     const allEvents = (hotData.data.events || []).map(item => {
       const rawReason = item.reason || '';
       const reasonHasAnalyst = rawReason.indexOf('分析师观点：') >= 0;
@@ -543,5 +544,62 @@ Page({
     setHoldings(holdings);
     wx.showToast({ title: '已添加到持仓', icon: 'success' });
     this.loadAll();
+  },
+
+  /**
+   * 用真实行情数据修正热力图趋势方向
+   * LLM 给出的 trend 基于新闻热度对比，不是真实涨跌，容易误导
+   * 这里用实际商品/ETF 涨跌幅覆盖对应板块的 trend
+   */
+  _fixHeatmapTrends(heatmap, commodities, indices) {
+    // 建立 tag → 实际涨跌幅 的映射
+    const realPct = {};
+
+    // 从大宗商品提取涨跌
+    const commMap = {
+      '金': '黄金', '银': '白银', '铜': '有色金属', '铝': '有色金属',
+      '锌': '有色金属', '镍': '有色金属', '油': '原油', '燃': '原油',
+      '钢': '基建', '铁': '基建',
+    };
+    (commodities || []).forEach(c => {
+      const tag = commMap[c.short];
+      if (tag && c.pct != null) {
+        // 同一tag取最大绝对值的那个
+        if (!realPct[tag] || Math.abs(c.pct) > Math.abs(realPct[tag])) {
+          realPct[tag] = c.pct;
+        }
+      }
+    });
+
+    // 从指数ETF提取涨跌
+    const idxMap = {
+      '黄金ETF': '黄金', '白银LOF': '白银', '有色金属': '有色金属',
+    };
+    (indices || []).forEach(idx => {
+      const tag = idxMap[idx.name];
+      if (tag && idx.pct != null) {
+        // ETF涨跌优先级高于期货（因为反映A股资金方向）
+        realPct[tag] = idx.pct;
+      }
+    });
+
+    // 贵金属联动：黄金涨则贵金属也涨
+    if (realPct['黄金'] && !realPct['贵金属']) {
+      realPct['贵金属'] = realPct['黄金'];
+    }
+
+    // 修正heatmap trend
+    return heatmap.map(h => {
+      const pct = realPct[h.tag];
+      if (pct != null) {
+        const trend = pct > 0.5 ? 'up' : (pct < -0.5 ? 'down' : 'stable');
+        // 涨跌明显时同时提高/降低温度
+        let temp = h.temperature;
+        if (Math.abs(pct) >= 2) temp = Math.min(100, Math.max(temp, 75));
+        else if (Math.abs(pct) >= 1) temp = Math.min(100, Math.max(temp, 60));
+        return { ...h, trend, temperature: temp, realPct: pct };
+      }
+      return h;
+    });
   },
 });
