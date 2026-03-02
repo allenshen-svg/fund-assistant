@@ -117,7 +117,7 @@
       <view class="ai-trigger-btn {{aiLoading ? 'ai-btn-loading' : ''}} {{aiResult && !aiLoading ? 'ai-btn-done' : ''}}" bindtap="triggerAI">
         <view class="ai-btn-pulse" wx:if="{{aiLoading}}"></view>
         <text class="ai-btn-icon">{{aiLoading ? '⏳' : '🤖'}}</text>
-        <text class="ai-btn-label">{{aiLoading ? '分析中' : aiResult ? '更新AI' : 'AI分析'}}</text>
+        <text class="ai-btn-label">{{aiLoading ? '分析中' : 'AI分析'}}</text>
       </view>
     </view>
     <view class="overview-bar">

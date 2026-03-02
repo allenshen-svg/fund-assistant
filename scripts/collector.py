@@ -22,11 +22,11 @@ FINANCE_KW = [
     'AI','人工智能','算力','芯片','半导体','光模块','CPO','大模型','DeepSeek',
     '机器人','自动驾驶','新能源','光伏','锂电','碳酸锂','储能',
     '军工','国防','航天','白酒','消费','医药','创新药','CXO',
-    '黄金','金价','原油','油价','有色金属','铜','铝','稀土',
+    '黄金','金价','白银','银价','贵金属','铂金','钯金','原油','油价','有色金属','铜','铝','稀土','锌','镍','锡',
     '红利','高股息','银行','保险','券商','地产','房价','楼市','房地产',
     '央行','降息','降准','LPR','利率','通胀','CPI','GDP','PMI',
     '美联储','加息','国债','债券','汇率','人民币',
-    '关税','贸易战','制裁',
+    '关税','贸易战','制裁','地缘','冲突','战争',
     '基金','ETF','牛市','熊市','涨停','跌停','抄底','追高',
     '仓位','加仓','减仓','定投','主力','资金流','北向资金',
     '茅台','比亚迪','宁德','英伟达','NVIDIA','特斯拉','格力','万达',
@@ -39,6 +39,14 @@ FINANCE_KW = [
     '投资者','融资','融券','杠杆','做空','做多','止损',
     '证券','上市','港交所','外汇','利润','亏损','盈利','资产','负债',
     '经济','金融',
+]
+
+# 主动搜索关键词 — 确保热门投资话题有充分覆盖
+ACTIVE_SEARCH_KW = [
+    '黄金投资', '白银投资', '贵金属行情',
+    '半导体行情', 'AI芯片', '科技股',
+    '原油期货', '新能源基金',
+    '军工板块', '白酒基金',
 ]
 _kw_lower = [kw.lower() for kw in FINANCE_KW]
 
@@ -274,6 +282,34 @@ def fetch_eastmoney():
     except Exception as e:
         print(f'[东方财富-tophub] {e}')
 
+    # Source 3: 东方财富关键词搜索 (主动搜索贵金属/热门板块)
+    search_kw_em = ['黄金', '白银', '贵金属', '原油']
+    for kw in search_kw_em:
+        try:
+            r = requests.get(
+                f'https://search-api-web.eastmoney.com/search/jsonp?cb=&param=%7B%22uid%22%3A%22%22%2C%22keyword%22%3A%22{kw}%22%2C%22type%22%3A%5B%22cmsArticleWebOld%22%5D%2C%22client%22%3A%22web%22%2C%22clientType%22%3A%22web%22%2C%22clientVersion%22%3A%22curr%22%2C%22param%22%3A%7B%22cmsArticleWebOld%22%3A%7B%22searchScope%22%3A%22default%22%2C%22sort%22%3A%22default%22%2C%22pageIndex%22%3A1%2C%22pageSize%22%3A10%2C%22preTag%22%3A%22%22%2C%22postTag%22%3A%22%22%7D%7D%7D',
+                headers=HEADERS, timeout=TIMEOUT)
+            text = r.text.strip().lstrip('(').rstrip(');')
+            data = json.loads(text)
+            articles = (data.get('result') or {}).get('cmsArticleWebOld') or []
+            for item in articles:
+                title = (item.get('title') or '').strip()
+                summary = (item.get('content') or '')[:200].strip()
+                if title and title not in seen:
+                    seen.add(title)
+                    items.append({
+                        'title': title[:80],
+                        'summary': summary or title,
+                        'likes': 0,
+                        'platform': '东方财富',
+                        'source_type': f'搜索-{kw}',
+                        'sentiment': estimate_sentiment(title + ' ' + summary),
+                        'creator_type': '财经资讯平台',
+                        'publish_time': item.get('date') or now_iso(),
+                    })
+        except Exception as e:
+            print(f'[东方财富-搜索-{kw}] {e}')
+
     return items
 
 def fetch_cailian():
@@ -474,6 +510,49 @@ def fetch_bilibili():
                 })
     except Exception as e:
         print(f'[B站-排行] {e}')
+
+    # Source 4: 主动关键词搜索（补充 KOL 深度内容）
+    search_headers = {
+        **HEADERS,
+        'Referer': 'https://search.bilibili.com/',
+    }
+    for kw in ACTIVE_SEARCH_KW:
+        if len(items) >= 80:
+            break
+        try:
+            r = requests.get(
+                'https://api.bilibili.com/x/web-interface/wbi/search/type',
+                params={
+                    'search_type': 'video',
+                    'keyword': kw,
+                    'order': 'click',
+                    'duration': 1,   # 最近一天
+                    'page': 1,
+                    'pagesize': 10,
+                },
+                headers=search_headers, timeout=TIMEOUT)
+            data = r.json()
+            for item in (data.get('data') or {}).get('result') or []:
+                title = re.sub(r'<[^>]+>', '', item.get('title') or '').strip()
+                desc = re.sub(r'<[^>]+>', '', item.get('description') or '').strip()
+                author = item.get('author') or ''
+                views = safe_int(item.get('play'))
+                if title and is_finance(title + ' ' + desc) and title not in seen:
+                    seen.add(title)
+                    items.append({
+                        'title': title[:80],
+                        'summary': (desc[:200] or title),
+                        'likes': views,
+                        'platform': 'B站',
+                        'source_type': f'搜索-{kw}',
+                        'sentiment': estimate_sentiment(title + ' ' + desc),
+                        'creator_type': '视频博主',
+                        'creator_name': author,
+                        'publish_time': now_iso(),
+                    })
+            time.sleep(0.3)  # 避免限流
+        except Exception as e:
+            print(f'[B站-搜索-{kw}] {e}')
 
     return items
 
