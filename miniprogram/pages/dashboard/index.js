@@ -574,6 +574,7 @@ Page({
     // 从指数ETF提取涨跌
     const idxMap = {
       '黄金ETF': '黄金', '白银LOF': '白银', '有色金属': '有色金属',
+      '油气ETF': '原油',
     };
     (indices || []).forEach(idx => {
       const tag = idxMap[idx.name];
