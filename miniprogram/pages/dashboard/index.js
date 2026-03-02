@@ -393,6 +393,10 @@ Page({
       let content = msg;
       if (msg.includes('timeout') || msg.includes('超时')) {
         content = 'AI分析超时，可能原因：\n1. 网络不稳定\n2. AI服务器繁忙\n\n建议：稍后重试，或在设置中切换AI模型';
+      } else if (msg.includes('截断') || msg.includes('过长')) {
+        content = msg + '\n\n提示：持仓基金数量较多时，AI输出可能超长被截断。可尝试：\n1. 重新运行（通常第二次会成功）\n2. 在设置中切换更强的AI模型';
+      } else if (msg.includes('无法解析') || msg.includes('格式')) {
+        content = msg + '\n\n可尝试：重新运行AI分析，或切换AI模型';
       }
       wx.showModal({ title: 'AI 分析失败', content });
     }

@@ -228,7 +228,7 @@ function callAI(apiBase, apiKey, model, systemPrompt, userPrompt, temperature = 
           { role: 'user', content: userPrompt },
         ],
         temperature,
-        max_tokens: 4096,
+        max_tokens: 8192,
       },
       success(res) {
         if (res.statusCode !== 200) {
@@ -253,16 +253,62 @@ function parseAIResponse(raw) {
   let cleaned = raw.replace(/<think>[\s\S]*?<\/think>/g, '').trim();
   // 去掉 markdown 代码块
   cleaned = cleaned.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
+
+  // 策略1: 直接解析
   try {
     return JSON.parse(cleaned);
   } catch (e) {
-    // 尝试提取第一个 { ... }
-    const m = cleaned.match(/\{[\s\S]*\}/);
-    if (m) {
-      try { return JSON.parse(m[0]); } catch (_) {}
-    }
-    return null;
+    console.warn('[AI] 直接解析失败:', e.message);
   }
+
+  // 策略2: 提取第一个 { ... }
+  const m = cleaned.match(/\{[\s\S]*\}/);
+  if (m) {
+    try { return JSON.parse(m[0]); } catch (_) {
+      console.warn('[AI] 提取JSON对象解析失败');
+    }
+  }
+
+  // 策略3: 尝试修复截断的JSON（AI输出被 max_tokens 截断）
+  const jsonStart = cleaned.indexOf('{');
+  if (jsonStart >= 0) {
+    let partial = cleaned.slice(jsonStart);
+    // 尝试补全截断的JSON
+    for (let tries = 0; tries < 10; tries++) {
+      partial += tries === 0 ? ']}' : '}';
+      try {
+        const obj = JSON.parse(partial);
+        console.warn('[AI] 通过补全截断JSON成功解析');
+        return obj;
+      } catch (_) {}
+    }
+    // 尝试截断到最后一个完整的 signal/recommendation 对象
+    try {
+      // 找到最后一个完整的 } 后的尾部，截断并补全
+      const lastBrace = cleaned.lastIndexOf('}');
+      if (lastBrace > jsonStart) {
+        let truncated = cleaned.slice(jsonStart, lastBrace + 1);
+        // 计算缺少的括号
+        let openBraces = 0, openBrackets = 0;
+        for (const ch of truncated) {
+          if (ch === '{') openBraces++;
+          else if (ch === '}') openBraces--;
+          else if (ch === '[') openBrackets++;
+          else if (ch === ']') openBrackets--;
+        }
+        // 补全括号
+        while (openBrackets > 0) { truncated += ']'; openBrackets--; }
+        while (openBraces > 0) { truncated += '}'; openBraces--; }
+        const obj = JSON.parse(truncated);
+        console.warn('[AI] 通过括号补全成功解析');
+        return obj;
+      }
+    } catch (_) {
+      console.warn('[AI] 括号补全解析也失败');
+    }
+  }
+
+  return null;
 }
 
 /* ====== 主入口：运行 AI 分析 ====== */
@@ -306,7 +352,22 @@ signals 数组必须包含这 ${holdings.length} 只基金的分析结果，不�
   );
 
   const result = parseAIResponse(raw);
-  if (!result) throw new Error('AI 返回格式异常，请重试');
+  if (!result) {
+    // 保存原始响应以便debug
+    console.error('[AI] 解析失败，原始nraw长度:', raw ? raw.length : 0);
+    console.error('[AI] raw前500字符:', raw ? raw.substring(0, 500) : '(empty)');
+    console.error('[AI] raw后500字符:', raw ? raw.substring(Math.max(0, raw.length - 500)) : '(empty)');
+    wx.setStorageSync('fa_mp_ai_debug', {
+      date: todayStr(),
+      rawLength: raw ? raw.length : 0,
+      rawHead: raw ? raw.substring(0, 1000) : '',
+      rawTail: raw ? raw.substring(Math.max(0, raw.length - 500)) : '',
+    });
+    const hint = raw && raw.length > 7000
+      ? 'AI输出过长被截断，建议减少持仓数量或切换模型后重试'
+      : 'AI返回内容无法解析为JSON，请重试或切换模型';
+    throw new Error(hint);
+  }
 
   // ====== 自动补全：检查并填充 AI 遗漏的基金 ======
   if (result.signals && holdings.length > 0) {
