@@ -784,6 +784,14 @@ def _fetch_realtime_market_pct():
         '0.159930': '新能源',     # 能源ETF
         '1.515880': '消费',       # 消费ETF
         '0.159828': '医药',       # 医药ETF
+        '1.515070': 'AI算力',     # AI算力ETF
+        '1.562500': '机器人',     # 机器人ETF
+        '0.159857': '光伏',       # 光伏ETF
+        '0.159840': '锂电',       # 锂电池ETF
+        '1.515030': '新能源车',   # 新能源车ETF
+        '1.513180': '港股科技',   # 恒生科技ETF
+        '1.515080': '红利',       # 红利ETF
+        '1.511260': '债券',       # 十年国债ETF
     }
     # 期货主力 → tag映射
     futures_map = {
@@ -1215,6 +1223,9 @@ def build_output(llm_result, prev_data, now, all_news=None, xueqiu_data=None, an
     # 用真实行情数据修正热力图趋势方向（LLM 温度对比不可靠）
     real_pct = _fetch_realtime_market_pct()
     if real_pct:
+        # 大模型与人工智能共享行情
+        if '人工智能' in real_pct and '大模型' not in real_pct:
+            real_pct['大模型'] = real_pct['人工智能']
         for h in heatmap:
             pct = real_pct.get(h['tag'])
             if pct is not None:

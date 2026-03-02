@@ -372,14 +372,15 @@
       <text class="title">🌡️ 板块热力</text>
     </view>
     <view class="heat-grid">
-      <view class="heat-chip" wx:for="{{heatmap}}" wx:key="tag"
-            style="background:rgba({{item.temperature > 70 ? '239,68,68' : item.temperature > 50 ? '251,146,60' : '34,197,94'}}, {{item.temperature / 200}});">
+      <view class="heat-chip heat-{{item.trend}}" wx:for="{{heatmap}}" wx:key="tag"
+            style="opacity:{{0.55 + item.temperature / 200}};">
         <text class="heat-tag">{{item.tag}}</text>
         <view class="heat-bottom">
-          <text class="heat-val">{{item.temperature}}°</text>
-          <text class="heat-trend" wx:if="{{item.trend === 'up'}}" style="color:#ef4444;">▲</text>
-          <text class="heat-trend" wx:if="{{item.trend === 'down'}}" style="color:#22c55e;">▼</text>
-          <text class="heat-trend" wx:if="{{item.trend === 'stable'}}" style="color:#999;">—</text>
+          <text class="heat-pct" wx:if="{{item.realPct != null}}">{{item.realPct > 0 ? '+' : ''}}{{item.realPct}}%</text>
+          <text class="heat-pct" wx:else>{{item.temperature}}°</text>
+          <text class="heat-trend-arrow" wx:if="{{item.trend === 'up'}}">▲</text>
+          <text class="heat-trend-arrow" wx:if="{{item.trend === 'down'}}">▼</text>
+          <text class="heat-trend-arrow" wx:if="{{item.trend === 'stable'}}">—</text>
         </view>
       </view>
     </view>

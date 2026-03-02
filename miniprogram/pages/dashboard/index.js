@@ -548,11 +548,10 @@ Page({
 
   /**
    * 用真实行情数据修正热力图趋势方向
-   * LLM 给出的 trend 基于新闻热度对比，不是真实涨跌，容易误导
-   * 这里用实际商品/ETF 涨跌幅覆盖对应板块的 trend
+   * 优先使用服务端已附加的 real_pct，其次用客户端商品/ETF数据
    */
   _fixHeatmapTrends(heatmap, commodities, indices) {
-    // 建立 tag → 实际涨跌幅 的映射
+    // 建立 tag → 实际涨跌幅 的映射（客户端数据作为兜底）
     const realPct = {};
 
     // 从大宗商品提取涨跌
@@ -564,7 +563,6 @@ Page({
     (commodities || []).forEach(c => {
       const tag = commMap[c.short];
       if (tag && c.pct != null) {
-        // 同一tag取最大绝对值的那个
         if (!realPct[tag] || Math.abs(c.pct) > Math.abs(realPct[tag])) {
           realPct[tag] = c.pct;
         }
@@ -579,28 +577,27 @@ Page({
     (indices || []).forEach(idx => {
       const tag = idxMap[idx.name];
       if (tag && idx.pct != null) {
-        // ETF涨跌优先级高于期货（因为反映A股资金方向）
         realPct[tag] = idx.pct;
       }
     });
 
-    // 贵金属联动：黄金涨则贵金属也涨
+    // 贵金属联动
     if (realPct['黄金'] && !realPct['贵金属']) {
       realPct['贵金属'] = realPct['黄金'];
     }
 
     // 修正heatmap trend
     return heatmap.map(h => {
-      const pct = realPct[h.tag];
+      // 优先使用服务端已有的 real_pct
+      let pct = h.real_pct != null ? h.real_pct : realPct[h.tag];
       if (pct != null) {
         const trend = pct > 0.5 ? 'up' : (pct < -0.5 ? 'down' : 'stable');
-        // 涨跌明显时同时提高/降低温度
         let temp = h.temperature;
         if (Math.abs(pct) >= 2) temp = Math.min(100, Math.max(temp, 75));
         else if (Math.abs(pct) >= 1) temp = Math.min(100, Math.max(temp, 60));
-        return { ...h, trend, temperature: temp, realPct: pct };
+        return { ...h, trend, temperature: temp, realPct: Math.round(pct * 100) / 100 };
       }
-      return h;
+      return { ...h, realPct: null };
     });
   },
 });
