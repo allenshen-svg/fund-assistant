@@ -884,6 +884,10 @@ def enrich_event(evt, idx, now):
                 normalized.append(ns)
         evt[field] = normalized
 
+    # 3) 同一板块不能同时出现在positive和negative，positive优先
+    pos_set = set(evt.get('sectors_positive', []))
+    evt['sectors_negative'] = [s for s in evt.get('sectors_negative', []) if s not in pos_set]
+
     # 计算 confidence (sentiment强度 + impact级别)
     sentiment = evt.get('sentiment', 0)
     impact_level = evt.get('impact', 3)
