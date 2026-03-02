@@ -1201,19 +1201,21 @@ def build_output(llm_result, prev_data, now, all_news=None, xueqiu_data=None, an
     # === 全量事件补充分析师观点 ===
     events = _attach_analyst_views_to_events(events, analyst_views or [])
 
-    # 热度图: 补充趋势
-    heatmap = []
+    # 热度图: 补充趋势（去重：同tag取最高温度）
+    heatmap_dict = {}
     for h in llm_result.get('heatmap', []):
         tag = h.get('tag', '')
         if tag not in MARKET_TAGS:
             continue
         temp = max(0, min(100, h.get('temperature', 50)))
-        heatmap.append({
-            "tag": tag,
-            "temperature": temp,
-            "sentiment": round(h.get('sentiment', 0), 2),
-            "trend": compute_trend(temp, prev_data, tag),
-        })
+        if tag not in heatmap_dict or temp > heatmap_dict[tag]['temperature']:
+            heatmap_dict[tag] = {
+                "tag": tag,
+                "temperature": temp,
+                "sentiment": round(h.get('sentiment', 0), 2),
+                "trend": compute_trend(temp, prev_data, tag),
+            }
+    heatmap = list(heatmap_dict.values())
     # 确保所有标签都有热度数据
     existing_tags = {h['tag'] for h in heatmap}
     for tag in MARKET_TAGS:
