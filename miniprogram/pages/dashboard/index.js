@@ -349,11 +349,11 @@ Page({
       return;
     }
 
-    this.setData({ aiLoading: true, showAI: true });
-    wx.showLoading({ title: 'AI 深度分析中...', mask: true });
+    if (this.data.aiLoading) return; // 防止重复点击
+
+    this.setData({ aiLoading: true });
 
     try {
-      wx.showLoading({ title: '获取基金数据...', mask: true });
       const holdings = getHoldings();
       const codes = holdings.map(h => h.code);
       const [estimates, historyMap] = await Promise.all([
@@ -361,7 +361,6 @@ Page({
         require('../../utils/api').fetchMultiFundHistory(codes),
       ]);
 
-      wx.showLoading({ title: 'AI 分析中(约30-90秒)...', mask: true });
       const app = getApp();
       const result = await runAIAnalysis({
         holdings,
@@ -374,21 +373,21 @@ Page({
         fundDB: app.globalData.FUND_DB,
       });
 
+      const formatted = this._formatAIResult(result);
       this.setData({
-        aiResult: this._formatAIResult(result),
+        aiResult: formatted,
         aiTime: new Date().toLocaleString(),
         aiLoading: false,
-        aiRecommendations: this._formatAIResult(result).recommendations || [],
+        showAI: true,
+        aiRecommendations: formatted.recommendations || [],
         aiMarketOutlook: result.marketOutlook || '',
         aiSectorRotation: result.sectorRotation || '',
         aiMarketTemp: result.marketTemperature || 50,
       });
       this._mergeAIIntoPlans();
-      wx.hideLoading();
-      wx.showToast({ title: 'AI 分析完成', icon: 'success' });
+      wx.showToast({ title: 'AI 分析完成 ✅', icon: 'success' });
     } catch (e) {
       this.setData({ aiLoading: false });
-      wx.hideLoading();
       const msg = e.message || '未知错误';
       let content = msg;
       if (msg.includes('timeout') || msg.includes('超时')) {

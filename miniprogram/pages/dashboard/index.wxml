@@ -107,11 +107,18 @@
 
   <!-- ====== 实盘行动指南 ====== -->
   <view class="card">
-    <view class="card-header">
-      <text class="title">🎯 实盘行动指南</text>
-      <text class="chip {{overview.score >= 60 ? 'up' : overview.score <= 40 ? 'down' : 'gray'}}">
-        {{overview.label}} · {{overview.score}}分
-      </text>
+    <view class="card-header ag-guide-header">
+      <view class="ag-title-group">
+        <text class="title">🎯 实盘行动指南</text>
+        <text class="chip {{overview.score >= 60 ? 'up' : overview.score <= 40 ? 'down' : 'gray'}}">
+          {{overview.label}} · {{overview.score}}分
+        </text>
+      </view>
+      <view class="ai-trigger-btn {{aiLoading ? 'ai-btn-loading' : ''}} {{aiResult && !aiLoading ? 'ai-btn-done' : ''}}" bindtap="triggerAI">
+        <view class="ai-btn-pulse" wx:if="{{aiLoading}}"></view>
+        <text class="ai-btn-icon">{{aiLoading ? '⏳' : '🤖'}}</text>
+        <text class="ai-btn-label">{{aiLoading ? '分析中' : aiResult ? '更新AI' : 'AI分析'}}</text>
+      </view>
     </view>
     <view class="overview-bar">
       <view class="ob-item red"><text class="ob-num">{{overview.buy}}</text><text class="ob-label">加仓</text></view>
@@ -288,7 +295,7 @@
           </view>
         </view>
         <view wx:elif="{{!item.aiPlan}}" class="ai-fund-plan-empty">
-          <text class="sub">🤖 点击上方「运行 AI 分析」获取加减仓方案</text>
+          <text class="sub">🤖 点击顶部「AI分析」按钮获取加减仓方案</text>
         </view>
 
         <!-- 雷达图 (用 CSS bars 代替 SVG) -->
@@ -389,27 +396,28 @@
   </view>
 
   <!-- ====== AI 智能分析 ====== -->
-  <view class="card">
+  <view class="card" wx:if="{{aiResult || aiLoading}}">
     <view class="card-header sec-toggle" bindtap="toggleAI">
       <text class="title">🤖 AI 智能分析</text>
-      <text class="toggle-arrow">{{showAI ? '▲' : '▼'}}</text>
-    </view>
-    <view wx:if="{{!showAI}}" class="ai-summary-hint">
-      <text class="sub">{{aiResult ? '✅ 已有分析结果（' + aiTime + '）' : '点击展开运行 AI 分析'}}</text>
-    </view>
-    <view wx:if="{{showAI}}">
-      <view class="ai-action-bar">
-        <button class="btn {{aiLoading ? 'disabled' : ''}}" size="mini" bindtap="triggerAI" disabled="{{aiLoading}}">
-          {{aiLoading ? '⚙️ 深度分析中...' : '🚀 运行 AI 深度分析'}}
-        </button>
+      <view class="ai-section-meta">
         <text class="sub" wx:if="{{aiTime}}">{{aiTime}}</text>
+        <text class="toggle-arrow">{{showAI ? '▲' : '▼'}}</text>
       </view>
-
-      <view wx:if="{{!aiHasKey && !aiResult}}" class="ai-no-key">
-        <text class="sub">⚠️ 未配置 API Key，请在「设置」页填写</text>
+    </view>
+    <!-- AI 加载中占位 -->
+    <view wx:if="{{aiLoading && !aiResult}}" class="ai-loading-inline">
+      <view class="ai-loading-dots">
+        <view class="ai-ld"></view>
+        <view class="ai-ld ai-ld2"></view>
+        <view class="ai-ld ai-ld3"></view>
       </view>
-
-      <view wx:if="{{aiResult}}" class="ai-result">
+      <text class="sub" style="margin-top:12rpx;">AI 正在深度分析，请稍候...</text>
+    </view>
+    <view wx:if="{{!showAI && aiResult}}" class="ai-summary-hint">
+      <text class="sub">✅ 已有分析结果，点击展开查看详情</text>
+    </view>
+    <view wx:if="{{showAI && aiResult}}">
+      <view class="ai-result">
 
         <!-- 市场温度计 -->
         <view class="ai-temp-bar">
@@ -557,6 +565,15 @@
   <!-- ====== 更新时间 ====== -->
   <view class="footer-info">
     <text class="sub">数据更新：{{updatedAt}}</text>
+  </view>
+
+  <!-- AI 分析浮动进度条 -->
+  <view class="ai-float-bar" wx:if="{{aiLoading}}">
+    <view class="ai-float-shimmer"></view>
+    <view class="ai-float-content">
+      <text class="ai-float-icon">🤖</text>
+      <text class="ai-float-text">AI 深度分析中，可继续浏览</text>
+    </view>
   </view>
 
 </view>
