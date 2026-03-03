@@ -199,9 +199,12 @@ def api_ai_proxy():
     if not api_url:
         return jsonify({'error': f'未知 AI 提供商: {provider}'}), 400
 
-    # 如未提供 key，使用服务器默认 key（仅限 zhipu）
-    if not api_key and provider == 'zhipu':
-        api_key = os.environ.get('AI_API_KEY', '4511f9dee1e64b7da49a539ddef85dfd.Z6HgN8s8cDhL2LeQ')
+    # 如未提供 key，使用服务器默认 key
+    if not api_key:
+        if provider == 'deepseek':
+            api_key = os.environ.get('DEEPSEEK_API_KEY', 'sk-1986e1cd1169405f96649311dcfc76aa')
+        elif provider == 'zhipu':
+            api_key = os.environ.get('AI_API_KEY', '4511f9dee1e64b7da49a539ddef85dfd.Z6HgN8s8cDhL2LeQ')
 
     if not api_key:
         return jsonify({'error': '缺少 API Key'}), 400

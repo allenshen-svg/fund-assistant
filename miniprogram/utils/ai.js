@@ -47,7 +47,7 @@ const AI_MODEL_KEY = 'fa_mp_ai_model';
 
 /* ====== 存取 ====== */
 function getAIConfig() {
-  const providerId = wx.getStorageSync(AI_PROVIDER_KEY) || 'zhipu';
+  const providerId = wx.getStorageSync(AI_PROVIDER_KEY) || 'deepseek';
   const key = wx.getStorageSync(AI_KEY) || '';
   const modelId = wx.getStorageSync(AI_MODEL_KEY) || '';
   const provider = AI_PROVIDERS.find(p => p.id === providerId) || AI_PROVIDERS[0];
