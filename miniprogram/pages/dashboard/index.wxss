@@ -297,29 +297,50 @@
 .sfai-mask {
   position: fixed;
   top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(0,0,0,0.5);
+  background: rgba(0,0,0,0.45);
   z-index: 1000;
+  animation: sfaiFadeIn 0.2s ease;
 }
+@keyframes sfaiFadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes sfaiSlideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+
 .sfai-popup {
   position: fixed;
   left: 0; right: 0;
   bottom: 0;
-  max-height: 80vh;
-  background: var(--surface, #1a1b2e);
-  border-radius: 28rpx 28rpx 0 0;
+  max-height: 85vh;
+  background: #fff;
+  border-radius: 32rpx 32rpx 0 0;
   z-index: 1001;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 -8rpx 40rpx rgba(0,0,0,0.3);
+  box-shadow: 0 -4rpx 30rpx rgba(0,0,0,0.12);
   padding-bottom: env(safe-area-inset-bottom);
   overflow: hidden;
+  box-sizing: border-box;
+  width: 100%;
+  animation: sfaiSlideUp 0.3s ease;
 }
+
+/* 顶部拖拽指示条 */
+.sfai-drag-bar {
+  display: flex;
+  justify-content: center;
+  padding: 16rpx 0 8rpx;
+}
+.sfai-drag-line {
+  width: 64rpx;
+  height: 6rpx;
+  border-radius: 3rpx;
+  background: #e0e0e0;
+}
+
+/* 标题栏 */
 .sfai-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 28rpx 28rpx 16rpx;
-  border-bottom: 1rpx solid var(--border-faint, rgba(255,255,255,0.08));
+  padding: 8rpx 32rpx 20rpx;
 }
 .sfai-title-row {
   display: flex;
@@ -327,86 +348,170 @@
   gap: 12rpx;
   flex: 1;
   min-width: 0;
+  overflow: hidden;
 }
 .sfai-title {
-  font-size: 32rpx;
-  font-weight: 700;
-  color: var(--text-strong, #fff);
+  font-size: 34rpx;
+  font-weight: 800;
+  color: #1a1a2e;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 .sfai-code {
-  font-size: 22rpx;
-  color: var(--text-sub, #8b8fa3);
+  font-size: 24rpx;
+  color: #9ca3af;
   flex-shrink: 0;
 }
 .sfai-close {
-  width: 52rpx;
-  height: 52rpx;
+  width: 56rpx;
+  height: 56rpx;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 28rpx;
-  color: var(--text-sub, #8b8fa3);
+  color: #9ca3af;
   border-radius: 50%;
-  background: var(--elevated, rgba(255,255,255,0.05));
+  background: #f3f4f6;
   flex-shrink: 0;
   margin-left: 16rpx;
 }
+.sfai-close:active {
+  background: #e5e7eb;
+}
+
+/* 滚动区 */
 .sfai-body {
-  padding: 16rpx 28rpx 28rpx;
-  height: calc(80vh - 120rpx);
+  padding: 0 28rpx 28rpx;
   flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  box-sizing: border-box;
+  width: 100%;
+}
+
+/* 卡片通用 */
+.sfai-card {
+  background: #f8f9fb;
+  border-radius: 20rpx;
+  padding: 24rpx;
+  margin-bottom: 20rpx;
+  box-sizing: border-box;
+  width: 100%;
   overflow: hidden;
 }
-.sfai-section {
-  margin-bottom: 24rpx;
-  overflow: hidden;
-  word-break: break-all;
+
+/* 走势总结特殊卡片 */
+.sfai-trend-card {
+  display: flex;
+  gap: 20rpx;
+  align-items: flex-start;
+  background: linear-gradient(135deg, #f0f4ff 0%, #f8f9fb 100%);
+  border: 1rpx solid #e8ecf4;
 }
-.sfai-label {
+.sfai-card-icon {
+  font-size: 40rpx;
+  flex-shrink: 0;
+  margin-top: 4rpx;
+}
+.sfai-card-content {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+}
+.sfai-card-title {
   display: block;
   font-size: 24rpx;
-  font-weight: 700;
-  color: var(--text-strong, #e0e1e6);
+  font-weight: 600;
+  color: #6b7280;
   margin-bottom: 8rpx;
 }
-.sfai-text {
+
+/* 标签 */
+.sfai-label {
   display: block;
   font-size: 26rpx;
-  color: var(--text, #c5c6cc);
-  line-height: 1.7;
-  word-break: break-all;
+  font-weight: 700;
+  color: #1a1a2e;
+  margin-bottom: 12rpx;
+}
+
+/* 正文 */
+.sfai-text {
+  display: block;
+  font-size: 28rpx;
+  color: #374151;
+  line-height: 1.8;
+  word-break: break-word;
   word-wrap: break-word;
-  white-space: pre-wrap;
   overflow-wrap: break-word;
+  white-space: normal;
 }
-.sfai-risk {
-  color: #f59e0b;
+
+/* 操作建议卡片 */
+.sfai-action-card {
+  border: 1rpx solid transparent;
 }
-.sfai-action-section {
-  background: var(--elevated, rgba(255,255,255,0.04));
-  border-radius: 14rpx;
-  padding: 18rpx;
-  overflow: hidden;
+.sfai-action-card.action-bg-buy {
+  background: linear-gradient(135deg, #ecfdf5 0%, #f0fdf4 100%);
+  border-color: #bbf7d0;
+}
+.sfai-action-card.action-bg-sell {
+  background: linear-gradient(135deg, #fef2f2 0%, #fff5f5 100%);
+  border-color: #fecaca;
+}
+.sfai-action-card.action-bg-hold {
+  background: linear-gradient(135deg, #fefce8 0%, #fffbeb 100%);
+  border-color: #fef08a;
+}
+.sfai-action-header {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  margin-bottom: 14rpx;
+}
+.sfai-action-title {
+  font-size: 26rpx;
+  font-weight: 700;
+  color: #374151;
 }
 .sfai-action-badge {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
   font-size: 24rpx;
   font-weight: 700;
-  padding: 6rpx 16rpx;
-  border-radius: 8rpx;
-  margin-bottom: 10rpx;
+  padding: 6rpx 18rpx;
+  border-radius: 20rpx;
 }
-.sfai-action-badge.action-buy { background: rgba(34,197,94,0.15); color: #4ade80; }
-.sfai-action-badge.action-sell { background: rgba(239,68,68,0.15); color: #f87171; }
-.sfai-action-badge.action-hold { background: rgba(234,179,8,0.15); color: #facc15; }
+.sfai-action-badge.action-buy { background: #22c55e; color: #fff; }
+.sfai-action-badge.action-sell { background: #ef4444; color: #fff; }
+.sfai-action-badge.action-hold { background: #eab308; color: #fff; }
+
+/* 风险卡片 */
+.sfai-risk-card {
+  background: #fffbeb;
+  border: 1rpx solid #fef08a;
+}
+.sfai-risk-text {
+  color: #b45309;
+}
+
+/* 底部信息 */
 .sfai-footer {
   text-align: center;
-  padding: 16rpx 0 8rpx;
-  border-top: 1rpx solid var(--border-faint, rgba(255,255,255,0.06));
-  margin-top: 8rpx;
+  padding: 20rpx 0 12rpx;
+  margin-top: 4rpx;
+}
+.sfai-footer-text {
+  display: block;
+  font-size: 22rpx;
+  color: #9ca3af;
+}
+.sfai-footer-tip {
+  display: block;
+  font-size: 20rpx;
+  color: #d1d5db;
+  margin-top: 6rpx;
 }
 
 /* ====== 行动指南 ====== */
