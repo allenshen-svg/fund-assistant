@@ -44,10 +44,31 @@ function pickHeatForType(type, heatmap) {
   };
 }
 
+/* ====== 板块资金流额外标签（东方财富行业板块名称映射） ====== */
+const FLOW_EXTRA_TAGS = {
+  黄金: ['有色金属'],
+  'AI/科技': ['计算机', '电子', '通信'],
+  '半导体/科技': ['计算机', '电子'],
+  半导体: ['电子'],
+  军工: ['国防军工'],
+  新能源: ['电力设备'],
+  医药: ['医药生物'],
+  消费: ['食品饮料', '商贸零售', '家用电器'],
+  '白酒/消费': ['食品饮料'],
+  红利: ['银行', '煤炭', '公用事业'],
+  港股科技: ['计算机', '电子'],
+  原油: ['石油石化'],
+  蓝筹: ['银行', '非银金融', '食品饮料'],
+  '蓝筹/QDII': ['食品饮料'],
+  宽基: ['银行', '非银金融'],
+};
+
 /* ====== 匹配板块资金流 ====== */
 function matchSectorFlow(type, sectorFlows) {
   if (!sectorFlows || !sectorFlows.length) return null;
-  const tags = TYPE_TAG_MAP[type] || [type];
+  const baseTags = TYPE_TAG_MAP[type] || [type];
+  const extra = FLOW_EXTRA_TAGS[type] || [];
+  const tags = baseTags.concat(extra);
   for (const flow of sectorFlows) {
     if (tags.some(tag => flow.name.includes(tag) || tag.includes(flow.name))) {
       return flow;
