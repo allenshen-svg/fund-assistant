@@ -385,7 +385,7 @@ Page({
       });
 
       // 附加板块资金流原始数据到结果
-      const sf = matchSectorFlow(fund.type, sectorFlowsData);
+      const sf = matchSectorFlow(fund.type, sectorFlowsData, fund.name);
       if (sf) {
         result._sectorFlow = {
           name: sf.name,

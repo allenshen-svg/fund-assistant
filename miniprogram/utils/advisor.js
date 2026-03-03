@@ -63,12 +63,44 @@ const FLOW_EXTRA_TAGS = {
   宽基: ['银行', '非银金融'],
 };
 
+/* ====== 基金名称→板块关键词（用于"其他"类型的名称匹配） ====== */
+const NAME_FLOW_MAP = [
+  { keywords: ['机器人', '人工智能', 'AI', '智能'], sectors: ['计算机', '电子', '机械设备'] },
+  { keywords: ['芯片', '半导体', '集成电路'], sectors: ['电子'] },
+  { keywords: ['新能源', '光伏', '锂电', '储能', '风电'], sectors: ['电力设备'] },
+  { keywords: ['白酒', '食品', '饮料', '消费'], sectors: ['食品饮料'] },
+  { keywords: ['医药', '医疗', '生物', '创新药'], sectors: ['医药生物'] },
+  { keywords: ['军工', '国防', '航天', '航空'], sectors: ['国防军工'] },
+  { keywords: ['黄金', '贵金属', '金ETF'], sectors: ['有色金属'] },
+  { keywords: ['有色', '铜', '铝', '锂', '稀土'], sectors: ['有色金属'] },
+  { keywords: ['原油', '石油', '油气', '能源'], sectors: ['石油石化'] },
+  { keywords: ['银行', '金融'], sectors: ['银行'] },
+  { keywords: ['券商', '证券'], sectors: ['非银金融'] },
+  { keywords: ['地产', '房地产', '基建'], sectors: ['房地产'] },
+  { keywords: ['传媒', '游戏', '影视'], sectors: ['传媒'] },
+  { keywords: ['汽车', '新能源车', '智能驾驶'], sectors: ['汽车'] },
+  { keywords: ['钢铁', '煤炭', '建材'], sectors: ['钢铁', '煤炭'] },
+  { keywords: ['通信', '5G'], sectors: ['通信'] },
+  { keywords: ['农业', '养殖', '种业'], sectors: ['农林牧渔'] },
+];
+
 /* ====== 匹配板块资金流 ====== */
-function matchSectorFlow(type, sectorFlows) {
+function matchSectorFlow(type, sectorFlows, fundName) {
   if (!sectorFlows || !sectorFlows.length) return null;
   const baseTags = TYPE_TAG_MAP[type] || [type];
   const extra = FLOW_EXTRA_TAGS[type] || [];
-  const tags = baseTags.concat(extra);
+  let tags = baseTags.concat(extra);
+
+  // 对"其他"或匹配不到时，根据基金名称推断板块
+  if (fundName) {
+    for (const nm of NAME_FLOW_MAP) {
+      if (nm.keywords.some(kw => fundName.includes(kw))) {
+        tags = tags.concat(nm.sectors);
+        break;
+      }
+    }
+  }
+
   for (const flow of sectorFlows) {
     if (tags.some(tag => flow.name.includes(tag) || tag.includes(flow.name))) {
       return flow;
@@ -93,7 +125,7 @@ function buildPlans(holdings, heatmap, historyMap, sectorFlows) {
     const heatInfo = pickHeatForType(item.type, heatmap);
     const navList = historyMap[item.code] || [];
     const td = analyzeTrend(navList);
-    const sectorFlow = matchSectorFlow(item.type, sectorFlows);
+    const sectorFlow = matchSectorFlow(item.type, sectorFlows, item.name);
     const vote = computeVote(td, heatInfo, sectorFlow);
     const trendLabel = getTrendLabel(td);
     const plainAdvisor = buildPlainAdvisor(item, td, heatInfo, vote);

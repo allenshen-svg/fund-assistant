@@ -769,8 +769,8 @@
 .ag-ma-bear { color: #22c55e; background: rgba(34,197,94,0.1); }
 .ag-ma-mix  { color: #fb923c; background: rgba(251,146,60,0.1); }
 
-.ag-flow-in  { color: #ef4444; }
-.ag-flow-out { color: #22c55e; }
+.ag-flow-in  { color: #dc2626; background: rgba(239,68,68,0.12); font-weight: 700; }
+.ag-flow-out { color: #16a34a; background: rgba(34,197,94,0.12); font-weight: 700; }
 
 /* metrics bar */
 .ag-metrics {
