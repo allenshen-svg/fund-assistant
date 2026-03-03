@@ -554,11 +554,131 @@ function getCachedAIResult() {
   return null;
 }
 
+/* ====== 单只基金 AI 分析 ====== */
+const SINGLE_FUND_SYSTEM_PROMPT = `你是一位专业的基金投资分析师，擅长分析单只基金的走势原因和操作建议。
+
+## 输出要求（JSON格式）：
+{
+  "fundName": "基金名称",
+  "fundCode": "基金代码",
+  "trendSummary": "当前走势总结（1-2句话，如：近5日上涨3.2%，延续反弹趋势）",
+  "whyTrend": "走势原因分析（3-5句话，从宏观环境、板块轮动、资金面、政策面等角度解释为何走势如此）",
+  "technicalView": "技术面分析（2-3句话，RSI、均线、支撑/压力位等）",
+  "action": "buy|sell|hold",
+  "actionAdvice": "操作建议（2-3句话，包含仓位建议和时机选择）",
+  "riskWarning": "风险提示（1-2句话）",
+  "outlook": "未来1-2周展望（2-3句话）"
+}
+
+## 注意：
+- 只输出JSON，不要其他文字
+- 重点解释走势的驱动因素，让用户理解"为什么涨/跌"
+- 给出明确可执行的操作建议
+- 用中文回复`;
+
+async function runSingleFundAI({ fund, estimates, historyMap, indices, commodities, heatmap, hotEvents }) {
+  const config = getAIConfig();
+  if (!config.key) throw new Error('请先在设置中配置 AI API Key');
+
+  const today = todayStr();
+  const est = estimates ? estimates[fund.code] : null;
+  const navList = historyMap ? historyMap[fund.code] : null;
+  const td = navList ? analyzeTrend(navList) : null;
+  const heatInfo = pickHeatForType(fund.type, heatmap || []);
+  const vote = td ? computeVote(td, heatInfo, null) : null;
+
+  let ctx = `## 日期：${today}（${isTradingDay(today) ? '交易日' : '非交易日'}）\n\n`;
+
+  // 大盘环境
+  if (indices && indices.length > 0) {
+    ctx += `## 今日大盘指数\n`;
+    indices.forEach(idx => {
+      ctx += `- ${idx.name}: ${idx.price || '--'} (${idx.pctStr || '--'})\n`;
+    });
+    ctx += '\n';
+  }
+
+  // 大宗商品
+  if (commodities && commodities.length > 0) {
+    ctx += `## 大宗商品行情\n`;
+    commodities.forEach(c => {
+      ctx += `- ${c.icon || ''} ${c.name}: ${c.price || '--'} (${c.pctStr || '--'})${Math.abs(c.pct) >= 2 ? ' ⚠️异动' : ''}\n`;
+    });
+    ctx += '\n';
+  }
+
+  // 板块热力
+  if (heatmap && heatmap.length > 0) {
+    ctx += `## 板块热力图\n`;
+    heatmap.forEach(h => {
+      ctx += `- ${h.tag}: 温度${h.temperature}° 趋势${h.trend || '—'}\n`;
+    });
+    ctx += '\n';
+  }
+
+  // 热点事件
+  if (hotEvents && hotEvents.length > 0) {
+    ctx += `## 近期热点事件\n`;
+    hotEvents.slice(0, 5).forEach(ev => {
+      ctx += `- [影响${ev.impact >= 0 ? '+' : ''}${ev.impact}] ${ev.title}\n`;
+    });
+    ctx += '\n';
+  }
+
+  // 目标基金详细数据
+  ctx += `## 分析目标基金\n`;
+  ctx += `### ${fund.name}（${fund.code}，${fund.type}）\n`;
+  if (est) {
+    ctx += `- 今日估值: ${est.estimate || '--'}, 估算涨幅: ${formatPct(est.pct)}\n`;
+  }
+  if (td) {
+    ctx += `- 趋势方向: ${td.trendDir}, 趋势得分: ${td.trendScore}\n`;
+    ctx += `- 5日涨幅: ${td.chg5d ? td.chg5d.toFixed(2) + '%' : '--'}, 20日涨幅: ${td.chg20d ? td.chg20d.toFixed(2) + '%' : '--'}\n`;
+    ctx += `- RSI: ${td.rsi ? td.rsi.toFixed(1) : '--'}, 波动率: ${td.vol20d ? td.vol20d.toFixed(2) + '%' : '--'}\n`;
+    ctx += `- 最高回撤: ${td.drawdownFromHigh ? td.drawdownFromHigh.toFixed(2) + '%' : '--'}, 反弹幅度: ${td.reboundFromLow ? td.reboundFromLow.toFixed(2) + '%' : '--'}\n`;
+    ctx += `- 均线状态: ${td.maStatus || '--'}, 波段位置: ${td.swingPos || '--'}\n`;
+    ctx += `- 波段建议: ${td.swingAdvice || '--'}\n`;
+  }
+  if (heatInfo) {
+    ctx += `- 板块热度: ${heatInfo.temperature}°, 板块趋势: ${heatInfo.trend}\n`;
+  }
+  if (vote) {
+    ctx += `- 算法投票: ${vote.label}（得分${vote.score}，置信度${vote.confidence}）\n`;
+  }
+
+  const userPrompt = ctx + `\n请深入分析 ${fund.name}（${fund.code}）的当前走势原因，解释它为什么涨/跌/震荡，并给出明确的操作建议。用中文回复。`;
+
+  const raw = await callAI(
+    config.provider.base,
+    config.key,
+    config.model,
+    SINGLE_FUND_SYSTEM_PROMPT,
+    userPrompt,
+    0.7
+  );
+
+  const result = parseAIResponse(raw);
+  if (!result) {
+    throw new Error('AI返回内容无法解析，请重试');
+  }
+
+  // 缓存单基金结果
+  const cacheKey = 'fa_mp_ai_single_' + fund.code;
+  wx.setStorageSync(cacheKey, {
+    date: todayStr(),
+    timestamp: new Date().toISOString(),
+    result,
+  });
+
+  return result;
+}
+
 module.exports = {
   AI_PROVIDERS,
   getAIConfig,
   setAIConfig,
   runAIAnalysis,
+  runSingleFundAI,
   getCachedAIResult,
   callAI,
 };

@@ -2,7 +2,7 @@ const { getHoldings, getSettings } = require('../../utils/storage');
 const { fetchHotEvents, fetchIndices, fetchMultiFundEstimates, fetchSectorFlows, fetchMultiFundHistory, fetchCommodities } = require('../../utils/api');
 const { buildPlans, buildOverview, MODEL_PORTFOLIO } = require('../../utils/advisor');
 const { getMarketStatus, isMarketOpen, formatPct, pctClass, formatTime, isTradingDay, formatMoney } = require('../../utils/market');
-const { runAIAnalysis, getCachedAIResult, getAIConfig } = require('../../utils/ai');
+const { runAIAnalysis, runSingleFundAI, getCachedAIResult, getAIConfig } = require('../../utils/ai');
 
 function buildAnalystFallback(item) {
   const title = String(item && item.title || '');
@@ -81,6 +81,13 @@ Page({
     aiMarketOutlook: '',
     aiSectorRotation: '',
     aiMarketTemp: 50,
+
+    // 单基金 AI 分析
+    singleAILoading: '',  // 正在分析的基金代码，空串表示未在分析
+    singleAIProgress: '',
+    singleAIResult: null,
+    singleAITime: '',
+    showSingleAI: false,
 
     // 调试
     debugError: '',
@@ -314,6 +321,87 @@ Page({
   goHoldings() { wx.switchTab({ url: '/pages/holdings/index' }); },
   goSentiment() { wx.switchTab({ url: '/pages/sentiment/index' }); },
   goSettings() { wx.switchTab({ url: '/pages/settings/index' }); },
+
+  // ====== 单基金 AI 分析 ======
+  async triggerSingleFundAI(e) {
+    const { code, name, type } = e.currentTarget.dataset;
+    if (!code) return;
+
+    const cfg = getAIConfig();
+    if (!cfg.key) {
+      wx.showModal({
+        title: '未配置 API Key',
+        content: '请先在"设置"页配置 AI API Key',
+        confirmText: '去设置',
+        success: (res) => {
+          if (res.confirm) wx.switchTab({ url: '/pages/settings/index' });
+        },
+      });
+      return;
+    }
+
+    if (this.data.singleAILoading) return; // 防止重复
+
+    this.setData({
+      singleAILoading: code,
+      singleAIProgress: `正在分析 ${name}...`,
+    });
+
+    // 进度提示
+    const t1 = setTimeout(() => {
+      if (this.data.singleAILoading === code) {
+        this.setData({ singleAIProgress: 'AI 正在深度分析走势原因...' });
+      }
+    }, 5000);
+    const t2 = setTimeout(() => {
+      if (this.data.singleAILoading === code) {
+        this.setData({ singleAIProgress: '分析即将完成，请稍候...' });
+      }
+    }, 15000);
+    const clearTimers = () => { clearTimeout(t1); clearTimeout(t2); };
+
+    try {
+      const holdings = getHoldings();
+      const fund = holdings.find(h => h.code === code) || { code, name, type };
+      const codes = [code];
+      const [estimates, historyMap] = await Promise.all([
+        require('../../utils/api').fetchMultiFundEstimates(codes),
+        require('../../utils/api').fetchMultiFundHistory(codes),
+      ]);
+
+      const result = await runSingleFundAI({
+        fund,
+        estimates,
+        historyMap,
+        indices: this.data.indices,
+        commodities: this.data.commodities,
+        heatmap: this.data.heatmap,
+        hotEvents: this.data.topEvents,
+      });
+
+      clearTimers();
+      this.setData({
+        singleAILoading: '',
+        singleAIProgress: '',
+        singleAIResult: result,
+        singleAITime: new Date().toLocaleString(),
+        showSingleAI: true,
+      });
+    } catch (e) {
+      clearTimers();
+      this.setData({ singleAILoading: '', singleAIProgress: '' });
+      const msg = e.message || '未知错误';
+      let content = msg;
+      if (msg.includes('timeout') || msg.includes('超时')) {
+        content = 'AI分析超时，请稍后重试';
+      }
+      wx.showModal({ title: 'AI 分析失败', content, showCancel: false });
+    }
+  },
+
+  closeSingleAI() {
+    this.setData({ showSingleAI: false });
+  },
 
   // ====== AI 分析 ======
   _loadAICache() {

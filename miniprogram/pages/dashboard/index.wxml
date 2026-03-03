@@ -100,6 +100,9 @@
         <view class="row" style="margin-top:6rpx;">
           <text class="sub">{{item.code}} · {{item.type}}</text>
           <text class="sub" wx:if="{{item.estimate}}">估值 {{item.estimate}}</text>
+          <view class="h-ai-btn {{singleAILoading === item.code ? 'h-ai-loading' : ''}}" catchtap="triggerSingleFundAI" data-code="{{item.code}}" data-name="{{item.name}}" data-type="{{item.type}}">
+            <text>{{singleAILoading === item.code ? '⏳' : '🤖'}} {{singleAILoading === item.code ? '分析中' : 'AI分析'}}</text>
+          </view>
         </view>
       </view>
     </view>
@@ -580,6 +583,69 @@
       <text class="ai-float-icon">🤖</text>
       <text class="ai-float-text">{{aiProgress || 'AI 深度分析中，可继续浏览'}}</text>
     </view>
+  </view>
+
+  <!-- 单基金 AI 分析浮动进度条 -->
+  <view class="ai-float-bar" wx:if="{{singleAILoading}}">
+    <view class="ai-float-shimmer"></view>
+    <view class="ai-float-content">
+      <text class="ai-float-icon">🤖</text>
+      <text class="ai-float-text">{{singleAIProgress || '正在分析单只基金...'}}</text>
+    </view>
+  </view>
+
+  <!-- 单基金 AI 分析结果弹窗 -->
+  <view class="sfai-mask" wx:if="{{showSingleAI}}" bindtap="closeSingleAI"></view>
+  <view class="sfai-popup" wx:if="{{showSingleAI}}">
+    <view class="sfai-header">
+      <view class="sfai-title-row">
+        <text class="sfai-title">🤖 {{singleAIResult.fundName}}</text>
+        <text class="sfai-code">{{singleAIResult.fundCode}}</text>
+      </view>
+      <view class="sfai-close" bindtap="closeSingleAI">✕</view>
+    </view>
+
+    <scroll-view scroll-y class="sfai-body">
+      <!-- 走势总结 -->
+      <view class="sfai-section">
+        <text class="sfai-label">📈 走势总结</text>
+        <text class="sfai-text">{{singleAIResult.trendSummary}}</text>
+      </view>
+
+      <!-- 原因分析 -->
+      <view class="sfai-section">
+        <text class="sfai-label">🔍 走势原因</text>
+        <text class="sfai-text">{{singleAIResult.whyTrend}}</text>
+      </view>
+
+      <!-- 技术面 -->
+      <view class="sfai-section">
+        <text class="sfai-label">📊 技术面</text>
+        <text class="sfai-text">{{singleAIResult.technicalView}}</text>
+      </view>
+
+      <!-- 操作建议 -->
+      <view class="sfai-section sfai-action-section">
+        <view class="sfai-action-badge action-{{singleAIResult.action}}">{{singleAIResult.action === 'buy' ? '🟢 建议加仓' : singleAIResult.action === 'sell' ? '🔴 建议减仓' : '🟡 建议持有'}}</view>
+        <text class="sfai-text">{{singleAIResult.actionAdvice}}</text>
+      </view>
+
+      <!-- 风险提示 -->
+      <view class="sfai-section" wx:if="{{singleAIResult.riskWarning}}">
+        <text class="sfai-label">⚠️ 风险提示</text>
+        <text class="sfai-text sfai-risk">{{singleAIResult.riskWarning}}</text>
+      </view>
+
+      <!-- 展望 -->
+      <view class="sfai-section" wx:if="{{singleAIResult.outlook}}">
+        <text class="sfai-label">🔮 未来展望</text>
+        <text class="sfai-text">{{singleAIResult.outlook}}</text>
+      </view>
+
+      <view class="sfai-footer">
+        <text class="sub">分析时间：{{singleAITime}}</text>
+      </view>
+    </scroll-view>
   </view>
 
 </view>
