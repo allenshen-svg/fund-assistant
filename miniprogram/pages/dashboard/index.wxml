@@ -614,20 +614,64 @@
       <view class="sfai-card sfai-trend-card">
         <view class="sfai-card-icon">📈</view>
         <view class="sfai-card-content">
-          <text class="sfai-card-title">走势总结</text>
+          <text class="sfai-card-label">走势总结</text>
           <text class="sfai-text">{{singleAIResult.trendSummary}}</text>
         </view>
       </view>
 
+      <!-- 板块资金流 -->
+      <view class="sfai-card sfai-flow-card" wx:if="{{singleAIResult._sectorFlow}}">
+        <view class="sfai-section-title">
+          <text class="sfai-section-icon">💰</text>
+          <text class="sfai-section-label">板块资金流向</text>
+        </view>
+        <view class="sfai-flow-data">
+          <view class="sfai-flow-sector">
+            <text class="sfai-flow-name">{{singleAIResult._sectorFlow.name}}</text>
+            <view class="sfai-flow-badge sfai-flow-{{singleAIResult._sectorFlow.flowDir}}">
+              <text class="sfai-flow-arrow">{{singleAIResult._sectorFlow.flowDir === 'in' ? '↑' : '↓'}}</text>
+              <text class="sfai-flow-amount">主力 {{singleAIResult._sectorFlow.flowText}}</text>
+            </view>
+          </view>
+          <view class="sfai-flow-detail">
+            <view class="sfai-flow-item">
+              <text class="sfai-flow-item-label">板块涨幅</text>
+              <text class="sfai-flow-item-val {{singleAIResult._sectorFlow.pct >= 0 ? 'sfai-val-up' : 'sfai-val-down'}}">{{singleAIResult._sectorFlow.pct >= 0 ? '+' : ''}}{{singleAIResult._sectorFlow.pct}}%</text>
+            </view>
+            <view class="sfai-flow-item">
+              <text class="sfai-flow-item-label">主力净占比</text>
+              <text class="sfai-flow-item-val">{{singleAIResult._sectorFlow.mainPct}}%</text>
+            </view>
+          </view>
+        </view>
+        <view class="sfai-divider" wx:if="{{singleAIResult.sectorAnalysis}}"></view>
+        <text class="sfai-text sfai-analysis-text" wx:if="{{singleAIResult.sectorAnalysis}}">{{singleAIResult.sectorAnalysis}}</text>
+      </view>
+
+      <!-- 无板块资金流时仅显示AI板块分析 -->
+      <view class="sfai-card" wx:if="{{!singleAIResult._sectorFlow && singleAIResult.sectorAnalysis}}">
+        <view class="sfai-section-title">
+          <text class="sfai-section-icon">💰</text>
+          <text class="sfai-section-label">板块资金分析</text>
+        </view>
+        <text class="sfai-text">{{singleAIResult.sectorAnalysis}}</text>
+      </view>
+
       <!-- 走势原因 -->
       <view class="sfai-card">
-        <text class="sfai-label">🔍 走势原因分析</text>
+        <view class="sfai-section-title">
+          <text class="sfai-section-icon">🔍</text>
+          <text class="sfai-section-label">走势原因分析</text>
+        </view>
         <text class="sfai-text">{{singleAIResult.whyTrend}}</text>
       </view>
 
       <!-- 技术面 -->
       <view class="sfai-card">
-        <text class="sfai-label">📊 技术面分析</text>
+        <view class="sfai-section-title">
+          <text class="sfai-section-icon">📊</text>
+          <text class="sfai-section-label">技术面分析</text>
+        </view>
         <text class="sfai-text">{{singleAIResult.technicalView}}</text>
       </view>
 
@@ -635,20 +679,26 @@
       <view class="sfai-card sfai-action-card action-bg-{{singleAIResult.action}}">
         <view class="sfai-action-header">
           <view class="sfai-action-badge action-{{singleAIResult.action}}">{{singleAIResult.action === 'buy' ? '加仓' : singleAIResult.action === 'sell' ? '减仓' : '持有'}}</view>
-          <text class="sfai-action-title">操作建议</text>
+          <text class="sfai-section-label">操作建议</text>
         </view>
         <text class="sfai-text">{{singleAIResult.actionAdvice}}</text>
       </view>
 
       <!-- 风险提示 -->
       <view class="sfai-card sfai-risk-card" wx:if="{{singleAIResult.riskWarning}}">
-        <text class="sfai-label">⚠️ 风险提示</text>
+        <view class="sfai-section-title">
+          <text class="sfai-section-icon">⚠️</text>
+          <text class="sfai-section-label">风险提示</text>
+        </view>
         <text class="sfai-text sfai-risk-text">{{singleAIResult.riskWarning}}</text>
       </view>
 
       <!-- 未来展望 -->
       <view class="sfai-card" wx:if="{{singleAIResult.outlook}}">
-        <text class="sfai-label">🔮 未来展望</text>
+        <view class="sfai-section-title">
+          <text class="sfai-section-icon">🔮</text>
+          <text class="sfai-section-label">未来展望</text>
+        </view>
         <text class="sfai-text">{{singleAIResult.outlook}}</text>
       </view>
 

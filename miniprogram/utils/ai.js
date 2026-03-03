@@ -563,6 +563,7 @@ const SINGLE_FUND_SYSTEM_PROMPT = `你是一位专业的基金投资分析师，
   "fundCode": "基金代码",
   "trendSummary": "当前走势总结（1-2句话，如：近5日上涨3.2%，延续反弹趋势）",
   "whyTrend": "走势原因分析（3-5句话，从宏观环境、板块轮动、资金面、政策面等角度解释为何走势如此）",
+  "sectorAnalysis": "板块资金面分析（2-3句话，结合板块资金流入流出数据，分析主力资金动向对该基金的影响，判断资金趋势是否持续）",
   "technicalView": "技术面分析（2-3句话，RSI、均线、支撑/压力位等）",
   "action": "buy|sell|hold",
   "actionAdvice": "操作建议（2-3句话，包含仓位建议和时机选择）",
@@ -573,10 +574,11 @@ const SINGLE_FUND_SYSTEM_PROMPT = `你是一位专业的基金投资分析师，
 ## 注意：
 - 只输出JSON，不要其他文字
 - 重点解释走势的驱动因素，让用户理解"为什么涨/跌"
+- 板块资金面分析要结合实际资金流向数据给出判断
 - 给出明确可执行的操作建议
 - 用中文回复`;
 
-async function runSingleFundAI({ fund, estimates, historyMap, indices, commodities, heatmap, hotEvents }) {
+async function runSingleFundAI({ fund, estimates, historyMap, indices, commodities, heatmap, hotEvents, sectorFlows }) {
   const config = getAIConfig();
   if (!config.key) throw new Error('请先在设置中配置 AI API Key');
 
@@ -621,6 +623,36 @@ async function runSingleFundAI({ fund, estimates, historyMap, indices, commoditi
     ctx += `## 近期热点事件\n`;
     hotEvents.slice(0, 5).forEach(ev => {
       ctx += `- [影响${ev.impact >= 0 ? '+' : ''}${ev.impact}] ${ev.title}\n`;
+    });
+    ctx += '\n';
+  }
+
+  // 板块资金流向
+  if (sectorFlows && sectorFlows.length > 0) {
+    // 找到与该基金类型匹配的板块资金流
+    const TYPE_TAG_MAP = {
+      黄金: ['黄金', '贵金属'], 有色金属: ['有色金属'],
+      'AI/科技': ['AI算力', '人工智能', '半导体', '机器人'], '半导体/科技': ['半导体', 'AI算力', '人工智能'],
+      半导体: ['半导体'], 军工: ['军工'], 新能源: ['新能源', '光伏', '新能源车', '锂电'],
+      医药: ['医药'], 消费: ['消费'], '白酒/消费': ['消费', '白酒'], 债券: ['债券'],
+      宽基: ['宽基', '沪深300', 'A500'], 红利: ['红利'], 港股科技: ['港股科技'],
+      原油: ['原油'], 蓝筹: ['蓝筹', '消费', '医药'],
+    };
+    const tags = TYPE_TAG_MAP[fund.type] || [fund.type];
+    const matchedFlows = sectorFlows.filter(f =>
+      tags.some(tag => f.name.includes(tag) || tag.includes(f.name))
+    );
+    // 展示匹配的板块 + 涨幅前10的板块
+    const topFlows = sectorFlows.slice(0, 10);
+    const allDisplay = [...matchedFlows];
+    topFlows.forEach(f => { if (!allDisplay.find(d => d.code === f.code)) allDisplay.push(f); });
+
+    ctx += `## 板块资金流向（主力净流入，单位：元）\n`;
+    allDisplay.slice(0, 12).forEach(f => {
+      const netStr = f.mainNet >= 0 ? '+' : '';
+      const inBillions = (f.mainNet / 1e8).toFixed(2);
+      const mark = matchedFlows.find(m => m.code === f.code) ? ' ← 该基金所属板块' : '';
+      ctx += `- ${f.name}: 涨幅${f.pct >= 0 ? '+' : ''}${f.pct}%, 主力净流入${netStr}${inBillions}亿 (占比${f.mainPct}%)${mark}\n`;
     });
     ctx += '\n';
   }

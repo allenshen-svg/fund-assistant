@@ -180,6 +180,7 @@ const MODEL_PORTFOLIO = {
 
 module.exports = {
   pickHeatForType,
+  matchSectorFlow,
   buildPlans,
   buildOverview,
   MODEL_PORTFOLIO,

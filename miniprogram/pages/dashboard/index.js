@@ -1,6 +1,6 @@
 const { getHoldings, getSettings } = require('../../utils/storage');
 const { fetchHotEvents, fetchIndices, fetchMultiFundEstimates, fetchSectorFlows, fetchMultiFundHistory, fetchCommodities } = require('../../utils/api');
-const { buildPlans, buildOverview, MODEL_PORTFOLIO } = require('../../utils/advisor');
+const { buildPlans, buildOverview, MODEL_PORTFOLIO, matchSectorFlow } = require('../../utils/advisor');
 const { getMarketStatus, isMarketOpen, formatPct, pctClass, formatTime, isTradingDay, formatMoney } = require('../../utils/market');
 const { runAIAnalysis, runSingleFundAI, getCachedAIResult, getAIConfig } = require('../../utils/ai');
 
@@ -58,6 +58,7 @@ Page({
     // 热点事件
     topEvents: [],
     heatmap: [],
+    sectorFlows: [],
 
     // 数据源
     sourceLabel: '加载中',
@@ -254,7 +255,7 @@ Page({
       indices, commodities, hotBreaking,
       holdings: holdingsWithEst, totalPct, totalPctClass,
       overview, plans,
-      topEvents, heatmap,
+      topEvents, heatmap, sectorFlows,
       sourceLabel: hotData.source === 'remote' ? '远程数据' : '本地回退',
       updatedAt: String(hotData.data.updated_at || '--').replace('T', ' ').slice(0, 16),
       loading: false,
@@ -364,9 +365,12 @@ Page({
       const holdings = getHoldings();
       const fund = holdings.find(h => h.code === code) || { code, name, type };
       const codes = [code];
-      const [estimates, historyMap] = await Promise.all([
+      const [estimates, historyMap, sectorFlowsData] = await Promise.all([
         require('../../utils/api').fetchMultiFundEstimates(codes),
         require('../../utils/api').fetchMultiFundHistory(codes),
+        this.data.sectorFlows && this.data.sectorFlows.length > 0
+          ? Promise.resolve(this.data.sectorFlows)
+          : require('../../utils/api').fetchSectorFlows(),
       ]);
 
       const result = await runSingleFundAI({
@@ -377,7 +381,21 @@ Page({
         commodities: this.data.commodities,
         heatmap: this.data.heatmap,
         hotEvents: this.data.topEvents,
+        sectorFlows: sectorFlowsData,
       });
+
+      // 附加板块资金流原始数据到结果
+      const sf = matchSectorFlow(fund.type, sectorFlowsData);
+      if (sf) {
+        result._sectorFlow = {
+          name: sf.name,
+          mainNet: sf.mainNet,
+          mainPct: sf.mainPct,
+          pct: sf.pct,
+          flowText: (sf.mainNet >= 0 ? '+' : '') + (sf.mainNet / 1e8).toFixed(2) + '亿',
+          flowDir: sf.mainNet >= 0 ? 'in' : 'out',
+        };
+      }
 
       clearTimers();
       this.setData({

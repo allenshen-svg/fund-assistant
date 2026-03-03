@@ -309,7 +309,7 @@
   left: 0; right: 0;
   bottom: 0;
   max-height: 85vh;
-  background: #fff;
+  background: #f5f6fa;
   border-radius: 32rpx 32rpx 0 0;
   z-index: 1001;
   display: flex;
@@ -327,6 +327,7 @@
   display: flex;
   justify-content: center;
   padding: 16rpx 0 8rpx;
+  background: #fff;
 }
 .sfai-drag-line {
   width: 64rpx;
@@ -341,6 +342,8 @@
   align-items: center;
   justify-content: space-between;
   padding: 8rpx 32rpx 20rpx;
+  background: #fff;
+  border-bottom: 1rpx solid #f0f0f0;
 }
 .sfai-title-row {
   display: flex;
@@ -382,7 +385,7 @@
 
 /* 滚动区 */
 .sfai-body {
-  padding: 0 28rpx 28rpx;
+  padding: 20rpx 24rpx 24rpx;
   flex: 1;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
@@ -392,13 +395,31 @@
 
 /* 卡片通用 */
 .sfai-card {
-  background: #f8f9fb;
+  background: #fff;
   border-radius: 20rpx;
-  padding: 24rpx;
-  margin-bottom: 20rpx;
+  padding: 24rpx 28rpx;
+  margin-bottom: 16rpx;
   box-sizing: border-box;
   width: 100%;
   overflow: hidden;
+  box-shadow: 0 2rpx 8rpx rgba(0,0,0,0.04);
+}
+
+/* 统一的段落标题样式 */
+.sfai-section-title {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  margin-bottom: 16rpx;
+}
+.sfai-section-icon {
+  font-size: 28rpx;
+  flex-shrink: 0;
+}
+.sfai-section-label {
+  font-size: 28rpx;
+  font-weight: 700;
+  color: #1a1a2e;
 }
 
 /* 走势总结特殊卡片 */
@@ -406,8 +427,8 @@
   display: flex;
   gap: 20rpx;
   align-items: flex-start;
-  background: linear-gradient(135deg, #f0f4ff 0%, #f8f9fb 100%);
-  border: 1rpx solid #e8ecf4;
+  background: linear-gradient(135deg, #eef2ff 0%, #f0f4ff 100%);
+  border: 1rpx solid #dbeafe;
 }
 .sfai-card-icon {
   font-size: 40rpx;
@@ -419,21 +440,88 @@
   min-width: 0;
   overflow: hidden;
 }
-.sfai-card-title {
+.sfai-card-label {
   display: block;
   font-size: 24rpx;
   font-weight: 600;
-  color: #6b7280;
+  color: #6366f1;
   margin-bottom: 8rpx;
+  letter-spacing: 1rpx;
 }
 
-/* 标签 */
-.sfai-label {
-  display: block;
-  font-size: 26rpx;
+/* ---- 板块资金流卡片 ---- */
+.sfai-flow-card {
+  border: 1rpx solid #e8ecf4;
+}
+.sfai-flow-data {
+  margin-bottom: 8rpx;
+}
+.sfai-flow-sector {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16rpx;
+}
+.sfai-flow-name {
+  font-size: 30rpx;
   font-weight: 700;
-  color: #1a1a2e;
-  margin-bottom: 12rpx;
+  color: #1e293b;
+}
+.sfai-flow-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6rpx;
+  padding: 8rpx 20rpx;
+  border-radius: 24rpx;
+  font-weight: 700;
+}
+.sfai-flow-in {
+  background: linear-gradient(135deg, #dcfce7, #bbf7d0);
+  color: #15803d;
+}
+.sfai-flow-out {
+  background: linear-gradient(135deg, #fee2e2, #fecaca);
+  color: #dc2626;
+}
+.sfai-flow-arrow {
+  font-size: 24rpx;
+  font-weight: 900;
+}
+.sfai-flow-amount {
+  font-size: 24rpx;
+}
+.sfai-flow-detail {
+  display: flex;
+  gap: 24rpx;
+}
+.sfai-flow-item {
+  flex: 1;
+  background: #f8f9fb;
+  border-radius: 12rpx;
+  padding: 14rpx 18rpx;
+  text-align: center;
+}
+.sfai-flow-item-label {
+  display: block;
+  font-size: 22rpx;
+  color: #9ca3af;
+  margin-bottom: 6rpx;
+}
+.sfai-flow-item-val {
+  display: block;
+  font-size: 28rpx;
+  font-weight: 700;
+  color: #374151;
+}
+.sfai-val-up { color: #16a34a; }
+.sfai-val-down { color: #dc2626; }
+.sfai-divider {
+  height: 1rpx;
+  background: #f0f0f0;
+  margin: 16rpx 0;
+}
+.sfai-analysis-text {
+  margin-top: 4rpx;
 }
 
 /* 正文 */
@@ -469,11 +557,6 @@
   align-items: center;
   gap: 12rpx;
   margin-bottom: 14rpx;
-}
-.sfai-action-title {
-  font-size: 26rpx;
-  font-weight: 700;
-  color: #374151;
 }
 .sfai-action-badge {
   display: inline-flex;
