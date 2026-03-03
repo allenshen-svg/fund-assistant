@@ -34,7 +34,7 @@ const AI_PROVIDERS = [
     id: 'deepseek', name: 'DeepSeek官方', free: false,
     base: 'https://api.deepseek.com/v1/chat/completions',
     models: [
-      { id: 'deepseek-chat', name: 'DeepSeek-V3', model: 'deepseek-chat' },
+      { id: 'deepseek-chat', name: 'DeepSeek-V3.2', model: 'deepseek-chat' },
       { id: 'deepseek-reasoner', name: 'DeepSeek-R1', model: 'deepseek-reasoner' },
     ],
     defaultModel: 'deepseek-chat',
