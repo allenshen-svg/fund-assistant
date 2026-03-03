@@ -1,10 +1,12 @@
 /**
  * AI 分析模块 — 调用硅基流动 / DeepSeek 等 OpenAI-compatible API
+ * 真机环境通过服务器代理 (/api/ai-proxy) 调用，避免域名白名单限制
  */
-const { getHoldings } = require('./storage');
+const { getHoldings, getSettings } = require('./storage');
 const { analyzeTrend, computeVote } = require('./analyzer');
 const { pickHeatForType } = require('./advisor');
 const { todayStr, formatPct, isTradingDay } = require('./market');
+const { getServerBase } = require('./api');
 
 /* ====== 提供商配置 ====== */
 const AI_PROVIDERS = [
@@ -215,7 +217,49 @@ function buildContext(holdings, estimates, historyMap, indices, extras) {
 }
 
 /* ====== 调用 AI ====== */
-function _doRequest(apiBase, apiKey, model, reqData, timeoutMs) {
+
+/**
+ * 通过服务器代理调用 AI（解决微信真机域名白名单限制）
+ */
+function _doProxyRequest(serverBase, providerId, apiKey, apiBase, reqData, timeoutMs) {
+  return new Promise((resolve, reject) => {
+    wx.request({
+      url: serverBase + '/api/ai-proxy',
+      method: 'POST',
+      timeout: timeoutMs,
+      header: { 'Content-Type': 'application/json' },
+      data: {
+        provider: providerId,
+        api_key: apiKey,
+        api_base: apiBase,  // 自定义 provider 时传完整 URL
+        body: reqData,
+      },
+      success(res) {
+        if (res.statusCode !== 200) {
+          const detail = (res.data && (res.data.error || res.data.detail)) || JSON.stringify(res.data);
+          reject(new Error(`代理请求失败 ${res.statusCode}: ${detail}`));
+          return;
+        }
+        const content = res.data && res.data.choices && res.data.choices[0] && res.data.choices[0].message
+          ? res.data.choices[0].message.content : '';
+        resolve(content);
+      },
+      fail(err) {
+        const msg = err.errMsg || err.message || '';
+        if (/timeout/i.test(msg)) {
+          reject(new Error('timeout'));
+        } else {
+          reject(new Error('代理网络失败: ' + msg));
+        }
+      },
+    });
+  });
+}
+
+/**
+ * 直接调用 AI API（仅开发工具 / 域名已白名单时可用）
+ */
+function _doDirectRequest(apiBase, apiKey, reqData, timeoutMs) {
   return new Promise((resolve, reject) => {
     wx.request({
       url: apiBase,
@@ -268,10 +312,21 @@ async function callAI(apiBase, apiKey, model, systemPrompt, userPrompt, temperat
   const TIMEOUT_MS = 180000; // 3分钟超时
   const MAX_RETRIES = 1;     // 超时自动重试1次
 
+  // 判断是否通过服务器代理
+  const settings = getSettings();
+  const serverBase = getServerBase(settings);
+  const useProxy = !!serverBase;
+  const config = getAIConfig();
+
   for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
     try {
-      console.log(`[AI] 请求第${attempt + 1}次, timeout=${TIMEOUT_MS / 1000}s`);
-      const content = await _doRequest(apiBase, apiKey, model, reqData, TIMEOUT_MS);
+      console.log(`[AI] 第${attempt + 1}次请求, ${useProxy ? '代理模式' : '直连模式'}, timeout=${TIMEOUT_MS / 1000}s`);
+      let content;
+      if (useProxy) {
+        content = await _doProxyRequest(serverBase, config.providerId, apiKey, apiBase, reqData, TIMEOUT_MS);
+      } else {
+        content = await _doDirectRequest(apiBase, apiKey, reqData, TIMEOUT_MS);
+      }
       return content;
     } catch (e) {
       if (e.message === 'timeout' && attempt < MAX_RETRIES) {

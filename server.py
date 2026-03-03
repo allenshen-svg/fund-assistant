@@ -165,6 +165,71 @@ def api_reanalyze():
     t.start()
     return jsonify({'status': 'started', 'message': 'AI 分析已启动'})
 
+# ==================== AI 代理 ====================
+
+import urllib.request as _urllib_req
+import urllib.error as _urllib_err
+
+# AI 提供商配置（与小程序端保持一致）
+_AI_PROVIDERS = {
+    'zhipu': 'https://open.bigmodel.cn/api/paas/v4/chat/completions',
+    'siliconflow': 'https://api.siliconflow.cn/v1/chat/completions',
+    'deepseek': 'https://api.deepseek.com/v1/chat/completions',
+}
+
+@app.route('/api/ai-proxy', methods=['POST', 'OPTIONS'])
+def api_ai_proxy():
+    """AI 请求代理：小程序发请求到此端点，服务器转发到外部 AI API。
+    解决微信真机域名白名单限制。"""
+    if request.method == 'OPTIONS':
+        return '', 204
+
+    data = request.get_json(force=True, silent=True)
+    if not data:
+        return jsonify({'error': '请求体为空'}), 400
+
+    provider = data.get('provider', 'zhipu')
+    api_key = data.get('api_key', '')
+    req_body = data.get('body', {})
+
+    # 确定目标 API URL
+    api_url = _AI_PROVIDERS.get(provider)
+    if not api_url:
+        api_url = data.get('api_base', '')
+    if not api_url:
+        return jsonify({'error': f'未知 AI 提供商: {provider}'}), 400
+
+    # 如未提供 key，使用服务器默认 key（仅限 zhipu）
+    if not api_key and provider == 'zhipu':
+        api_key = os.environ.get('AI_API_KEY', '4511f9dee1e64b7da49a539ddef85dfd.Z6HgN8s8cDhL2LeQ')
+
+    if not api_key:
+        return jsonify({'error': '缺少 API Key'}), 400
+
+    # 转发请求
+    headers = {
+        'Content-Type': 'application/json',
+        'Authorization': f'Bearer {api_key}',
+    }
+    encoded = json.dumps(req_body, ensure_ascii=False).encode('utf-8')
+    req_obj = _urllib_req.Request(api_url, data=encoded, headers=headers, method='POST')
+
+    try:
+        with _urllib_req.urlopen(req_obj, timeout=300) as resp:
+            body = resp.read().decode('utf-8')
+            return app.response_class(body, status=200, mimetype='application/json')
+    except _urllib_err.HTTPError as e:
+        err_body = e.read().decode('utf-8', errors='replace') if e.fp else ''
+        print(f'[AI proxy] HTTP {e.code}: {err_body[:500]}')
+        return jsonify({'error': f'AI API 返回 {e.code}', 'detail': err_body[:500]}), e.code
+    except _urllib_err.URLError as e:
+        print(f'[AI proxy] URLError: {e.reason}')
+        return jsonify({'error': f'无法连接 AI 服务: {e.reason}'}), 502
+    except Exception as e:
+        print(f'[AI proxy] 异常: {e}')
+        return jsonify({'error': str(e)}), 500
+
+
 # ==================== 静态文件 ====================
 
 @app.route('/')
