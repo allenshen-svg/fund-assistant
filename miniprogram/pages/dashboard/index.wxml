@@ -417,7 +417,7 @@
         <view class="ai-ld ai-ld2"></view>
         <view class="ai-ld ai-ld3"></view>
       </view>
-      <text class="sub" style="margin-top:12rpx;">AI 正在深度分析，请稍候...</text>
+      <text class="sub" style="margin-top:12rpx;">{{aiProgress || 'AI 正在深度分析，请稍候...'}}</text>
     </view>
     <view wx:if="{{!showAI && aiResult}}" class="ai-summary-hint">
       <text class="sub">✅ 已有分析结果，点击展开查看详情</text>
@@ -578,7 +578,7 @@
     <view class="ai-float-shimmer"></view>
     <view class="ai-float-content">
       <text class="ai-float-icon">🤖</text>
-      <text class="ai-float-text">AI 深度分析中，可继续浏览</text>
+      <text class="ai-float-text">{{aiProgress || 'AI 深度分析中，可继续浏览'}}</text>
     </view>
   </view>
 

@@ -70,6 +70,7 @@ Page({
     // AI 分析
     showAI: false,
     aiLoading: false,
+    aiProgress: '',
     aiResult: null,
     aiTime: '',
     aiHasKey: false,
@@ -352,7 +353,22 @@ Page({
 
     if (this.data.aiLoading) return; // 防止重复点击
 
-    this.setData({ aiLoading: true });
+    this.setData({ aiLoading: true, aiProgress: '正在获取持仓数据...' });
+
+    // 进度提示定时器
+    const progressMsgs = [
+      { t: 3000, msg: '正在获取基金估值与历史数据...' },
+      { t: 8000, msg: 'AI 正在深度分析持仓基金...' },
+      { t: 30000, msg: 'AI 分析中，大约还需30秒...' },
+      { t: 60000, msg: 'AI 仍在分析中，请耐心等待...' },
+      { t: 120000, msg: 'AI 分析耗时较长，即将完成...' },
+    ];
+    const progressTimers = progressMsgs.map(p =>
+      setTimeout(() => {
+        if (this.data.aiLoading) this.setData({ aiProgress: p.msg });
+      }, p.t)
+    );
+    const clearProgress = () => progressTimers.forEach(t => clearTimeout(t));
 
     try {
       const holdings = getHoldings();
@@ -374,11 +390,13 @@ Page({
         fundDB: app.globalData.FUND_DB,
       });
 
+      clearProgress();
       const formatted = this._formatAIResult(result);
       this.setData({
         aiResult: formatted,
         aiTime: new Date().toLocaleString(),
         aiLoading: false,
+        aiProgress: '',
         showAI: true,
         aiRecommendations: formatted.recommendations || [],
         aiMarketOutlook: result.marketOutlook || '',
@@ -395,11 +413,12 @@ Page({
         confirmText: '知道了',
       });
     } catch (e) {
-      this.setData({ aiLoading: false });
+      clearProgress();
+      this.setData({ aiLoading: false, aiProgress: '' });
       const msg = e.message || '未知错误';
       let content = msg;
       if (msg.includes('timeout') || msg.includes('超时')) {
-        content = 'AI分析超时，可能原因：\n1. 网络不稳定\n2. AI服务器繁忙\n\n建议：稍后重试，或在设置中切换AI模型';
+        content = 'AI分析超时（已自动重试1次）\n\n可能原因：\n1. 持仓基金数量较多，AI生成耗时长\n2. 网络不稳定或AI服务器繁忙\n\n建议：稍后重试';
       } else if (msg.includes('截断') || msg.includes('过长')) {
         content = msg + '\n\n提示：持仓基金数量较多时，AI输出可能超长被截断。可尝试：\n1. 重新运行（通常第二次会成功）\n2. 在设置中切换更强的AI模型';
       } else if (msg.includes('无法解析') || msg.includes('格式')) {

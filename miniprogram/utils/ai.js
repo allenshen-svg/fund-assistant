@@ -153,11 +153,12 @@ function buildContext(holdings, estimates, historyMap, indices, extras) {
     ctx += '\n';
   }
 
-  // 热点事件
+  // 热点事件 (大持仓时限制条数减少token)
   const hotEvents = extras && extras.hotEvents;
+  const maxEvents = holdings.length >= 8 ? 5 : 8;
   if (hotEvents && hotEvents.length > 0) {
     ctx += `## 近期热点事件\n`;
-    hotEvents.slice(0, 8).forEach(ev => {
+    hotEvents.slice(0, maxEvents).forEach(ev => {
       ctx += `- [影响${ev.impact >= 0 ? '+' : ''}${ev.impact}] ${ev.title}`;
       if (ev.advice) ctx += ` → ${ev.advice}`;
       ctx += '\n';
@@ -166,6 +167,7 @@ function buildContext(holdings, estimates, historyMap, indices, extras) {
   }
 
   // 持仓基金分析
+  const isLargePortfolio = holdings.length >= 8;
   ctx += `## 持仓基金（共${holdings.length}只）\n`;
   holdings.forEach(h => {
     const est = estimates ? estimates[h.code] : null;
@@ -182,8 +184,10 @@ function buildContext(holdings, estimates, historyMap, indices, extras) {
       ctx += `- 趋势方向: ${td.trendDir}, 趋势得分: ${td.trendScore}\n`;
       ctx += `- 5日涨幅: ${td.chg5d ? td.chg5d.toFixed(2) + '%' : '--'}, 20日涨幅: ${td.chg20d ? td.chg20d.toFixed(2) + '%' : '--'}\n`;
       ctx += `- RSI: ${td.rsi ? td.rsi.toFixed(1) : '--'}, 波动率: ${td.vol20d ? td.vol20d.toFixed(2) + '%' : '--'}\n`;
-      ctx += `- 最高回撤: ${td.drawdownFromHigh ? td.drawdownFromHigh.toFixed(2) + '%' : '--'}, 反弹幅度: ${td.reboundFromLow ? td.reboundFromLow.toFixed(2) + '%' : '--'}\n`;
-      ctx += `- 均线状态: ${td.maStatus || '--'}, 波段位置: ${td.swingPos || '--'}\n`;
+      if (!isLargePortfolio) {
+        ctx += `- 最高回撤: ${td.drawdownFromHigh ? td.drawdownFromHigh.toFixed(2) + '%' : '--'}, 反弹幅度: ${td.reboundFromLow ? td.reboundFromLow.toFixed(2) + '%' : '--'}\n`;
+        ctx += `- 均线状态: ${td.maStatus || '--'}, 波段位置: ${td.swingPos || '--'}\n`;
+      }
       ctx += `- 波段建议: ${td.swingAdvice || '--'}\n`;
     }
     if (heatInfo) {
@@ -211,7 +215,39 @@ function buildContext(holdings, estimates, historyMap, indices, extras) {
 }
 
 /* ====== 调用 AI ====== */
-function callAI(apiBase, apiKey, model, systemPrompt, userPrompt, temperature = 0.7) {
+function _doRequest(apiBase, apiKey, model, reqData, timeoutMs) {
+  return new Promise((resolve, reject) => {
+    wx.request({
+      url: apiBase,
+      method: 'POST',
+      timeout: timeoutMs,
+      header: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + apiKey,
+      },
+      data: reqData,
+      success(res) {
+        if (res.statusCode !== 200) {
+          reject(new Error(`API错误 ${res.statusCode}: ${JSON.stringify(res.data)}`));
+          return;
+        }
+        const content = res.data && res.data.choices && res.data.choices[0] && res.data.choices[0].message
+          ? res.data.choices[0].message.content : '';
+        resolve(content);
+      },
+      fail(err) {
+        const msg = err.errMsg || err.message || '';
+        if (/timeout/i.test(msg)) {
+          reject(new Error('timeout'));
+        } else {
+          reject(new Error('网络请求失败: ' + msg));
+        }
+      },
+    });
+  });
+}
+
+async function callAI(apiBase, apiKey, model, systemPrompt, userPrompt, temperature = 0.7) {
   // 构建请求体
   const reqData = {
     model,
@@ -228,30 +264,23 @@ function callAI(apiBase, apiKey, model, systemPrompt, userPrompt, temperature = 
   if (!isReasoner) {
     reqData.response_format = { type: 'json_object' };
   }
-  return new Promise((resolve, reject) => {
-    wx.request({
-      url: apiBase,
-      method: 'POST',
-      timeout: 120000, // 2分钟超时，AI深度分析需要较长时间
-      header: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + apiKey,
-      },
-      data: reqData,
-      success(res) {
-        if (res.statusCode !== 200) {
-          reject(new Error(`API错误 ${res.statusCode}: ${JSON.stringify(res.data)}`));
-          return;
-        }
-        const content = res.data && res.data.choices && res.data.choices[0] && res.data.choices[0].message
-          ? res.data.choices[0].message.content : '';
-        resolve(content);
-      },
-      fail(err) {
-        reject(new Error('网络请求失败: ' + (err.errMsg || err.message || '')));
-      },
-    });
-  });
+
+  const TIMEOUT_MS = 180000; // 3分钟超时
+  const MAX_RETRIES = 1;     // 超时自动重试1次
+
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      console.log(`[AI] 请求第${attempt + 1}次, timeout=${TIMEOUT_MS / 1000}s`);
+      const content = await _doRequest(apiBase, apiKey, model, reqData, TIMEOUT_MS);
+      return content;
+    } catch (e) {
+      if (e.message === 'timeout' && attempt < MAX_RETRIES) {
+        console.warn(`[AI] 第${attempt + 1}次请求超时，自动重试...`);
+        continue;
+      }
+      throw e;
+    }
+  }
 }
 
 /* ====== 清理 JSON 字符串中的常见问题 ====== */
@@ -371,28 +400,27 @@ async function runAIAnalysis({ holdings, estimates, historyMap, indices, commodi
   const context = buildContext(holdings, estimates, historyMap, indices, {
     commodities, heatmap, hotEvents, fundDB,
   });
+  // 根据持仓数量动态调整提示词的详细程度，减少输出token数
+  const isLarge = holdings.length >= 8;
+  const analysisHint = isLarge
+    ? '含analysis字段，40-80字简明分析'
+    : '含analysis字段，80-150字深度分析';
+
   const userPrompt = context + `
 
 ⚠️ 重要提醒：用户共持有 ${holdings.length} 只基金，代码分别为：${holdings.map(h => h.code).join('、')}。
 signals 数组必须包含这 ${holdings.length} 只基金的分析结果，不可遗漏任何一只！
 
-请基于以上全部数据（大盘指数、大宗商品、板块热力、热点事件、持仓基金技术面）和你的专业知识：
+请基于以上全部数据和你的专业知识：
 
-1. 对每只持仓基金给出详细的AI分析（含analysis字段，80-150字深度分析），包括：
-   - 该基金所属板块的近期行情与驱动因素
-   - 与大盘指数/大宗商品的联动关系
-   - 技术面信号解读
-   - 未来1个月的方向性判断与操作建议
+1. 对每只持仓基金给出AI分析（${analysisHint}），包括板块行情、技术面信号、操作建议
 
-2. 从候选基金库中，基于当前大盘趋势和未来1个月的前瞻研判，推荐3-5只最值得入手的基金（recommendations），考虑：
-   - 当前市场风格轮动（成长vs价值、大盘vs中小盘）
-   - 政策催化与事件驱动
-   - 风险收益比与回撤保护
-   - 与现有持仓的互补性
+2. 从候选基金库中推荐2-3只值得入手的基金（recommendations）
 
-3. 给出未来1个月的市场展望（marketOutlook），以及板块轮动建议（sectorRotation）
+3. 给出市场展望（marketOutlook）和板块轮动建议（sectorRotation）
 
-再次强调：signals 中必须包含全部 ${holdings.length} 只基金：${holdings.map(h => `${h.name}(${h.code})`).join('、')}`;
+再次强调：signals 必须包含全部 ${holdings.length} 只基金：${holdings.map(h => `${h.name}(${h.code})`).join('、')}
+请用中文回复。`;
 
   const raw = await callAI(
     config.provider.base,
