@@ -7,7 +7,16 @@ function getSettings() {
   const cfg = getAppConfig();
   const raw = wx.getStorageSync(cfg.storageKeys.settings);
   if (!raw) return { ...cfg.defaultSettings };
-  return { ...cfg.defaultSettings, ...raw };
+  // 合并时，空字符串不覆盖默认值
+  const merged = { ...cfg.defaultSettings };
+  if (raw) {
+    Object.keys(raw).forEach(k => {
+      if (raw[k] !== '' && raw[k] !== null && raw[k] !== undefined) {
+        merged[k] = raw[k];
+      }
+    });
+  }
+  return merged;
 }
 
 function setSettings(nextSettings) {
