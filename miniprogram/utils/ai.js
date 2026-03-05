@@ -710,45 +710,40 @@ async function runSingleFundAI({ fund, estimates, historyMap, indices, commoditi
   return result;
 }
 
-/* ====== 一周操作建议 ====== */
+/* ====== 今日操作建议 ====== */
 
-const WEEKLY_SYSTEM_PROMPT = `你是一位专业的基金投资顾问，正在为用户做持仓基金的每周复盘与操作建议。
+const DAILY_ADVICE_SYSTEM_PROMPT = `你是一位专业的基金投资顾问。根据用户持仓基金过去一周（5-7个交易日）的净值走势，结合当前市场环境，给出今天的具体操作建议。
 
 ## 输出要求（JSON格式）：
 {
-  "weekSummary": "本周市场一句话总结（15-25字）",
-  "marketContext": "本周市场环境回顾（3-5句话，涵盖大盘走势、板块轮动、政策/事件驱动）",
-  "nextWeekOutlook": "下周市场展望（2-3句话）",
+  "marketBrief": "今日市场一句话定调（15-25字）",
   "riskLevel": "低风险|中风险|高风险",
   "funds": [
     {
       "code": "基金代码",
       "name": "基金名称",
-      "weekChange": "本周涨跌幅（如+2.3%）",
+      "weekChange": "近一周涨跌幅（如+2.3%）",
+      "weekTrend": "过去一周走势简述（1句话，如'连涨4日后回调'）",
       "action": "buy|sell|hold|add|reduce",
-      "urgency": "高|中|低",
-      "confidence": 0-100,
-      "weekReview": "本周走势回顾（1-2句话，解释为何涨跌）",
-      "nextWeekView": "下周展望（1-2句话）",
-      "advice": "具体操作建议（1-2句话，含仓位/时机）",
-      "keyRisk": "主要风险（1句话）"
+      "reason": "今日给出该操作的理由（2-3句话，须引用具体净值/技术指标数据）",
+      "timing": "操作时机建议（如'开盘即可''等回调至1.05''尾盘操作'）",
+      "confidence": 0-100
     }
-  ],
-  "topAction": "本周最重要的一个操作建议（20-30字，如：建议逢低加仓XX，目标仓位20%）"
+  ]
 }
 
 ## 注意事项：
 - 只输出JSON，不要其他文字
 - action含义：buy=建仓买入, sell=清仓卖出, hold=持有不动, add=加仓, reduce=减仓
-- funds数组必须覆盖用户全部持仓基金，一只都不能少
-- 重点关注一周净值变化趋势，结合宏观环境给出前瞻性建议
+- funds数组必须覆盖用户全部持仓基金
+- 重点分析过去一周净值的走势形态（连涨/连跌/震荡/反弹等），基于趋势给出今天该怎么操作
 - confidence为0-100的整数
 - 用中文回复`;
 
 /**
- * 一周操作建议 — 汇总过去7天净值波动 + 当前局势 → AI建议
+ * 今日操作建议 — 基于过去一周净值走势 + 当前局势 → 给出今天的操作
  */
-async function runWeeklyReview({ holdings, estimates, historyMap, indices, commodities, heatmap, hotEvents }) {
+async function runDailyAdvice({ holdings, estimates, historyMap, indices, commodities, heatmap, hotEvents }) {
   const config = getAIConfig();
   if (!config.key) throw new Error('请先在设置中配置 AI API Key');
 
@@ -827,11 +822,11 @@ async function runWeeklyReview({ holdings, estimates, historyMap, indices, commo
 ⚠️ 用户共持有 ${holdings.length} 只基金：${holdings.map(h => `${h.name}(${h.code})`).join('、')}。
 funds 数组必须包含全部 ${holdings.length} 只基金。
 
-请基于以上一周净值数据和市场环境：
-1. 回顾本周每只基金的表现，解释涨跌原因
-2. 结合当前市场局势，给出下周的买入/卖出/持有建议
-3. 给出仓位调整的优先级（urgency）
-4. 明确指出本周最重要的一个操作建议（topAction）
+请基于以上过去一周的净值走势和今日市场环境：
+1. 分析每只基金过去一周的走势形态（连涨/连跌/震荡/突破等）
+2. 结合当前市场局势，给出**今天**应该如何操作（买入/卖出/加仓/减仓/持有）
+3. 每只基金的建议须引用具体的净值数据或技术指标作为依据
+4. 给出操作时机建议（开盘/尾盘/等回调等）
 
 用中文回复。`;
 
@@ -839,7 +834,7 @@ funds 数组必须包含全部 ${holdings.length} 只基金。
     config.provider.base,
     config.key,
     config.model,
-    WEEKLY_SYSTEM_PROMPT,
+    DAILY_ADVICE_SYSTEM_PROMPT,
     userPrompt,
     0.7
   );
@@ -863,13 +858,11 @@ funds 数组必须包含全部 ${holdings.length} 只基金。
           code: h.code,
           name: h.name,
           weekChange: weekChg,
+          weekTrend: '数据不足',
           action: 'hold',
-          urgency: '低',
+          reason: '数据不足，AI未覆盖此基金，建议持有观望',
+          timing: '--',
           confidence: 40,
-          weekReview: '数据不足，AI未覆盖此基金',
-          nextWeekView: '建议持有观望',
-          advice: '等待更多数据后再决策',
-          keyRisk: '数据不足',
           _autoFilled: true,
         });
       }
@@ -877,7 +870,7 @@ funds 数组必须包含全部 ${holdings.length} 只基金。
   }
 
   // 缓存
-  wx.setStorageSync('fa_mp_weekly_review', {
+  wx.setStorageSync('fa_mp_daily_advice', {
     date: todayStr(),
     timestamp: new Date().toISOString(),
     result,
@@ -886,9 +879,9 @@ funds 数组必须包含全部 ${holdings.length} 只基金。
   return result;
 }
 
-/** 获取缓存的周度分析 */
-function getCachedWeeklyReview() {
-  const cached = wx.getStorageSync('fa_mp_weekly_review');
+/** 获取缓存的今日操作建议 */
+function getCachedDailyAdvice() {
+  const cached = wx.getStorageSync('fa_mp_daily_advice');
   if (cached && cached.date === todayStr()) return cached;
   return null;
 }
@@ -900,7 +893,7 @@ module.exports = {
   runAIAnalysis,
   runSingleFundAI,
   getCachedAIResult,
-  runWeeklyReview,
-  getCachedWeeklyReview,
+  runDailyAdvice,
+  getCachedDailyAdvice,
   callAI,
 };

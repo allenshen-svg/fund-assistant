@@ -3,7 +3,7 @@ const { fetchMultiFundEstimates, fetchMultiFundHistory, searchFundByCode, fetchI
 const { formatPct, pctClass, isTradingDay, todayStr, getPrevTradingDay } = require('../../utils/market');
 const { analyzeTrend, computeVote } = require('../../utils/analyzer');
 const { pickHeatForType } = require('../../utils/advisor');
-const { runWeeklyReview, getCachedWeeklyReview } = require('../../utils/ai');
+const { runDailyAdvice, getCachedDailyAdvice } = require('../../utils/ai');
 
 const TYPE_OPTIONS = ['宽基', '红利', '黄金', '有色金属', 'AI/科技', '半导体', '军工', '新能源', '白酒/消费', '医药', '债券', '蓝筹', '蓝筹/QDII', '港股科技', '原油', '其他'];
 
@@ -30,11 +30,11 @@ Page({
     swingItems: [],
     swingLoading: false,
 
-    // ====== 一周操作建议 ======
-    secWeekly: false,
-    weeklyLoading: false,
-    weeklyResult: null,   // { weekSummary, marketContext, nextWeekOutlook, riskLevel, funds[], topAction }
-    weeklyTime: '',       // 上次分析时间
+    // ====== 今日操作建议 ======
+    secDaily: false,
+    dailyLoading: false,
+    dailyResult: null,   // { marketBrief, riskLevel, funds[] }
+    dailyTime: '',       // 上次分析时间
 
     // ====== 预测追踪 ======
     secPred: false,
@@ -156,9 +156,9 @@ Page({
       if (key === 'secSwing' && val && this.data.swingItems.length === 0) {
         this._loadSwingData();
       }
-      // 展开一周建议时加载缓存
-      if (key === 'secWeekly' && val && !this.data.weeklyResult) {
-        this._loadCachedWeekly();
+      // 展开今日建议时加载缓存
+      if (key === 'secDaily' && val && !this.data.dailyResult) {
+        this._loadCachedDaily();
       }
     }
   },
@@ -474,27 +474,27 @@ Page({
   },
 
   /* ========================================================
-   *  一周操作建议 — AI分析
+   *  今日操作建议 — AI分析
    * ======================================================== */
-  _loadCachedWeekly() {
-    const cached = getCachedWeeklyReview();
+  _loadCachedDaily() {
+    const cached = getCachedDailyAdvice();
     if (cached && cached.result) {
       this.setData({
-        weeklyResult: this._formatWeeklyResult(cached.result),
-        weeklyTime: cached.timestamp ? cached.timestamp.replace('T', ' ').slice(0, 16) : '',
+        dailyResult: this._formatDailyResult(cached.result),
+        dailyTime: cached.timestamp ? cached.timestamp.replace('T', ' ').slice(0, 16) : '',
       });
     }
   },
 
-  async loadWeeklyReview() {
-    if (this.data.weeklyLoading) return;
-    this.setData({ weeklyLoading: true });
+  async loadDailyAdvice() {
+    if (this.data.dailyLoading) return;
+    this.setData({ dailyLoading: true });
 
     try {
       const holdings = getHoldings();
       if (holdings.length === 0) {
         wx.showToast({ title: '请先添加持仓基金', icon: 'none' });
-        this.setData({ weeklyLoading: false });
+        this.setData({ dailyLoading: false });
         return;
       }
 
@@ -534,7 +534,7 @@ Page({
         pctStr: formatPct(c.pct),
       }));
 
-      const result = await runWeeklyReview({
+      const result = await runDailyAdvice({
         holdings,
         estimates,
         historyMap,
@@ -544,30 +544,30 @@ Page({
         hotEvents,
       });
 
-      const formatted = this._formatWeeklyResult(result);
+      const formatted = this._formatDailyResult(result);
       const now = new Date();
       const timeStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
 
       this.setData({
-        weeklyResult: formatted,
-        weeklyTime: timeStr,
-        weeklyLoading: false,
-        secWeekly: true,
+        dailyResult: formatted,
+        dailyTime: timeStr,
+        dailyLoading: false,
+        secDaily: true,
       });
 
       wx.showToast({ title: '分析完成', icon: 'success' });
     } catch (err) {
-      console.error('[WeeklyReview] Error:', err);
+      console.error('[DailyAdvice] Error:', err);
       wx.showModal({
         title: '分析失败',
         content: err.message || '请检查AI配置后重试',
         showCancel: false,
       });
-      this.setData({ weeklyLoading: false });
+      this.setData({ dailyLoading: false });
     }
   },
 
-  _formatWeeklyResult(result) {
+  _formatDailyResult(result) {
     if (!result) return null;
 
     const ACTION_MAP = {
@@ -594,24 +594,20 @@ Page({
         actionCls: act.cls,
         weekChangeNum: parseFloat(f.weekChange) || 0,
         weekChangeCls: (parseFloat(f.weekChange) || 0) >= 0 ? 'pct-up' : 'pct-down',
-        urgencyCls: f.urgency === '高' ? 'urg-high' : f.urgency === '中' ? 'urg-mid' : 'urg-low',
       };
     });
 
-    // 按 urgency 排序: 高 > 中 > 低
-    const urgOrder = { '高': 0, '中': 1, '低': 2 };
-    funds.sort((a, b) => (urgOrder[a.urgency] || 2) - (urgOrder[b.urgency] || 2));
+    // 按 action 排序: buy/add 在前, sell/reduce 其次, hold 最后
+    const actOrder = { buy: 0, strong_buy: 0, add: 1, reduce: 2, sell: 2, hold: 3 };
+    funds.sort((a, b) => (actOrder[a.action] || 3) - (actOrder[b.action] || 3));
 
     const riskInfo = RISK_MAP[result.riskLevel] || RISK_MAP['中风险'];
 
     return {
-      weekSummary: result.weekSummary || '--',
-      marketContext: result.marketContext || '--',
-      nextWeekOutlook: result.nextWeekOutlook || '--',
+      marketBrief: result.marketBrief || '--',
       riskLevel: result.riskLevel || '中风险',
       riskCls: riskInfo.cls,
       riskIcon: riskInfo.icon,
-      topAction: result.topAction || '--',
       funds,
     };
   },
