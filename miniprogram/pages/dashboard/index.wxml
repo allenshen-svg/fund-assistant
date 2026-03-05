@@ -675,13 +675,21 @@
         <text class="sfai-text">{{singleAIResult.technicalView}}</text>
       </view>
 
-      <!-- 操作建议（突出卡片） -->
+      <!-- 操作建议（突出卡片）— 含一周走势 + 今日建议 + 时机 -->
       <view class="sfai-card sfai-action-card action-bg-{{singleAIResult.action}}">
         <view class="sfai-action-header">
-          <view class="sfai-action-badge action-{{singleAIResult.action}}">{{singleAIResult.action === 'buy' ? '加仓' : singleAIResult.action === 'sell' ? '减仓' : '持有'}}</view>
-          <text class="sfai-section-label">操作建议</text>
+          <view class="sfai-action-badge action-{{singleAIResult.action}}">{{singleAIResult.action === 'buy' ? '买入' : singleAIResult.action === 'add' ? '加仓' : singleAIResult.action === 'sell' ? '卖出' : singleAIResult.action === 'reduce' ? '减仓' : '持有'}}</view>
+          <text class="sfai-section-label">今日操作建议</text>
         </view>
-        <text class="sfai-text">{{singleAIResult.actionAdvice}}</text>
+        <view class="sfai-week-trend" wx:if="{{singleAIResult.weekTrend}}">
+          <text class="sfai-week-trend-label">📅 一周走势</text>
+          <text class="sfai-week-trend-text">{{singleAIResult.weekTrend}}</text>
+        </view>
+        <text class="sfai-text">{{singleAIResult.todayAdvice || singleAIResult.actionAdvice}}</text>
+        <view class="sfai-timing" wx:if="{{singleAIResult.timing}}">
+          <text class="sfai-timing-icon">⏰</text>
+          <text class="sfai-timing-text">{{singleAIResult.timing}}</text>
+        </view>
       </view>
 
       <!-- 风险提示 -->

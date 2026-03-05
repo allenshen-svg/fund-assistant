@@ -569,6 +569,57 @@
 .sfai-action-badge.action-buy { background: #22c55e; color: #fff; }
 .sfai-action-badge.action-sell { background: #ef4444; color: #fff; }
 .sfai-action-badge.action-hold { background: #eab308; color: #fff; }
+.sfai-action-badge.action-add { background: #22c55e; color: #fff; }
+.sfai-action-badge.action-reduce { background: #f97316; color: #fff; }
+.sfai-action-card.action-bg-add {
+  background: linear-gradient(135deg, #ecfdf5 0%, #f0fdf4 100%);
+  border-color: #bbf7d0;
+}
+.sfai-action-card.action-bg-reduce {
+  background: linear-gradient(135deg, #fff7ed 0%, #fffbeb 100%);
+  border-color: #fed7aa;
+}
+
+/* 一周走势 */
+.sfai-week-trend {
+  background: rgba(99,102,241,0.08);
+  border-radius: 12rpx;
+  padding: 12rpx 16rpx;
+  margin-bottom: 12rpx;
+}
+.sfai-week-trend-label {
+  font-size: 22rpx;
+  font-weight: 600;
+  color: #6366f1;
+  display: block;
+  margin-bottom: 4rpx;
+}
+.sfai-week-trend-text {
+  font-size: 24rpx;
+  color: #333;
+  line-height: 1.5;
+}
+
+/* 操作时机 */
+.sfai-timing {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  margin-top: 12rpx;
+  padding: 10rpx 16rpx;
+  background: rgba(99,102,241,0.1);
+  border-radius: 12rpx;
+}
+.sfai-timing-icon {
+  font-size: 28rpx;
+  flex-shrink: 0;
+}
+.sfai-timing-text {
+  font-size: 26rpx;
+  font-weight: 700;
+  color: #4f46e5;
+  line-height: 1.4;
+}
 
 /* 风险卡片 */
 .sfai-risk-card {

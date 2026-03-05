@@ -562,20 +562,23 @@ const SINGLE_FUND_SYSTEM_PROMPT = `你是一位专业的基金投资分析师，
   "fundName": "基金名称",
   "fundCode": "基金代码",
   "trendSummary": "当前走势总结（1-2句话，如：近5日上涨3.2%，延续反弹趋势）",
+  "weekTrend": "过去一周走势形态（1句话，如'连涨4日后回调''震荡筑底''放量突破'）",
   "whyTrend": "走势原因分析（3-5句话，从宏观环境、板块轮动、资金面、政策面等角度解释为何走势如此）",
   "sectorAnalysis": "板块资金面分析（2-3句话，结合板块资金流入流出数据，分析主力资金动向对该基金的影响，判断资金趋势是否持续）",
   "technicalView": "技术面分析（2-3句话，RSI、均线、支撑/压力位等）",
-  "action": "buy|sell|hold",
-  "actionAdvice": "操作建议（2-3句话，包含仓位建议和时机选择）",
+  "action": "buy|sell|hold|add|reduce",
+  "todayAdvice": "今日操作建议（2-3句话，基于过去一周走势给出今天具体该怎么操作，须引用净值/指标数据）",
+  "timing": "操作时机（如'开盘即可''等回调至1.05再入''尾盘操作''观望不动'）",
   "riskWarning": "风险提示（1-2句话）",
   "outlook": "未来1-2周展望（2-3句话）"
 }
 
 ## 注意：
 - 只输出JSON，不要其他文字
-- 重点解释走势的驱动因素，让用户理解"为什么涨/跌"
+- action含义：buy=建仓买入, sell=清仓卖出, hold=持有不动, add=加仓, reduce=减仓
+- 重点分析过去一周逐日净值的走势形态（连涨/连跌/震荡/反弹等），基于趋势给出今天该怎么操作
 - 板块资金面分析要结合实际资金流向数据给出判断
-- 给出明确可执行的操作建议
+- todayAdvice 必须引用具体数据，给出明确可执行的当天操作
 - 用中文回复`;
 
 async function runSingleFundAI({ fund, estimates, historyMap, indices, commodities, heatmap, hotEvents, sectorFlows }) {
@@ -665,6 +668,17 @@ async function runSingleFundAI({ fund, estimates, historyMap, indices, commoditi
   // 目标基金详细数据
   ctx += `## 分析目标基金\n`;
   ctx += `### ${fund.name}（${fund.code}，${fund.type}）\n`;
+
+  // 过去一周逐日净值
+  if (navList && navList.length > 0) {
+    const recent = navList.slice(-7);
+    const weekStart = recent[0];
+    const weekEnd = recent[recent.length - 1];
+    const weekChg = ((weekEnd.nav - weekStart.nav) / weekStart.nav * 100).toFixed(2);
+    ctx += `- 一周净值: ${weekStart.date}=${weekStart.nav} → ${weekEnd.date}=${weekEnd.nav}, 周涨幅=${weekChg}%\n`;
+    ctx += `- 逐日净值: ${recent.map(r => `${r.date.slice(5)}:${r.nav}`).join(' → ')}\n`;
+  }
+
   if (est) {
     ctx += `- 今日估值: ${est.estimate || '--'}, 估算涨幅: ${formatPct(est.pct)}\n`;
   }
@@ -683,7 +697,7 @@ async function runSingleFundAI({ fund, estimates, historyMap, indices, commoditi
     ctx += `- 算法投票: ${vote.label}（得分${vote.score}，置信度${vote.confidence}）\n`;
   }
 
-  const userPrompt = ctx + `\n请深入分析 ${fund.name}（${fund.code}）的当前走势原因，解释它为什么涨/跌/震荡，并给出明确的操作建议。用中文回复。`;
+  const userPrompt = ctx + `\n请深入分析 ${fund.name}（${fund.code}）的当前走势原因，重点结合过去一周的逐日净值走势形态，给出**今天**具体该如何操作的建议（含操作时机）。用中文回复。`;
 
   const raw = await callAI(
     config.provider.base,
