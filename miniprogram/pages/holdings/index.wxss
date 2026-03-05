@@ -521,4 +521,253 @@
   padding-top: 8rpx;
 }
 
+/* ====== 一周操作建议 ====== */
+.wk-actions {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  padding: 12rpx 0 16rpx;
+}
 
+.wk-actions .btn {
+  flex-shrink: 0;
+}
+
+.wk-time {
+  font-size: 20rpx;
+  color: var(--text-muted);
+}
+
+/* 市场概览卡片 */
+.wk-summary-card {
+  background: var(--elevated);
+  border-radius: 16rpx;
+  padding: 20rpx;
+  margin-bottom: 16rpx;
+}
+
+.wk-summary-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12rpx;
+}
+
+.wk-summary-text {
+  font-size: 30rpx;
+  font-weight: 700;
+  color: var(--text);
+  flex: 1;
+  line-height: 1.4;
+}
+
+.wk-risk-badge {
+  font-size: 22rpx;
+  padding: 4rpx 14rpx;
+  border-radius: 20rpx;
+  white-space: nowrap;
+  flex-shrink: 0;
+  margin-left: 12rpx;
+}
+
+.wk-risk-low {
+  background: rgba(52,211,153,0.2);
+  color: #34d399;
+}
+
+.wk-risk-mid {
+  background: rgba(251,191,36,0.2);
+  color: #fbbf24;
+}
+
+.wk-risk-high {
+  background: rgba(248,113,113,0.2);
+  color: #f87171;
+}
+
+.wk-context {
+  margin-bottom: 12rpx;
+  line-height: 1.6;
+}
+
+.wk-outlook {
+  padding-top: 12rpx;
+  border-top: 1rpx solid var(--border-subtle);
+}
+
+.wk-outlook-label {
+  font-size: 24rpx;
+  font-weight: 600;
+  color: var(--text-label);
+  display: block;
+  margin-bottom: 4rpx;
+}
+
+/* 最重要操作 */
+.wk-top-action {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+  background: linear-gradient(135deg, rgba(99,102,241,0.15), rgba(52,211,153,0.1));
+  border: 1rpx solid rgba(99,102,241,0.3);
+  border-radius: 16rpx;
+  padding: 16rpx 20rpx;
+  margin-bottom: 16rpx;
+}
+
+.wk-top-icon {
+  font-size: 32rpx;
+  flex-shrink: 0;
+}
+
+.wk-top-text {
+  font-size: 26rpx;
+  font-weight: 600;
+  color: var(--text);
+  line-height: 1.5;
+}
+
+/* 基金建议卡片 */
+.wk-fund-card {
+  background: var(--elevated);
+  border-radius: 16rpx;
+  padding: 20rpx;
+  margin-bottom: 12rpx;
+  border-left: 6rpx solid var(--text-muted);
+}
+
+.wk-fund-card.wk-fund-buy {
+  border-left-color: #34d399;
+}
+
+.wk-fund-card.wk-fund-sell {
+  border-left-color: #f87171;
+}
+
+.wk-fund-card.wk-fund-hold {
+  border-left-color: #fbbf24;
+}
+
+.wk-fund-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12rpx;
+}
+
+.wk-fund-left {
+  flex: 1;
+}
+
+.wk-fund-name {
+  font-size: 28rpx;
+  font-weight: 700;
+  color: var(--text);
+  display: block;
+}
+
+.wk-fund-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6rpx;
+}
+
+.wk-action-badge {
+  font-size: 22rpx;
+  padding: 4rpx 16rpx;
+  border-radius: 20rpx;
+  white-space: nowrap;
+}
+
+.wk-action-buy {
+  background: rgba(52,211,153,0.2);
+  color: #34d399;
+}
+
+.wk-action-sell {
+  background: rgba(248,113,113,0.2);
+  color: #f87171;
+}
+
+.wk-action-hold {
+  background: rgba(251,191,36,0.2);
+  color: #fbbf24;
+}
+
+.wk-urg {
+  font-size: 20rpx;
+  padding: 2rpx 10rpx;
+  border-radius: 8rpx;
+}
+
+.urg-high {
+  background: rgba(248,113,113,0.15);
+  color: #f87171;
+}
+
+.urg-mid {
+  background: rgba(251,191,36,0.15);
+  color: #fbbf24;
+}
+
+.urg-low {
+  color: var(--text-muted);
+}
+
+/* 基金详情 */
+.wk-fund-body {
+  padding-top: 12rpx;
+  border-top: 1rpx solid var(--border-faint);
+}
+
+.wk-fund-row {
+  margin-bottom: 8rpx;
+}
+
+.wk-row-label {
+  font-size: 22rpx;
+  color: var(--text-label);
+  font-weight: 600;
+  display: block;
+  margin-bottom: 2rpx;
+}
+
+.wk-advice-text {
+  font-size: 24rpx;
+  color: var(--text);
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.wk-fund-risk {
+  margin-top: 8rpx;
+  padding-top: 8rpx;
+  border-top: 1rpx solid var(--border-faint);
+}
+
+/* 置信度条 */
+.wk-conf-bar {
+  position: relative;
+  height: 16rpx;
+  background: var(--accent-bg, rgba(99,102,241,0.1));
+  border-radius: 8rpx;
+  overflow: hidden;
+  margin-top: 12rpx;
+}
+
+.wk-conf-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #6c8aff, #34d399);
+  border-radius: 8rpx;
+  transition: width 0.4s;
+}
+
+.wk-conf-label {
+  position: absolute;
+  right: 8rpx;
+  top: -2rpx;
+  font-size: 18rpx;
+  color: var(--text-muted);
+  line-height: 20rpx;
+}

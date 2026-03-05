@@ -95,6 +95,91 @@
     </view>
   </view>
 
+  <!-- ====== 一周操作建议 ====== -->
+  <view class="card">
+    <view class="card-header sec-toggle" data-key="secWeekly" bindtap="toggleSection">
+      <text class="title">📅 一周操作建议</text>
+      <text class="toggle-arrow">{{secWeekly ? '▲' : '▼'}}</text>
+    </view>
+    <view class="sec-sub-header" wx:if="{{!secWeekly}}">
+      <text class="sub">结合一周净值波动与市场局势，AI给出买卖建议</text>
+    </view>
+    <view wx:if="{{secWeekly}}">
+      <!-- 操作按钮 -->
+      <view class="wk-actions">
+        <button class="btn small" bindtap="loadWeeklyReview" disabled="{{weeklyLoading}}">
+          🤖 {{weeklyLoading ? 'AI分析中...' : '生成一周建议'}}
+        </button>
+        <text wx:if="{{weeklyTime}}" class="sub wk-time">更新: {{weeklyTime}}</text>
+      </view>
+
+      <!-- 分析结果 -->
+      <view wx:if="{{weeklyResult}}">
+        <!-- 市场概览 -->
+        <view class="wk-summary-card">
+          <view class="wk-summary-top">
+            <text class="wk-summary-text">{{weeklyResult.weekSummary}}</text>
+            <text class="wk-risk-badge wk-{{weeklyResult.riskCls}}">{{weeklyResult.riskIcon}} {{weeklyResult.riskLevel}}</text>
+          </view>
+          <view class="wk-context">
+            <text class="sub">{{weeklyResult.marketContext}}</text>
+          </view>
+          <view class="wk-outlook">
+            <text class="wk-outlook-label">📈 下周展望</text>
+            <text class="sub">{{weeklyResult.nextWeekOutlook}}</text>
+          </view>
+        </view>
+
+        <!-- 最重要操作 -->
+        <view class="wk-top-action" wx:if="{{weeklyResult.topAction}}">
+          <text class="wk-top-icon">⚡</text>
+          <text class="wk-top-text">{{weeklyResult.topAction}}</text>
+        </view>
+
+        <!-- 每只基金的建议 -->
+        <view class="wk-fund-card wk-fund-{{item.actionCls}}" wx:for="{{weeklyResult.funds}}" wx:key="code">
+          <view class="wk-fund-top">
+            <view class="wk-fund-left">
+              <text class="wk-fund-name">{{item.name}}</text>
+              <text class="sub">{{item.code}} · {{item.weekChange}}</text>
+            </view>
+            <view class="wk-fund-right">
+              <text class="wk-action-badge wk-action-{{item.actionCls}}">{{item.actionIcon}} {{item.actionLabel}}</text>
+              <text class="wk-urg {{item.urgencyCls}}">{{item.urgency}}优先</text>
+            </view>
+          </view>
+          <view class="wk-fund-body">
+            <view class="wk-fund-row">
+              <text class="wk-row-label">本周回顾</text>
+              <text class="sub">{{item.weekReview}}</text>
+            </view>
+            <view class="wk-fund-row">
+              <text class="wk-row-label">下周展望</text>
+              <text class="sub">{{item.nextWeekView}}</text>
+            </view>
+            <view class="wk-fund-row">
+              <text class="wk-row-label">操作建议</text>
+              <text class="wk-advice-text">{{item.advice}}</text>
+            </view>
+            <view wx:if="{{item.keyRisk}}" class="wk-fund-risk">
+              <text class="sub">⚠️ {{item.keyRisk}}</text>
+            </view>
+          </view>
+          <view wx:if="{{item.confidence}}" class="wk-conf-bar">
+            <view class="wk-conf-fill" style="width: {{item.confidence}}%;"></view>
+            <text class="wk-conf-label">置信度 {{item.confidence}}%</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- 无结果提示 -->
+      <view wx:elif="{{!weeklyLoading}}" class="empty-state">
+        <text class="empty-icon">📅</text>
+        <text class="sub">点击"生成一周建议"开始AI分析</text>
+      </view>
+    </view>
+  </view>
+
   <!-- ====== 预测追踪 ====== -->
   <view class="card">
     <view class="card-header sec-toggle" data-key="secPred" bindtap="toggleSection">
