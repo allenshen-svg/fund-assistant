@@ -441,59 +441,116 @@
         <text class="fp-overview-text">{{fundPickResult.sectorOverview}}</text>
       </view>
 
-      <!-- 推荐列表 -->
-      <view class="fp-picks" wx:if="{{fundPickResult.picks && fundPickResult.picks.length > 0}}">
-        <view class="fp-pick {{item.showDetail ? 'fp-pick-open' : ''}}" wx:for="{{fundPickResult.picks}}" wx:key="code" data-idx="{{index}}" bindtap="togglePickDetail">
-          <!-- 概要行 -->
-          <view class="fp-pick-top">
-            <view class="fp-pick-left">
-              <view class="fp-pick-type-badge fp-type-{{item.type === 'fund' ? 'fund' : 'stock'}}">
-                {{item.type === 'fund' ? '基' : '股'}}
+      <!-- ===== 基金推荐（5只）===== -->
+      <view class="fp-section" wx:if="{{fundPickResult.fundPicks && fundPickResult.fundPicks.length > 0}}">
+        <view class="fp-section-header fp-section-fund">
+          <text class="fp-section-icon">💰</text>
+          <text class="fp-section-title">基金推荐</text>
+          <text class="fp-section-count">{{fundPickResult.fundPicks.length}}只</text>
+        </view>
+        <view class="fp-picks">
+          <view class="fp-pick {{item.showDetail ? 'fp-pick-open' : ''}}" wx:for="{{fundPickResult.fundPicks}}" wx:key="code" data-idx="{{index}}" data-list="fundPicks" bindtap="togglePickDetail">
+            <view class="fp-pick-top">
+              <view class="fp-pick-left">
+                <view class="fp-pick-type-badge fp-type-fund">基</view>
+                <view class="fp-pick-info">
+                  <text class="fp-pick-name">{{item.name}}</text>
+                  <text class="fp-pick-code">{{item.code}} · {{item.sector}} {{item.sectorPct || ''}}</text>
+                </view>
               </view>
-              <view class="fp-pick-info">
-                <text class="fp-pick-name">{{item.name}}</text>
-                <text class="fp-pick-code">{{item.code}} · {{item.sector}}</text>
+              <view class="fp-pick-right">
+                <text class="fp-pick-rating fp-rating-{{item.rating}}">
+                  {{item.rating === 'strong_buy' ? '🔥 强推' : item.rating === 'buy' ? '👍 推荐' : '📈 吸纳'}}
+                </text>
+                <text class="fp-pick-confidence">{{item.confidence || 75}}%</text>
               </view>
             </view>
-            <view class="fp-pick-right">
-              <text class="fp-pick-rating fp-rating-{{item.rating}}">
-                {{item.rating === 'strong_buy' ? '🔥 强推' : item.rating === 'buy' ? '👍 推荐' : '📈 吸纳'}}
-              </text>
-              <text class="fp-pick-confidence">{{item.confidence || 75}}%</text>
+            <view class="fp-pick-detail" wx:if="{{item.showDetail}}">
+              <view class="fp-detail-section">
+                <text class="fp-detail-label">📊 看好板块原因</text>
+                <text class="fp-detail-text">{{item.whyThisSector}}</text>
+              </view>
+              <view class="fp-detail-section">
+                <text class="fp-detail-label">🎯 选择理由</text>
+                <text class="fp-detail-text">{{item.whyThisPick}}</text>
+              </view>
+              <view class="fp-detail-section">
+                <text class="fp-detail-label">📈 3个月支撑分析</text>
+                <text class="fp-detail-text">{{item.supportAnalysis}}</text>
+              </view>
+              <view class="fp-detail-section">
+                <text class="fp-detail-label">💡 买入策略</text>
+                <text class="fp-detail-text fp-strategy-text">{{item.strategy}}</text>
+              </view>
+              <view class="fp-detail-row">
+                <view class="fp-detail-item">
+                  <text class="fp-detail-label">🎯 预期收益</text>
+                  <text class="fp-detail-val fp-val-up">{{item.targetReturn || '--'}}</text>
+                </view>
+                <view class="fp-detail-item">
+                  <text class="fp-detail-label">⚠️ 风险</text>
+                  <text class="fp-detail-val fp-val-risk">{{item.riskPoints || '--'}}</text>
+                </view>
+              </view>
+              <view class="fp-add-btn" catchtap="addPickToHoldings" data-code="{{item.code}}" data-name="{{item.name}}" data-type="{{item.sector}}">
+                <text>+ 加入持仓</text>
+              </view>
             </view>
           </view>
+        </view>
+      </view>
 
-          <!-- 展开详情 -->
-          <view class="fp-pick-detail" wx:if="{{item.showDetail}}">
-            <view class="fp-detail-section">
-              <text class="fp-detail-label">📊 看好板块原因</text>
-              <text class="fp-detail-text">{{item.whyThisSector}}</text>
-            </view>
-            <view class="fp-detail-section">
-              <text class="fp-detail-label">🎯 选择理由</text>
-              <text class="fp-detail-text">{{item.whyThisPick}}</text>
-            </view>
-            <view class="fp-detail-section">
-              <text class="fp-detail-label">📈 3个月支撑分析</text>
-              <text class="fp-detail-text">{{item.supportAnalysis}}</text>
-            </view>
-            <view class="fp-detail-section">
-              <text class="fp-detail-label">💡 买入策略</text>
-              <text class="fp-detail-text fp-strategy-text">{{item.strategy}}</text>
-            </view>
-            <view class="fp-detail-row">
-              <view class="fp-detail-item">
-                <text class="fp-detail-label">🎯 预期收益</text>
-                <text class="fp-detail-val fp-val-up">{{item.targetReturn || '--'}}</text>
+      <!-- ===== 股票推荐（5只）===== -->
+      <view class="fp-section" wx:if="{{fundPickResult.stockPicks && fundPickResult.stockPicks.length > 0}}">
+        <view class="fp-section-header fp-section-stock">
+          <text class="fp-section-icon">📈</text>
+          <text class="fp-section-title">股票推荐</text>
+          <text class="fp-section-count">{{fundPickResult.stockPicks.length}}只</text>
+        </view>
+        <view class="fp-picks">
+          <view class="fp-pick {{item.showDetail ? 'fp-pick-open' : ''}}" wx:for="{{fundPickResult.stockPicks}}" wx:key="code" data-idx="{{index}}" data-list="stockPicks" bindtap="togglePickDetail">
+            <view class="fp-pick-top">
+              <view class="fp-pick-left">
+                <view class="fp-pick-type-badge fp-type-stock">股</view>
+                <view class="fp-pick-info">
+                  <text class="fp-pick-name">{{item.name}}</text>
+                  <text class="fp-pick-code">{{item.code}} · {{item.sector}} {{item.sectorPct || ''}}</text>
+                </view>
               </view>
-              <view class="fp-detail-item">
-                <text class="fp-detail-label">⚠️ 风险</text>
-                <text class="fp-detail-val fp-val-risk">{{item.riskPoints || '--'}}</text>
+              <view class="fp-pick-right">
+                <text class="fp-pick-rating fp-rating-{{item.rating}}">
+                  {{item.rating === 'strong_buy' ? '🔥 强推' : item.rating === 'buy' ? '👍 推荐' : '📈 吸纳'}}
+                </text>
+                <text class="fp-pick-confidence">{{item.confidence || 75}}%</text>
               </view>
             </view>
-            <!-- 加入持仓按钮（仅基金） -->
-            <view class="fp-add-btn" wx:if="{{item.type === 'fund'}}" catchtap="addPickToHoldings" data-code="{{item.code}}" data-name="{{item.name}}" data-type="{{item.sector}}">
-              <text>+ 加入持仓</text>
+            <view class="fp-pick-detail" wx:if="{{item.showDetail}}">
+              <view class="fp-detail-section">
+                <text class="fp-detail-label">📊 看好板块原因</text>
+                <text class="fp-detail-text">{{item.whyThisSector}}</text>
+              </view>
+              <view class="fp-detail-section">
+                <text class="fp-detail-label">🎯 选择理由</text>
+                <text class="fp-detail-text">{{item.whyThisPick}}</text>
+              </view>
+              <view class="fp-detail-section">
+                <text class="fp-detail-label">📈 3个月支撑分析</text>
+                <text class="fp-detail-text">{{item.supportAnalysis}}</text>
+              </view>
+              <view class="fp-detail-section">
+                <text class="fp-detail-label">💡 买入策略</text>
+                <text class="fp-detail-text fp-strategy-text">{{item.strategy}}</text>
+              </view>
+              <view class="fp-detail-row">
+                <view class="fp-detail-item">
+                  <text class="fp-detail-label">🎯 预期收益</text>
+                  <text class="fp-detail-val fp-val-up">{{item.targetReturn || '--'}}</text>
+                </view>
+                <view class="fp-detail-item">
+                  <text class="fp-detail-label">⚠️ 风险</text>
+                  <text class="fp-detail-val fp-val-risk">{{item.riskPoints || '--'}}</text>
+                </view>
+              </view>
             </view>
           </view>
         </view>

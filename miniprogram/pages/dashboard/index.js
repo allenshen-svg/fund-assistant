@@ -538,8 +538,9 @@ Page({
         fundPickTime: new Date().toLocaleString(),
       });
 
-      const pickCount = (result.picks || []).length;
-      wx.showToast({ title: `精选 ${pickCount} 只标的`, icon: 'success' });
+      const fundCount = (result.fundPicks || []).length;
+      const stockCount = (result.stockPicks || []).length;
+      wx.showToast({ title: `精选 ${fundCount}基金+${stockCount}股票`, icon: 'success' });
     } catch (e) {
       clearProgress();
       this.setData({ fundPickLoading: false, fundPickProgress: '' });
@@ -553,8 +554,10 @@ Page({
 
   togglePickDetail(e) {
     const idx = e.currentTarget.dataset.idx;
-    const key = `fundPickResult.picks[${idx}].showDetail`;
-    const current = this.data.fundPickResult && this.data.fundPickResult.picks && this.data.fundPickResult.picks[idx];
+    const listType = e.currentTarget.dataset.list || 'fundPicks'; // 'fundPicks' or 'stockPicks'
+    const key = `fundPickResult.${listType}[${idx}].showDetail`;
+    const list = this.data.fundPickResult && this.data.fundPickResult[listType];
+    const current = list && list[idx];
     this.setData({ [key]: !(current && current.showDetail) });
   },
 

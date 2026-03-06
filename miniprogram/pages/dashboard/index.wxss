@@ -1925,6 +1925,43 @@
   line-height: 1.7;
 }
 
+/* 基金/股票分区 */
+.fp-section {
+  margin-bottom: 20rpx;
+}
+.fp-section-header {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  margin-bottom: 12rpx;
+  padding: 10rpx 16rpx;
+  border-radius: 10rpx;
+  font-weight: 600;
+}
+.fp-section-fund {
+  background: linear-gradient(135deg, #ede9fe, #ddd6fe);
+  border-left: 6rpx solid #7c3aed;
+}
+.fp-section-stock {
+  background: linear-gradient(135deg, #fef2f2, #fde8e8);
+  border-left: 6rpx solid #ef4444;
+}
+.fp-section-icon {
+  font-size: 32rpx;
+}
+.fp-section-title {
+  font-size: 28rpx;
+  color: #1f2937;
+  flex: 1;
+}
+.fp-section-count {
+  font-size: 22rpx;
+  color: #6b7280;
+  background: rgba(255,255,255,0.7);
+  padding: 2rpx 12rpx;
+  border-radius: 20rpx;
+}
+
 /* 推荐列表 */
 .fp-picks {
   display: flex;
