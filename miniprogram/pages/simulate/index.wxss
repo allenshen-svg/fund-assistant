@@ -194,7 +194,6 @@
 }
 
 .cal-cell-data {
-  cursor: pointer;
 }
 
 .cal-day {

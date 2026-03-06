@@ -504,7 +504,7 @@ Page({
     this.setData({ buyAmount: String(amount) });
   },
 
-  confirmBuy() {
+  async confirmBuy() {
     const { buyTarget, buyAmount, cash } = this.data;
     if (!buyTarget) {
       wx.showToast({ title: '请先选择标的', icon: 'none' }); return;

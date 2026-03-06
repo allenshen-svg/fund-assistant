@@ -77,6 +77,27 @@ for f in wxml_files:
     if not bad:
         print('OK   %s (all tags balanced)' % f)
 
+print("\n=== Node.js Syntax Check ===")
+import subprocess, shutil
+nvm_node = os.path.expanduser('~/.nvm/versions/node')
+node_bin = None
+if os.path.isdir(nvm_node):
+    versions = sorted(os.listdir(nvm_node))
+    if versions:
+        node_bin = os.path.join(nvm_node, versions[-1], 'bin', 'node')
+if not node_bin or not os.path.isfile(node_bin):
+    node_bin = shutil.which('node')
+if node_bin:
+    for f in files:
+        r = subprocess.run([node_bin, '-c', f], capture_output=True, text=True)
+        if r.returncode != 0:
+            err = r.stderr.strip().split('\n')
+            print('FAIL %s: %s' % (f, err[1] if len(err) > 1 else err[0]))
+        else:
+            print('OK   %s' % f)
+else:
+    print('SKIP (node not found)')
+
 print("\n=== Module Exports Check ===")
 # Check that ai.js exports everything dashboard needs
 ai_content = open('miniprogram/utils/ai.js').read()
