@@ -662,68 +662,6 @@
     </view>
   </view>
 
-  <!-- ====== AI 推荐基金 ====== -->
-  <view class="card" wx:if="{{aiRecommendations.length > 0}}">
-    <view class="card-header sec-toggle" bindtap="toggleRecommendations">
-      <text class="title">🌟 AI 推荐基金</text>
-      <view class="row">
-        <text class="chip blue">{{aiRecommendations.length}}只</text>
-        <text class="toggle-arrow" style="margin-left:12rpx;">{{showRecommendations ? '▲' : '▼'}}</text>
-      </view>
-    </view>
-
-    <view wx:if="{{showRecommendations}}">
-      <view class="ai-reco-hint">
-        <text class="sub">基于大盘观测与未来1个月推断，AI从基金库中筛选</text>
-      </view>
-
-      <view class="ai-reco-card {{item.actionClass}}" wx:for="{{aiRecommendations}}" wx:key="code" data-idx="{{index}}">
-        <view class="ai-reco-top" bindtap="toggleRecoDetail" data-idx="{{index}}">
-          <view class="ai-reco-left">
-            <text class="ai-reco-name">{{item.name}}</text>
-            <text class="ai-reco-code">{{item.code}} · {{item.type}}</text>
-          </view>
-          <view class="ai-reco-right">
-            <text class="ai-reco-badge {{item.actionClass}}">{{item.actionLabel}}</text>
-            <text class="ai-reco-conf">{{item.confidenceStr}}</text>
-          </view>
-        </view>
-
-        <text class="ai-reco-reason">{{item.reason}}</text>
-
-        <!-- 展开详情 -->
-        <view wx:if="{{item.showDetail}}" class="ai-reco-detail">
-          <view class="ai-reco-analysis">
-            <text class="ai-reco-analysis-text">{{item.analysis}}</text>
-          </view>
-          <view class="ai-reco-extras">
-            <view class="ai-reco-extra-item" wx:if="{{item.expectedReturn}}">
-              <text class="ai-reco-extra-key">📈 预期收益</text>
-              <text class="ai-reco-extra-val">{{item.expectedReturn}}</text>
-            </view>
-            <view class="ai-reco-extra-item" wx:if="{{item.catalyst}}">
-              <text class="ai-reco-extra-key">🚀 催化剂</text>
-              <text class="ai-reco-extra-val">{{item.catalyst}}</text>
-            </view>
-            <view class="ai-reco-extra-item" wx:if="{{item.riskNote}}">
-              <text class="ai-reco-extra-key">⚠️ 风险</text>
-              <text class="ai-reco-extra-val">{{item.riskNote}}</text>
-            </view>
-          </view>
-        </view>
-
-        <view class="ai-reco-actions">
-          <text class="ag-expand-hint" style="flex:1;" bindtap="toggleRecoDetail" data-idx="{{index}}">
-            {{item.showDetail ? '▲ 收起' : '▼ 详细分析'}}
-          </text>
-          <view class="ai-reco-add-btn" bindtap="addRecoToHoldings" data-code="{{item.code}}" data-name="{{item.name}}" data-type="{{item.type}}">
-            <text>+ 加入持仓</text>
-          </view>
-        </view>
-      </view>
-    </view>
-  </view>
-
   <!-- ====== 更新时间 ====== -->
   <view class="footer-info">
     <text class="sub">数据更新：{{updatedAt}}</text>

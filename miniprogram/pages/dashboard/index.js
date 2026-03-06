@@ -791,38 +791,11 @@ Page({
     };
   },
 
-  // 展开/收起AI推荐
-  toggleRecommendations() {
-    this.setData({ showRecommendations: !this.data.showRecommendations });
-  },
-
   // 展开/收起AI信号详情
   toggleSignalDetail(e) {
     const idx = e.currentTarget.dataset.idx;
     const key = `aiResult.signals[${idx}].showDetail`;
     this.setData({ [key]: !this.data.aiResult.signals[idx].showDetail });
-  },
-
-  // 展开/收起推荐基金详情
-  toggleRecoDetail(e) {
-    const idx = e.currentTarget.dataset.idx;
-    const key = `aiRecommendations[${idx}].showDetail`;
-    this.setData({ [key]: !this.data.aiRecommendations[idx].showDetail });
-  },
-
-  // 添加推荐基金到持仓
-  addRecoToHoldings(e) {
-    const { code, name, type } = e.currentTarget.dataset;
-    const { getHoldings: getH, setHoldings } = require('../../utils/storage');
-    const holdings = getH();
-    if (holdings.find(h => h.code === code)) {
-      wx.showToast({ title: '已在持仓中', icon: 'none' });
-      return;
-    }
-    holdings.push({ code, name, type });
-    setHoldings(holdings);
-    wx.showToast({ title: '已添加到持仓', icon: 'success' });
-    this.loadAll();
   },
 
   /**
