@@ -666,6 +666,24 @@
         <text class="sfai-text">{{singleAIResult.whyTrend}}</text>
       </view>
 
+      <!-- 深度因果分析 -->
+      <view class="sfai-card sfai-deep-card" wx:if="{{singleAIResult.deepAnalysis}}">
+        <view class="sfai-section-title">
+          <text class="sfai-section-icon">🧠</text>
+          <text class="sfai-section-label">深度因果链分析</text>
+        </view>
+        <text class="sfai-text sfai-deep-text">{{singleAIResult.deepAnalysis}}</text>
+      </view>
+
+      <!-- 关键事件影响 -->
+      <view class="sfai-card" wx:if="{{singleAIResult.keyEvents}}">
+        <view class="sfai-section-title">
+          <text class="sfai-section-icon">🔥</text>
+          <text class="sfai-section-label">关键事件影响</text>
+        </view>
+        <text class="sfai-text">{{singleAIResult.keyEvents}}</text>
+      </view>
+
       <!-- 技术面 -->
       <view class="sfai-card">
         <view class="sfai-section-title">

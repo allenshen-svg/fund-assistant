@@ -524,6 +524,16 @@
   margin-top: 4rpx;
 }
 
+/* 深度因果分析卡片 */
+.sfai-deep-card {
+  border-left: 4rpx solid #1a73e8;
+  background: linear-gradient(135deg, #f8fbff 0%, #eef4fd 100%);
+}
+.sfai-deep-text {
+  line-height: 1.9;
+  white-space: pre-wrap;
+}
+
 /* 正文 */
 .sfai-text {
   display: block;

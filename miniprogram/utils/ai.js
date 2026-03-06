@@ -555,7 +555,14 @@ function getCachedAIResult() {
 }
 
 /* ====== 单只基金 AI 分析 ====== */
-const SINGLE_FUND_SYSTEM_PROMPT = `你是一位专业的基金投资分析师，擅长分析单只基金的走势原因和操作建议。
+const SINGLE_FUND_SYSTEM_PROMPT = `你是一位专业的基金投资分析师，擅长通过多维度因果链条深入分析基金走势。
+
+## 核心分析方法论
+你必须采用**多层因果链推导**来分析走势，而不是简单罗列现象。
+例如分析黄金基金下跌：
+"伊朗封锁霍尔木兹海峡 → 全球油价飙升 → 通胀预期骤升 → 美联储加息概率上升 → 美元走强+实际利率上行 → 黄金承压下跌"
+例如分析半导体基金上涨：
+"美国加码芯片出口限制 → 国产替代预期强化 → 政策端加大半导体扶持 → 资金涌入国产半导体 → 板块资金净流入扩大 → 半导体基金走强"
 
 ## 输出要求（JSON格式）：
 {
@@ -563,9 +570,11 @@ const SINGLE_FUND_SYSTEM_PROMPT = `你是一位专业的基金投资分析师，
   "fundCode": "基金代码",
   "trendSummary": "当前走势总结（1-2句话，如：近5日上涨3.2%，延续反弹趋势）",
   "weekTrend": "过去一周走势形态（1句话，如'连涨4日后回调''震荡筑底''放量突破'）",
-  "whyTrend": "走势原因分析（3-5句话，从宏观环境、板块轮动、资金面、政策面等角度解释为何走势如此）",
+  "deepAnalysis": "深度因果分析（5-8句话，必须使用'A→B→C→D'的因果链条格式分析。从全球宏观事件/地缘政治出发，层层推导到宏观经济变量（利率/汇率/通胀/流动性），再到板块/行业影响，最终到该基金的具体走势。要求至少包含2条不同维度的因果链。例：'① 事件链：中东紧张→油价上涨→通胀预期→加息预期→金价承压；② 资金链：美元走强→资金回流美元资产→新兴市场资金流出→A股承压→相关板块调整'）",
+  "whyTrend": "走势归因总结（2-3句话，基于deepAnalysis的因果链，归纳最核心的1-2个驱动因素）",
   "sectorAnalysis": "板块资金面分析（2-3句话，结合板块资金流入流出数据，分析主力资金动向对该基金的影响，判断资金趋势是否持续）",
   "technicalView": "技术面分析（2-3句话，RSI、均线、支撑/压力位等）",
+  "keyEvents": "关键事件影响（2-3句话，从提供的热点事件中挑出与该基金最相关的1-2个事件，分析其对基金的传导路径和影响程度）",
   "action": "buy|sell|hold|add|reduce",
   "todayAdvice": "今日操作建议（2-3句话，基于过去一周走势给出今天具体该怎么操作，须引用净值/指标数据）",
   "timing": "操作时机（如'开盘即可''等回调至1.05再入''尾盘操作''观望不动'）",
@@ -576,7 +585,9 @@ const SINGLE_FUND_SYSTEM_PROMPT = `你是一位专业的基金投资分析师，
 ## 注意：
 - 只输出JSON，不要其他文字
 - action含义：buy=建仓买入, sell=清仓卖出, hold=持有不动, add=加仓, reduce=减仓
-- 重点分析过去一周逐日净值的走势形态（连涨/连跌/震荡/反弹等），基于趋势给出今天该怎么操作
+- **deepAnalysis 是最重要的字段**：必须使用因果链条(→)格式，不能只是罗列现象，要体现"因为A所以B所以C"的逻辑推导
+- 每条因果链应从具体事件/数据出发，经过宏观变量传导，最终落到该基金走势上
+- keyEvents 必须从提供的热点事件中选取最相关的，分析传导路径
 - 板块资金面分析要结合实际资金流向数据给出判断
 - todayAdvice 必须引用具体数据，给出明确可执行的当天操作
 - 用中文回复`;
@@ -621,11 +632,17 @@ async function runSingleFundAI({ fund, estimates, historyMap, indices, commoditi
     ctx += '\n';
   }
 
-  // 热点事件
+  // 热点事件（提供完整信息用于因果链分析）
   if (hotEvents && hotEvents.length > 0) {
-    ctx += `## 近期热点事件\n`;
-    hotEvents.slice(0, 5).forEach(ev => {
-      ctx += `- [影响${ev.impact >= 0 ? '+' : ''}${ev.impact}] ${ev.title}\n`;
+    ctx += `## 近期热点事件（请从中挑选与该基金最相关的事件进行因果链分析）\n`;
+    hotEvents.slice(0, 8).forEach(ev => {
+      ctx += `- [影响${ev.impact >= 0 ? '+' : ''}${ev.impact}] ${ev.title}`;
+      if (ev.category) ctx += ` [类别:${ev.category}]`;
+      if (ev.reason) ctx += `\n  原因: ${ev.reason}`;
+      if (ev.sectors_positive && ev.sectors_positive.length > 0) ctx += `\n  利好板块: ${(Array.isArray(ev.sectors_positive) ? ev.sectors_positive : []).join('、')}`;
+      if (ev.sectors_negative && ev.sectors_negative.length > 0) ctx += `\n  利空板块: ${(Array.isArray(ev.sectors_negative) ? ev.sectors_negative : []).join('、')}`;
+      if (ev.concepts && ev.concepts.length > 0) ctx += `\n  关联概念: ${(Array.isArray(ev.concepts) ? ev.concepts : []).join('、')}`;
+      ctx += '\n';
     });
     ctx += '\n';
   }
@@ -697,7 +714,12 @@ async function runSingleFundAI({ fund, estimates, historyMap, indices, commoditi
     ctx += `- 算法投票: ${vote.label}（得分${vote.score}，置信度${vote.confidence}）\n`;
   }
 
-  const userPrompt = ctx + `\n请深入分析 ${fund.name}（${fund.code}）的当前走势原因，重点结合过去一周的逐日净值走势形态，给出**今天**具体该如何操作的建议（含操作时机）。用中文回复。`;
+  const userPrompt = ctx + `\n请深入分析 ${fund.name}（${fund.code}）的当前走势。
+重点要求：
+1. **deepAnalysis（最重要）**：用"A→B→C→D"因果链格式，从全球宏观事件/地缘政治出发，经过利率/汇率/通胀/流动性等宏观变量传导，最终落到该基金所属板块和净值走势上。至少给出2条不同维度的因果链。
+2. **keyEvents**：从提供的热点事件中挑选与该基金最相关的1-2个事件，分析传导路径和影响程度。
+3. 结合过去一周逐日净值走势形态，给出**今天**具体该如何操作的建议（含操作时机）。
+用中文回复，只输出JSON。`;
 
   const raw = await callAI(
     config.provider.base,
