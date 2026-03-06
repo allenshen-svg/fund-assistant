@@ -87,7 +87,7 @@ const NAME_FLOW_MAP = [
 /* ====== 匹配板块资金流 ====== */
 function matchSectorFlow(type, sectorFlows, fundName) {
   if (!sectorFlows || !sectorFlows.length) return null;
-  const baseTags = TYPE_TAG_MAP[type] || [type];
+  const baseTags = TYPE_TAG_MAP[type] || (type && type !== '其他' ? [type] : []);
   const extra = FLOW_EXTRA_TAGS[type] || [];
   let tags = baseTags.concat(extra);
   const normalize = (s) => String(s || '').replace(/[\s\u3000]/g, '');
