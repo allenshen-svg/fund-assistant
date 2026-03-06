@@ -389,21 +389,6 @@
     </view>
   </view>
 
-  <!-- ====== 热点事件 ====== -->
-  <view class="card" wx:if="{{topEvents.length > 0}}">
-    <view class="card-header">
-      <text class="title">📰 热点事件</text>
-      <text class="sub" bindtap="goSentiment">更多 ›</text>
-    </view>
-    <view class="event-item" wx:for="{{topEvents}}" wx:key="id">
-      <view class="row">
-        <text class="e-title">{{item.title}}</text>
-        <text class="chip {{item.impactClass}}">{{item.impact >= 0 ? '+' : ''}}{{item.impact}}</text>
-      </view>
-      <text class="sub" style="margin-top:6rpx;">{{item.advice}}</text>
-    </view>
-  </view>
-
   <!-- ====== 选基金/股票 ====== -->
   <view class="card fp-card">
     <view class="card-header">
