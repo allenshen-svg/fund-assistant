@@ -131,6 +131,32 @@ function addSimWeeklyReview(review) {
   return reviews;
 }
 
+/* ====== 每日结算记录 ====== */
+const SIM_SETTLE_KEY = 'fa_sim_settle_log_v1';
+
+/**
+ * 获取结算记录
+ * @returns {Array<{date,totalValue,cash,positionValue,dailyPnl,dailyPct,positions:{code,name,nav,shares,value}[]}>}
+ */
+function getSimSettleLog() {
+  const raw = wx.getStorageSync(SIM_SETTLE_KEY);
+  return Array.isArray(raw) ? raw : [];
+}
+
+function addSimSettleRecord(record) {
+  const log = getSimSettleLog();
+  // 同一天只保留最新一条
+  const existIdx = log.findIndex(r => r.date === record.date);
+  if (existIdx >= 0) {
+    log[existIdx] = record;
+  } else {
+    log.unshift(record);
+  }
+  if (log.length > 365) log.length = 365; // 保留一年
+  wx.setStorageSync(SIM_SETTLE_KEY, log);
+  return log;
+}
+
 module.exports = {
   getSettings,
   setSettings,
@@ -144,4 +170,6 @@ module.exports = {
   addSimTradeLog,
   getSimWeeklyReviews,
   addSimWeeklyReview,
+  getSimSettleLog,
+  addSimSettleRecord,
 };

@@ -1,5 +1,5 @@
-const { getSimPortfolio, setSimPortfolio, getSimTradeLog, addSimTradeLog, getSimWeeklyReviews, addSimWeeklyReview, getSettings } = require('../../utils/storage');
-const { fetchIndices, fetchCommodities, fetchHotEvents, fetchSectorFlows, fetchMultiFundEstimates } = require('../../utils/api');
+const { getSimPortfolio, setSimPortfolio, getSimTradeLog, addSimTradeLog, getSimWeeklyReviews, addSimWeeklyReview, getSettings, getSimSettleLog, addSimSettleRecord } = require('../../utils/storage');
+const { fetchIndices, fetchCommodities, fetchHotEvents, fetchSectorFlows, fetchMultiFundEstimates, fetchFundEstimate } = require('../../utils/api');
 const { getCachedFundPick, runSimSellAdvice, runSimWeeklyReview, getAIConfig } = require('../../utils/ai');
 const { formatPct, pctClass, todayStr, isTradingDay, formatMoney } = require('../../utils/market');
 
@@ -45,10 +45,20 @@ Page({
     /* ====== 状态 ====== */
     loading: false,
     refreshing: false,
+
+    /* ====== 结算 ====== */
+    settleDate: '',         // 最后结算日
+    settling: false,        // 结算中
+    dailyPnl: '',           // 今日盈亏额
+    dailyPnlClass: 'flat',
+    dailyPct: '',           // 今日涨跌幅
+    settleLog: [],          // 近30天结算记录
+    secSettle: false,       // 结算记录展开
   },
 
   onShow() {
     this._loadPortfolio();
+    this._autoSettle();
   },
 
   onPullDownRefresh() {
@@ -60,6 +70,7 @@ Page({
     const portfolio = getSimPortfolio();
     const tradeLog = getSimTradeLog();
     const reviews = getSimWeeklyReviews();
+    const settleLog = getSimSettleLog();
 
     this.setData({
       portfolio,
@@ -68,6 +79,8 @@ Page({
       tradeLog: tradeLog.slice(0, 50),
       weeklyReviews: reviews,
       latestReview: reviews.length > 0 ? reviews[0] : null,
+      settleDate: portfolio.lastSettleDate || '',
+      settleLog: settleLog.slice(0, 30),
     });
 
     this._refreshPositions();
@@ -91,29 +104,30 @@ Page({
     this.setData({ refreshing: true });
 
     try {
-      // 获取基金类持仓的估值
-      const fundCodes = positions.filter(p => p.type === 'fund').map(p => p.code);
-      let fundEstimates = {};
-      if (fundCodes.length > 0) {
-        const results = await fetchMultiFundEstimates(fundCodes);
-        results.forEach(r => {
-          if (r && r.code) fundEstimates[r.code] = r;
-        });
+      // 获取基金类持仓的估值（包括确认净值 nav 和实时估值 estimate）
+      const allCodes = positions.map(p => p.code);
+      let fundData = {};
+      if (allCodes.length > 0) {
+        const results = await fetchMultiFundEstimates(allCodes);
+        fundData = results;
       }
 
       // 构建持仓列表
       let positionValue = 0;
       const positionList = positions.map(pos => {
-        const est = fundEstimates[pos.code];
-        const currentPrice = est ? est.estimateNav : pos.costPrice;
-        const currentValue = pos.shares * currentPrice;
+        const est = fundData[pos.code];
+        // 优先用实时估值，其次用确认净值，再次用最后结算价
+        const currentNav = est ? (est.estimate || est.nav) : (pos.lastNav || pos.costPrice);
+        const confirmedNav = est ? est.nav : (pos.lastNav || pos.costPrice);
+        const currentValue = pos.shares * currentNav;
         const profit = currentValue - pos.costTotal;
         const profitPct = pos.costTotal > 0 ? (profit / pos.costTotal * 100) : 0;
         positionValue += currentValue;
 
         return {
           ...pos,
-          currentPrice: currentPrice.toFixed(4),
+          currentPrice: currentNav.toFixed(4),
+          confirmedNav: confirmedNav.toFixed(4),
           currentValue: currentValue.toFixed(2),
           profit: profit.toFixed(2),
           profitPct: profitPct.toFixed(2) + '%',
@@ -137,6 +151,139 @@ Page({
     } catch (e) {
       console.error('刷新持仓估值失败', e);
       this.setData({ refreshing: false });
+    }
+  },
+
+  /* ================= 每日结算 ================= */
+  /**
+   * 自动结算：进入页面时检查是否需要结算
+   * - 如果今天是交易日且尚未结算，自动执行结算
+   * - 结算使用每只基金/股票的确认净值(nav/dwjz)
+   */
+  async _autoSettle() {
+    const portfolio = getSimPortfolio();
+    const today = todayStr();
+    const positions = portfolio.positions || [];
+
+    // 无持仓 或 今天已结算过 -> 跳过
+    if (positions.length === 0) return;
+    if (portfolio.lastSettleDate === today) {
+      this._loadSettleDisplay();
+      return;
+    }
+
+    // 非交易日不自动结算（但可以手动触发）
+    if (!isTradingDay(today)) {
+      this._loadSettleDisplay();
+      return;
+    }
+
+    await this._doSettle();
+  },
+
+  /**
+   * 手动触发结算
+   */
+  async manualSettle() {
+    if (this.data.settling) return;
+    const portfolio = getSimPortfolio();
+    if ((portfolio.positions || []).length === 0) {
+      wx.showToast({ title: '暂无持仓', icon: 'none' });
+      return;
+    }
+    await this._doSettle();
+  },
+
+  /**
+   * 执行结算逻辑
+   * - 获取每只持仓的确认净值
+   * - 按净值计算每只持仓市值
+   * - 记录结算快照（每日净值曲线）
+   * - 更新持仓的 lastNav 字段
+   */
+  async _doSettle() {
+    this.setData({ settling: true });
+    const portfolio = getSimPortfolio();
+    const positions = portfolio.positions || [];
+    const today = todayStr();
+
+    // 获取上一次结算的总市值，用于计算日收益
+    const settleLog = getSimSettleLog();
+    const lastSettle = settleLog.length > 0 ? settleLog[0] : null;
+    const prevTotalValue = lastSettle ? lastSettle.totalValue : portfolio.totalCash;
+
+    try {
+      // 并行获取所有持仓净值
+      const tasks = positions.map(pos => fetchFundEstimate(pos.code));
+      const results = await Promise.allSettled(tasks);
+
+      let positionValue = 0;
+      const settlePositions = [];
+
+      positions.forEach((pos, i) => {
+        const est = results[i].status === 'fulfilled' ? results[i].value : null;
+        // 优先用确认净值(dwjz)，其次用估值(gsz)，再次用上次结算净值
+        const settleNav = est ? (est.nav || est.estimate || pos.lastNav || pos.costPrice)
+                              : (pos.lastNav || pos.costPrice);
+        const value = pos.shares * settleNav;
+        positionValue += value;
+
+        // 更新持仓的最新净值
+        pos.lastNav = settleNav;
+        pos.lastNavDate = today;
+
+        settlePositions.push({
+          code: pos.code,
+          name: pos.name,
+          nav: settleNav,
+          shares: pos.shares,
+          value: parseFloat(value.toFixed(2)),
+        });
+      });
+
+      const totalValue = portfolio.cash + positionValue;
+      const dailyPnl = totalValue - prevTotalValue;
+      const dailyPct = prevTotalValue > 0 ? ((dailyPnl / prevTotalValue) * 100) : 0;
+
+      // 保存结算记录
+      addSimSettleRecord({
+        date: today,
+        totalValue: parseFloat(totalValue.toFixed(2)),
+        cash: portfolio.cash,
+        positionValue: parseFloat(positionValue.toFixed(2)),
+        dailyPnl: parseFloat(dailyPnl.toFixed(2)),
+        dailyPct: parseFloat(dailyPct.toFixed(2)),
+        positions: settlePositions,
+      });
+
+      // 更新组合状态
+      portfolio.lastSettleDate = today;
+      portfolio.lastSettleValue = parseFloat(totalValue.toFixed(2));
+      setSimPortfolio(portfolio);
+
+      this.setData({ settling: false });
+      this._loadPortfolio();
+      wx.showToast({ title: `结算完成 ${dailyPnl >= 0 ? '+' : ''}¥${dailyPnl.toFixed(0)}`, icon: 'none' });
+    } catch (e) {
+      console.error('结算失败', e);
+      this.setData({ settling: false });
+      wx.showToast({ title: '结算失败', icon: 'none' });
+    }
+  },
+
+  /**
+   * 加载结算显示数据
+   */
+  _loadSettleDisplay() {
+    const settleLog = getSimSettleLog();
+    const latest = settleLog.length > 0 ? settleLog[0] : null;
+    if (latest) {
+      this.setData({
+        dailyPnl: (latest.dailyPnl >= 0 ? '+' : '') + latest.dailyPnl.toFixed(2),
+        dailyPnlClass: latest.dailyPnl >= 0 ? (latest.dailyPnl > 0 ? 'up' : 'flat') : 'down',
+        dailyPct: (latest.dailyPct >= 0 ? '+' : '') + latest.dailyPct.toFixed(2) + '%',
+        settleLog: settleLog.slice(0, 30),
+      });
     }
   },
 
@@ -229,8 +376,10 @@ Page({
     }
 
     const portfolio = getSimPortfolio();
-    // 模拟买入: 假设净值为1.0000 (基金) 或当前价格
-    const price = 1.0000;
+    // 买入时获取实际净值
+    const est = await fetchFundEstimate(buyTarget.code);
+    // 优先使用确认净值(dwjz)，没有则用估值(gsz)
+    const price = est ? (est.nav || est.estimate || 1.0) : 1.0;
     const shares = amount / price;
 
     // 检查是否已有该持仓, 如有则加仓

@@ -64,6 +64,97 @@
   color: var(--text);
 }
 
+/* ====== 结算状态 ====== */
+.sim-settle-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16rpx 0 0;
+  margin-top: 12rpx;
+  border-top: 1rpx solid var(--border-subtle);
+}
+
+.sim-settle-info {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+}
+
+.sim-settle-label {
+  font-size: 24rpx;
+  color: var(--text-muted);
+}
+
+.sim-settle-pnl {
+  font-size: 28rpx;
+  font-weight: 700;
+}
+
+.sim-settle-right {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+}
+
+.sim-settle-date {
+  font-size: 22rpx;
+}
+
+.sim-settle-btn {
+  font-size: 24rpx;
+  color: var(--accent);
+  padding: 6rpx 16rpx;
+  border: 1rpx solid var(--border-accent);
+  border-radius: 8rpx;
+  font-weight: 500;
+}
+
+/* ====== 结算历史列表 ====== */
+.sim-settle-list {
+  margin-top: 8rpx;
+}
+
+.sim-settle-list-header {
+  display: flex;
+  padding: 8rpx 0;
+  border-bottom: 1rpx solid var(--border-subtle);
+}
+
+.sim-settle-list-header text {
+  font-size: 22rpx;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.sim-settle-list-row {
+  display: flex;
+  padding: 10rpx 0;
+  border-bottom: 1rpx solid var(--border-faint);
+}
+
+.sim-settle-list-row text {
+  font-size: 24rpx;
+}
+
+.sim-settle-col-date {
+  flex: 2.5;
+}
+
+.sim-settle-col-val {
+  flex: 2.5;
+  text-align: right;
+}
+
+.sim-settle-col-pnl {
+  flex: 2;
+  text-align: right;
+}
+
+.sim-settle-col-pct {
+  flex: 1.5;
+  text-align: right;
+}
+
 /* ====== 操作按钮 ====== */
 .sim-actions {
   display: flex;

@@ -27,6 +27,19 @@
           <text class="sim-summary-val">{{positionList.length}}</text>
         </view>
       </view>
+
+      <!-- 结算状态 -->
+      <view class="sim-settle-row" wx:if="{{positionList.length > 0}}">
+        <view class="sim-settle-info">
+          <text class="sim-settle-label">今日盈亏</text>
+          <text class="sim-settle-pnl pct-{{dailyPnlClass}}" wx:if="{{dailyPnl}}">{{dailyPnl}} ({{dailyPct}})</text>
+          <text class="sim-settle-pnl" wx:else>待结算</text>
+        </view>
+        <view class="sim-settle-right">
+          <text class="sim-settle-date sub" wx:if="{{settleDate}}">{{settleDate}} 已结算</text>
+          <text class="sim-settle-btn" bindtap="manualSettle">{{settling ? '结算中...' : '💰 结算'}}</text>
+        </view>
+      </view>
     </view>
 
     <!-- 操作按钮 -->
@@ -66,7 +79,10 @@
         </view>
       </view>
       <view class="sim-pos-detail">
-        <text class="sub">成本: ¥{{item.costPrice}} | 现价: ¥{{item.currentPrice}} | 盈亏: ¥{{item.profit}}</text>
+        <text class="sub">成本: ¥{{item.costPrice}} | 现价: ¥{{item.currentPrice}} | 确认净值: ¥{{item.confirmedNav}}</text>
+      </view>
+      <view class="sim-pos-detail">
+        <text class="sub">市值: ¥{{item.currentValue}} | 盈亏: ¥{{item.profit}}</text>
       </view>
       <view class="sim-pos-actions">
         <text class="sim-pos-btn sim-pos-btn-add" data-code="{{item.code}}" bindtap="addPosition">加仓</text>
@@ -167,6 +183,35 @@
               <text class="sim-review-text">{{item.aiReview.optimizationHints}}</text>
             </view>
           </view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- ====== 结算历史 ====== -->
+  <view class="card" wx:if="{{settleLog.length > 0}}">
+    <view class="card-header sec-toggle" data-key="secSettle" bindtap="toggleSection">
+      <text class="title">📅 结算记录</text>
+      <text class="toggle-arrow">{{secSettle ? '▲' : '▼'}}</text>
+    </view>
+
+    <view wx:if="{{secSettle}}">
+      <view class="sim-settle-list">
+        <view class="sim-settle-list-header">
+          <text class="sim-settle-col-date">日期</text>
+          <text class="sim-settle-col-val">总资产</text>
+          <text class="sim-settle-col-pnl">日盈亏</text>
+          <text class="sim-settle-col-pct">涨跌幅</text>
+        </view>
+        <view class="sim-settle-list-row" wx:for="{{settleLog}}" wx:key="date">
+          <text class="sim-settle-col-date">{{item.date}}</text>
+          <text class="sim-settle-col-val">{{item.totalValue}}</text>
+          <text class="sim-settle-col-pnl pct-{{item.dailyPnl >= 0 ? (item.dailyPnl > 0 ? 'up' : 'flat') : 'down'}}">
+            {{item.dailyPnl >= 0 ? '+' : ''}}{{item.dailyPnl}}
+          </text>
+          <text class="sim-settle-col-pct pct-{{item.dailyPct >= 0 ? (item.dailyPct > 0 ? 'up' : 'flat') : 'down'}}">
+            {{item.dailyPct >= 0 ? '+' : ''}}{{item.dailyPct}}%
+          </text>
         </view>
       </view>
     </view>
