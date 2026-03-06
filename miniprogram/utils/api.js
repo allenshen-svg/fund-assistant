@@ -1,11 +1,58 @@
 const { fallbackHotEvents } = require('../data/fallback-hot-events');
 
+function normalizeEventText(text) {
+  return String(text || '')
+    .toLowerCase()
+    .replace(/[\s\u3000]+/g, '')
+    .replace(/[“”"'`·•:：，,。！？!？（）()【】\[\]、;；\-—]/g, '');
+}
+
+function dedupeHotEvents(events) {
+  if (!Array.isArray(events) || events.length <= 1) return Array.isArray(events) ? events : [];
+
+  const bestByKey = new Map();
+  events.forEach((evt, idx) => {
+    const titleKey = normalizeEventText(evt && evt.title);
+    const reasonKey = normalizeEventText(evt && evt.reason).slice(0, 24);
+    const categoryKey = String((evt && evt.category) || '');
+    const conceptsKey = Array.isArray(evt && evt.concepts)
+      ? evt.concepts.map(normalizeEventText).filter(Boolean).sort().join('|')
+      : '';
+
+    const key = titleKey
+      ? `${titleKey}|${categoryKey}|${reasonKey || conceptsKey}`
+      : `__idx_${idx}`;
+
+    const current = bestByKey.get(key);
+    if (!current) {
+      bestByKey.set(key, evt);
+      return;
+    }
+
+    const currentScore = Math.abs(Number(current.impact || 0)) * 100 + Number(current.confidence || 0);
+    const nextScore = Math.abs(Number((evt && evt.impact) || 0)) * 100 + Number((evt && evt.confidence) || 0);
+    if (nextScore > currentScore) {
+      bestByKey.set(key, evt);
+    }
+  });
+
+  return Array.from(bestByKey.values());
+}
+
+function normalizeHotEventsPayload(data) {
+  const payload = data || {};
+  return {
+    ...payload,
+    events: dedupeHotEvents(payload.events || []),
+  };
+}
+
 /**
  * 获取热点事件数据
  */
 function fetchHotEvents(settings) {
   if (!settings.useRemote) {
-    return Promise.resolve({ source: 'local', data: fallbackHotEvents });
+    return Promise.resolve({ source: 'local', data: normalizeHotEventsPayload(fallbackHotEvents) });
   }
   const base = String(settings.apiBase || '').replace(/\/$/, '');
   const url = `${base}/data/hot_events.json?_t=${Date.now()}`;
@@ -18,13 +65,13 @@ function fetchHotEvents(settings) {
         const ok = res.statusCode >= 200 && res.statusCode < 300;
         const hasShape = res.data && Array.isArray(res.data.heatmap);
         if (ok && hasShape) {
-          resolve({ source: 'remote', data: res.data });
+          resolve({ source: 'remote', data: normalizeHotEventsPayload(res.data) });
           return;
         }
-        resolve({ source: 'local', data: fallbackHotEvents });
+        resolve({ source: 'local', data: normalizeHotEventsPayload(fallbackHotEvents) });
       },
       fail() {
-        resolve({ source: 'local', data: fallbackHotEvents });
+        resolve({ source: 'local', data: normalizeHotEventsPayload(fallbackHotEvents) });
       }
     });
   });

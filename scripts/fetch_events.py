@@ -1230,6 +1230,43 @@ def _attach_analyst_views_to_events(events, analyst_views):
     return events
 
 
+def _normalize_event_text(text):
+    return re.sub(r'\W+', '', str(text or '').lower())
+
+
+def _dedupe_events(events):
+    """事件去重：按标题+类别+简化原因合并，保留影响/置信度更高的一条"""
+    if not events:
+        return []
+
+    best = {}
+    ordered_keys = []
+
+    for i, evt in enumerate(events):
+        title_key = _normalize_event_text(evt.get('title'))
+        category_key = str(evt.get('category') or '')
+        reason_key = _normalize_event_text(evt.get('reason'))[:24]
+        concepts_key = '|'.join(sorted(_normalize_event_text(c) for c in (evt.get('concepts') or []) if c))
+
+        if title_key:
+            dedupe_key = f"{title_key}|{category_key}|{reason_key or concepts_key}"
+        else:
+            dedupe_key = f"__idx_{i}"
+
+        current = best.get(dedupe_key)
+        if current is None:
+            best[dedupe_key] = evt
+            ordered_keys.append(dedupe_key)
+            continue
+
+        cur_score = abs(float(current.get('impact', 0) or 0)) * 100 + float(current.get('confidence', 0) or 0)
+        nxt_score = abs(float(evt.get('impact', 0) or 0)) * 100 + float(evt.get('confidence', 0) or 0)
+        if nxt_score > cur_score:
+            best[dedupe_key] = evt
+
+    return [best[k] for k in ordered_keys]
+
+
 def build_output(llm_result, prev_data, now, all_news=None, xueqiu_data=None, analyst_views=None):
     """组装最终JSON输出"""
     events = []
@@ -1249,6 +1286,9 @@ def build_output(llm_result, prev_data, now, all_news=None, xueqiu_data=None, an
 
     # === 全量事件补充分析师观点 ===
     events = _attach_analyst_views_to_events(events, analyst_views or [])
+
+    # === 事件去重（防止LLM/模板注入后出现同题材重复卡片） ===
+    events = _dedupe_events(events)
 
     # 热度图: 补充趋势（去重：同tag取最高温度）
     heatmap_dict = {}

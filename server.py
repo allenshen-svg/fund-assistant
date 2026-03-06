@@ -4,7 +4,7 @@ fund-assistant 后端服务器
 - 提供 /api/sentiment   → 返回缓存的舆情数据
 - 提供 /api/refresh     → 触发立即采集
 - 提供静态文件服务       → HTML/CSS/JS
-- 后台每小时自动采集一次
+- 后台每30分钟自动采集一次
 """
 
 import os, sys, json, time, threading
@@ -36,7 +36,7 @@ def add_cors_headers(response):
 
 # ==================== 配置 ====================
 PORT = int(os.environ.get('PORT', 8000))
-COLLECT_INTERVAL = int(os.environ.get('COLLECT_INTERVAL', 3600))  # 默认1小时
+COLLECT_INTERVAL = int(os.environ.get('COLLECT_INTERVAL', 1800))  # 默认30分钟
 _collecting_lock = threading.Lock()
 _collecting = False
 
@@ -50,7 +50,7 @@ def api_sentiment():
         return jsonify({'items': [], 'total': 0, 'source_counts': {},
                         'fetch_time': None, 'message': '暂无数据，请等待首次采集完成'}), 200
 
-    # 检查缓存是否过期 (超过2小时视为过期)
+    # 检查缓存是否过期 (超过2倍采集间隔视为过期)
     age = int(time.time()) - cache.get('fetch_ts', 0)
     cache['cache_age_seconds'] = age
     cache['stale'] = age > COLLECT_INTERVAL * 2
@@ -266,11 +266,11 @@ def is_trading_hours():
 
 def get_collect_interval():
     """根据交易日/非交易日动态调整采集间隔
-    - 交易时段：COLLECT_INTERVAL（默认1小时）
-    - 非交易日/非交易时段：7200秒（2小时）"""
+    - 交易时段：COLLECT_INTERVAL（默认30分钟）
+    - 非交易日/非交易时段：3600秒（1小时）"""
     if is_trading_hours():
         return COLLECT_INTERVAL
-    return max(COLLECT_INTERVAL, 7200)  # 非交易时段至少2小时
+    return max(COLLECT_INTERVAL, 3600)  # 非交易时段至少1小时
 
 # ==================== 后台定时采集 ====================
 
