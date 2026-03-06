@@ -513,8 +513,8 @@
   font-weight: 700;
   color: #374151;
 }
-.sfai-val-up { color: #16a34a; }
-.sfai-val-down { color: #dc2626; }
+.sfai-val-up { color: #dc2626; }
+.sfai-val-down { color: #16a34a; }
 .sfai-divider {
   height: 1rpx;
   background: #f0f0f0;
