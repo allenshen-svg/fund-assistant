@@ -198,12 +198,17 @@ Page({
         confidence: Number(item.confidence || 0),
         isGeo: item.category === 'geopolitics',
         isCommodity: item.category === 'commodity',
+        isTemplate: !!item.is_template,
       };
     });
-    const topEvents = allEvents.slice(0, 5);
+    // 动态事件优先，模板事件排在最后
+    const dynamicEvents = allEvents.filter(e => !e.isTemplate);
+    const templateEvents = allEvents.filter(e => e.isTemplate);
+    const sortedEvents = [...dynamicEvents, ...templateEvents];
+    const topEvents = sortedEvents.slice(0, 5);
 
-    // 热点异动: 地缘政治+商品事件 + 商品价格异动
-    const breakingEvents = allEvents.filter(e => e.isGeo || e.isCommodity || e.impactAbs >= 10);
+    // 热点异动: 仅取动态事件，排除静态模板
+    const breakingEvents = allEvents.filter(e => !e.isTemplate && (e.isGeo || e.isCommodity || e.impactAbs >= 10));
     const commodityAnomalies = commodities.filter(c => Math.abs(c.pct) >= 1.5).map(c => ({
       id: 'anom_' + c.code,
       title: c.icon + ' ' + c.name + (c.pct >= 0 ? '大涨' : '大跌') + ' ' + c.pctStr,

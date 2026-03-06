@@ -981,6 +981,8 @@ def _ensure_commodity_events(events, now):
             evt['id'] = f"evt_{now.strftime('%Y%m%d')}_base_{idx+1:03d}"
             evt['confidence'] = 0.6
             evt['source'] = "常驻基础事件"
+            evt['is_template'] = True
+            evt['impact'] = 1
             evt['time'] = now.isoformat()
             events.append(evt)
             added += 1
@@ -1103,6 +1105,8 @@ def _ensure_geopolitical_events(events, all_news, now):
             evt['id'] = f"evt_{now.strftime('%Y%m%d')}_geo_{idx+1:03d}"
             evt['confidence'] = 0.65
             evt['source'] = "地缘事件追踪"
+            evt['is_template'] = True
+            evt['impact'] = 1
             evt['time'] = now.isoformat()
             events.append(evt)
             added += 1
@@ -1188,6 +1192,7 @@ def _inject_key_events_with_analyst_views(events, all_news, analyst_views, now):
             evt['advice'] = f"{evt['advice']}（参考热门分析师实时观点）"
             evt['analyst_view'] = analyst_note
 
+        evt['is_template'] = True
         if evt['title'] not in existing_titles:
             events.append(evt)
             existing_titles.add(evt['title'])
