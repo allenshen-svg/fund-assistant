@@ -8,22 +8,22 @@ const { analyzeTrend, getTrendLabel, computeVote, buildPlainAdvisor } = require(
 const TYPE_TAG_MAP = {
   黄金: ['黄金', '贵金属'],
   有色金属: ['有色金属'],
-  'AI/科技': ['AI算力', '人工智能', '半导体', '机器人'],
+  'AI/科技': ['AI算力', '人工智能', '机器人', '计算机'],
   '半导体/科技': ['半导体', 'AI算力', '人工智能'],
   半导体: ['半导体'],
-  军工: ['军工'],
-  新能源: ['新能源', '光伏', '新能源车', '锂电'],
-  医药: ['医药'],
-  消费: ['消费'],
-  '白酒/消费': ['消费', '白酒'],
+  军工: ['军工', '国防军工'],
+  新能源: ['新能源', '光伏', '新能源车', '锂电', '储能', '电力设备'],
+  医药: ['医药', '医药生物'],
+  消费: ['消费', '食品饮料'],
+  '白酒/消费': ['白酒', '食品饮料'],
   债券: ['债券'],
   宽基: ['宽基', '沪深300', 'A500'],
   红利: ['红利'],
   港股科技: ['港股科技'],
-  原油: ['原油'],
-  蓝筹: ['蓝筹', '消费', '医药'],
+  原油: ['原油', '油气', '石油石化'],
+  蓝筹: ['蓝筹'],
   'QDII': ['港股', '美股'],
-  '蓝筹/QDII': ['蓝筹', '消费', '港股'],
+  '蓝筹/QDII': ['蓝筹', '港股'],
 };
 
 /* ====== 匹配板块热度 ====== */
@@ -44,20 +44,17 @@ function pickHeatForType(type, heatmap) {
   };
 }
 
-/* ====== 板块资金流额外标签（东方财富行业板块名称映射） ====== */
+/* ====== 板块资金流额外标签（东方财富申万行业板块名称映射） ====== */
 const FLOW_EXTRA_TAGS = {
   黄金: ['有色金属'],
-  'AI/科技': ['计算机', '电子', '通信'],
-  '半导体/科技': ['计算机', '电子'],
+  'AI/科技': ['电子', '通信'],
+  '半导体/科技': ['电子', '计算机'],
   半导体: ['电子'],
-  军工: ['国防军工'],
-  新能源: ['电力设备'],
-  医药: ['医药生物'],
-  消费: ['食品饮料', '商贸零售', '家用电器'],
-  '白酒/消费': ['食品饮料'],
+  新能源: [],
+  消费: ['商贸零售', '家用电器'],
+  '白酒/消费': [],
   红利: ['银行', '煤炭', '公用事业'],
   港股科技: ['计算机', '电子'],
-  原油: ['石油石化'],
   蓝筹: ['银行', '非银金融', '食品饮料'],
   '蓝筹/QDII': ['食品饮料'],
   宽基: ['银行', '非银金融'],
@@ -65,23 +62,29 @@ const FLOW_EXTRA_TAGS = {
 
 /* ====== 基金名称→板块关键词（用于"其他"类型的名称匹配） ====== */
 const NAME_FLOW_MAP = [
-  { keywords: ['机器人', '人工智能', 'AI', '智能'], sectors: ['计算机', '电子', '机械设备'] },
   { keywords: ['芯片', '半导体', '集成电路'], sectors: ['电子'] },
+  { keywords: ['机器人', '人工智能', 'AI'], sectors: ['计算机', '电子'] },
+  { keywords: ['云计算', '大数据', '软件', '信息技术'], sectors: ['计算机'] },
   { keywords: ['新能源', '光伏', '锂电', '储能', '风电'], sectors: ['电力设备'] },
-  { keywords: ['白酒', '食品', '饮料', '消费'], sectors: ['食品饮料'] },
-  { keywords: ['医药', '医疗', '生物', '创新药'], sectors: ['医药生物'] },
+  { keywords: ['白酒', '食品', '饮料'], sectors: ['食品饮料'] },
+  { keywords: ['医药', '医疗', '创新药'], sectors: ['医药生物'] },
   { keywords: ['军工', '国防', '航天', '航空'], sectors: ['国防军工'] },
   { keywords: ['黄金', '贵金属', '金ETF'], sectors: ['有色金属'] },
-  { keywords: ['有色', '铜', '铝', '锂', '稀土'], sectors: ['有色金属'] },
-  { keywords: ['原油', '石油', '油气', '能源'], sectors: ['石油石化'] },
-  { keywords: ['银行', '金融'], sectors: ['银行'] },
+  { keywords: ['有色', '铜', '铝', '稀土'], sectors: ['有色金属'] },
+  { keywords: ['原油', '石油', '油气', '石化', '能源化工'], sectors: ['石油石化'] },
+  { keywords: ['银行'], sectors: ['银行'] },
   { keywords: ['券商', '证券'], sectors: ['非银金融'] },
-  { keywords: ['地产', '房地产', '基建'], sectors: ['房地产'] },
+  { keywords: ['地产', '房地产'], sectors: ['房地产'] },
+  { keywords: ['基建', '基础设施'], sectors: ['建筑装饰'] },
   { keywords: ['传媒', '游戏', '影视'], sectors: ['传媒'] },
-  { keywords: ['汽车', '新能源车', '智能驾驶'], sectors: ['汽车'] },
-  { keywords: ['钢铁', '煤炭', '建材'], sectors: ['钢铁', '煤炭'] },
+  { keywords: ['汽车', '智能驾驶'], sectors: ['汽车'] },
+  { keywords: ['钢铁'], sectors: ['钢铁'] },
+  { keywords: ['煤炭'], sectors: ['煤炭'] },
+  { keywords: ['建材'], sectors: ['建筑材料'] },
   { keywords: ['通信', '5G'], sectors: ['通信'] },
   { keywords: ['农业', '养殖', '种业'], sectors: ['农林牧渔'] },
+  { keywords: ['家电', '家用电器'], sectors: ['家用电器'] },
+  { keywords: ['环保', '水务', '碳中和'], sectors: ['环保'] },
 ];
 
 /* ====== 匹配板块资金流 ====== */
@@ -94,10 +97,12 @@ function matchSectorFlow(type, sectorFlows, fundName) {
   const exactTags = new Set(baseTags.map(normalize));
   const extraTags = new Set(extra.map(normalize));
 
-  // 对"其他"或匹配不到时，根据基金名称推断板块
+  // 根据基金名称补充板块标签（所有类型均可补充，但权重最低）
+  const nameFlowTags = new Set();
   if (fundName) {
     for (const nm of NAME_FLOW_MAP) {
       if (nm.keywords.some(kw => fundName.includes(kw))) {
+        nm.sectors.forEach(s => nameFlowTags.add(normalize(s)));
         tags = tags.concat(nm.sectors);
         break;
       }
@@ -110,7 +115,8 @@ function matchSectorFlow(type, sectorFlows, fundName) {
   const tagWeight = (tag) => {
     if (exactTags.has(tag)) return 100;
     if (extraTags.has(tag)) return 70;
-    return 85;
+    if (nameFlowTags.has(tag)) return 50;
+    return 60;
   };
 
   let best = null;

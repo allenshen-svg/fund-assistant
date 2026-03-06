@@ -5,7 +5,7 @@ const { analyzeTrend, computeVote } = require('../../utils/analyzer');
 const { pickHeatForType } = require('../../utils/advisor');
 const { runDailyAdvice, getCachedDailyAdvice } = require('../../utils/ai');
 
-const TYPE_OPTIONS = ['宽基', '红利', '黄金', '有色金属', 'AI/科技', '半导体', '军工', '新能源', '白酒/消费', '医药', '债券', '蓝筹', '蓝筹/QDII', '港股科技', '原油', '其他'];
+const TYPE_OPTIONS = ['宽基', '红利', '黄金', '有色金属', 'AI/科技', '半导体', '半导体/科技', '军工', '新能源', '白酒/消费', '医药', '消费', '债券', '蓝筹', '蓝筹/QDII', '港股科技', 'QDII', '原油', '其他'];
 
 /* ====== 预测追踪 keys ====== */
 const PRED_KEY = 'fa_pred_tracker_mp';
