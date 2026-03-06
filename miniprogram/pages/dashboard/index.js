@@ -1,8 +1,8 @@
 const { getHoldings, getSettings } = require('../../utils/storage');
-const { fetchHotEvents, fetchIndices, fetchMultiFundEstimates, fetchSectorFlows, fetchMultiFundHistory, fetchCommodities } = require('../../utils/api');
+const { fetchHotEvents, fetchIndices, fetchMultiFundEstimates, fetchSectorFlows, fetchMultiFundHistory, fetchCommodities, fetchSectorTopFunds, fetchSectorTopStocks } = require('../../utils/api');
 const { buildPlans, buildOverview, MODEL_PORTFOLIO, matchSectorFlow } = require('../../utils/advisor');
 const { getMarketStatus, isMarketOpen, formatPct, pctClass, formatTime, isTradingDay, formatMoney } = require('../../utils/market');
-const { runAIAnalysis, runSingleFundAI, getCachedAIResult, getAIConfig } = require('../../utils/ai');
+const { runAIAnalysis, runSingleFundAI, getCachedAIResult, getAIConfig, runFundPickAI, getCachedFundPick } = require('../../utils/ai');
 
 function buildAnalystFallback(item) {
   const title = String(item && item.title || '');
@@ -90,6 +90,12 @@ Page({
     singleAITime: '',
     showSingleAI: false,
 
+    // 选基金/股票
+    fundPickLoading: false,
+    fundPickProgress: '',
+    fundPickResult: null,
+    fundPickTime: '',
+
     // 调试
     debugError: '',
   },
@@ -98,12 +104,14 @@ Page({
     try { this.updateMarketStatus(); } catch(e) { console.error('updateMarketStatus error:', e); this.setData({ debugError: 'updateMarketStatus: ' + (e.message || e) }); }
     this.loadAll().catch(e => { console.error('loadAll error:', e); this.setData({ loading: false, debugError: 'loadAll: ' + (e.message || e) }); });
     try { this._loadAICache(); } catch(e) { console.error('_loadAICache error:', e); this.setData({ debugError: '_loadAICache: ' + (e.message || e) }); }
+    try { this._loadFundPickCache(); } catch(e) { console.error('_loadFundPickCache error:', e); }
   },
 
   onShow() {
     try { this.updateMarketStatus(); } catch(e) { console.error('updateMarketStatus error:', e); }
     this.loadAll().catch(e => { console.error('loadAll error:', e); this.setData({ loading: false, debugError: 'loadAll(onShow): ' + (e.message || e) }); });
     try { this._loadAICache(); } catch(e) { console.error('_loadAICache error:', e); }
+    try { this._loadFundPickCache(); } catch(e) { console.error('_loadFundPickCache error:', e); }
     const timer = setInterval(() => {
       try {
         this.updateMarketStatus();
@@ -427,6 +435,141 @@ Page({
 
   closeSingleAI() {
     this.setData({ showSingleAI: false });
+  },
+
+  // ====== 选基金/股票 ======
+  _loadFundPickCache() {
+    const cached = getCachedFundPick();
+    if (cached && cached.result) {
+      this.setData({
+        fundPickResult: cached.result,
+        fundPickTime: (cached.timestamp || '').replace('T', ' ').slice(0, 16),
+      });
+    }
+  },
+
+  async triggerFundPick() {
+    const cfg = getAIConfig();
+    if (!cfg.key) {
+      wx.showModal({
+        title: '未配置 API Key',
+        content: '请先在"设置"页配置 AI API Key',
+        confirmText: '去设置',
+        success: (res) => {
+          if (res.confirm) wx.switchTab({ url: '/pages/settings/index' });
+        },
+      });
+      return;
+    }
+
+    if (this.data.fundPickLoading) return;
+
+    this.setData({ fundPickLoading: true, fundPickProgress: '正在分析板块资金流向...' });
+
+    const progressMsgs = [
+      { t: 3000, msg: '筛选增长最强的板块...' },
+      { t: 8000, msg: '获取板块内TOP基金和个股...' },
+      { t: 15000, msg: 'AI基金经理正在深度分析...' },
+      { t: 30000, msg: '正在生成投资策略建议...' },
+      { t: 60000, msg: '分析即将完成，请稍候...' },
+    ];
+    const progressTimers = progressMsgs.map(p =>
+      setTimeout(() => {
+        if (this.data.fundPickLoading) this.setData({ fundPickProgress: p.msg });
+      }, p.t)
+    );
+    const clearProgress = () => progressTimers.forEach(t => clearTimeout(t));
+
+    try {
+      // 获取板块资金流向
+      let sectorFlows = this.data.sectorFlows;
+      if (!sectorFlows || sectorFlows.length === 0) {
+        sectorFlows = await fetchSectorFlows();
+      }
+
+      // 选取涨幅+资金流入最强的 5 个板块
+      const scoredSectors = sectorFlows.map(s => ({
+        ...s,
+        score: (s.pct || 0) * 2 + (s.mainNet > 0 ? Math.log10(Math.max(s.mainNet, 1)) : -1),
+      }));
+      scoredSectors.sort((a, b) => b.score - a.score);
+      const topSectors = scoredSectors.slice(0, 5);
+
+      this.setData({ fundPickProgress: '获取板块内TOP基金...' });
+
+      // 并行获取各板块TOP基金和个股
+      const fundTasks = topSectors.map(s =>
+        fetchSectorTopFunds(s.name, 4).then(funds => ({ sector: s.name, code: s.code, funds }))
+      );
+      const stockTasks = topSectors.map(s =>
+        fetchSectorTopStocks(s.code, 4).then(stocks => ({ sector: s.name, stocks }))
+      );
+
+      const [fundResults, stockResults] = await Promise.all([
+        Promise.allSettled(fundTasks),
+        Promise.allSettled(stockTasks),
+      ]);
+
+      const topSectorFunds = fundResults
+        .filter(r => r.status === 'fulfilled')
+        .map(r => r.value);
+      const topSectorStocks = stockResults
+        .filter(r => r.status === 'fulfilled')
+        .map(r => r.value);
+
+      this.setData({ fundPickProgress: 'AI基金经理正在深度分析...' });
+
+      // 调用AI分析
+      const result = await runFundPickAI({
+        sectorFlows,
+        topSectorFunds,
+        topSectorStocks,
+        indices: this.data.indices,
+        commodities: this.data.commodities,
+        hotEvents: this.data.topEvents,
+        heatmap: this.data.heatmap,
+      });
+
+      clearProgress();
+      this.setData({
+        fundPickLoading: false,
+        fundPickProgress: '',
+        fundPickResult: result,
+        fundPickTime: new Date().toLocaleString(),
+      });
+
+      const pickCount = (result.picks || []).length;
+      wx.showToast({ title: `精选 ${pickCount} 只标的`, icon: 'success' });
+    } catch (e) {
+      clearProgress();
+      this.setData({ fundPickLoading: false, fundPickProgress: '' });
+      wx.showModal({
+        title: 'AI选股失败',
+        content: e.message || '未知错误',
+        showCancel: false,
+      });
+    }
+  },
+
+  togglePickDetail(e) {
+    const idx = e.currentTarget.dataset.idx;
+    const key = `fundPickResult.picks[${idx}].showDetail`;
+    const current = this.data.fundPickResult && this.data.fundPickResult.picks && this.data.fundPickResult.picks[idx];
+    this.setData({ [key]: !(current && current.showDetail) });
+  },
+
+  addPickToHoldings(e) {
+    const { code, name, type } = e.currentTarget.dataset;
+    const { getHoldings: getH, setHoldings } = require('../../utils/storage');
+    const holdings = getH();
+    if (holdings.find(h => h.code === code)) {
+      wx.showToast({ title: '已在持仓中', icon: 'none' });
+      return;
+    }
+    holdings.push({ code, name, type: type || '其他' });
+    setHoldings(holdings);
+    wx.showToast({ title: '已添加到持仓', icon: 'success' });
+    this.loadAll();
   },
 
   // ====== AI 分析 ======

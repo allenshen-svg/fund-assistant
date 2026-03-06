@@ -1857,3 +1857,267 @@
   font-size: 26rpx;
   font-weight: 500;
 }
+
+/* ====== 选基金/股票 ====== */
+.fp-card {
+  overflow: hidden;
+}
+.fp-title-group {
+  display: flex;
+  align-items: baseline;
+  gap: 12rpx;
+}
+.fp-trigger-btn {
+  display: flex;
+  align-items: center;
+  gap: 6rpx;
+  padding: 8rpx 20rpx;
+  border-radius: 24rpx;
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: #fff;
+  font-size: 24rpx;
+  font-weight: 600;
+  position: relative;
+  overflow: hidden;
+}
+.fp-btn-loading {
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+}
+.fp-btn-done {
+  background: linear-gradient(135deg, #10b981, #059669);
+}
+.fp-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 40rpx 0;
+  gap: 16rpx;
+}
+.fp-loading-text {
+  color: #6b7280;
+  font-size: 26rpx;
+}
+.fp-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 40rpx 0 24rpx;
+  gap: 8rpx;
+}
+.fp-empty-icon {
+  font-size: 48rpx;
+}
+.fp-empty-text {
+  color: #9ca3af;
+  font-size: 24rpx;
+}
+
+/* 板块总览 */
+.fp-overview {
+  background: linear-gradient(135deg, #fef3c7, #fde68a);
+  border-radius: 12rpx;
+  padding: 16rpx 20rpx;
+  margin-bottom: 16rpx;
+}
+.fp-overview-text {
+  font-size: 26rpx;
+  color: #92400e;
+  line-height: 1.7;
+}
+
+/* 推荐列表 */
+.fp-picks {
+  display: flex;
+  flex-direction: column;
+  gap: 12rpx;
+}
+.fp-pick {
+  background: #f9fafb;
+  border-radius: 12rpx;
+  padding: 16rpx;
+  border: 1rpx solid #e5e7eb;
+  transition: all 0.3s;
+}
+.fp-pick-open {
+  border-color: #f59e0b;
+  background: #fffbeb;
+}
+.fp-pick-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.fp-pick-left {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  flex: 1;
+  min-width: 0;
+}
+.fp-pick-type-badge {
+  width: 44rpx;
+  height: 44rpx;
+  border-radius: 10rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24rpx;
+  font-weight: 700;
+  color: #fff;
+  flex-shrink: 0;
+}
+.fp-type-fund {
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+}
+.fp-type-stock {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+}
+.fp-pick-info {
+  flex: 1;
+  min-width: 0;
+}
+.fp-pick-name {
+  display: block;
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #111827;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.fp-pick-code {
+  display: block;
+  font-size: 22rpx;
+  color: #9ca3af;
+  margin-top: 2rpx;
+}
+.fp-pick-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4rpx;
+  flex-shrink: 0;
+}
+.fp-pick-rating {
+  font-size: 22rpx;
+  font-weight: 600;
+  padding: 2rpx 10rpx;
+  border-radius: 8rpx;
+}
+.fp-rating-strong_buy {
+  background: #fef2f2;
+  color: #dc2626;
+}
+.fp-rating-buy {
+  background: #ecfdf5;
+  color: #059669;
+}
+.fp-rating-accumulate {
+  background: #fef3c7;
+  color: #d97706;
+}
+.fp-pick-confidence {
+  font-size: 20rpx;
+  color: #9ca3af;
+}
+
+/* 展开详情 */
+.fp-pick-detail {
+  margin-top: 16rpx;
+  padding-top: 16rpx;
+  border-top: 1rpx solid #e5e7eb;
+}
+.fp-detail-section {
+  margin-bottom: 14rpx;
+}
+.fp-detail-label {
+  display: block;
+  font-size: 24rpx;
+  font-weight: 600;
+  color: #6b7280;
+  margin-bottom: 4rpx;
+}
+.fp-detail-text {
+  display: block;
+  font-size: 26rpx;
+  color: #374151;
+  line-height: 1.7;
+}
+.fp-strategy-text {
+  color: #b45309;
+  font-weight: 500;
+}
+.fp-detail-row {
+  display: flex;
+  gap: 16rpx;
+  margin-bottom: 14rpx;
+}
+.fp-detail-item {
+  flex: 1;
+  background: #f3f4f6;
+  border-radius: 8rpx;
+  padding: 10rpx 12rpx;
+}
+.fp-detail-val {
+  display: block;
+  font-size: 24rpx;
+  margin-top: 4rpx;
+  line-height: 1.5;
+}
+.fp-val-up {
+  color: #059669;
+  font-weight: 600;
+}
+.fp-val-risk {
+  color: #dc2626;
+}
+.fp-add-btn {
+  margin-top: 10rpx;
+  text-align: center;
+  padding: 10rpx 0;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  color: #fff;
+  font-size: 24rpx;
+  font-weight: 600;
+  border-radius: 8rpx;
+}
+
+/* 配置建议 */
+.fp-advice {
+  margin-top: 16rpx;
+  background: #f0fdf4;
+  border-radius: 12rpx;
+  padding: 14rpx 16rpx;
+}
+.fp-advice-header {
+  display: flex;
+  align-items: center;
+  gap: 6rpx;
+  margin-bottom: 6rpx;
+}
+.fp-advice-icon {
+  font-size: 28rpx;
+}
+.fp-advice-label {
+  font-size: 26rpx;
+  font-weight: 600;
+  color: #065f46;
+}
+.fp-advice-text {
+  font-size: 26rpx;
+  color: #047857;
+  line-height: 1.7;
+}
+
+/* 风险提示 */
+.fp-risk {
+  margin-top: 12rpx;
+  background: #fef2f2;
+  border-radius: 8rpx;
+  padding: 10rpx 14rpx;
+}
+.fp-risk-text {
+  font-size: 24rpx;
+  color: #dc2626;
+  line-height: 1.6;
+}

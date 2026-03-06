@@ -404,6 +404,117 @@
     </view>
   </view>
 
+  <!-- ====== 选基金/股票 ====== -->
+  <view class="card fp-card">
+    <view class="card-header">
+      <view class="fp-title-group">
+        <text class="title">🏆 选基金/股票</text>
+        <text class="sub" wx:if="{{fundPickTime}}">{{fundPickTime}}</text>
+      </view>
+      <view class="fp-trigger-btn {{fundPickLoading ? 'fp-btn-loading' : ''}} {{fundPickResult && !fundPickLoading ? 'fp-btn-done' : ''}}" bindtap="triggerFundPick">
+        <view class="ai-btn-pulse" wx:if="{{fundPickLoading}}"></view>
+        <text class="ai-btn-icon">{{fundPickLoading ? '⏳' : '🧠'}}</text>
+        <text class="ai-btn-label">{{fundPickLoading ? '选股中' : 'AI选股'}}</text>
+      </view>
+    </view>
+
+    <!-- Loading state -->
+    <view wx:if="{{fundPickLoading && !fundPickResult}}" class="fp-loading">
+      <view class="ai-loading-dots">
+        <view class="ai-ld"></view>
+        <view class="ai-ld ai-ld2"></view>
+        <view class="ai-ld ai-ld3"></view>
+      </view>
+      <text class="fp-loading-text">{{fundPickProgress || '正在筛选增长板块...'}}</text>
+    </view>
+
+    <!-- 无结果提示 -->
+    <view wx:if="{{!fundPickResult && !fundPickLoading}}" class="fp-empty">
+      <text class="fp-empty-icon">📊</text>
+      <text class="fp-empty-text">点击右上角「AI选股」，基金经理视角精选标的</text>
+    </view>
+
+    <!-- 结果展示 -->
+    <view wx:if="{{fundPickResult}}">
+      <!-- 板块轮动总览 -->
+      <view class="fp-overview" wx:if="{{fundPickResult.sectorOverview}}">
+        <text class="fp-overview-text">{{fundPickResult.sectorOverview}}</text>
+      </view>
+
+      <!-- 推荐列表 -->
+      <view class="fp-picks" wx:if="{{fundPickResult.picks && fundPickResult.picks.length > 0}}">
+        <view class="fp-pick {{item.showDetail ? 'fp-pick-open' : ''}}" wx:for="{{fundPickResult.picks}}" wx:key="code" data-idx="{{index}}" bindtap="togglePickDetail">
+          <!-- 概要行 -->
+          <view class="fp-pick-top">
+            <view class="fp-pick-left">
+              <view class="fp-pick-type-badge fp-type-{{item.type === 'fund' ? 'fund' : 'stock'}}">
+                {{item.type === 'fund' ? '基' : '股'}}
+              </view>
+              <view class="fp-pick-info">
+                <text class="fp-pick-name">{{item.name}}</text>
+                <text class="fp-pick-code">{{item.code}} · {{item.sector}}</text>
+              </view>
+            </view>
+            <view class="fp-pick-right">
+              <text class="fp-pick-rating fp-rating-{{item.rating}}">
+                {{item.rating === 'strong_buy' ? '🔥 强推' : item.rating === 'buy' ? '👍 推荐' : '📈 吸纳'}}
+              </text>
+              <text class="fp-pick-confidence">{{item.confidence || 75}}%</text>
+            </view>
+          </view>
+
+          <!-- 展开详情 -->
+          <view class="fp-pick-detail" wx:if="{{item.showDetail}}">
+            <view class="fp-detail-section">
+              <text class="fp-detail-label">📊 看好板块原因</text>
+              <text class="fp-detail-text">{{item.whyThisSector}}</text>
+            </view>
+            <view class="fp-detail-section">
+              <text class="fp-detail-label">🎯 选择理由</text>
+              <text class="fp-detail-text">{{item.whyThisPick}}</text>
+            </view>
+            <view class="fp-detail-section">
+              <text class="fp-detail-label">📈 3个月支撑分析</text>
+              <text class="fp-detail-text">{{item.supportAnalysis}}</text>
+            </view>
+            <view class="fp-detail-section">
+              <text class="fp-detail-label">💡 买入策略</text>
+              <text class="fp-detail-text fp-strategy-text">{{item.strategy}}</text>
+            </view>
+            <view class="fp-detail-row">
+              <view class="fp-detail-item">
+                <text class="fp-detail-label">🎯 预期收益</text>
+                <text class="fp-detail-val fp-val-up">{{item.targetReturn || '--'}}</text>
+              </view>
+              <view class="fp-detail-item">
+                <text class="fp-detail-label">⚠️ 风险</text>
+                <text class="fp-detail-val fp-val-risk">{{item.riskPoints || '--'}}</text>
+              </view>
+            </view>
+            <!-- 加入持仓按钮（仅基金） -->
+            <view class="fp-add-btn" wx:if="{{item.type === 'fund'}}" catchtap="addPickToHoldings" data-code="{{item.code}}" data-name="{{item.name}}" data-type="{{item.sector}}">
+              <text>+ 加入持仓</text>
+            </view>
+          </view>
+        </view>
+      </view>
+
+      <!-- 配置建议 -->
+      <view class="fp-advice" wx:if="{{fundPickResult.allocationAdvice}}">
+        <view class="fp-advice-header">
+          <text class="fp-advice-icon">💰</text>
+          <text class="fp-advice-label">资金配置建议</text>
+        </view>
+        <text class="fp-advice-text">{{fundPickResult.allocationAdvice}}</text>
+      </view>
+
+      <!-- 风险提示 -->
+      <view class="fp-risk" wx:if="{{fundPickResult.marketRisk}}">
+        <text class="fp-risk-text">⚠️ {{fundPickResult.marketRisk}}</text>
+      </view>
+    </view>
+  </view>
+
   <!-- ====== AI 智能分析 ====== -->
   <view class="card" wx:if="{{aiResult || aiLoading}}">
     <view class="card-header sec-toggle" bindtap="toggleAI">

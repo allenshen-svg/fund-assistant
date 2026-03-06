@@ -922,6 +922,188 @@ function getCachedDailyAdvice() {
   return null;
 }
 
+/* ====== 选基金/股票 — 基金经理视角 ====== */
+
+const FUND_PICK_SYSTEM_PROMPT = `你是一位管理百亿规模基金的资深基金经理，擅长从板块轮动和资金流向中发现投资机会。
+
+## 你的任务
+根据当前增长良好的板块数据（涨幅、资金净流入）、板块内TOP基金和领涨个股，站在专业基金经理角度，选出最值得投资的基金和股票。
+
+## 分析方法论
+1. 先判断板块景气度：资金面（主力净流入持续性）+ 基本面（行业增长逻辑）+ 催化剂（政策/事件驱动）
+2. 再从板块中精选标的：基金看3个月业绩支撑+规模适中+跟踪误差小；股票看业绩增速+估值合理+资金关注度
+3. 用因果链分析WHY：为什么这个板块现在值得配置，是短期情绪还是中期趋势
+
+## 输出要求（JSON格式）：
+{
+  "sectorOverview": "当前市场板块轮动总览（3-5句话，哪些板块在领涨，资金在向哪里流动，背后的宏观逻辑是什么）",
+  "picks": [
+    {
+      "type": "fund 或 stock",
+      "code": "代码",
+      "name": "名称",
+      "sector": "所属板块",
+      "rating": "strong_buy|buy|accumulate",
+      "confidence": 60-95,
+      "whyThisSector": "为什么看好这个板块（2-3句话，用因果链A→B→C格式）",
+      "whyThisPick": "为什么选这只（2-3句话，基金看业绩/规模/跟踪精度，股票看业绩/估值/资金）",
+      "supportAnalysis": "过去3个月的支撑面分析（2-3句话，分析近3月表现、支撑逻辑、是否可持续）",
+      "riskPoints": "主要风险点（1-2句话）",
+      "strategy": "建议买入策略（如：分3批建仓，首批仓位30%，回调至XX再加仓）",
+      "targetReturn": "预期收益区间（如：未来1-3个月 8-15%）"
+    }
+  ],
+  "marketRisk": "当前市场整体风险提示（2-3句话）",
+  "allocationAdvice": "资金配置建议（2-3句话，建议多少仓位配置在推荐标的上）"
+}
+
+## 注意：
+- 只输出JSON，不要其他文字
+- picks 数组推荐 4-6 只标的，基金和股票混合推荐
+- rating含义：strong_buy=强烈推荐(高确定性), buy=推荐买入, accumulate=逢低吸纳
+- 重点分析"为什么现在是买入时机"，而不只是罗列数据
+- whyThisSector 必须包含因果链推导
+- supportAnalysis 要分析过去3个月的趋势是否有持续性
+- 用中文回复`;
+
+async function runFundPickAI({ sectorFlows, topSectorFunds, topSectorStocks, indices, commodities, hotEvents, heatmap }) {
+  const config = getAIConfig();
+  if (!config.key) throw new Error('请先在设置中配置 AI API Key');
+
+  const today = todayStr();
+  let ctx = `## 日期：${today}\n\n`;
+
+  // 大盘环境
+  if (indices && indices.length > 0) {
+    ctx += `## 今日大盘指数\n`;
+    indices.forEach(idx => {
+      ctx += `- ${idx.name}: ${idx.price || '--'} (${idx.pctStr || (idx.pct != null ? (idx.pct >= 0 ? '+' : '') + idx.pct + '%' : '--')})\n`;
+    });
+    ctx += '\n';
+  }
+
+  // 大宗商品
+  if (commodities && commodities.length > 0) {
+    ctx += `## 大宗商品\n`;
+    commodities.forEach(c => {
+      ctx += `- ${c.icon || ''} ${c.name}: ${c.price || '--'} (${c.pctStr || '--'})\n`;
+    });
+    ctx += '\n';
+  }
+
+  // 热点事件
+  if (hotEvents && hotEvents.length > 0) {
+    ctx += `## 近期热点事件\n`;
+    hotEvents.slice(0, 6).forEach(ev => {
+      ctx += `- [影响${ev.impact >= 0 ? '+' : ''}${ev.impact}] ${ev.title}`;
+      if (ev.reason) ctx += ` | ${ev.reason}`;
+      ctx += '\n';
+    });
+    ctx += '\n';
+  }
+
+  // 板块热力
+  if (heatmap && heatmap.length > 0) {
+    ctx += `## 板块热力图\n`;
+    heatmap.forEach(h => {
+      ctx += `- ${h.tag}: 温度${h.temperature}° 趋势${h.trend || '—'}`;
+      if (h.realPct != null) ctx += ` 实际涨幅${h.realPct >= 0 ? '+' : ''}${h.realPct}%`;
+      ctx += '\n';
+    });
+    ctx += '\n';
+  }
+
+  // 板块资金流向 TOP 板块
+  if (sectorFlows && sectorFlows.length > 0) {
+    ctx += `## 板块资金流向（按主力净流入排序）\n`;
+    // 涨幅 Top 15
+    const topByPct = [...sectorFlows].sort((a, b) => (b.pct || 0) - (a.pct || 0)).slice(0, 15);
+    ctx += `### 涨幅领先板块\n`;
+    topByPct.forEach(f => {
+      const netBillion = ((f.mainNet || 0) / 1e8).toFixed(2);
+      ctx += `- ${f.name}: 涨幅${f.pct >= 0 ? '+' : ''}${f.pct}%, 主力净流入${netBillion}亿 (占比${f.mainPct || 0}%)\n`;
+    });
+    // 资金流入 Top 10
+    const topByFlow = [...sectorFlows].sort((a, b) => (b.mainNet || 0) - (a.mainNet || 0)).slice(0, 10);
+    ctx += `### 资金净流入领先板块\n`;
+    topByFlow.forEach(f => {
+      const netBillion = ((f.mainNet || 0) / 1e8).toFixed(2);
+      ctx += `- ${f.name}: 主力净流入${netBillion}亿, 涨幅${f.pct >= 0 ? '+' : ''}${f.pct}%\n`;
+    });
+    ctx += '\n';
+  }
+
+  // 各板块TOP基金
+  if (topSectorFunds && topSectorFunds.length > 0) {
+    ctx += `## 增长板块内的TOP基金（按近3月业绩排序）\n`;
+    topSectorFunds.forEach(sf => {
+      ctx += `### ${sf.sector}板块\n`;
+      if (sf.funds && sf.funds.length > 0) {
+        sf.funds.forEach(f => {
+          ctx += `- ${f.name}（${f.code}）类型:${f.type || '未知'}\n`;
+        });
+      } else {
+        ctx += `- 暂无匹配基金\n`;
+      }
+    });
+    ctx += '\n';
+  }
+
+  // 各板块领涨个股
+  if (topSectorStocks && topSectorStocks.length > 0) {
+    ctx += `## 增长板块内的领涨个股\n`;
+    topSectorStocks.forEach(ss => {
+      ctx += `### ${ss.sector}板块\n`;
+      if (ss.stocks && ss.stocks.length > 0) {
+        ss.stocks.forEach(s => {
+          const capStr = s.marketCap ? (s.marketCap / 1e8).toFixed(0) + '亿' : '--';
+          ctx += `- ${s.name}（${s.code}）价格:${s.price} 涨幅:${s.pct >= 0 ? '+' : ''}${s.pct}% 市值:${capStr} PE:${s.pe || '--'}\n`;
+        });
+      } else {
+        ctx += `- 暂无数据\n`;
+      }
+    });
+    ctx += '\n';
+  }
+
+  const userPrompt = ctx + `\n请站在百亿基金经理的角度，从以上增长良好的板块中，精选4-6只最值得投资的基金和股票。
+要求：
+1. 优先选择涨幅+资金净流入双强的板块
+2. 每只标的都要有过去3个月的支撑面分析
+3. 用因果链分析为什么看好这个板块
+4. 给出具体的买入策略和预期收益
+用中文回复，只输出JSON。`;
+
+  const raw = await callAI(
+    config.provider.base,
+    config.key,
+    config.model,
+    FUND_PICK_SYSTEM_PROMPT,
+    userPrompt,
+    0.7
+  );
+
+  const result = parseAIResponse(raw);
+  if (!result) {
+    throw new Error('AI返回内容无法解析，请重试');
+  }
+
+  // 缓存
+  wx.setStorageSync('fa_mp_fund_pick', {
+    date: todayStr(),
+    timestamp: new Date().toISOString(),
+    result,
+  });
+
+  return result;
+}
+
+function getCachedFundPick() {
+  const cached = wx.getStorageSync('fa_mp_fund_pick');
+  if (cached && cached.date === todayStr()) return cached;
+  return null;
+}
+
 module.exports = {
   AI_PROVIDERS,
   getAIConfig,
@@ -932,4 +1114,6 @@ module.exports = {
   runDailyAdvice,
   getCachedDailyAdvice,
   callAI,
+  runFundPickAI,
+  getCachedFundPick,
 };

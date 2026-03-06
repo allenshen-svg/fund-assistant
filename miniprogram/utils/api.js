@@ -430,6 +430,98 @@ function _guessType(name) {
   return '其他';
 }
 
+/**
+ * 获取板块内 TOP 基金排行（按近3月收益排序）
+ * 使用东方财富基金排行接口
+ * sectorName: 板块名称用于关键词过滤
+ * topN: 返回前N只
+ */
+function fetchSectorTopFunds(sectorName, topN) {
+  topN = topN || 5;
+  // 板块名 → 天天基金分类搜索关键词映射
+  const SECTOR_FUND_KW = {
+    '半导体': '半导体', '电子': '半导体', 'AI算力': '人工智能',
+    '人工智能': '人工智能', '计算机': '科技', '机器人': '机器人',
+    '通信': '通信', '军工': '军工', '国防军工': '军工',
+    '医药生物': '医药', '医药': '医药', '创新药': '医药',
+    '食品饮料': '消费', '消费': '消费', '白酒': '白酒',
+    '新能源': '新能源', '光伏': '光伏', '锂电': '新能源',
+    '新能源车': '新能源车', '电力设备': '电力',
+    '有色金属': '有色', '贵金属': '黄金', '黄金': '黄金',
+    '原油': '原油', '石油石化': '原油', '能源': '能源',
+    '银行': '银行', '非银金融': '证券', '证券': '证券',
+    '煤炭': '煤炭', '钢铁': '钢铁', '基建': '基建',
+    '房地产': '地产', '交通运输': '交通',
+    '公用事业': '公用事业', '农林牧渔': '农业',
+    '传媒': '传媒', '纺织服饰': '消费',
+  };
+  const kw = SECTOR_FUND_KW[sectorName] || sectorName;
+
+  // 东方财富基金搜索接口 - 按近3月收益降序
+  const url = `https://fundsuggest.eastmoney.com/FundSearch/api/FundSearchPageByField.ashx?key=${encodeURIComponent(kw)}&pageindex=1&pagesize=${topN}&Sort=SYL_3Y&SortType=Desc&_=${Date.now()}`;
+
+  return new Promise((resolve) => {
+    wx.request({
+      url,
+      timeout: 8000,
+      success(res) {
+        try {
+          const datas = res.data && res.data.Datas;
+          if (datas && datas.length > 0) {
+            const list = datas.slice(0, topN).map(d => ({
+              code: d.CODE || '',
+              name: d.NAME || '',
+              type: _guessType(d.NAME || ''),
+            }));
+            resolve(list);
+            return;
+          }
+        } catch (e) {}
+        resolve([]);
+      },
+      fail() { resolve([]); }
+    });
+  });
+}
+
+/**
+ * 获取板块内领涨个股（东方财富板块成分股接口）
+ * sectorCode: 板块代码 (如 BK0477)
+ * topN: 返回前N只
+ */
+function fetchSectorTopStocks(sectorCode, topN) {
+  topN = topN || 5;
+  const url = `https://push2.eastmoney.com/api/qt/clist/get?pn=1&pz=${topN}&po=1&np=1&fltt=2&invt=2&fid=f3&fs=b:${sectorCode}&fields=f12,f14,f2,f3,f4,f15,f16,f17,f20,f115`;
+  return new Promise((resolve) => {
+    wx.request({
+      url,
+      timeout: 8000,
+      success(res) {
+        try {
+          const diff = res.data && res.data.data && res.data.data.diff;
+          if (diff && diff.length > 0) {
+            const list = diff.slice(0, topN).map(d => ({
+              code: d.f12,
+              name: d.f14,
+              price: d.f2,
+              pct: d.f3,
+              high: d.f15,
+              low: d.f16,
+              open: d.f17,
+              marketCap: d.f20, // 总市值
+              pe: d.f115,       // 市盈率
+            }));
+            resolve(list);
+            return;
+          }
+        } catch (e) {}
+        resolve([]);
+      },
+      fail() { resolve([]); }
+    });
+  });
+}
+
 module.exports = {
   fetchHotEvents,
   fetchIndices,
@@ -446,6 +538,8 @@ module.exports = {
   triggerReanalyze,
   getServerBase: _getServerBase,
   searchFundByCode,
+  fetchSectorTopFunds,
+  fetchSectorTopStocks,
 };
 
 /**
