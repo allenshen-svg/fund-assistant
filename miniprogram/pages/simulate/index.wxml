@@ -33,7 +33,7 @@
       <view class="sim-settle-row" wx:if="{{positionList.length > 0}}">
         <view class="sim-settle-info">
           <text class="sim-settle-label">今日盈亏</text>
-          <text class=\"sim-settle-pnl pct-{{dailyPnlClass}}\" wx:if=\"{{dailyPnl}}\">{{fmt.fmtNum(dailyPnl)}} ({{dailyPct}})</text>
+          <text class="sim-settle-pnl pct-{{dailyPnlClass}}" wx:if="{{dailyPnl}}">{{fmt.fmtNum(dailyPnl)}} ({{dailyPct}})</text>
           <text class="sim-settle-pnl" wx:else>待结算</text>
         </view>
         <view class="sim-settle-right">
