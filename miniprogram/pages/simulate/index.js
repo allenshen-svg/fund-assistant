@@ -5,6 +5,12 @@ const { formatPct, pctClass, todayStr, isTradingDay, formatMoney } = require('..
 
 const app = getApp();
 
+/* 千分位格式化 (整数) */
+function fmtK(n) {
+  const s = Math.abs(Math.round(n)).toString();
+  return s.replace(/\B(?=(\d{3})+$)/g, ',');
+}
+
 Page({
   data: {
     /* ====== 组合概览 ====== */
@@ -272,7 +278,7 @@ Page({
 
       this.setData({ settling: false });
       this._loadPortfolio();
-      wx.showToast({ title: `结算完成 ${dailyPnl >= 0 ? '+' : ''}¥${dailyPnl.toFixed(0)}`, icon: 'none' });
+      wx.showToast({ title: `结算完成 ${dailyPnl >= 0 ? '+' : '-'}¥${fmtK(dailyPnl)}`, icon: 'none' });
     } catch (e) {
       console.error('结算失败', e);
       this.setData({ settling: false });
@@ -568,7 +574,7 @@ Page({
       aiSource: 'fundPick',
     });
 
-    wx.showToast({ title: `买入 ¥${amount.toFixed(0)}`, icon: 'success' });
+    wx.showToast({ title: `买入 ¥${fmtK(amount)}`, icon: 'success' });
     this.setData({ showBuyPanel: false });
     this._loadPortfolio();
   },
@@ -621,7 +627,7 @@ Page({
           aiSource: 'manual',
         });
 
-        wx.showToast({ title: `加仓 ¥${amount.toFixed(0)}`, icon: 'success' });
+        wx.showToast({ title: `加仓 ¥${fmtK(amount)}`, icon: 'success' });
         this._loadPortfolio();
       },
     });
@@ -745,7 +751,7 @@ Page({
           aiSource: 'sellAdvice',
         });
 
-        wx.showToast({ title: `卖出 ¥${sellAmount.toFixed(0)}`, icon: 'success' });
+        wx.showToast({ title: `卖出 ¥${fmtK(sellAmount)}`, icon: 'success' });
         this.setData({ showSellPanel: false });
         this._loadPortfolio();
       },
@@ -797,7 +803,7 @@ Page({
           aiSource: 'manual',
         });
 
-        wx.showToast({ title: `卖出 ¥${sellAmount.toFixed(0)}`, icon: 'success' });
+        wx.showToast({ title: `卖出 ¥${fmtK(sellAmount)}`, icon: 'success' });
         this._loadPortfolio();
       },
     });

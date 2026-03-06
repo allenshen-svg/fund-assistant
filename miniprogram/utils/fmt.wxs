@@ -1,0 +1,66 @@
+/**
+ * 数字千分位格式化 (WXS 模块)
+ * WXS 在视图层运行，不影响逻辑层性能
+ */
+
+/**
+ * 格式化金额：千分位 + 保留2位小数
+ * fmtMoney(99934.97) => "99,934.97"
+ * fmtMoney(-1234.5) => "-1,234.50"
+ */
+function fmtMoney(val) {
+  if (val === '' || val === null || val === undefined) return '--';
+  var num = parseFloat(val);
+  if (isNaN(num)) return val;
+  var sign = num < 0 ? '-' : '';
+  var absStr = Math.abs(num).toFixed(2);
+  var parts = absStr.split('.');
+  var intPart = parts[0];
+  var decPart = parts[1];
+  var result = '';
+  var count = 0;
+  for (var i = intPart.length - 1; i >= 0; i--) {
+    if (count > 0 && count % 3 === 0) {
+      result = ',' + result;
+    }
+    result = intPart[i] + result;
+    count++;
+  }
+  return sign + result + '.' + decPart;
+}
+
+/**
+ * 格式化数字：千分位（不固定小数位）
+ * fmtNum(100000) => "100,000"
+ * fmtNum(4939.36) => "4,939.36"
+ */
+function fmtNum(val) {
+  if (val === '' || val === null || val === undefined) return '--';
+  var str = String(val);
+  // 处理带+号的情况
+  var prefix = '';
+  if (str[0] === '+' || str[0] === '-') {
+    prefix = str[0];
+    str = str.substring(1);
+  }
+  var numVal = parseFloat(str);
+  if (isNaN(numVal)) return val;
+  var parts = str.split('.');
+  var intPart = parts[0];
+  var decPart = parts.length > 1 ? ('.' + parts[1]) : '';
+  var result = '';
+  var count = 0;
+  for (var i = intPart.length - 1; i >= 0; i--) {
+    if (count > 0 && count % 3 === 0) {
+      result = ',' + result;
+    }
+    result = intPart[i] + result;
+    count++;
+  }
+  return prefix + result + decPart;
+}
+
+module.exports = {
+  fmtMoney: fmtMoney,
+  fmtNum: fmtNum,
+};

@@ -1,3 +1,4 @@
+<wxs src="../../utils/fmt.wxs" module="fmt" />
 <view class="container">
 
   <!-- ====== 组合概览 ====== -->
@@ -10,17 +11,17 @@
     <view class="sim-summary">
       <view class="sim-summary-main">
         <text class="sim-total-label">总资产</text>
-        <text class="sim-total-value">¥{{totalValue}}</text>
+        <text class="sim-total-value">¥{{fmt.fmtNum(totalValue)}}</text>
         <text class="sim-return pct-{{totalReturnClass}}">{{totalReturn}}</text>
       </view>
       <view class="sim-summary-row">
         <view class="sim-summary-item">
           <text class="sim-summary-label">可用现金</text>
-          <text class="sim-summary-val">¥{{cash}}</text>
+          <text class="sim-summary-val">¥{{fmt.fmtNum(cash)}}</text>
         </view>
         <view class="sim-summary-item">
           <text class="sim-summary-label">初始资金</text>
-          <text class="sim-summary-val">¥{{totalCash}}</text>
+          <text class="sim-summary-val">¥{{fmt.fmtNum(totalCash)}}</text>
         </view>
         <view class="sim-summary-item">
           <text class="sim-summary-label">持仓数</text>
@@ -32,7 +33,7 @@
       <view class="sim-settle-row" wx:if="{{positionList.length > 0}}">
         <view class="sim-settle-info">
           <text class="sim-settle-label">今日盈亏</text>
-          <text class="sim-settle-pnl pct-{{dailyPnlClass}}" wx:if="{{dailyPnl}}">{{dailyPnl}} ({{dailyPct}})</text>
+          <text class=\"sim-settle-pnl pct-{{dailyPnlClass}}\" wx:if=\"{{dailyPnl}}\">{{fmt.fmtNum(dailyPnl)}} ({{dailyPct}})</text>
           <text class="sim-settle-pnl" wx:else>待结算</text>
         </view>
         <view class="sim-settle-right">
@@ -75,14 +76,14 @@
         </view>
         <view class="sim-pos-right">
           <text class="sim-pos-profit pct-{{item.profitClass}}">{{item.profitPct}}</text>
-          <text class="sub">¥{{item.currentValue}}</text>
+          <text class="sub">¥{{fmt.fmtNum(item.currentValue)}}</text>
         </view>
       </view>
       <view class="sim-pos-detail">
-        <text class="sub">成本: ¥{{item.costPrice}} | 现价: ¥{{item.currentPrice}} | 确认净值: ¥{{item.confirmedNav}}</text>
+        <text class="sub">成本: ¥{{item.costPrice}} | 现价: ¥{{item.currentPrice}} | 净值: ¥{{item.confirmedNav}}</text>
       </view>
       <view class="sim-pos-detail">
-        <text class="sub">市值: ¥{{item.currentValue}} | 盈亏: ¥{{item.profit}}</text>
+        <text class="sub">市值: ¥{{fmt.fmtNum(item.currentValue)}} | 盈亏: ¥{{fmt.fmtNum(item.profit)}}</text>
       </view>
       <view class="sim-pos-actions">
         <text class="sim-pos-btn sim-pos-btn-add" data-code="{{item.code}}" bindtap="addPosition">加仓</text>
@@ -120,7 +121,7 @@
           </view>
           <view class="sim-log-right">
             <text class="sim-log-amount {{item.action === 'buy' ? 'pct-down' : 'pct-up'}}">
-              {{item.action === 'buy' ? '-' : '+'}}¥{{item.amount}}
+              {{item.action === 'buy' ? '-' : '+'}}¥{{fmt.fmtNum(item.amount)}}
             </text>
             <text class="sub sim-log-reason">{{item.reason}}</text>
           </view>
@@ -194,7 +195,7 @@
       <text class="title">📅 收益日历</text>
       <view class="cal-month-pnl pct-{{calMonthPnlClass}}" wx:if="{{calMonthPnl}}">
         <text class="sub">本月累计 </text>
-        <text class="cal-month-pnl-val">{{calMonthPnl}}</text>
+        <text class="cal-month-pnl-val">{{fmt.fmtNum(calMonthPnl)}}</text>
       </view>
     </view>
 
@@ -233,20 +234,20 @@
       <view class="cal-detail-header">
         <text class="cal-detail-date">{{calSelectedDate}}</text>
         <text class="cal-detail-pnl pct-{{calSelectedDetail.dailyPnl >= 0 ? (calSelectedDetail.dailyPnl > 0 ? 'up' : 'flat') : 'down'}}">
-          {{calSelectedDetail.dailyPnl >= 0 ? '+' : ''}}{{calSelectedDetail.dailyPnl}} ({{calSelectedDetail.dailyPct >= 0 ? '+' : ''}}{{calSelectedDetail.dailyPct}}%)
+          {{calSelectedDetail.dailyPnl >= 0 ? '+' : ''}}{{fmt.fmtNum(calSelectedDetail.dailyPnl)}} ({{calSelectedDetail.dailyPct >= 0 ? '+' : ''}}{{calSelectedDetail.dailyPct}}%)
         </text>
       </view>
       <view class="cal-detail-row">
         <text class="sub">总资产</text>
-        <text class="cal-detail-val">¥{{calSelectedDetail.totalValue}}</text>
+        <text class="cal-detail-val">¥{{fmt.fmtNum(calSelectedDetail.totalValue)}}</text>
       </view>
       <view class="cal-detail-row">
         <text class="sub">现金</text>
-        <text class="cal-detail-val">¥{{calSelectedDetail.cash}}</text>
+        <text class="cal-detail-val">¥{{fmt.fmtNum(calSelectedDetail.cash)}}</text>
       </view>
       <view class="cal-detail-row">
         <text class="sub">持仓市值</text>
-        <text class="cal-detail-val">¥{{calSelectedDetail.positionValue}}</text>
+        <text class="cal-detail-val">¥{{fmt.fmtNum(calSelectedDetail.positionValue)}}</text>
       </view>
       <!-- 持仓明细 -->
       <view wx:if="{{calSelectedDetail.positions && calSelectedDetail.positions.length > 0}}" class="cal-detail-positions">
@@ -259,8 +260,8 @@
         <view class="cal-detail-pos-row" wx:for="{{calSelectedDetail.positions}}" wx:key="code">
           <text class="cal-pos-name">{{item.name}}</text>
           <text class="cal-pos-nav">{{item.nav}}</text>
-          <text class="cal-pos-shares">{{item.shares}}</text>
-          <text class="cal-pos-val">{{item.value}}</text>
+          <text class="cal-pos-shares">{{fmt.fmtNum(item.shares)}}</text>
+          <text class="cal-pos-val">{{fmt.fmtNum(item.value)}}</text>
         </view>
       </view>
     </view>
@@ -328,7 +329,7 @@
         <text class="sim-buy-yen">¥</text>
         <input class="sim-buy-input" type="digit" placeholder="输入金额"
                value="{{buyAmount}}" bindinput="onBuyAmountInput" />
-        <text class="sub">可用: ¥{{cash}}</text>
+        <text class="sub">可用: ¥{{fmt.fmtNum(cash)}}</text>
       </view>
       <view class="sim-buy-quick-btns">
         <text class="sim-quick-btn" data-amount="1000" bindtap="quickBuyAmount">1000</text>
