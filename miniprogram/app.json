@@ -3,6 +3,7 @@
     "pages/dashboard/index",
     "pages/sentiment/index",
     "pages/holdings/index",
+    "pages/simulate/index",
     "pages/settings/index"
   ],
   "darkmode": true,
@@ -37,6 +38,12 @@
         "text": "持仓",
         "iconPath": "images/tab-holdings.png",
         "selectedIconPath": "images/tab-holdings-active.png"
+      },
+      {
+        "pagePath": "pages/simulate/index",
+        "text": "模拟仓",
+        "iconPath": "images/tab-simulate.png",
+        "selectedIconPath": "images/tab-simulate-active.png"
       },
       {
         "pagePath": "pages/settings/index",

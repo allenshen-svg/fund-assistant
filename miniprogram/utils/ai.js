@@ -1132,6 +1132,178 @@ function getCachedFundPick() {
   return null;
 }
 
+/* ====== 模拟仓：AI减仓建议 ====== */
+const SIM_SELL_SYSTEM_PROMPT = `你是一位管理百亿规模基金的资深基金经理，负责管理一个模拟投资组合。
+
+## 你的任务
+根据用户模拟仓中当前持有的基金/股票，结合今日大盘走势、板块涨跌、热点事件，判断是否需要减仓某些标的。
+
+## 分析方法论
+1. 分析每只持仓标的所属板块今日表现
+2. 结合热点事件判断是否有利空
+3. 评估持仓成本 vs 当前价格，判断止盈/止损
+4. 考虑资金集中度风险
+
+## 输出要求（纯JSON）：
+{
+  "overview": "今日市场概况和持仓组合分析（3-5句话）",
+  "sellAdvice": [
+    {
+      "code": "代码",
+      "name": "名称",
+      "action": "sell_part|sell_all|hold",
+      "sellPct": 0-100,
+      "reason": "减仓原因（2-3句话，用因果链A→B→C格式）",
+      "urgency": "高|中|低"
+    }
+  ],
+  "holdAdvice": "对于不需要减仓的标的的持有理由（2-3句话）",
+  "riskAlert": "当前组合的风险提示（1-2句话）"
+}
+
+## 注意：
+- 只输出JSON，不要其他文字
+- 如果当前持仓没有需要减仓的，sellAdvice可以为空数组[]，但要在holdAdvice中说明原因
+- sellPct表示建议减仓比例，如30表示减仓30%
+- 优先保护利润，及时止盈；严格止损，亏损超8%考虑减仓
+- 用中文回复`;
+
+async function runSimSellAdvice({ positions, indices, commodities, hotEvents, heatmap, sectorFlows }) {
+  const config = getAIConfig();
+  if (!config.key) throw new Error('请先在设置中配置 AI API Key');
+
+  const today = todayStr();
+  let ctx = `## 日期：${today}\n\n`;
+
+  // 模拟仓持仓
+  ctx += `## 模拟仓当前持仓\n`;
+  if (positions.length === 0) {
+    return { overview: '当前模拟仓为空，无需减仓分析', sellAdvice: [], holdAdvice: '暂无持仓', riskAlert: '无' };
+  }
+  positions.forEach(p => {
+    const pnlPct = p.currentPrice && p.costPrice ? (((p.currentPrice - p.costPrice) / p.costPrice) * 100).toFixed(2) : '--';
+    ctx += `- ${p.name}（${p.code}）板块:${p.sector || '未知'} 成本:${p.costPrice || '--'} 现价:${p.currentPrice || '--'} 盈亏:${pnlPct}% 持仓金额:${(p.costTotal || 0).toFixed(0)}元\n`;
+  });
+  ctx += '\n';
+
+  // 大盘
+  if (indices && indices.length > 0) {
+    ctx += `## 今日大盘\n`;
+    indices.forEach(idx => {
+      ctx += `- ${idx.name}: ${idx.price || '--'} (${idx.pctStr || '--'})\n`;
+    });
+    ctx += '\n';
+  }
+
+  // 板块热力
+  if (heatmap && heatmap.length > 0) {
+    ctx += `## 板块热力\n`;
+    heatmap.forEach(h => {
+      if (h.real_pct != null) ctx += `- ${h.tag}: ${h.real_pct >= 0 ? '+' : ''}${h.real_pct}%\n`;
+    });
+    ctx += '\n';
+  }
+
+  // 热点事件
+  if (hotEvents && hotEvents.length > 0) {
+    ctx += `## 热点事件\n`;
+    hotEvents.filter(e => !e.is_template && !e.isTemplate).slice(0, 6).forEach(ev => {
+      ctx += `- [影响${ev.impact}] ${ev.title}`;
+      if (ev.sectors_positive) ctx += ` | 利好:${ev.sectors_positive.join(',')}`;
+      if (ev.sectors_negative) ctx += ` | 利空:${ev.sectors_negative.join(',')}`;
+      ctx += '\n';
+    });
+    ctx += '\n';
+  }
+
+  const userPrompt = ctx + `请分析我的模拟仓持仓，判断今天是否需要减仓？对每只持仓给出hold/sell_part/sell_all建议。中文回复，只输出JSON。`;
+
+  const raw = await callAI(config.provider.base, config.key, config.model, SIM_SELL_SYSTEM_PROMPT, userPrompt, 0.7);
+  const result = parseAIResponse(raw);
+  if (!result) throw new Error('AI返回内容无法解析，请重试');
+  return result;
+}
+
+/* ====== 模拟仓：周复盘 ====== */
+const SIM_REVIEW_SYSTEM_PROMPT = `你是一位资深投资复盘分析师。
+
+## 你的任务
+对用户模拟仓过去一周的操作进行复盘，分析盈亏原因，给出改进建议。
+
+## 输出要求（纯JSON）：
+{
+  "summary": "本周操作总结（3-5句话）",
+  "performance": {
+    "totalReturn": "本周总收益率如+2.3%",
+    "bestTrade": "表现最好的操作",
+    "worstTrade": "表现最差的操作"
+  },
+  "analysis": "盈亏原因分析（5-8句话，分析哪些操作做对了、哪些做错了、市场环境判断是否准确）",
+  "lessons": [
+    "教训1：...",
+    "教训2：...",
+    "教训3：..."
+  ],
+  "nextWeekStrategy": "下周操作策略建议（3-5句话，包括仓位调整、板块方向、风险控制）",
+  "optimizationHints": "给算法/AI的优化建议（2-3句话，如：应更关注XX指标、XX情况下应更果断减仓等）"
+}
+
+## 注意：
+- 只输出JSON
+- 客观分析，不回避失误
+- 重点关注操作时机和仓位管理
+- 用中文回复`;
+
+async function runSimWeeklyReview({ trades, startPortfolio, endPortfolio, weekStart, weekEnd, marketContext }) {
+  const config = getAIConfig();
+  if (!config.key) throw new Error('请先在设置中配置 AI API Key');
+
+  let ctx = `## 复盘周期：${weekStart} ~ ${weekEnd}\n\n`;
+
+  // 起止资产
+  const startVal = startPortfolio.cash + startPortfolio.positions.reduce((s, p) => s + (p.costTotal || 0), 0);
+  const endVal = endPortfolio.cash + endPortfolio.positions.reduce((s, p) => s + (p.marketValue || p.costTotal || 0), 0);
+  const returnPct = startVal > 0 ? (((endVal - startVal) / startVal) * 100).toFixed(2) : '0.00';
+
+  ctx += `## 资产变化\n`;
+  ctx += `- 期初总值: ${startVal.toFixed(0)}元 (现金${startPortfolio.cash.toFixed(0)} + 持仓${(startVal - startPortfolio.cash).toFixed(0)})\n`;
+  ctx += `- 期末总值: ${endVal.toFixed(0)}元 (现金${endPortfolio.cash.toFixed(0)} + 持仓${(endVal - endPortfolio.cash).toFixed(0)})\n`;
+  ctx += `- 本周收益: ${returnPct}%\n\n`;
+
+  // 本周操作
+  ctx += `## 本周操作记录\n`;
+  if (trades.length === 0) {
+    ctx += `- 本周无操作\n`;
+  } else {
+    trades.forEach(t => {
+      ctx += `- [${t.date}] ${t.action === 'buy' ? '加仓' : '减仓'} ${t.name}(${t.code}) ${t.amount}元`;
+      if (t.reason) ctx += ` | 原因: ${t.reason}`;
+      if (t.aiSource) ctx += ` | AI来源: ${t.aiSource}`;
+      ctx += '\n';
+    });
+  }
+  ctx += '\n';
+
+  // 当前持仓
+  ctx += `## 期末持仓\n`;
+  endPortfolio.positions.forEach(p => {
+    const pnl = p.marketValue ? (((p.marketValue - p.costTotal) / p.costTotal) * 100).toFixed(2) : '--';
+    ctx += `- ${p.name}(${p.code}) 成本:${(p.costTotal || 0).toFixed(0)}元 市值:${(p.marketValue || p.costTotal || 0).toFixed(0)}元 盈亏:${pnl}%\n`;
+  });
+  ctx += '\n';
+
+  if (marketContext) {
+    ctx += `## 本周市场环境\n${marketContext}\n\n`;
+  }
+
+  const userPrompt = ctx + '请对我的模拟仓进行周复盘分析。中文回复，只输出JSON。';
+
+  const raw = await callAI(config.provider.base, config.key, config.model, SIM_REVIEW_SYSTEM_PROMPT, userPrompt, 0.7);
+  const result = parseAIResponse(raw);
+  if (!result) throw new Error('AI返回内容无法解析，请重试');
+  return result;
+}
+
 module.exports = {
   AI_PROVIDERS,
   getAIConfig,
@@ -1144,4 +1316,6 @@ module.exports = {
   callAI,
   runFundPickAI,
   getCachedFundPick,
+  runSimSellAdvice,
+  runSimWeeklyReview,
 };

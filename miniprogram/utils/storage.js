@@ -68,6 +68,69 @@ function setWatchlist(list) {
   return normalized;
 }
 
+/* ====== 模拟仓 ====== */
+const SIM_KEY = 'fa_sim_portfolio_v1';
+const SIM_LOG_KEY = 'fa_sim_trade_log_v1';
+const SIM_REVIEW_KEY = 'fa_sim_weekly_review_v1';
+
+/**
+ * 获取模拟仓状态
+ * @returns {{ cash: number, totalCash: number, positions: Array<{code,name,type,sector,shares,costPrice,costTotal,buyDate}>, createdAt: string }}
+ */
+function getSimPortfolio() {
+  const raw = wx.getStorageSync(SIM_KEY);
+  if (raw && typeof raw === 'object') return raw;
+  return {
+    cash: 100000,
+    totalCash: 100000,
+    positions: [],
+    createdAt: new Date().toISOString(),
+  };
+}
+
+function setSimPortfolio(portfolio) {
+  wx.setStorageSync(SIM_KEY, portfolio);
+  return portfolio;
+}
+
+/**
+ * 获取交易记录
+ * @returns {Array<{id,date,time,action,code,name,sector,amount,price,reason,aiSource}>}
+ */
+function getSimTradeLog() {
+  const raw = wx.getStorageSync(SIM_LOG_KEY);
+  return Array.isArray(raw) ? raw : [];
+}
+
+function addSimTradeLog(entry) {
+  const log = getSimTradeLog();
+  entry.id = Date.now();
+  entry.time = new Date().toISOString();
+  log.unshift(entry); // 最新的在前
+  // 最多保留200条
+  if (log.length > 200) log.length = 200;
+  wx.setStorageSync(SIM_LOG_KEY, log);
+  return log;
+}
+
+/**
+ * 获取周复盘记录
+ * @returns {Array<{id,weekStart,weekEnd,startValue,endValue,returnPct,details,aiReview,trades}>}
+ */
+function getSimWeeklyReviews() {
+  const raw = wx.getStorageSync(SIM_REVIEW_KEY);
+  return Array.isArray(raw) ? raw : [];
+}
+
+function addSimWeeklyReview(review) {
+  const reviews = getSimWeeklyReviews();
+  review.id = Date.now();
+  reviews.unshift(review);
+  if (reviews.length > 52) reviews.length = 52; // 保留一年
+  wx.setStorageSync(SIM_REVIEW_KEY, reviews);
+  return reviews;
+}
+
 module.exports = {
   getSettings,
   setSettings,
@@ -75,4 +138,10 @@ module.exports = {
   setHoldings,
   getWatchlist,
   setWatchlist,
+  getSimPortfolio,
+  setSimPortfolio,
+  getSimTradeLog,
+  addSimTradeLog,
+  getSimWeeklyReviews,
+  addSimWeeklyReview,
 };
