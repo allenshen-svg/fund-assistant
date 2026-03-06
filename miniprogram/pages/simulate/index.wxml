@@ -188,32 +188,84 @@
     </view>
   </view>
 
-  <!-- ====== 结算历史 ====== -->
-  <view class="card" wx:if="{{settleLog.length > 0}}">
-    <view class="card-header sec-toggle" data-key="secSettle" bindtap="toggleSection">
-      <text class="title">📅 结算记录</text>
-      <text class="toggle-arrow">{{secSettle ? '▲' : '▼'}}</text>
+  <!-- ====== 收益日历 ====== -->
+  <view class="card">
+    <view class="card-header">
+      <text class="title">📅 收益日历</text>
+      <view class="cal-month-pnl pct-{{calMonthPnlClass}}" wx:if="{{calMonthPnl}}">
+        <text class="sub">本月累计 </text>
+        <text class="cal-month-pnl-val">{{calMonthPnl}}</text>
+      </view>
     </view>
 
-    <view wx:if="{{secSettle}}">
-      <view class="sim-settle-list">
-        <view class="sim-settle-list-header">
-          <text class="sim-settle-col-date">日期</text>
-          <text class="sim-settle-col-val">总资产</text>
-          <text class="sim-settle-col-pnl">日盈亏</text>
-          <text class="sim-settle-col-pct">涨跌幅</text>
-        </view>
-        <view class="sim-settle-list-row" wx:for="{{settleLog}}" wx:key="date">
-          <text class="sim-settle-col-date">{{item.date}}</text>
-          <text class="sim-settle-col-val">{{item.totalValue}}</text>
-          <text class="sim-settle-col-pnl pct-{{item.dailyPnl >= 0 ? (item.dailyPnl > 0 ? 'up' : 'flat') : 'down'}}">
-            {{item.dailyPnl >= 0 ? '+' : ''}}{{item.dailyPnl}}
-          </text>
-          <text class="sim-settle-col-pct pct-{{item.dailyPct >= 0 ? (item.dailyPct > 0 ? 'up' : 'flat') : 'down'}}">
-            {{item.dailyPct >= 0 ? '+' : ''}}{{item.dailyPct}}%
-          </text>
+    <!-- 月份导航 -->
+    <view class="cal-nav">
+      <text class="cal-nav-btn" bindtap="calPrevMonth">◀</text>
+      <text class="cal-nav-title" bindtap="calToday">{{calTitle}}</text>
+      <text class="cal-nav-btn" bindtap="calNextMonth">▶</text>
+    </view>
+
+    <!-- 星期头 -->
+    <view class="cal-weekday-row">
+      <text class="cal-weekday cal-weekend">日</text>
+      <text class="cal-weekday">一</text>
+      <text class="cal-weekday">二</text>
+      <text class="cal-weekday">三</text>
+      <text class="cal-weekday">四</text>
+      <text class="cal-weekday">五</text>
+      <text class="cal-weekday cal-weekend">六</text>
+    </view>
+
+    <!-- 日历网格 -->
+    <view class="cal-grid">
+      <view class="cal-week-row" wx:for="{{calWeeks}}" wx:key="index" wx:for-item="week">
+        <view class="cal-cell {{cell.inMonth ? '' : 'cal-cell-out'}} {{cell.isToday ? 'cal-cell-today' : ''}} {{calSelectedDate === cell.date ? 'cal-cell-selected' : ''}} {{cell.hasData ? 'cal-cell-data' : ''}}"
+              wx:for="{{week}}" wx:for-item="cell" wx:key="date"
+              data-date="{{cell.date}}" data-has="{{cell.hasData}}" bindtap="calSelectDate">
+          <text class="cal-day">{{cell.day}}</text>
+          <text class="cal-pnl pct-{{cell.pnlClass}}" wx:if="{{cell.hasData}}">{{cell.pnlStr}}</text>
         </view>
       </view>
+    </view>
+
+    <!-- 选中日期详情 -->
+    <view class="cal-detail" wx:if="{{calSelectedDetail}}">
+      <view class="cal-detail-header">
+        <text class="cal-detail-date">{{calSelectedDate}}</text>
+        <text class="cal-detail-pnl pct-{{calSelectedDetail.dailyPnl >= 0 ? (calSelectedDetail.dailyPnl > 0 ? 'up' : 'flat') : 'down'}}">
+          {{calSelectedDetail.dailyPnl >= 0 ? '+' : ''}}{{calSelectedDetail.dailyPnl}} ({{calSelectedDetail.dailyPct >= 0 ? '+' : ''}}{{calSelectedDetail.dailyPct}}%)
+        </text>
+      </view>
+      <view class="cal-detail-row">
+        <text class="sub">总资产</text>
+        <text class="cal-detail-val">¥{{calSelectedDetail.totalValue}}</text>
+      </view>
+      <view class="cal-detail-row">
+        <text class="sub">现金</text>
+        <text class="cal-detail-val">¥{{calSelectedDetail.cash}}</text>
+      </view>
+      <view class="cal-detail-row">
+        <text class="sub">持仓市值</text>
+        <text class="cal-detail-val">¥{{calSelectedDetail.positionValue}}</text>
+      </view>
+      <!-- 持仓明细 -->
+      <view wx:if="{{calSelectedDetail.positions && calSelectedDetail.positions.length > 0}}" class="cal-detail-positions">
+        <view class="cal-detail-pos-header">
+          <text class="cal-pos-name">名称</text>
+          <text class="cal-pos-nav">净值</text>
+          <text class="cal-pos-shares">份额</text>
+          <text class="cal-pos-val">市值</text>
+        </view>
+        <view class="cal-detail-pos-row" wx:for="{{calSelectedDetail.positions}}" wx:key="code">
+          <text class="cal-pos-name">{{item.name}}</text>
+          <text class="cal-pos-nav">{{item.nav}}</text>
+          <text class="cal-pos-shares">{{item.shares}}</text>
+          <text class="cal-pos-val">{{item.value}}</text>
+        </view>
+      </view>
+    </view>
+    <view class="cal-detail cal-empty" wx:elif="{{calSelectedDate && !calSelectedDetail}}">
+      <text class="sub">{{calSelectedDate}} 无结算数据</text>
     </view>
   </view>
 

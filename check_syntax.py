@@ -14,6 +14,7 @@ files = [
     'miniprogram/pages/settings/index.js',
     'miniprogram/pages/holdings/index.js',
     'miniprogram/pages/sentiment/index.js',
+    'miniprogram/pages/simulate/index.js',
 ]
 
 print("=== JS Bracket Check ===")
@@ -53,6 +54,7 @@ wxml_files = [
     'miniprogram/pages/sentiment/index.wxml',
     'miniprogram/pages/holdings/index.wxml',
     'miniprogram/pages/settings/index.wxml',
+    'miniprogram/pages/simulate/index.wxml',
 ]
 for f in wxml_files:
     content = open(f).read()

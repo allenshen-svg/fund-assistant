@@ -54,6 +54,16 @@ Page({
     dailyPct: '',           // 今日涨跌幅
     settleLog: [],          // 近30天结算记录
     secSettle: false,       // 结算记录展开
+
+    /* ====== 收益日历 ====== */
+    calYear: 0,
+    calMonth: 0,
+    calTitle: '',
+    calWeeks: [],           // 日历网格 [[{day,date,pnl,pct,isToday,hasData,inMonth}]]
+    calSelectedDate: '',    // 选中的日期
+    calSelectedDetail: null,// 选中日期的结算详情
+    calMonthPnl: '',        // 本月累计盈亏
+    calMonthPnlClass: 'flat',
   },
 
   onShow() {
@@ -285,6 +295,142 @@ Page({
         settleLog: settleLog.slice(0, 30),
       });
     }
+    this._buildCalendar();
+  },
+
+  /* ================= 收益日历 ================= */
+  _buildCalendar(year, month) {
+    const now = new Date();
+    const y = year || this.data.calYear || now.getFullYear();
+    const m = month || this.data.calMonth || (now.getMonth() + 1);
+
+    const settleLog = getSimSettleLog();
+    // 建 date -> record 映射
+    const settleMap = {};
+    settleLog.forEach(r => { settleMap[r.date] = r; });
+
+    // 本月第一天和最后一天
+    const firstDay = new Date(y, m - 1, 1);
+    const lastDay = new Date(y, m, 0);
+    const daysInMonth = lastDay.getDate();
+    const startWeekday = firstDay.getDay(); // 0=周日
+
+    // 上月补位天数
+    const prevMonthLast = new Date(y, m - 1, 0).getDate();
+
+    const weeks = [];
+    let week = [];
+    let dayCounter = 1;
+    let nextMonthDay = 1;
+
+    // 填充6行x7列
+    for (let row = 0; row < 6; row++) {
+      week = [];
+      for (let col = 0; col < 7; col++) {
+        const cellIdx = row * 7 + col;
+        let cellDate = '';
+        let day = 0;
+        let inMonth = false;
+
+        if (cellIdx < startWeekday) {
+          // 上月
+          day = prevMonthLast - startWeekday + cellIdx + 1;
+          const pm = m - 1 <= 0 ? 12 : m - 1;
+          const py = m - 1 <= 0 ? y - 1 : y;
+          cellDate = `${py}-${String(pm).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+        } else if (dayCounter <= daysInMonth) {
+          day = dayCounter;
+          cellDate = `${y}-${String(m).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+          inMonth = true;
+          dayCounter++;
+        } else {
+          // 下月
+          day = nextMonthDay;
+          const nm = m + 1 > 12 ? 1 : m + 1;
+          const ny = m + 1 > 12 ? y + 1 : y;
+          cellDate = `${ny}-${String(nm).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+          nextMonthDay++;
+        }
+
+        const record = settleMap[cellDate];
+        const todayDate = todayStr();
+        week.push({
+          day,
+          date: cellDate,
+          inMonth,
+          isToday: cellDate === todayDate,
+          isWeekend: col === 0 || col === 6,
+          hasData: !!record,
+          pnl: record ? record.dailyPnl : 0,
+          pct: record ? record.dailyPct : 0,
+          pnlStr: record ? ((record.dailyPnl >= 0 ? '+' : '') + record.dailyPnl.toFixed(0)) : '',
+          pnlClass: record ? (record.dailyPnl > 0 ? 'up' : (record.dailyPnl < 0 ? 'down' : 'flat')) : '',
+        });
+      }
+      weeks.push(week);
+      // 如果已填满本月，后续行不再需要
+      if (dayCounter > daysInMonth) break;
+    }
+
+    // 如果最后一行全是下月的，去掉
+    if (weeks.length > 5 && weeks[5].every(c => !c.inMonth)) {
+      weeks.pop();
+    }
+
+    // 本月累计盈亏
+    const monthPrefix = `${y}-${String(m).padStart(2,'0')}`;
+    let monthPnl = 0;
+    settleLog.forEach(r => {
+      if (r.date && r.date.startsWith(monthPrefix)) {
+        monthPnl += r.dailyPnl || 0;
+      }
+    });
+
+    this.setData({
+      calYear: y,
+      calMonth: m,
+      calTitle: `${y}年${m}月`,
+      calWeeks: weeks,
+      calMonthPnl: (monthPnl >= 0 ? '+' : '') + monthPnl.toFixed(2),
+      calMonthPnlClass: monthPnl > 0 ? 'up' : (monthPnl < 0 ? 'down' : 'flat'),
+    });
+  },
+
+  calPrevMonth() {
+    let { calYear, calMonth } = this.data;
+    calMonth--;
+    if (calMonth < 1) { calMonth = 12; calYear--; }
+    this._buildCalendar(calYear, calMonth);
+    this.setData({ calSelectedDate: '', calSelectedDetail: null });
+  },
+
+  calNextMonth() {
+    let { calYear, calMonth } = this.data;
+    calMonth++;
+    if (calMonth > 12) { calMonth = 1; calYear++; }
+    this._buildCalendar(calYear, calMonth);
+    this.setData({ calSelectedDate: '', calSelectedDetail: null });
+  },
+
+  calToday() {
+    const now = new Date();
+    this._buildCalendar(now.getFullYear(), now.getMonth() + 1);
+    this.setData({ calSelectedDate: '', calSelectedDetail: null });
+  },
+
+  calSelectDate(e) {
+    const date = e.currentTarget.dataset.date;
+    const hasData = e.currentTarget.dataset.has;
+    if (!hasData) {
+      this.setData({ calSelectedDate: date, calSelectedDetail: null });
+      return;
+    }
+    const settleLog = getSimSettleLog();
+    const record = settleLog.find(r => r.date === date);
+    this.setData({
+      calSelectedDate: date,
+      calSelectedDetail: record || null,
+    });
   },
 
   /* ================= 加载推荐缓存 ================= */

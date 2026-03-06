@@ -109,49 +109,205 @@
   font-weight: 500;
 }
 
-/* ====== 结算历史列表 ====== */
-.sim-settle-list {
-  margin-top: 8rpx;
+/* ====== 收益日历 ====== */
+.cal-month-pnl {
+  display: flex;
+  align-items: center;
+  gap: 4rpx;
 }
 
-.sim-settle-list-header {
+.cal-month-pnl-val {
+  font-size: 26rpx;
+  font-weight: 700;
+}
+
+.cal-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12rpx 20rpx;
+}
+
+.cal-nav-btn {
+  font-size: 28rpx;
+  color: var(--accent);
+  padding: 8rpx 20rpx;
+}
+
+.cal-nav-title {
+  font-size: 30rpx;
+  font-weight: 700;
+  color: var(--text-strong);
+}
+
+.cal-weekday-row {
   display: flex;
   padding: 8rpx 0;
   border-bottom: 1rpx solid var(--border-subtle);
 }
 
-.sim-settle-list-header text {
+.cal-weekday {
+  flex: 1;
+  text-align: center;
   font-size: 22rpx;
   color: var(--text-muted);
   font-weight: 600;
 }
 
-.sim-settle-list-row {
+.cal-weekend {
+  color: var(--text-muted);
+  opacity: 0.6;
+}
+
+.cal-grid {
+  padding: 4rpx 0;
+}
+
+.cal-week-row {
   display: flex;
-  padding: 10rpx 0;
+}
+
+.cal-cell {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 8rpx 0;
+  min-height: 80rpx;
+  border-radius: 8rpx;
+  transition: background 0.2s;
+}
+
+.cal-cell-out {
+  opacity: 0.3;
+}
+
+.cal-cell-today {
+  background: rgba(108,138,255,0.1);
+  border: 1rpx solid rgba(108,138,255,0.3);
+}
+
+.cal-cell-selected {
+  background: rgba(108,138,255,0.18);
+  border: 2rpx solid var(--accent);
+}
+
+.cal-cell-data {
+  cursor: pointer;
+}
+
+.cal-day {
+  font-size: 24rpx;
+  color: var(--text);
+  font-weight: 500;
+  line-height: 1.2;
+}
+
+.cal-cell-out .cal-day {
+  color: var(--text-muted);
+}
+
+.cal-pnl {
+  font-size: 18rpx;
+  font-weight: 700;
+  line-height: 1.2;
+  margin-top: 2rpx;
+}
+
+/* 详情面板 */
+.cal-detail {
+  margin-top: 16rpx;
+  padding: 16rpx;
+  background: var(--bg-card-inner, rgba(108,138,255,0.04));
+  border-radius: 12rpx;
+  border: 1rpx solid var(--border-subtle);
+}
+
+.cal-empty {
+  text-align: center;
+  padding: 20rpx;
+}
+
+.cal-detail-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12rpx;
+  padding-bottom: 8rpx;
+  border-bottom: 1rpx solid var(--border-subtle);
+}
+
+.cal-detail-date {
+  font-size: 28rpx;
+  font-weight: 700;
+  color: var(--text-strong);
+}
+
+.cal-detail-pnl {
+  font-size: 28rpx;
+  font-weight: 700;
+}
+
+.cal-detail-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 6rpx 0;
+}
+
+.cal-detail-val {
+  font-size: 26rpx;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.cal-detail-positions {
+  margin-top: 12rpx;
+  border-top: 1rpx solid var(--border-subtle);
+  padding-top: 8rpx;
+}
+
+.cal-detail-pos-header {
+  display: flex;
+  padding: 6rpx 0;
   border-bottom: 1rpx solid var(--border-faint);
 }
 
-.sim-settle-list-row text {
-  font-size: 24rpx;
+.cal-detail-pos-header text {
+  font-size: 20rpx;
+  color: var(--text-muted);
+  font-weight: 600;
 }
 
-.sim-settle-col-date {
-  flex: 2.5;
+.cal-detail-pos-row {
+  display: flex;
+  padding: 6rpx 0;
 }
 
-.sim-settle-col-val {
-  flex: 2.5;
-  text-align: right;
+.cal-detail-pos-row text {
+  font-size: 22rpx;
+  color: var(--text);
 }
 
-.sim-settle-col-pnl {
+.cal-pos-name {
+  flex: 3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cal-pos-nav {
   flex: 2;
   text-align: right;
 }
 
-.sim-settle-col-pct {
-  flex: 1.5;
+.cal-pos-shares {
+  flex: 2;
+  text-align: right;
+}
+
+.cal-pos-val {
+  flex: 2.5;
   text-align: right;
 }
 
