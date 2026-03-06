@@ -24,7 +24,7 @@
       "amplitude": 3.38,
       "high": 184.06,
       "low": 177.88,
-      "volume": 198419164,
+      "volume": 198779729,
       "market_cap": 4455162000000.0,
       "timestamp": 1772745300012
     },
@@ -38,7 +38,7 @@
       "amplitude": 1.64,
       "high": 261.555,
       "low": 257.25,
-      "volume": 49617775,
+      "volume": 49658626,
       "market_cap": 3821353930600.0,
       "timestamp": 1772744400568
     },
@@ -52,7 +52,7 @@
       "amplitude": 4.12,
       "high": 336.12,
       "low": 323.03,
-      "volume": 57028839,
+      "volume": 57076634,
       "market_cap": 1575866481195.0,
       "timestamp": 1772745300012
     },
@@ -66,7 +66,7 @@
       "amplitude": 2.27,
       "high": 408.62,
       "low": 399.42,
-      "volume": 51818660,
+      "volume": 51925898,
       "market_cap": 1521798791111.0,
       "timestamp": 1772745300012
     },
@@ -94,7 +94,7 @@
       "amplitude": 4.41,
       "high": 203.79,
       "low": 194.88,
-      "volume": 35922684,
+      "volume": 36000660,
       "market_cap": 325185442636.0,
       "timestamp": 1772744400720
     },
@@ -108,7 +108,7 @@
       "amplitude": 3.85,
       "high": 343.72,
       "low": 330.57,
-      "volume": 7233137,
+      "volume": 7239331,
       "market_cap": 3174944000.0,
       "timestamp": 1772745300012
     },
@@ -122,11 +122,11 @@
       "amplitude": 1.65,
       "high": 22877.024,
       "low": 22500.293,
-      "volume": 11210122495,
+      "volume": 11246013326,
       "market_cap": null,
       "timestamp": 1772748959000
     }
   ],
-  "fetch_time": "2026-03-06 00:01:46",
-  "fetch_ts": 1772755306
+  "fetch_time": "2026-03-06 05:13:22",
+  "fetch_ts": 1772774002
 }
