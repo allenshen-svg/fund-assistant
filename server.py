@@ -21,6 +21,7 @@ from flask import Flask, jsonify, send_from_directory, request
 from scripts.collector import collect_and_save, load_cache, load_us_market_cache, fetch_us_market, CACHE_FILE
 from scripts.analyzer import load_analysis_cache, analyze_and_save, ANALYSIS_CACHE
 from scripts.fetch_events import main as fetch_hot_events
+from scripts.fund_pick import run_fund_pick, load_fund_pick_cache
 
 app = Flask(__name__, static_folder=None)
 
@@ -164,6 +165,41 @@ def api_reanalyze():
     t = threading.Thread(target=do_analyze, daemon=True)
     t.start()
     return jsonify({'status': 'started', 'message': 'AI 分析已启动'})
+
+# ==================== 选基金/股票 ====================
+
+_fund_pick_lock = threading.Lock()
+_fund_pick_running = False
+
+@app.route('/api/fund-pick')
+def api_fund_pick():
+    """返回最新的 AI 选基金/股票结果（由每日 14:50 自动生成）"""
+    data = load_fund_pick_cache()
+    if data is None:
+        return jsonify({'status': 'no_data', 'message': '暂无推荐，请等待每日 14:50 自动生成'}), 200
+    return jsonify(data)
+
+@app.route('/api/fund-pick/trigger', methods=['POST'])
+def api_fund_pick_trigger():
+    """手动触发选基金/股票（管理员用，正常由定时任务触发）"""
+    global _fund_pick_running
+    if _fund_pick_running:
+        return jsonify({'status': 'busy', 'message': '选基正在进行中，请稍候'}), 429
+
+    def do_pick():
+        global _fund_pick_running
+        with _fund_pick_lock:
+            _fund_pick_running = True
+            try:
+                run_fund_pick()
+            except Exception as e:
+                print(f'[fund_pick] 手动触发失败: {e}')
+            finally:
+                _fund_pick_running = False
+
+    t = threading.Thread(target=do_pick, daemon=True)
+    t.start()
+    return jsonify({'status': 'started', 'message': '选基金/股票已启动'})
 
 # ==================== AI 代理 ====================
 
@@ -310,6 +346,48 @@ def scheduler_loop():
             time.sleep(10)
 
 
+def fund_pick_scheduler_loop():
+    """每日 14:50 自动执行选基金/股票
+
+    工作逻辑：
+    - 每分钟检查一次时间
+    - 如果是交易日 14:50 且今天还没有生成过推荐，自动执行
+    - 结果缓存在 data/fund_pick.json
+    """
+    global _fund_pick_running
+    _last_pick_date = None
+    time.sleep(15)  # 启动后等待15秒
+    print('[fund_pick_scheduler] 选基金定时任务已启动 (每日 14:50)')
+
+    while True:
+        try:
+            now = datetime.now()
+            today = now.strftime('%Y-%m-%d')
+
+            # 检查条件：交易日 + 14:50 + 今日未执行
+            if (is_trading_day() and
+                now.hour == 14 and now.minute >= 50 and
+                _last_pick_date != today and
+                not _fund_pick_running):
+
+                print(f'\n[fund_pick_scheduler] ⏰ {now.strftime("%H:%M")} 触发每日选基...')
+                with _fund_pick_lock:
+                    _fund_pick_running = True
+                    try:
+                        run_fund_pick()
+                        _last_pick_date = today
+                    except Exception as e:
+                        print(f'[fund_pick_scheduler] ❌ 选基失败: {e}')
+                        import traceback
+                        traceback.print_exc()
+                    finally:
+                        _fund_pick_running = False
+        except Exception as e:
+            print(f'[fund_pick_scheduler] 异常: {e}')
+
+        time.sleep(30)  # 每30秒检查一次
+
+
 # ==================== 启动后台采集线程 ====================
 _scheduler_started = False
 _scheduler_lock = threading.Lock()
@@ -325,6 +403,9 @@ def _ensure_scheduler():
         t = threading.Thread(target=scheduler_loop, daemon=True)
         t.start()
         print('[scheduler] 定时采集线程已启动')
+        t2 = threading.Thread(target=fund_pick_scheduler_loop, daemon=True)
+        t2.start()
+        print('[scheduler] 选基金定时线程已启动 (每日14:50)')
 
 # gunicorn 兼容：通过 before_request 在第一次请求时启动采集线程
 @app.before_request
@@ -343,11 +424,14 @@ if __name__ == '__main__':
 ║  📊 Fund-Assistant 舆情分析后端                  ║
 ║  端口: {PORT:<6}                                  ║
 ║  采集间隔: {COLLECT_INTERVAL}秒 ({COLLECT_INTERVAL//60}分钟)                       ║
+║  选基金: 每日 14:50 自动执行                     ║
 ║  API:                                            ║
 ║    GET  /api/sentiment  → 舆情数据               ║
 ║    GET  /api/analysis   → AI分析结果             ║
+║    GET  /api/fund-pick  → AI选基结果             ║
 ║    POST /api/refresh    → 手动刷新               ║
 ║    POST /api/reanalyze  → 重新AI分析             ║
+║    POST /api/fund-pick/trigger → 手动触发选基    ║
 ║    GET  /api/status     → 服务状态               ║
 ╚══════════════════════════════════════════════════╝
 ''')

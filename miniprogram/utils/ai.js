@@ -1132,6 +1132,18 @@ function getCachedFundPick() {
   return null;
 }
 
+/** 使用服务器返回的选基结果更新本地缓存 */
+function saveServerFundPick(serverData) {
+  if (!serverData || !serverData.result) return;
+  wx.setStorageSync('fa_mp_fund_pick', {
+    date: serverData.date || todayStr(),
+    timestamp: serverData.timestamp || new Date().toISOString(),
+    triggerTime: serverData.triggerTime || '14:50',
+    result: serverData.result,
+    source: 'server',
+  });
+}
+
 /* ====== 模拟仓：AI减仓建议 ====== */
 const SIM_SELL_SYSTEM_PROMPT = `你是一位管理百亿规模基金的资深基金经理，负责管理一个模拟投资组合。
 
@@ -1316,6 +1328,7 @@ module.exports = {
   callAI,
   runFundPickAI,
   getCachedFundPick,
+  saveServerFundPick,
   runSimSellAdvice,
   runSimWeeklyReview,
 };

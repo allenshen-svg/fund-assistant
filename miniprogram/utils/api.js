@@ -522,6 +522,30 @@ function fetchSectorTopStocks(sectorCode, topN) {
   });
 }
 
+/**
+ * 从服务器获取 AI 选基金/股票结果（每日 14:50 自动生成）
+ * GET /api/fund-pick
+ */
+function fetchServerFundPick(settings) {
+  const base = _getServerBase(settings);
+  if (!base) return Promise.resolve(null);
+  const url = `${base}/api/fund-pick?_t=${Date.now()}`;
+  return new Promise((resolve) => {
+    wx.request({
+      url,
+      timeout: 8000,
+      success(res) {
+        if (res.statusCode >= 200 && res.statusCode < 300 && res.data && res.data.result) {
+          resolve(res.data);
+        } else {
+          resolve(null);
+        }
+      },
+      fail() { resolve(null); }
+    });
+  });
+}
+
 module.exports = {
   fetchHotEvents,
   fetchIndices,
@@ -540,6 +564,7 @@ module.exports = {
   searchFundByCode,
   fetchSectorTopFunds,
   fetchSectorTopStocks,
+  fetchServerFundPick,
 };
 
 /**

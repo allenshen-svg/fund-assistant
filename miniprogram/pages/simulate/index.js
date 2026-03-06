@@ -1,6 +1,6 @@
 const { getSimPortfolio, setSimPortfolio, getSimTradeLog, addSimTradeLog, getSimWeeklyReviews, addSimWeeklyReview, getSettings, getSimSettleLog, addSimSettleRecord } = require('../../utils/storage');
-const { fetchIndices, fetchCommodities, fetchHotEvents, fetchSectorFlows, fetchMultiFundEstimates, fetchFundEstimate } = require('../../utils/api');
-const { getCachedFundPick, runSimSellAdvice, runSimWeeklyReview, getAIConfig } = require('../../utils/ai');
+const { fetchIndices, fetchCommodities, fetchHotEvents, fetchSectorFlows, fetchMultiFundEstimates, fetchFundEstimate, fetchServerFundPick } = require('../../utils/api');
+const { getCachedFundPick, saveServerFundPick, runSimSellAdvice, runSimWeeklyReview, getAIConfig } = require('../../utils/ai');
 const { formatPct, pctClass, todayStr, isTradingDay, formatMoney } = require('../../utils/market');
 
 const app = getApp();
@@ -448,7 +448,21 @@ Page({
         stockPicks: (result.stockPicks || []).map((p, i) => ({ ...p, _idx: i })),
         pickTime: (cached.timestamp || '').replace('T', ' ').slice(0, 16),
       });
+      return;
     }
+    // 本地无缓存，从服务器拉取（14:50自动推荐）
+    const settings = getSettings();
+    fetchServerFundPick(settings).then(serverData => {
+      if (serverData && serverData.result) {
+        saveServerFundPick(serverData);
+        const result = serverData.result;
+        this.setData({
+          fundPicks: (result.fundPicks || []).map((p, i) => ({ ...p, _idx: i })),
+          stockPicks: (result.stockPicks || []).map((p, i) => ({ ...p, _idx: i })),
+          pickTime: (serverData.timestamp || '').replace('T', ' ').slice(0, 16),
+        });
+      }
+    }).catch(() => {});
   },
 
   /* ================= 买入面板 ================= */
@@ -457,7 +471,7 @@ Page({
     if (this.data.fundPicks.length === 0 && this.data.stockPicks.length === 0) {
       wx.showModal({
         title: '暂无推荐',
-        content: '请先在首页"选基金/股票"模块获取 AI 推荐',
+        content: '系统每日14:50自动推荐，也可在首页手动触发"选基金/股票"',
         confirmText: '去首页',
         success: (res) => {
           if (res.confirm) wx.switchTab({ url: '/pages/dashboard/index' });

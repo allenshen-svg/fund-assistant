@@ -1,8 +1,8 @@
 const { getHoldings, getSettings } = require('../../utils/storage');
-const { fetchHotEvents, fetchIndices, fetchMultiFundEstimates, fetchSectorFlows, fetchMultiFundHistory, fetchCommodities, fetchSectorTopFunds, fetchSectorTopStocks } = require('../../utils/api');
+const { fetchHotEvents, fetchIndices, fetchMultiFundEstimates, fetchSectorFlows, fetchMultiFundHistory, fetchCommodities, fetchSectorTopFunds, fetchSectorTopStocks, fetchServerFundPick } = require('../../utils/api');
 const { buildPlans, buildOverview, MODEL_PORTFOLIO, matchSectorFlow } = require('../../utils/advisor');
 const { getMarketStatus, isMarketOpen, formatPct, pctClass, formatTime, isTradingDay, formatMoney } = require('../../utils/market');
-const { runAIAnalysis, runSingleFundAI, getCachedAIResult, getAIConfig, runFundPickAI, getCachedFundPick } = require('../../utils/ai');
+const { runAIAnalysis, runSingleFundAI, getCachedAIResult, getAIConfig, runFundPickAI, getCachedFundPick, saveServerFundPick } = require('../../utils/ai');
 
 function buildAnalystFallback(item) {
   const title = String(item && item.title || '');
@@ -445,7 +445,19 @@ Page({
         fundPickResult: cached.result,
         fundPickTime: (cached.timestamp || '').replace('T', ' ').slice(0, 16),
       });
+      return;
     }
+    // 本地无缓存，尝试从服务器获取（14:50 自动生成）
+    const settings = getSettings();
+    fetchServerFundPick(settings).then(serverData => {
+      if (serverData && serverData.result) {
+        saveServerFundPick(serverData);
+        this.setData({
+          fundPickResult: serverData.result,
+          fundPickTime: (serverData.timestamp || '').replace('T', ' ').slice(0, 16),
+        });
+      }
+    }).catch(() => {});
   },
 
   async triggerFundPick() {
