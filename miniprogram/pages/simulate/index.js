@@ -95,6 +95,7 @@ Page({
 
     this._refreshPositions();
     this._loadPicks();
+    this._loadSettleDisplay();
   },
 
   /* ================= 刷新持仓估值 ================= */
@@ -178,13 +179,11 @@ Page({
     // 无持仓 或 今天已结算过 -> 跳过
     if (positions.length === 0) return;
     if (portfolio.lastSettleDate === today) {
-      this._loadSettleDisplay();
       return;
     }
 
     // 非交易日不自动结算（但可以手动触发）
     if (!isTradingDay(today)) {
-      this._loadSettleDisplay();
       return;
     }
 

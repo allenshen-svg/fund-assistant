@@ -1,214 +1,487 @@
 {
   "items": [
     {
-      "title": "央行开展买断式逆回购操作8000亿元",
-      "summary": "央行开展买断式逆回购操作8000亿元",
-      "likes": 15589064,
-      "platform": "抖音",
-      "source_type": "头条热搜",
-      "sentiment": "中性偏多",
-      "creator_type": "社交热搜",
-      "publish_time": "2026-03-06T14:44:27.281364+00:00"
-    },
-    {
       "title": "全国人大举行经济主题记者会",
       "summary": "全国人大举行经济主题记者会",
-      "likes": 11245433,
+      "likes": 11284797,
       "platform": "抖音",
       "source_type": "热搜",
       "sentiment": "中性偏多",
       "creator_type": "社交热搜",
-      "publish_time": "2026-03-06T14:44:24.660623+00:00"
+      "publish_time": "2026-03-06T14:59:12.414442+00:00"
     },
     {
       "title": "预计今年GDP增量超6万亿",
       "summary": "预计今年GDP增量超6万亿",
-      "likes": 10800824,
+      "likes": 10798604,
       "platform": "抖音",
       "source_type": "热搜",
       "sentiment": "中性偏多",
       "creator_type": "社交热搜",
-      "publish_time": "2026-03-06T14:44:24.660686+00:00"
-    },
-    {
-      "title": "国际油价创近6年最大单日涨幅",
-      "summary": "国际油价创近6年最大单日涨幅",
-      "likes": 8618813,
-      "platform": "抖音",
-      "source_type": "热搜",
-      "sentiment": "中性偏多",
-      "creator_type": "社交热搜",
-      "publish_time": "2026-03-06T14:44:24.660742+00:00"
-    },
-    {
-      "title": "油价即将上涨",
-      "summary": "油价即将上涨",
-      "likes": 7830273,
-      "platform": "抖音",
-      "source_type": "热搜",
-      "sentiment": "偏多",
-      "creator_type": "社交热搜",
-      "publish_time": "2026-03-06T14:44:24.660770+00:00"
-    },
-    {
-      "title": "国防部回应澳方相关炒作",
-      "summary": "国防部回应澳方相关炒作",
-      "likes": 7822775,
-      "platform": "抖音",
-      "source_type": "热搜",
-      "sentiment": "中性偏多",
-      "creator_type": "社交热搜",
-      "publish_time": "2026-03-06T14:44:24.660781+00:00"
+      "publish_time": "2026-03-06T14:59:12.414484+00:00"
     },
     {
       "title": "充电焦虑可能要被比亚迪彻底解决了",
       "summary": "充电焦虑可能要被比亚迪彻底解决了",
-      "likes": 7741300,
+      "likes": 7833525,
       "platform": "抖音",
       "source_type": "头条热搜",
       "sentiment": "中性偏多",
       "creator_type": "社交热搜",
-      "publish_time": "2026-03-06T14:44:27.281474+00:00"
+      "publish_time": "2026-03-06T14:59:14.008855+00:00"
+    },
+    {
+      "title": "油价即将上涨",
+      "summary": "油价即将上涨",
+      "likes": 7822091,
+      "platform": "抖音",
+      "source_type": "热搜",
+      "sentiment": "偏多",
+      "creator_type": "社交热搜",
+      "publish_time": "2026-03-06T14:59:12.414573+00:00"
+    },
+    {
+      "title": "国防部回应澳方相关炒作",
+      "summary": "国防部回应澳方相关炒作",
+      "likes": 7819767,
+      "platform": "抖音",
+      "source_type": "热搜",
+      "sentiment": "中性偏多",
+      "creator_type": "社交热搜",
+      "publish_time": "2026-03-06T14:59:12.414585+00:00"
+    },
+    {
+      "title": "国际油价创近6年最大单日涨幅",
+      "summary": "国际油价创近6年最大单日涨幅",
+      "likes": 7758732,
+      "platform": "抖音",
+      "source_type": "热搜",
+      "sentiment": "中性偏多",
+      "creator_type": "社交热搜",
+      "publish_time": "2026-03-06T14:59:12.414612+00:00"
+    },
+    {
+      "title": "以财长之子在与黎真主党冲突中受伤",
+      "summary": "以财长之子在与黎真主党冲突中受伤",
+      "likes": 6413548,
+      "platform": "抖音",
+      "source_type": "头条热搜",
+      "sentiment": "中性偏多",
+      "creator_type": "社交热搜",
+      "publish_time": "2026-03-06T14:59:14.008874+00:00"
     },
     {
       "title": "比亚迪兆瓦闪充2.0体验",
       "summary": "比亚迪兆瓦闪充2.0体验",
-      "likes": 5734896,
+      "likes": 5803218,
       "platform": "抖音",
       "source_type": "头条热搜",
       "sentiment": "中性偏多",
       "creator_type": "社交热搜",
-      "publish_time": "2026-03-06T14:44:27.281511+00:00"
+      "publish_time": "2026-03-06T14:59:14.008881+00:00"
     },
     {
-      "title": "美国，对伊朗动手了！中东最后的“硬骨头”，将被敲碎",
-      "summary": "感谢各位老铁的点赞、投币和转发，如果觉得内容不错，欢迎充电支持。\n柏年的充电视频已经全面上线，包含【柏年财富说】和【深度观察】两个频道。\n其中【柏年财富说】会用更多的图表，更加专业的话语，以类路演的形式为大家带来当月的【宏观与政策分析】，以及当月的【大类资产研判与分析】；\n【深度观察】将聚焦当下的产业现状、社会问题以及地缘局势等热门话题的深度分析和解读。\n两个栏目加在一起，每个月至少会有3篇深度作",
-      "likes": 2792044,
+      "title": "黄金首饰怎么买，保值还省钱？",
+      "summary": "黄金首饰怎么买，保值还省钱？",
+      "likes": 3875870,
       "platform": "B站",
-      "source_type": "财经频道",
+      "source_type": "搜索-黄金投资",
       "sentiment": "中性偏多",
-      "creator_type": "视频社区",
-      "publish_time": "2026-03-06T14:44:24.264388+00:00"
+      "creator_type": "视频博主",
+      "creator_name": "大瑞真机灵",
+      "publish_time": "2026-03-06T14:59:13.551907+00:00"
+    },
+    {
+      "title": "疟疾：人类围猎死神的饱和式战争",
+      "summary": "从亚历山大吞下蜘蛛的绝望疗法，到拉韦朗在显微镜前第480次捕捉到那蠕动黑影——人类用五万年才看清疟疾的真面目。而当罗斯在1897年闷热的午后，于按蚊胃壁上发现带色素的卵囊时，那对震动的薄翅终于被定罪：空气无罪，水亦无罪，真正的杀手一直带着翅膀在我们耳边嗡鸣...\n参考文献：\n[1]Bhushan Balvir , Suhas Tiwaskar , Roshan Umate. History Of ",
+      "likes": 3445010,
+      "platform": "B站",
+      "source_type": "排行",
+      "sentiment": "中性偏多",
+      "creator_type": "聚合热榜",
+      "publish_time": "2026-03-06T14:59:12.853188+00:00"
+    },
+    {
+      "title": "比亚迪闪充站被曝年底将“出海”",
+      "summary": "比亚迪闪充站被曝年底将“出海”",
+      "likes": 2607554,
+      "platform": "抖音",
+      "source_type": "头条热搜",
+      "sentiment": "中性偏多",
+      "creator_type": "社交热搜",
+      "publish_time": "2026-03-06T14:59:14.008920+00:00"
     },
     {
       "title": "哈梅内伊真的是被AI击杀的吗？我看未必...",
       "summary": "美以伊战争爆发后，对世界各国的影响正迅速蔓延。但比起以前，这次各种前线新闻的报道下，多了一个词--AI。在大模型几个月一迭代的今天，人工智能在战争里到底能干什么？它会“自主杀人”吗？我们人类还能不能控制AI？对未来战争它又有何意味？本期聊聊～",
-      "likes": 2299677,
+      "likes": 2303297,
       "platform": "B站",
       "source_type": "排行",
       "sentiment": "极度看多",
       "creator_type": "聚合热榜",
-      "publish_time": "2026-03-06T14:44:28.741052+00:00"
+      "publish_time": "2026-03-06T14:59:12.852608+00:00"
     },
     {
       "title": "给我一块金，我请你看黄金雨",
       "summary": "给我一块金，我请你看黄金雨 #化学实验 #拉挖稀疯狂化学",
-      "likes": 2283393,
+      "likes": 2287689,
       "platform": "B站",
       "source_type": "排行",
       "sentiment": "中性偏多",
       "creator_type": "聚合热榜",
-      "publish_time": "2026-03-06T14:44:28.741427+00:00"
+      "publish_time": "2026-03-06T14:59:12.852906+00:00"
+    },
+    {
+      "title": "老板拿来2200克黄金价值80多W#黄金暴涨#金条",
+      "summary": "-",
+      "likes": 2244985,
+      "platform": "B站",
+      "source_type": "搜索-黄金投资",
+      "sentiment": "极度看多",
+      "creator_type": "视频博主",
+      "creator_name": "徽彩珠宝曾庆豪",
+      "publish_time": "2026-03-06T14:59:13.551977+00:00"
     },
     {
       "title": "堵桥时代迎来大变！护航猛攻哥已吓哭",
       "summary": "都说航天改版后就堵不了桥了？！只能说堵桥犹如呼吸般简单，学会这些焚决助你把把得吃！",
-      "likes": 2156321,
+      "likes": 2171000,
       "platform": "B站",
       "source_type": "排行",
       "sentiment": "中性偏多",
       "creator_type": "聚合热榜",
-      "publish_time": "2026-03-06T14:44:28.739943+00:00"
-    },
-    {
-      "title": "【巫师】吃透中国房价，但是主神视角",
-      "summary": "【巫师】吃透中国房价，但是主神视角",
-      "likes": 1967194,
-      "platform": "B站",
-      "source_type": "财经频道",
-      "sentiment": "中性偏多",
-      "creator_type": "视频社区",
-      "publish_time": "2026-03-06T14:44:24.264518+00:00"
+      "publish_time": "2026-03-06T14:59:12.851582+00:00"
     },
     {
       "title": "《辛巴巴巴噜比啦》丹尼尔本人教学（不是）",
       "summary": "注意这不是原片！也不是ai！",
-      "likes": 1710655,
+      "likes": 1729205,
       "platform": "B站",
       "source_type": "排行",
       "sentiment": "中性偏多",
       "creator_type": "聚合热榜",
-      "publish_time": "2026-03-06T14:44:28.740449+00:00"
+      "publish_time": "2026-03-06T14:59:12.852127+00:00"
     },
     {
       "title": "他们笑我是凡人，直到我掏出了核聚变机甲！",
       "summary": "原创AI真人剧《我在修仙界当卧底》持续更新中。\n欢迎来到我们的大家庭！",
-      "likes": 1682656,
+      "likes": 1692648,
       "platform": "B站",
       "source_type": "排行",
       "sentiment": "中性偏多",
       "creator_type": "聚合热榜",
-      "publish_time": "2026-03-06T14:44:28.740226+00:00"
+      "publish_time": "2026-03-06T14:59:12.851920+00:00"
+    },
+    {
+      "title": "我前脚买黄金，后脚中美贸易谈判了",
+      "summary": "理财有风险，投资需谨慎。",
+      "likes": 1653541,
+      "platform": "B站",
+      "source_type": "搜索-黄金投资",
+      "sentiment": "偏空",
+      "creator_type": "视频博主",
+      "creator_name": "烟囱爱跳舞",
+      "publish_time": "2026-03-06T14:59:13.551992+00:00"
     },
     {
       "title": "以国防部长破防伊朗润人：别管谁当伊朗领导都要杀",
       "summary": "以国防部长破防伊朗润人：别管谁当伊朗领导都要杀",
-      "likes": 1412841,
+      "likes": 1414323,
       "platform": "B站",
       "source_type": "排行",
       "sentiment": "中性偏多",
       "creator_type": "聚合热榜",
-      "publish_time": "2026-03-06T14:44:28.741096+00:00"
+      "publish_time": "2026-03-06T14:59:12.852642+00:00"
+    },
+    {
+      "title": "吵架了，婆家给的金条直接不要了，火烧不变色，黄金油油的，扔砖上没声音。",
+      "summary": "吵架了，婆家给的金条直接不要了，火烧不变色，黄金油油的，扔砖上没声音。",
+      "likes": 1403249,
+      "platform": "B站",
+      "source_type": "搜索-黄金投资",
+      "sentiment": "中性偏多",
+      "creator_type": "视频博主",
+      "creator_name": "文弟开金店",
+      "publish_time": "2026-03-06T14:59:13.552009+00:00"
+    },
+    {
+      "title": "2.5吨白银建造的“永兴银楼”被拍卖 1.75吨纯银 每克6.88元“甩卖” 目前白银投资价超29元/克 委托方：买到后不能拆除",
+      "summary": "2.5吨白银建造的“永兴银楼”被拍卖 1.75吨纯银 每克6.88元“甩卖” 目前白银投资价超29元/克 委托方：买到后不能拆除",
+      "likes": 1388778,
+      "platform": "B站",
+      "source_type": "搜索-白银投资",
+      "sentiment": "中性偏多",
+      "creator_type": "视频博主",
+      "creator_name": "红星视频",
+      "publish_time": "2026-03-06T14:59:14.545154+00:00"
+    },
+    {
+      "title": "奶奶藏了20年的金条，今天卖只能换辆电动车：黄金新规，给“私房金” 判了“变现死刑”！",
+      "summary": "奶奶藏了20年的金条，今天卖只能换辆电动车：黄金新规，给“私房金” 判了“变现死刑”！#黄金 #黄金首饰 #金价 #楚财说",
+      "likes": 1339581,
+      "platform": "B站",
+      "source_type": "搜索-黄金投资",
+      "sentiment": "中性偏多",
+      "creator_type": "视频博主",
+      "creator_name": "楚财说",
+      "publish_time": "2026-03-06T14:59:13.552028+00:00"
+    },
+    {
+      "title": "卖黄金，怎么卖最划算？这几个坑要小心！",
+      "summary": "卖黄金，怎么卖最划算？这几个坑要小心！",
+      "likes": 1314200,
+      "platform": "B站",
+      "source_type": "搜索-黄金投资",
+      "sentiment": "中性偏多",
+      "creator_type": "视频博主",
+      "creator_name": "大瑞真机灵",
+      "publish_time": "2026-03-06T14:59:13.552039+00:00"
+    },
+    {
+      "title": "说说看白银黄金哪个好？",
+      "summary": "-",
+      "likes": 1150146,
+      "platform": "B站",
+      "source_type": "搜索-黄金投资",
+      "sentiment": "中性偏多",
+      "creator_type": "视频博主",
+      "creator_name": "笑三西",
+      "publish_time": "2026-03-06T14:59:13.552050+00:00"
+    },
+    {
+      "title": "地缘分析：美伊以冲突推演（26年2月至3月）",
+      "summary": "地缘分析：美伊以冲突推演（26年2月至3月）",
+      "likes": 1112042,
+      "platform": "B站",
+      "source_type": "财经频道",
+      "sentiment": "中性偏多",
+      "creator_type": "视频社区",
+      "publish_time": "2026-03-06T14:59:11.634091+00:00"
+    },
+    {
+      "title": "假的！716亿投资、105吨黄金，全是假的！还有什么是真的？",
+      "summary": "关注我的公众号：发财老博士",
+      "likes": 1085963,
+      "platform": "B站",
+      "source_type": "搜索-黄金投资",
+      "sentiment": "中性偏多",
+      "creator_type": "视频博主",
+      "creator_name": "淘沙博士",
+      "publish_time": "2026-03-06T14:59:13.552065+00:00"
     },
     {
       "title": "【原创短剧】03：飞升失败 开局成为人渣",
       "summary": "自家小店 服务号【带富哈夫币商行】各位想 出币可以考虑一下我们 谢谢!\n原创AI短剧 制作不易 禁止搬运",
-      "likes": 1080920,
+      "likes": 1084728,
       "platform": "B站",
       "source_type": "排行",
       "sentiment": "中性偏多",
       "creator_type": "聚合热榜",
-      "publish_time": "2026-03-06T14:44:28.740244+00:00"
+      "publish_time": "2026-03-06T14:59:12.851939+00:00"
+    },
+    {
+      "title": "男子将2公斤金条变现，净赚百万，四五年前从银行买入，当时金价390多元/克，黄金回收商称一天能收100多单",
+      "summary": "10月14日报道，山东烟台，男子将2公斤金条变现，净赚百万，四五年前从银行买入，当时金价390多元/克，黄金回收商称一天能收100多单",
+      "likes": 1042009,
+      "platform": "B站",
+      "source_type": "搜索-黄金投资",
+      "sentiment": "中性偏多",
+      "creator_type": "视频博主",
+      "creator_name": "大象新闻",
+      "publish_time": "2026-03-06T14:59:13.552085+00:00"
+    },
+    {
+      "title": "《满城尽带黄金甲》：2万群众演员，3.6亿投资资金，5.8分的电影真是一部烂片吗？",
+      "summary": "《满城尽带黄金甲》：2万群众演员，3.6亿投资资金，5.8分的电影真是一部烂片吗？",
+      "likes": 1014601,
+      "platform": "B站",
+      "source_type": "搜索-黄金投资",
+      "sentiment": "中性偏多",
+      "creator_type": "视频博主",
+      "creator_name": "戏谈百年老剧",
+      "publish_time": "2026-03-06T14:59:13.552098+00:00"
+    },
+    {
+      "title": "🔥宝妈梭哈白银却遭金银暴跌，昨天举着银砖炫耀，今天欲哭无泪 #宝妈 #黄金 #白银 #白银暴跌",
+      "summary": "🔥宝妈梭哈白银却遭金银暴跌，昨天举着银砖炫耀，今天欲哭无泪 #宝妈 #黄金 #白银 #白银暴跌",
+      "likes": 1008833,
+      "platform": "B站",
+      "source_type": "搜索-黄金投资",
+      "sentiment": "极度看多",
+      "creator_type": "视频博主",
+      "creator_name": "天洪大师",
+      "publish_time": "2026-03-06T14:59:13.552112+00:00"
+    },
+    {
+      "title": "我不懂黄金的逻辑，但是我知道前几年有些人在买。",
+      "summary": "-",
+      "likes": 959068,
+      "platform": "B站",
+      "source_type": "搜索-黄金投资",
+      "sentiment": "中性偏多",
+      "creator_type": "视频博主",
+      "creator_name": "老陌Ss",
+      "publish_time": "2026-03-06T14:59:13.552123+00:00"
+    },
+    {
+      "title": "父亲买了52公斤白银，男子反复劝其卖出45公斤 躲过暴跌",
+      "summary": "父亲买了52公斤白银，男子反复劝其卖出45公斤 躲过暴跌",
+      "likes": 948220,
+      "platform": "B站",
+      "source_type": "搜索-白银投资",
+      "sentiment": "极度悲观",
+      "creator_type": "视频博主",
+      "creator_name": "河南都市频道",
+      "publish_time": "2026-03-06T14:59:14.545187+00:00"
+    },
+    {
+      "title": "金价暴涨！深圳商家惊恐逃离，一天5家跑路，诈骗130亿连夜消失！",
+      "summary": "金价暴涨！深圳商家惊恐逃离，一天5家跑路，诈骗130亿连夜消失！",
+      "likes": 929290,
+      "platform": "B站",
+      "source_type": "搜索-白银投资",
+      "sentiment": "极度看多",
+      "creator_type": "视频博主",
+      "creator_name": "升维推进结构综合体",
+      "publish_time": "2026-03-06T14:59:14.545197+00:00"
+    },
+    {
+      "title": "买时爹不让买卖时妈不去卖，拿6万压岁钱买黄金的伊森亏哭了",
+      "summary": "-",
+      "likes": 917638,
+      "platform": "B站",
+      "source_type": "搜索-黄金投资",
+      "sentiment": "中性偏多",
+      "creator_type": "视频博主",
+      "creator_name": "泽夕影视",
+      "publish_time": "2026-03-06T14:59:13.552135+00:00"
+    },
+    {
+      "title": "黄金上涨，本质不是为了让你发财",
+      "summary": "-",
+      "likes": 913007,
+      "platform": "B站",
+      "source_type": "搜索-黄金投资",
+      "sentiment": "偏多",
+      "creator_type": "视频博主",
+      "creator_name": "无敌娱乐哈哈哈",
+      "publish_time": "2026-03-06T14:59:13.552144+00:00"
+    },
+    {
+      "title": "钻石和黄金哪个价更高",
+      "summary": "钻石和黄金哪个价更高",
+      "likes": 912153,
+      "platform": "B站",
+      "source_type": "搜索-黄金投资",
+      "sentiment": "中性偏多",
+      "creator_type": "视频博主",
+      "creator_name": "是小刚同学吖",
+      "publish_time": "2026-03-06T14:59:13.552156+00:00"
+    },
+    {
+      "title": "一首歌梳理美元降息来龙去脉",
+      "summary": "有人问为啥降息了指数还往下降啊？因为鲍威尔降低了12月降息的预期。而短期预期早就被市场消化完了。美联储必须谨慎管理预期，避免给市场带来剧烈震荡。理财有风险投资需谨慎。",
+      "likes": 906033,
+      "platform": "B站",
+      "source_type": "搜索-黄金投资",
+      "sentiment": "偏空",
+      "creator_type": "视频博主",
+      "creator_name": "烟囱爱跳舞",
+      "publish_time": "2026-03-06T14:59:13.552177+00:00"
+    },
+    {
+      "title": "“坏消息，黄金暴跌了，好消息，爸爸在儿子面前腰直起来了！！！”",
+      "summary": "-",
+      "likes": 905883,
+      "platform": "B站",
+      "source_type": "搜索-黄金投资",
+      "sentiment": "极度悲观",
+      "creator_type": "视频博主",
+      "creator_name": "罗翔老师的哲学人生",
+      "publish_time": "2026-03-06T14:59:13.552188+00:00"
+    },
+    {
+      "title": "年均产金约6吨！福建大佬狂砸86亿又拿下一座金矿，旗下黄金矿山增至9座，市值超3000亿港元",
+      "summary": "年均产金约6吨！福建大佬狂砸86亿又拿下一座金矿，旗下黄金矿山增至9座，市值超3000亿港元（红星新闻）",
+      "likes": 901774,
+      "platform": "B站",
+      "source_type": "搜索-黄金投资",
+      "sentiment": "中性偏多",
+      "creator_type": "视频博主",
+      "creator_name": "大象新闻",
+      "publish_time": "2026-03-06T14:59:13.552206+00:00"
+    },
+    {
+      "title": "华尔街企图做空中国黄金，却被中国大妈半路截胡，结果怎么样？",
+      "summary": "华尔街企图做空中国黄金，却被中国大妈半路截胡，结果怎么样？",
+      "likes": 893708,
+      "platform": "B站",
+      "source_type": "搜索-黄金投资",
+      "sentiment": "中性偏多",
+      "creator_type": "视频博主",
+      "creator_name": "账号已注销",
+      "publish_time": "2026-03-06T14:59:13.552218+00:00"
+    },
+    {
+      "title": "为什么很多人后悔没有买黄金",
+      "summary": "-",
+      "likes": 890541,
+      "platform": "B站",
+      "source_type": "搜索-黄金投资",
+      "sentiment": "中性偏多",
+      "creator_type": "视频博主",
+      "creator_name": "同心萌宠",
+      "publish_time": "2026-03-06T14:59:13.552229+00:00"
     },
     {
       "title": "真实锐评TES打野Naiyou被调查",
       "summary": "真实锐评TES打野Naiyou被调查",
-      "likes": 865499,
+      "likes": 890445,
       "platform": "B站",
       "source_type": "热搜",
       "sentiment": "中性偏多",
       "creator_type": "聚合热榜",
-      "publish_time": "2026-03-06T14:44:25.997419+00:00"
+      "publish_time": "2026-03-06T14:59:12.166884+00:00"
     },
     {
-      "title": "TES上报Naiyou不当行为",
-      "summary": "TES上报Naiyou不当行为",
-      "likes": 862708,
-      "platform": "B站",
-      "source_type": "热搜",
-      "sentiment": "中性偏多",
-      "creator_type": "聚合热榜",
-      "publish_time": "2026-03-06T14:44:25.997481+00:00"
-    },
-    {
-      "title": "逐帧分析TES赛场Naiyou操作",
-      "summary": "逐帧分析TES赛场Naiyou操作",
-      "likes": 860981,
-      "platform": "B站",
-      "source_type": "热搜",
-      "sentiment": "中性偏多",
-      "creator_type": "聚合热榜",
-      "publish_time": "2026-03-06T14:44:25.997491+00:00"
-    },
-    {
-      "title": "利率下调有人房贷省出110万元",
-      "summary": "利率下调有人房贷省出110万元",
-      "likes": 857760,
+      "title": "布伦特原油升破90美元/桶",
+      "summary": "布伦特原油升破90美元/桶",
+      "likes": 785380,
       "platform": "抖音",
       "source_type": "头条热搜",
       "sentiment": "中性偏多",
       "creator_type": "社交热搜",
-      "publish_time": "2026-03-06T14:44:27.281719+00:00"
+      "publish_time": "2026-03-06T14:59:14.008978+00:00"
+    },
+    {
+      "title": "熊猫一走，日本发疯？都开始人造“大熊猫”项目了？！",
+      "summary": "日本熊猫彻底归零！半个世纪首无熊猫，500 亿经济缺口谁来填？",
+      "likes": 782016,
+      "platform": "B站",
+      "source_type": "财经频道",
+      "sentiment": "中性偏多",
+      "creator_type": "视频社区",
+      "publish_time": "2026-03-06T14:59:11.634541+00:00"
+    },
+    {
+      "title": "TES上报Naiyou不当行为",
+      "summary": "TES上报Naiyou不当行为",
+      "likes": 696248,
+      "platform": "B站",
+      "source_type": "热搜",
+      "sentiment": "中性偏多",
+      "creator_type": "聚合热榜",
+      "publish_time": "2026-03-06T14:59:12.166914+00:00"
+    },
+    {
+      "title": "利率下调有人房贷省出110万元",
+      "summary": "利率下调有人房贷省出110万元",
+      "likes": 643014,
+      "platform": "抖音",
+      "source_type": "头条热搜",
+      "sentiment": "中性偏多",
+      "creator_type": "社交热搜",
+      "publish_time": "2026-03-06T14:59:14.008989+00:00"
     },
     {
       "title": "破5亿播放AI短剧成本仅3000",
@@ -218,47 +491,133 @@
       "source_type": "热搜",
       "sentiment": "中性偏多",
       "creator_type": "微博热搜",
-      "publish_time": "2026-03-06T14:44:24.943651+00:00"
+      "publish_time": "2026-03-06T14:59:12.361982+00:00"
     },
     {
-      "title": "比亚迪闪充站被曝年底将“出海”",
-      "summary": "比亚迪闪充站被曝年底将“出海”",
-      "likes": 520258,
+      "title": "预计今年GDP增量超6万亿元",
+      "summary": "预计今年GDP增量超6万亿元",
+      "likes": 560000,
+      "platform": "微博",
+      "source_type": "热搜",
+      "sentiment": "中性偏多",
+      "creator_type": "微博热搜",
+      "publish_time": "2026-03-06T14:59:12.362082+00:00"
+    },
+    {
+      "title": "白银亏损七万八，为了不爆仓，老婆把黄金全卖了，白银又加仓了四万",
+      "summary": "白银亏损七万八，为了不爆仓，老婆把黄金全卖了，白银又加仓了四万",
+      "likes": 545533,
+      "platform": "B站",
+      "source_type": "搜索-白银投资",
+      "sentiment": "偏多",
+      "creator_type": "视频博主",
+      "creator_name": "丁大爷V",
+      "publish_time": "2026-03-06T14:59:14.545219+00:00"
+    },
+    {
+      "title": "黄金史诗级暴跌，白银单日最大跌幅35%，美联储新主席沃什，世界金融危机若隐若现",
+      "summary": "连续多日疯涨的国际黄金和白银，在1月30日出现史诗级暴跌。\n黄金单日最大跌幅达到12%，白银单日最大跌幅达到35%；\n还有特朗普提名美联储新主席沃什的事情，本视频会来做一些详细分析，感谢赞赏支持。",
+      "likes": 529486,
+      "platform": "B站",
+      "source_type": "搜索-白银投资",
+      "sentiment": "极度看多",
+      "creator_type": "视频博主",
+      "creator_name": "星话大白",
+      "publish_time": "2026-03-06T14:59:14.545233+00:00"
+    },
+    {
+      "title": "央行开展买断式逆回购操作8000亿元",
+      "summary": "央行开展买断式逆回购操作8000亿元",
+      "likes": 526456,
       "platform": "抖音",
       "source_type": "头条热搜",
       "sentiment": "中性偏多",
       "creator_type": "社交热搜",
-      "publish_time": "2026-03-06T14:44:27.281776+00:00"
+      "publish_time": "2026-03-06T14:59:14.008999+00:00"
+    },
+    {
+      "title": "《投资TV》贷款买的白银一夜暴跌30点，杠杆选手化身小飞侠",
+      "summary": "-",
+      "likes": 458280,
+      "platform": "B站",
+      "source_type": "搜索-白银投资",
+      "sentiment": "极度悲观",
+      "creator_type": "视频博主",
+      "creator_name": "抽象冰工厂",
+      "publish_time": "2026-03-06T14:59:14.545243+00:00"
     },
     {
       "title": "“舔狗经济”崩盘下，谁能抓住男性消费万亿商机？",
       "summary": "“舔狗经济”崩盘下，谁能抓住男性消费万亿商机？",
-      "likes": 362793,
+      "likes": 363036,
       "platform": "B站",
       "source_type": "财经频道",
       "sentiment": "极度悲观",
       "creator_type": "视频社区",
-      "publish_time": "2026-03-06T14:44:24.264774+00:00"
+      "publish_time": "2026-03-06T14:59:11.634344+00:00"
     },
     {
-      "title": "Never Ending Dance feat. 重音テトSV",
-      "summary": "Will this dance ever end?\n\nart+MV: mzhu https://x.com/mzhu112646\n\nmusic: d0tc0mmie https://x.com/d0tc0mmie\n\ntuning: yasai31 / UTAU ending https://x.com/yasai31_\nchocomint / Bridge + Final Chorus  http",
-      "likes": 293482,
+      "title": "《黄金白银暴跌》本以为从此走向人生巅峰，没想到是跌入谷底",
+      "summary": "-",
+      "likes": 361429,
       "platform": "B站",
-      "source_type": "排行",
-      "sentiment": "中性偏多",
-      "creator_type": "聚合热榜",
-      "publish_time": "2026-03-06T14:44:28.741524+00:00"
+      "source_type": "搜索-白银投资",
+      "sentiment": "极度悲观",
+      "creator_type": "视频博主",
+      "creator_name": "火柴大型记录片",
+      "publish_time": "2026-03-06T14:59:14.545252+00:00"
     },
     {
-      "title": "2026年AI发展到底卡在哪？【rap】",
-      "summary": "评论区领取：红色火箭指数投资利器+理财100问+医药全景图+指数武林宝典+行业研报+高手交流群等资料吧",
-      "likes": 290073,
+      "title": "【厉害】美伊冲突深度解析：当人类文明最脆弱的“咽喉”断裂，全球市场会走向何方？",
+      "summary": "一口气看懂美伊冲突背后，金价、油价、化工、航运等等多方面的超级影响\n战争会如何蔓延？\n中东又会走向何方？",
+      "likes": 324519,
       "platform": "B站",
       "source_type": "财经频道",
       "sentiment": "中性偏多",
       "creator_type": "视频社区",
-      "publish_time": "2026-03-06T14:44:24.264764+00:00"
+      "publish_time": "2026-03-06T14:59:11.634139+00:00"
+    },
+    {
+      "title": "中东战火蔓延 北约会否卷入冲突",
+      "summary": "中东战火蔓延 北约会否卷入冲突",
+      "likes": 319311,
+      "platform": "抖音",
+      "source_type": "头条热搜",
+      "sentiment": "中性偏多",
+      "creator_type": "社交热搜",
+      "publish_time": "2026-03-06T14:59:14.009023+00:00"
+    },
+    {
+      "title": "一板车重达191斤的白银，能在当铺值多少钱，顾客的购买价另老板震惊！",
+      "summary": "一板车重达191斤的白银，能在当铺值多少钱，顾客的购买价另老板震惊！",
+      "likes": 312878,
+      "platform": "B站",
+      "source_type": "搜索-白银投资",
+      "sentiment": "中性偏多",
+      "creator_type": "视频博主",
+      "creator_name": "珍宝的见证者",
+      "publish_time": "2026-03-06T14:59:14.545263+00:00"
+    },
+    {
+      "title": "女子10年前随手买的白银，如今竟赚翻了",
+      "summary": "女子10年前随手买的白银，如今竟赚翻了",
+      "likes": 302432,
+      "platform": "B站",
+      "source_type": "搜索-白银投资",
+      "sentiment": "中性偏多",
+      "creator_type": "视频博主",
+      "creator_name": "大象新闻",
+      "publish_time": "2026-03-06T14:59:14.545272+00:00"
+    },
+    {
+      "title": "Never Ending Dance feat. 重音テトSV",
+      "summary": "Will this dance ever end?\n\nart+MV: mzhu https://x.com/mzhu112646\n\nmusic: d0tc0mmie https://x.com/d0tc0mmie\n\ntuning: yasai31 / UTAU ending https://x.com/yasai31_\nchocomint / Bridge + Final Chorus  http",
+      "likes": 298812,
+      "platform": "B站",
+      "source_type": "排行",
+      "sentiment": "中性偏多",
+      "creator_type": "聚合热榜",
+      "publish_time": "2026-03-06T14:59:12.852981+00:00"
     },
     {
       "title": "TES上报Naiyou不正当行为",
@@ -268,1087 +627,1606 @@
       "source_type": "热搜",
       "sentiment": "中性偏多",
       "creator_type": "微博热搜",
-      "publish_time": "2026-03-06T14:44:24.943880+00:00"
+      "publish_time": "2026-03-06T14:59:12.362149+00:00"
     },
     {
-      "title": "和讯投顾：周一大盘怎么走",
-      "summary": "和讯投顾：周一大盘怎么走",
-      "likes": 258352,
-      "platform": "抖音",
-      "source_type": "头条热搜",
+      "title": "我打算把房子抵押了，贷款300W梭哈黄金和白银，全部用来炒股",
+      "summary": "这边应该也是，深受小朋友的喜爱",
+      "likes": 253091,
+      "platform": "B站",
+      "source_type": "搜索-白银投资",
+      "sentiment": "极度看多",
+      "creator_type": "视频博主",
+      "creator_name": "雷达YLD",
+      "publish_time": "2026-03-06T14:59:14.545281+00:00"
+    },
+    {
+      "title": "白银做大钱也有2000年了，只是现在产量增多，失去了稀有属性。",
+      "summary": "-",
+      "likes": 229825,
+      "platform": "B站",
+      "source_type": "搜索-白银投资",
       "sentiment": "中性偏多",
-      "creator_type": "社交热搜",
-      "publish_time": "2026-03-06T14:44:27.281848+00:00"
+      "creator_type": "视频博主",
+      "creator_name": "ZEISSX200_PRO",
+      "publish_time": "2026-03-06T14:59:14.545304+00:00"
     },
     {
-      "title": "黄金建议跑路，最大刺激哈梅内伊被炸身亡，5450仍是强坎",
-      "summary": "黄金建议跑路，最大刺激哈梅内伊被炸身亡，5450仍是强坎",
-      "likes": 67747,
+      "title": "上一秒还拿着银砖摇花手，下一秒排队上天台…宝妈们贷款梭哈白银，两天不到价格腰斩…",
+      "summary": "-",
+      "likes": 213685,
+      "platform": "B站",
+      "source_type": "搜索-白银投资",
+      "sentiment": "极度看多",
+      "creator_type": "视频博主",
+      "creator_name": "多徐的妹妹",
+      "publish_time": "2026-03-06T14:59:14.545313+00:00"
+    },
+    {
+      "title": "4.5%还是5%？地方“底牌”全部亮出，两会背后藏着哪些机遇",
+      "summary": "感谢各位老铁的点赞、投币和转发，如果觉得内容不错，欢迎充电支持。\n柏年的充电视频已经全面上线，包含【柏年财富说】和【深度观察】两个频道。\n其中【柏年财富说】会用更多的图表，更加专业的话语，以类路演的形式为大家带来当月的【宏观与政策分析】，以及当月的【大类资产研判与分析】；\n【深度观察】将聚焦当下的产业现状、社会问题以及地缘局势等热门话题的深度分析和解读。\n两个栏目加在一起，每个月至少会有3篇深度作",
+      "likes": 209778,
       "platform": "B站",
       "source_type": "财经频道",
       "sentiment": "中性偏多",
       "creator_type": "视频社区",
-      "publish_time": "2026-03-06T14:44:24.264708+00:00"
+      "publish_time": "2026-03-06T14:59:11.634189+00:00"
     },
     {
-      "title": "一个视频讲懂债券基金，全干货！可以直接用！【从0学理财】",
-      "summary": "一个视频讲懂债券基金，全干货！可以直接用！【从0学理财】",
-      "likes": 40287,
+      "title": "白银建造的湖南“永兴银楼”流拍，1.75吨白银单价6.8元“甩卖”，委托方：买到后不能拆除，重拍不会因白银涨价重新评估",
+      "summary": "白银建造的湖南“永兴银楼”流拍，1.75吨白银单价6.8元“甩卖”，委托方：买到后不能拆除，重拍不会因白银涨价重新评估",
+      "likes": 207460,
+      "platform": "B站",
+      "source_type": "搜索-白银投资",
+      "sentiment": "中性偏多",
+      "creator_type": "视频博主",
+      "creator_name": "极目新闻",
+      "publish_time": "2026-03-06T14:59:14.545325+00:00"
+    },
+    {
+      "title": "老哥画白银k线图，最后一笔堪称神来之笔，艺术拉满！！！",
+      "summary": "-",
+      "likes": 200649,
+      "platform": "B站",
+      "source_type": "搜索-白银投资",
+      "sentiment": "中性偏多",
+      "creator_type": "视频博主",
+      "creator_name": "风行玩转世界",
+      "publish_time": "2026-03-06T14:59:14.545335+00:00"
+    },
+    {
+      "title": "【硬核】十分钟带你搞清楚指数期货",
+      "summary": "评论区领取：理财100问+医药全景图+指数武林宝典+行业研报+高手交流群等资料吧",
+      "likes": 198659,
       "platform": "B站",
       "source_type": "财经频道",
       "sentiment": "中性偏多",
       "creator_type": "视频社区",
-      "publish_time": "2026-03-06T14:44:24.264676+00:00"
+      "publish_time": "2026-03-06T14:59:11.634356+00:00"
     },
     {
-      "title": "竇文濤做節目以來最精彩一集！16萬人看完直呼刷新對文明的認知！",
-      "summary": "专注分享财经干货，在这里学习最新最全的经济、金融知识",
-      "likes": 36786,
+      "title": "9月降息定了！黄金白银大涨，美股巨震上涨，到底有没有风险？",
+      "summary": "-",
+      "likes": 198426,
+      "platform": "B站",
+      "source_type": "搜索-白银投资",
+      "sentiment": "极度看多",
+      "creator_type": "视频博主",
+      "creator_name": "淘沙博士",
+      "publish_time": "2026-03-06T14:59:14.545340+00:00"
+    },
+    {
+      "title": "罗伯特·清崎Robert kiyosaki｜ 想要财富增值你应该投资白银",
+      "summary": "罗伯特·清崎Robert kiyosaki｜ 想要财富增值你应该投资白银",
+      "likes": 184068,
+      "platform": "B站",
+      "source_type": "搜索-白银投资",
+      "sentiment": "中性偏多",
+      "creator_type": "视频博主",
+      "creator_name": "一天不打篮球就难受",
+      "publish_time": "2026-03-06T14:59:14.545351+00:00"
+    },
+    {
+      "title": "霍尔木兹海峡还会封锁多久？革命卫队去中心化，31个自治单位暴走，马赛克防御",
+      "summary": "霍尔木兹海峡的封锁情况，对全球金融市场，乃至世界经济，都带来巨大冲击。\n现在革命卫队已经去中心化，31个自治单位已经暴走，这也意味着霍尔木兹海峡的半封锁状态，可能比外界预期还要久。\n具体本视频会来详细分析，感谢赞赏支持。",
+      "likes": 105454,
       "platform": "B站",
       "source_type": "财经频道",
       "sentiment": "中性偏多",
       "creator_type": "视频社区",
-      "publish_time": "2026-03-06T14:44:24.264215+00:00"
+      "publish_time": "2026-03-06T14:59:11.634336+00:00"
     },
     {
-      "title": "拉高金价圣体：47年前引发最高金价，伊朗凭什么再创记录？",
-      "summary": "伊朗这个国家很有意思，只要家里出大事，就一定会破金价记录，1979年是一次，2026年又是一次。\n\n还有一个国家也具备这种罕见的能力，这就是俄罗斯（苏联），1979年是一次，2022年又是一次。\n\n这两个国家通过三种方式，将金价拉高到一个新的位面，而如果这次伊朗局势继续恶化，其对金价的冲击力恐怕是空前的。\n\n这期视频，就和大家聊聊金价与战争的联系。",
-      "likes": 34287,
-      "platform": "B站",
-      "source_type": "财经频道",
+      "title": "美瞳避雷指南‼️⚠️",
+      "summary": "美瞳避雷指南‼️⚠️",
+      "likes": 75000,
+      "platform": "小红书",
+      "source_type": "热门笔记",
       "sentiment": "中性偏多",
-      "creator_type": "视频社区",
-      "publish_time": "2026-03-06T14:44:24.264916+00:00"
+      "creator_type": "小红书博主",
+      "publish_time": "2026-03-06T14:59:11.933774+00:00"
     },
     {
-      "title": "达利欧：为什么黄金不生息，但建议每个人都配15%的黄金",
-      "summary": "达利欧解析黄金在投资组合中的关键作用。他指出，黄金虽是非生产性资产，却长期扮演货币或替代货币角色。在货币价值因债务膨胀和货币超发而持续缩水的背景下，黄金是重要的风险减速器，优化组合中通常需配置 15% 左右，5%-10% 亦可，通过与其他资产的搭配实现多元化对冲。\n谈及美元趋势，达利欧强调需聚焦债务供需，债务本质是货币的另一种形态，当前债务规模过大且增速迅猛，必然引发难题，要么选择硬通货导致利率上",
-      "likes": 21963,
+      "title": "没有之一，最近一两个月最好上车机会了，黄金，白银的要注意",
+      "summary": "理性分析，合理判断~\n本视频都是个人教学，纯知识分享，个人观点，仅供参考，不构成任何投资建议！",
+      "likes": 74829,
       "platform": "B站",
       "source_type": "财经频道",
       "sentiment": "偏多",
       "creator_type": "视频社区",
-      "publish_time": "2026-03-06T14:44:24.265137+00:00"
+      "publish_time": "2026-03-06T14:59:11.634704+00:00"
     },
     {
-      "title": "如何利用“熵增定律”重组你的人生？ 毁掉你未来的正是你现在的优势",
-      "summary": "在这个剧变的时代，所谓的“稳定”其实是最大的陷阱。本期视频深度解析熊彼特的“创造性破坏”理论，结合热力学熵增定律与神经科学，揭示为什么柯达、诺基亚等巨头会死于自己的优势。你将学到如何克服大脑的“路径依赖”，利用安迪·格鲁夫的“转折点思维”和塔勒布的“杠铃策略”，主动设计人生的“受控崩塌”。这是一套帮助你在不确定性中建立反脆弱系统的硬核生存指南，让你在混乱中不仅活下来，更能实现认知跃迁。",
-      "likes": 16431,
+      "title": "太空光伏=文明升级密码？人类迈向恒星级文明第一步，从技术归一到产业逻辑全拆解",
+      "summary": "如果人类文明想从“地球村”升级成“太阳系小区”，第一步应该点开哪个科技树？\n六十年前，一位苏联天文学家卡尔达肖夫，就给宇宙文明画了一张“升级进度条”，通过文明能够利用和控制的能源总量，来衡量一个文明的技术先进程度。其中II型文明的标志，是能驾驭整颗恒星的能量——就像游戏里的“戴森球”，用巨构建筑把太阳包起来，一滴能量都不浪费。\n而随着火箭可回收技术的突破，一些公司就开始把一个关键零件，从科幻书架搬",
+      "likes": 56771,
       "platform": "B站",
       "source_type": "财经频道",
-      "sentiment": "中性",
+      "sentiment": "偏多",
       "creator_type": "视频社区",
-      "publish_time": "2026-03-06T14:44:24.264295+00:00"
+      "publish_time": "2026-03-06T14:59:11.634076+00:00"
     },
     {
-      "title": "冰岛视频版 带上耳机🎧",
-      "summary": "冰岛视频版 带上耳机🎧",
+      "title": "余承东在宣传视频中，存在明显的逻辑错误和对消费者的误导",
+      "summary": "余承东讲尊界S800底盘和芯片的视频中，存在明显的逻辑错误和对消费者的误导。营销宣传可以理解，请尊重事实，尊重消费者，尊重安全",
+      "likes": 52628,
+      "platform": "B站",
+      "source_type": "财经频道",
+      "sentiment": "中性偏多",
+      "creator_type": "视频社区",
+      "publish_time": "2026-03-06T14:59:11.634554+00:00"
+    },
+    {
+      "title": "安装了72个Skills后，我的OpenClaw无所不能！#OpenClaw #Clawbot #AgentsSkills #AI #我姚学AI",
+      "summary": "安装了72个Skills后，我的OpenClaw无所不能！#OpenClaw #Clawbot #AgentsSkills #AI #我姚学AI",
+      "likes": 49404,
+      "platform": "B站",
+      "source_type": "财经频道",
+      "sentiment": "中性偏多",
+      "creator_type": "视频社区",
+      "publish_time": "2026-03-06T14:59:11.634218+00:00"
+    },
+    {
+      "title": "房贷是造成中国消费下行原因，金融官员能力不行",
+      "summary": "-",
+      "likes": 48065,
+      "platform": "B站",
+      "source_type": "财经频道",
+      "sentiment": "中性偏多",
+      "creator_type": "视频社区",
+      "publish_time": "2026-03-06T14:59:11.634737+00:00"
+    },
+    {
+      "title": "春饼在家怎么做才能薄如蝉翼劲道又好吃呢",
+      "summary": "春饼在家怎么做才能薄如蝉翼劲道又好吃呢",
+      "likes": 47000,
+      "platform": "小红书",
+      "source_type": "热门笔记",
+      "sentiment": "中性偏多",
+      "creator_type": "小红书博主",
+      "publish_time": "2026-03-06T14:59:11.933696+00:00"
+    },
+    {
+      "title": "美股期货开盘继续暴跌！A股能走出独立行情吗？原油贵金属咋应对",
+      "summary": "-",
+      "likes": 45293,
+      "platform": "B站",
+      "source_type": "搜索-贵金属行情",
+      "sentiment": "极度悲观",
+      "creator_type": "视频博主",
+      "creator_name": "股帮",
+      "publish_time": "2026-03-06T14:59:15.502117+00:00"
+    },
+    {
+      "title": "三角洲行动绝密航天跑刀2.0教学三哥",
+      "summary": "三角洲行动绝密航天跑刀2.0教学三哥",
+      "likes": 41701,
+      "platform": "B站",
+      "source_type": "财经频道",
+      "sentiment": "中性偏多",
+      "creator_type": "视频社区",
+      "publish_time": "2026-03-06T14:59:11.634692+00:00"
+    },
+    {
+      "title": "存钱必看💰6部纪录片让你存款翻倍",
+      "summary": "存钱必看💰6部纪录片让你存款翻倍",
+      "likes": 33000,
+      "platform": "小红书",
+      "source_type": "热门笔记",
+      "sentiment": "中性偏多",
+      "creator_type": "小红书博主",
+      "publish_time": "2026-03-06T14:59:11.933723+00:00"
+    },
+    {
+      "title": "男朋友骑着车在路上大吼“求求大家让一让”",
+      "summary": "男朋友骑着车在路上大吼“求求大家让一让”",
+      "likes": 29000,
+      "platform": "小红书",
+      "source_type": "热门笔记",
+      "sentiment": "中性偏多",
+      "creator_type": "小红书博主",
+      "publish_time": "2026-03-06T14:59:11.933764+00:00"
+    },
+    {
+      "title": "芭比妆现实中很难看",
+      "summary": "芭比妆现实中很难看",
+      "likes": 28000,
+      "platform": "小红书",
+      "source_type": "热门笔记",
+      "sentiment": "中性偏多",
+      "creator_type": "小红书博主",
+      "publish_time": "2026-03-06T14:59:11.933691+00:00"
+    },
+    {
+      "title": "只需一面墙‼️4分钟无器械练臀🔥提升臀线‼️",
+      "summary": "只需一面墙‼️4分钟无器械练臀🔥提升臀线‼️",
+      "likes": 28000,
+      "platform": "小红书",
+      "source_type": "热门笔记",
+      "sentiment": "中性偏多",
+      "creator_type": "小红书博主",
+      "publish_time": "2026-03-06T14:59:11.933780+00:00"
+    },
+    {
+      "title": "2月2日下周一，加仓！加仓！贵金属第二波！",
+      "summary": "2月2日下周一，加仓！加仓！贵金属第二波！",
+      "likes": 27240,
+      "platform": "B站",
+      "source_type": "搜索-贵金属行情",
+      "sentiment": "偏多",
+      "creator_type": "视频博主",
+      "creator_name": "I鬼手刺客",
+      "publish_time": "2026-03-06T14:59:15.502158+00:00"
+    },
+    {
+      "title": "新手不会化妆的话 千万别被误导的化妆技巧",
+      "summary": "新手不会化妆的话 千万别被误导的化妆技巧",
+      "likes": 26000,
+      "platform": "小红书",
+      "source_type": "热门笔记",
+      "sentiment": "中性偏多",
+      "creator_type": "小红书博主",
+      "publish_time": "2026-03-06T14:59:11.933685+00:00"
+    },
+    {
+      "title": "别等瘦了再穿！",
+      "summary": "别等瘦了再穿！",
+      "likes": 26000,
+      "platform": "小红书",
+      "source_type": "热门笔记",
+      "sentiment": "中性偏多",
+      "creator_type": "小红书博主",
+      "publish_time": "2026-03-06T14:59:11.933701+00:00"
+    },
+    {
+      "title": "CNBC：原油供应可能切断，但中国处在一个更有利的位置",
+      "summary": "China in better position to endure extended oil disruption, says RBC's Helima Croft",
+      "likes": 24333,
+      "platform": "B站",
+      "source_type": "财经频道",
+      "sentiment": "中性偏多",
+      "creator_type": "视频社区",
+      "publish_time": "2026-03-06T14:59:11.634474+00:00"
+    },
+    {
+      "title": "摩根大通 CEO 深度访谈：如何管理全球最大的银行【中英双语】",
+      "summary": "视频来源：https://www.youtube.com/watch?v=9Kl-wO_j5GM&list=TLGGEV0vv24jZQkxODAyMjAyNg&index=5\n视频标题：When JPMorgan CEO Jamie Dimon Speaks, the World Listens\n发布时间：2024 年 04 月 18 日\n搬运译制：Yuyang\n其他备注：部分内容有删减",
+      "likes": 22530,
+      "platform": "B站",
+      "source_type": "财经频道",
+      "sentiment": "中性偏多",
+      "creator_type": "视频社区",
+      "publish_time": "2026-03-06T14:59:11.634251+00:00"
+    },
+    {
+      "title": "QQ弹弹的牛奶巧克力块",
+      "summary": "QQ弹弹的牛奶巧克力块",
+      "likes": 21000,
+      "platform": "小红书",
+      "source_type": "热门笔记",
+      "sentiment": "中性偏多",
+      "creator_type": "小红书博主",
+      "publish_time": "2026-03-06T14:59:11.933745+00:00"
+    },
+    {
+      "title": "原著粉疯了❗️这男女主到底是怎么选的❗️😡",
+      "summary": "原著粉疯了❗️这男女主到底是怎么选的❗️😡",
+      "likes": 19000,
+      "platform": "小红书",
+      "source_type": "热门笔记",
+      "sentiment": "中性偏多",
+      "creator_type": "小红书博主",
+      "publish_time": "2026-03-06T14:59:11.933735+00:00"
+    },
+    {
+      "title": "全面解析“世界模型”：定义、路线、实践与AGI的更近一步【硅谷101】",
+      "summary": "2026年，全球顶尖AI实验室和科技巨头们都在押注研发一个新算法路径：世界模型。随着大语言模型（LLM）的Scaling Law面临发展质疑，Yann LeCun、李飞飞等顶尖学者以及OpenAI、谷歌等科技巨头们都在追问：AI要想真正智能，能“预测世界”是否是必须项？由此，“世界模型”被视为是AI的下一个十年最重要的研究方向之一。\n\n这期视频我们将深入拆解世界模型的核心定义、三层研发结构，以及最",
+      "likes": 18938,
+      "platform": "B站",
+      "source_type": "财经频道",
+      "sentiment": "中性偏多",
+      "creator_type": "视频社区",
+      "publish_time": "2026-03-06T14:59:11.634272+00:00"
+    },
+    {
+      "title": "软件工程已死？AI时代还要学计算机吗？",
+      "summary": "欢迎追踪我的 INS: https://hackbear.tv/ig\nTG群組：https://hackbear.tv/tg\n合作邮箱: hack.tech.entertainment@gmail.com",
+      "likes": 18333,
+      "platform": "B站",
+      "source_type": "财经频道",
+      "sentiment": "中性偏多",
+      "creator_type": "视频社区",
+      "publish_time": "2026-03-06T14:59:11.633858+00:00"
+    },
+    {
+      "title": "嘿嘿嘿",
+      "summary": "嘿嘿嘿",
+      "likes": 18000,
+      "platform": "小红书",
+      "source_type": "热门笔记",
+      "sentiment": "中性偏多",
+      "creator_type": "小红书博主",
+      "publish_time": "2026-03-06T14:59:11.933672+00:00"
+    },
+    {
+      "title": "2月9日下周一，加仓！加仓！贵金属第二波！",
+      "summary": "2月9日下周一，加仓！加仓！贵金属第二波！",
+      "likes": 16962,
+      "platform": "B站",
+      "source_type": "搜索-贵金属行情",
+      "sentiment": "偏多",
+      "creator_type": "视频博主",
+      "creator_name": "I鬼手刺客",
+      "publish_time": "2026-03-06T14:59:15.502201+00:00"
+    },
+    {
+      "title": "女学生想自杀，色鬼老师说死前和我谈恋爱吧",
+      "summary": "女学生想自杀，色鬼老师说死前和我谈恋爱吧",
+      "likes": 15000,
+      "platform": "小红书",
+      "source_type": "热门笔记",
+      "sentiment": "中性偏多",
+      "creator_type": "小红书博主",
+      "publish_time": "2026-03-06T14:59:11.933717+00:00"
+    },
+    {
+      "title": "中国大模型偷了老美的家，原因竟然是电多？",
+      "summary": "中国大模型偷了老美的家，原因竟然是电多？",
+      "likes": 14281,
+      "platform": "B站",
+      "source_type": "财经频道",
+      "sentiment": "中性偏多",
+      "creator_type": "视频社区",
+      "publish_time": "2026-03-06T14:59:11.634728+00:00"
+    },
+    {
+      "title": "《我的恋爱脑男友》",
+      "summary": "《我的恋爱脑男友》",
       "likes": 14000,
       "platform": "小红书",
-      "source_type": "频道热门",
+      "source_type": "热门笔记",
       "sentiment": "中性偏多",
       "creator_type": "小红书博主",
-      "publish_time": "2026-03-06T14:44:36.269000+00:00"
+      "publish_time": "2026-03-06T14:59:11.933712+00:00"
     },
     {
-      "title": "Claude Opus 4.6登顶！两周写出10万行Linux编译器，15亿打工人变天",
-      "summary": "Claude Opus 4.6横空出世，以“Agent Teams”智能体团队模式震撼科技圈。仅耗资2万美元，16个AI在两周内自主写出10万行代码的C编译器，成功编译Linux内核。不仅吊打GPT-5.2，更杀入Office全家桶。从“辅助编程”到“自主研发”，打工人的天，真的变了。",
-      "likes": 12400,
+      "title": "🇮🇶在伊拉克旅行的日子",
+      "summary": "🇮🇶在伊拉克旅行的日子",
+      "likes": 13000,
+      "platform": "小红书",
+      "source_type": "热门笔记",
+      "sentiment": "中性偏多",
+      "creator_type": "小红书博主",
+      "publish_time": "2026-03-06T14:59:11.933707+00:00"
+    },
+    {
+      "title": "和闺蜜出游这么拍！",
+      "summary": "和闺蜜出游这么拍！",
+      "likes": 13000,
+      "platform": "小红书",
+      "source_type": "热门笔记",
+      "sentiment": "中性偏多",
+      "creator_type": "小红书博主",
+      "publish_time": "2026-03-06T14:59:11.933728+00:00"
+    },
+    {
+      "title": "2月6日周五，加仓！加仓！贵金属第二波！",
+      "summary": "2月6日周五，加仓！加仓！贵金属第二波！",
+      "likes": 12131,
       "platform": "B站",
-      "source_type": "财经频道",
-      "sentiment": "中性偏多",
-      "creator_type": "视频社区",
-      "publish_time": "2026-03-06T14:44:24.264611+00:00"
-    },
-    {
-      "title": "【沪深300】万华化学巨化股份：得陇望蜀，化工可期",
-      "summary": "-",
-      "likes": 9387,
-      "platform": "B站",
-      "source_type": "财经频道",
-      "sentiment": "中性偏多",
-      "creator_type": "视频社区",
-      "publish_time": "2026-03-06T14:44:24.264887+00:00"
-    },
-    {
-      "title": "西园寺5r门票！一定要体验的5件事！！！",
-      "summary": "西园寺5r门票！一定要体验的5件事！！！",
-      "likes": 6050,
-      "platform": "小红书",
-      "source_type": "频道热门",
-      "sentiment": "中性偏多",
-      "creator_type": "小红书博主",
-      "publish_time": "2026-03-06T14:44:36.268898+00:00"
-    },
-    {
-      "title": "涨停大肉，44亿资金尾盘抢筹，今日赢麻了",
-      "summary": "涨停大肉，44亿资金尾盘抢筹，今日赢麻了",
-      "likes": 3679,
-      "platform": "B站",
-      "source_type": "财经频道",
-      "sentiment": "极度看多",
-      "creator_type": "视频社区",
-      "publish_time": "2026-03-06T14:44:24.265031+00:00"
-    },
-    {
-      "title": "Rainy Thailand🦋",
-      "summary": "Rainy Thailand🦋",
-      "likes": 3342,
-      "platform": "小红书",
-      "source_type": "频道热门",
-      "sentiment": "中性偏多",
-      "creator_type": "小红书博主",
-      "publish_time": "2026-03-06T14:44:36.268955+00:00"
-    },
-    {
-      "title": "梦回五月 吹一下海风🌊",
-      "summary": "梦回五月 吹一下海风🌊",
-      "likes": 2983,
-      "platform": "小红书",
-      "source_type": "频道热门",
-      "sentiment": "中性偏多",
-      "creator_type": "小红书博主",
-      "publish_time": "2026-03-06T14:44:36.268910+00:00"
-    },
-    {
-      "title": "广西纸包鸡能不能馋哭老外？",
-      "summary": "广西纸包鸡能不能馋哭老外？",
-      "likes": 2715,
-      "platform": "小红书",
-      "source_type": "频道热门",
-      "sentiment": "中性偏多",
-      "creator_type": "小红书博主",
-      "publish_time": "2026-03-06T14:44:33.425290+00:00"
-    },
-    {
-      "title": "想死在这一刻",
-      "summary": "想死在这一刻",
-      "likes": 2290,
-      "platform": "小红书",
-      "source_type": "频道热门",
-      "sentiment": "中性偏多",
-      "creator_type": "小红书博主",
-      "publish_time": "2026-03-06T14:44:33.425341+00:00"
-    },
-    {
-      "title": "局势激变，战火点燃，油价何去何从？",
-      "summary": "过去一周，信息量直接爆炸，伊朗局势风云突变，全世界的目光聚焦在中东，战火、博弈、大国角力……地缘的火，也直接把油价给点着了，ICE布油价格已突破80美元/桶……\n抛开复杂的政治博弈，我们这期视频着重解码石油价格的影响因素，在看似由“情绪”驱动的行情背后，油价遵循着哪几条清晰的底层逻辑。\n希望通过这次视频，后续看到相关地缘事件进展的新闻，客官能了然于胸。",
-      "likes": 1547,
-      "platform": "B站",
-      "source_type": "财经频道",
+      "source_type": "搜索-贵金属行情",
       "sentiment": "偏多",
-      "creator_type": "视频社区",
-      "publish_time": "2026-03-06T14:44:24.264554+00:00"
+      "creator_type": "视频博主",
+      "creator_name": "I鬼手刺客",
+      "publish_time": "2026-03-06T14:59:15.502210+00:00"
     },
     {
-      "title": "A股3.6收评点评+3.9盘前预判：AI + 制造引爆新质生产力！黄白线严重分化！黄白线剧烈分化！个股涨疯了，新质生产力主线爆发！",
-      "summary": "A股3.6收评点评+3.9盘前预判：AI + 制造引爆新质生产力！黄白线严重分化！黄白线剧烈分化！个股涨疯了，新质生产力主线爆发！",
-      "likes": 1394,
-      "platform": "B站",
-      "source_type": "财经频道",
-      "sentiment": "极度看多",
-      "creator_type": "视频社区",
-      "publish_time": "2026-03-06T14:44:24.265096+00:00"
+      "title": "针对善良女性的新型骗局，越善良越要看！",
+      "summary": "针对善良女性的新型骗局，越善良越要看！",
+      "likes": 12000,
+      "platform": "小红书",
+      "source_type": "热门笔记",
+      "sentiment": "中性偏多",
+      "creator_type": "小红书博主",
+      "publish_time": "2026-03-06T14:59:11.933790+00:00"
     },
     {
-      "title": "A股：准备开大了？国家队真出手了！4200家上涨，赌国运的时候到了，下周又将见证历史！",
-      "summary": "A股：准备开大了？国家队真出手了！4200家上涨，赌国运的时候到了，下周又将见证历史！",
-      "likes": 1279,
+      "title": "适合大部分人！让声音好听百倍的一招",
+      "summary": "适合大部分人！让声音好听百倍的一招",
+      "likes": 11000,
+      "platform": "小红书",
+      "source_type": "热门笔记",
+      "sentiment": "中性偏多",
+      "creator_type": "小红书博主",
+      "publish_time": "2026-03-06T14:59:11.933751+00:00"
+    },
+    {
+      "title": "42岁 已减20斤 绝绝子 高效燃脂 一遍暴汗",
+      "summary": "42岁 已减20斤 绝绝子 高效燃脂 一遍暴汗",
+      "likes": 11000,
+      "platform": "小红书",
+      "source_type": "热门笔记",
+      "sentiment": "中性偏多",
+      "creator_type": "小红书博主",
+      "publish_time": "2026-03-06T14:59:11.933769+00:00"
+    },
+    {
+      "title": "黄金 白银 有色 期货行情解读 再次提醒！！！| Z哥直播0201",
+      "summary": "黄金 白银 有色 期货行情解读 再次提醒！！！| Z哥直播0201",
+      "likes": 10360,
       "platform": "B站",
-      "source_type": "财经频道",
+      "source_type": "搜索-贵金属行情",
+      "sentiment": "中性偏多",
+      "creator_type": "视频博主",
+      "creator_name": "摸金大校",
+      "publish_time": "2026-03-06T14:59:15.502234+00:00"
+    },
+    {
+      "title": "黄金价格破历史新高！盘点2023年走势，金价行情将迎来长牛？",
+      "summary": "黄金价格破历史新高！盘点2023年走势，金价行情将迎来长牛？",
+      "likes": 10354,
+      "platform": "B站",
+      "source_type": "搜索-贵金属行情",
+      "sentiment": "中性偏多",
+      "creator_type": "视频博主",
+      "creator_name": "二一数据",
+      "publish_time": "2026-03-06T14:59:15.502244+00:00"
+    },
+    {
+      "title": "能理解男的为什么都想要个女儿了……",
+      "summary": "能理解男的为什么都想要个女儿了……",
+      "likes": 9433,
+      "platform": "小红书",
+      "source_type": "热门笔记",
+      "sentiment": "中性偏多",
+      "creator_type": "小红书博主",
+      "publish_time": "2026-03-06T14:59:11.933679+00:00"
+    },
+    {
+      "title": "3月2日下周一，加仓！加仓！贵金属第二波！",
+      "summary": "3月2日下周一，加仓！加仓！贵金属第二波！",
+      "likes": 8989,
+      "platform": "B站",
+      "source_type": "搜索-贵金属行情",
       "sentiment": "偏多",
+      "creator_type": "视频博主",
+      "creator_name": "I鬼手刺客",
+      "publish_time": "2026-03-06T14:59:15.502254+00:00"
+    },
+    {
+      "title": "板块轮动： 追逐热点板块？等你进去时，热点已经凉了。#股票知识 #财经知识",
+      "summary": "板块轮动： 追逐热点板块？等你进去时，热点已经凉了。#股票知识 #财经知识",
+      "likes": 8931,
+      "platform": "B站",
+      "source_type": "财经频道",
+      "sentiment": "中性偏多",
       "creator_type": "视频社区",
-      "publish_time": "2026-03-06T14:44:24.264662+00:00"
+      "publish_time": "2026-03-06T14:59:11.633938+00:00"
     },
     {
-      "title": "旺角最便宜行李寄存服务❗️香港旅游攻略❗️",
-      "summary": "旺角最便宜行李寄存服务❗️香港旅游攻略❗️",
-      "likes": 1216,
+      "title": "2月4日周三，加仓！加仓！贵金属第二波！",
+      "summary": "2月4日周三，加仓！加仓！贵金属第二波！",
+      "likes": 8899,
+      "platform": "B站",
+      "source_type": "搜索-贵金属行情",
+      "sentiment": "偏多",
+      "creator_type": "视频博主",
+      "creator_name": "I鬼手刺客",
+      "publish_time": "2026-03-06T14:59:15.502264+00:00"
+    },
+    {
+      "title": "黄金见顶？将要回调？理性分析，从容面对",
+      "summary": "黄金见顶？将要回调？理性分析，从容面对",
+      "likes": 8854,
+      "platform": "B站",
+      "source_type": "搜索-贵金属行情",
+      "sentiment": "偏空",
+      "creator_type": "视频博主",
+      "creator_name": "明心说黄金",
+      "publish_time": "2026-03-06T14:59:15.502274+00:00"
+    },
+    {
+      "title": "小乔喊话曹公：铜雀台别乱猜",
+      "summary": "小乔的心思，曹老板能明白吗？俏皮可爱的曲风，能让忙碌的你得到快乐，快来听听吧！",
+      "likes": 8797,
+      "platform": "B站",
+      "source_type": "财经频道",
+      "sentiment": "中性偏多",
+      "creator_type": "视频社区",
+      "publish_time": "2026-03-06T14:59:11.634616+00:00"
+    },
+    {
+      "title": "懂王带动了哪些财经行情？怎么看10万亿化债的本质？今晚打破信息茧房，深度拆解经济、股市、贵金属、外贸，分别受到哪些影响？财经新鲜事半月总结，一晚上讲明白",
+      "summary": "美股大涨！懂王带动了哪些财经行情？怎么看10万亿化债的本质？今晚打破信息茧房，深度拆解经济、股市、贵金属、外贸，分别受到哪些影响？财经新鲜事半月总结，一晚上讲明白 #美股 #财经 #经济 #赤马红羊劫 #温铁军",
+      "likes": 8578,
+      "platform": "B站",
+      "source_type": "搜索-贵金属行情",
+      "sentiment": "极度看多",
+      "creator_type": "视频博主",
+      "creator_name": "修罗路西法大人",
+      "publish_time": "2026-03-06T14:59:15.502282+00:00"
+    },
+    {
+      "title": "中国资产全线飙涨背后，复盘五大经典封神预言。股票、基金、黄金为何全部狂涨？节后走势将如何？该如何操作？狂牛行情会继续吗？将创新高还是被深套？贵金属还值得买吗？",
+      "summary": "中国资产全线飙涨背后，复盘五大经典封神预言。股票、基金、黄金为何全部狂涨？节后走势将如何？该如何操作？狂牛行情会继续吗？将创新高还是被深套？贵金属还值得买吗？预言帝再立FLAG，为何能每次预测都如此精准？核心关键是什么？强者为何总是极少数？大多数人为何都注定失败？#股市 #A股 #牛市  #股票 #金价",
+      "likes": 8429,
+      "platform": "B站",
+      "source_type": "搜索-贵金属行情",
+      "sentiment": "极度看多",
+      "creator_type": "视频博主",
+      "creator_name": "修罗路西法大人",
+      "publish_time": "2026-03-06T14:59:15.502313+00:00"
+    },
+    {
+      "title": "实力速更：8分钟讲清A股今日大涨，春天来了吗？是变盘信号？沪指一天站稳3400点，是否慢牛变快牛？三个纬度深度拆解本轮行情，如何上帝视角，客观看待东升西降？",
+      "summary": "实力速更：8分钟讲清A股今日大涨，春天来了吗？是变盘信号？沪指一天站稳3400点，是否慢牛变快牛？三个纬度深度拆解本轮行情，如何上帝视角，辩证客观的看“东升西降”，黄金价格为何再创新高 #股市 #大盘 #美股 #财经 #金价",
+      "likes": 8258,
+      "platform": "B站",
+      "source_type": "搜索-贵金属行情",
+      "sentiment": "极度看多",
+      "creator_type": "视频博主",
+      "creator_name": "修罗路西法大人",
+      "publish_time": "2026-03-06T14:59:15.502319+00:00"
+    },
+    {
+      "title": "上综艺…丑（lei）关我私下什么事啊",
+      "summary": "上综艺…丑（lei）关我私下什么事啊",
+      "likes": 8109,
+      "platform": "小红书",
+      "source_type": "热门笔记",
+      "sentiment": "中性偏多",
+      "creator_type": "小红书博主",
+      "publish_time": "2026-03-06T14:59:11.933666+00:00"
+    },
+    {
+      "title": "科学育儿丨宝宝春季专业护理小知识",
+      "summary": "科学育儿丨宝宝春季专业护理小知识",
+      "likes": 7028,
+      "platform": "小红书",
+      "source_type": "热门笔记",
+      "sentiment": "中性偏多",
+      "creator_type": "小红书博主",
+      "publish_time": "2026-03-06T14:59:11.933795+00:00"
+    },
+    {
+      "title": "邓为美甲真的太太太sha我！机能风美甲！",
+      "summary": "邓为美甲真的太太太sha我！机能风美甲！",
+      "likes": 6639,
+      "platform": "小红书",
+      "source_type": "热门笔记",
+      "sentiment": "中性偏多",
+      "creator_type": "小红书博主",
+      "publish_time": "2026-03-06T14:59:11.933740+00:00"
+    },
+    {
+      "title": "《云之羽》片场张凌赫和郭敬明体型差惊人",
+      "summary": "《云之羽》片场张凌赫和郭敬明体型差惊人",
+      "likes": 6489,
+      "platform": "小红书",
+      "source_type": "热门笔记",
+      "sentiment": "中性偏多",
+      "creator_type": "小红书博主",
+      "publish_time": "2026-03-06T14:59:11.933785+00:00"
+    },
+    {
+      "title": "！！女孩子千万不要未婚跑男方家住",
+      "summary": "！！女孩子千万不要未婚跑男方家住",
+      "likes": 5498,
+      "platform": "小红书",
+      "source_type": "热门笔记",
+      "sentiment": "中性偏多",
+      "creator_type": "小红书博主",
+      "publish_time": "2026-03-06T14:59:11.933756+00:00"
+    },
+    {
+      "title": "关于我让npy去买loopy",
+      "summary": "关于我让npy去买loopy",
+      "likes": 4684,
+      "platform": "小红书",
+      "source_type": "热门笔记",
+      "sentiment": "中性偏多",
+      "creator_type": "小红书博主",
+      "publish_time": "2026-03-06T14:59:11.933642+00:00"
+    },
+    {
+      "title": "2023苏州汉堡测评",
+      "summary": "2023苏州汉堡测评",
+      "likes": 3795,
       "platform": "小红书",
       "source_type": "频道热门",
       "sentiment": "中性偏多",
       "creator_type": "小红书博主",
-      "publish_time": "2026-03-06T14:44:36.268984+00:00"
+      "publish_time": "2026-03-06T14:59:13.718367+00:00"
     },
     {
-      "title": "桂林市区夕阳日出观赏点·尧山云海",
-      "summary": "桂林市区夕阳日出观赏点·尧山云海",
-      "likes": 1116,
+      "title": "高级感十足的棉花糖",
+      "summary": "高级感十足的棉花糖",
+      "likes": 3603,
       "platform": "小红书",
       "source_type": "频道热门",
       "sentiment": "中性偏多",
       "creator_type": "小红书博主",
-      "publish_time": "2026-03-06T14:44:36.268927+00:00"
+      "publish_time": "2026-03-06T14:59:13.718314+00:00"
     },
     {
-      "title": "厦门多巴胺之旅！",
-      "summary": "厦门多巴胺之旅！",
-      "likes": 704,
+      "title": "如何用AI写五十万字以后的小说？长篇小说AI百万字不崩的方法来了！Ai写小说能力实测！不同模型写小说能力大对比，星月写作，ai写小说，番茄小说",
+      "summary": "对AI写作感兴趣的点击评论区置顶蓝链\n兑换码处使用“星月凌云666”可领取五万体验字数",
+      "likes": 2701,
+      "platform": "B站",
+      "source_type": "财经频道",
+      "sentiment": "中性偏多",
+      "creator_type": "视频社区",
+      "publish_time": "2026-03-06T14:59:11.634718+00:00"
+    },
+    {
+      "title": "福建，最能拼的经济大省？",
+      "summary": "福建，最能拼的经济大省？",
+      "likes": 1501,
+      "platform": "B站",
+      "source_type": "财经频道",
+      "sentiment": "中性偏多",
+      "creator_type": "视频社区",
+      "publish_time": "2026-03-06T14:59:11.634490+00:00"
+    },
+    {
+      "title": "夜市摆摊炸无骨鸡柳 看这篇就够了",
+      "summary": "夜市摆摊炸无骨鸡柳 看这篇就够了",
+      "likes": 1386,
       "platform": "小红书",
       "source_type": "频道热门",
       "sentiment": "中性偏多",
       "creator_type": "小红书博主",
-      "publish_time": "2026-03-06T14:44:36.268989+00:00"
+      "publish_time": "2026-03-06T14:59:13.718369+00:00"
     },
     {
-      "title": "大连真的太浪漫了🌊六天五夜打卡分享1⃣️",
-      "summary": "大连真的太浪漫了🌊六天五夜打卡分享1⃣️",
-      "likes": 664,
+      "title": "超简单超浓郁生巧巴斯克芝士蛋糕‼️新手可做",
+      "summary": "超简单超浓郁生巧巴斯克芝士蛋糕‼️新手可做",
+      "likes": 824,
       "platform": "小红书",
       "source_type": "频道热门",
       "sentiment": "中性偏多",
       "creator_type": "小红书博主",
-      "publish_time": "2026-03-06T14:44:36.268944+00:00"
+      "publish_time": "2026-03-06T14:59:13.718362+00:00"
     },
     {
       "title": "人大代表庹庆明建议高速由重大节假日免费改为年度 3000 公里免费，这能解决哪些出行痛点？该怎样实施？",
       "summary": "2026年全国两会即将召开，全国人大代表、四川省雅安市教育考试院院长庹庆明带来了一份关于优化高速公路重大节假日免收小型客车通行费政策的建议。 为更好平衡政策的惠民属性与路网高效运行，切实回应社会各界对政策优化的期待，他提出以下建议： 一是推行年度免费里程核定制度，优化政策实施模式。将现行“重大节假日及其连休日7座及以下小型客车高速免费通行”政策，调整为7座及以下非营运小型客车年度固定里程免费模式，",
-      "likes": 641,
+      "likes": 658,
       "platform": "知乎",
       "source_type": "热榜",
       "sentiment": "中性偏多",
       "creator_type": "聚合热榜",
-      "publish_time": "2026-03-06T14:44:24.339937+00:00"
+      "publish_time": "2026-03-06T14:59:11.665763+00:00"
     },
     {
-      "title": "呼和浩特初旅。",
-      "summary": "呼和浩特初旅。",
-      "likes": 606,
+      "title": "十分钟搞定无主食晚餐·凉拌牛肉 越吃越瘦‼️",
+      "summary": "十分钟搞定无主食晚餐·凉拌牛肉 越吃越瘦‼️",
+      "likes": 636,
       "platform": "小红书",
       "source_type": "频道热门",
       "sentiment": "中性偏多",
       "creator_type": "小红书博主",
-      "publish_time": "2026-03-06T14:44:36.268877+00:00"
+      "publish_time": "2026-03-06T14:59:13.718339+00:00"
     },
     {
-      "title": "【双字双语】彭博财经简报26.03.05完整版",
-      "summary": "本期视频标题：伊朗战事第六日：油价飙升、霍尔木兹“事实封锁”与全球股债汇动荡全纪录\n\n本期视频要点：\n1、战事升级：美参院授权后空袭已覆盖伊朗周边150城超2000个目标，国防部长称行动或持续“数周”，美军潜艇二战来首次击沉水面舰艇（伊朗军舰在斯里兰卡外海）。\n2、能源冲击：霍尔木兹海峡“事实关闭”导致卡塔尔能源宣布LNG不可抗力、沙特Ras Tanura炼油厂预防性关停；WTI原油涨2.25%、",
-      "likes": 598,
-      "platform": "B站",
-      "source_type": "财经频道",
-      "sentiment": "极度看多",
-      "creator_type": "视频社区",
-      "publish_time": "2026-03-06T14:44:24.264634+00:00"
-    },
-    {
-      "title": "紧急加更：如何通过新闻舆情的事件驱动量化策略，捕捉近期暴涨的油气板块！量化小白必须要搞懂的策略逻辑。",
-      "summary": "-",
-      "likes": 550,
-      "platform": "B站",
-      "source_type": "财经频道",
-      "sentiment": "极度看多",
-      "creator_type": "视频社区",
-      "publish_time": "2026-03-06T14:44:24.264943+00:00"
-    },
-    {
-      "title": "石家庄！石家庄！终于找到啦！",
-      "summary": "石家庄！石家庄！终于找到啦！",
-      "likes": 459,
+      "title": "低卡豌杂面/家庭版/减脂版/极低油少佐料",
+      "summary": "低卡豌杂面/家庭版/减脂版/极低油少佐料",
+      "likes": 562,
       "platform": "小红书",
       "source_type": "频道热门",
       "sentiment": "中性偏多",
       "creator_type": "小红书博主",
-      "publish_time": "2026-03-06T14:44:33.425250+00:00"
+      "publish_time": "2026-03-06T14:59:13.718333+00:00"
     },
     {
-      "title": "🇲🇾喜欢吃虾的买它🦐‼️",
-      "summary": "🇲🇾喜欢吃虾的买它🦐‼️",
-      "likes": 419,
+      "title": "韩国这五家雪冰超好吃！！！！！",
+      "summary": "韩国这五家雪冰超好吃！！！！！",
+      "likes": 526,
       "platform": "小红书",
       "source_type": "频道热门",
       "sentiment": "中性偏多",
       "creator_type": "小红书博主",
-      "publish_time": "2026-03-06T14:44:33.425197+00:00"
+      "publish_time": "2026-03-06T14:59:13.718328+00:00"
     },
     {
       "title": "比亚迪发布第二代刀片电池，宣称让充电和加油一样快，-30°C只多 3 分钟，这会对燃油车造成冲击吗？",
       "summary": "3月5日，比亚迪（002594.SZ）举办第二代刀片电池暨闪充技术发布会，正式发布第二代刀片电池。 比亚迪集团董事长兼总裁王传福表示，比亚迪第二代刀片电池刷新了充电速度新纪录，“让充电和加油一样快，零下30°C只多3分钟。” 充电实测显示，在常温环境下，从10%充到70%，充电时间仅需5分钟；从10%充到97%，充电时间仅需9分钟；在哈尔滨-20°C极寒充电实测中，从20%充到97%充电时间仅需1",
-      "likes": 417,
+      "likes": 433,
       "platform": "知乎",
       "source_type": "热榜",
       "sentiment": "偏多",
       "creator_type": "聚合热榜",
-      "publish_time": "2026-03-06T14:44:24.340054+00:00"
+      "publish_time": "2026-03-06T14:59:11.665852+00:00"
     },
     {
-      "title": "好喜欢798，看展也好开心～🎨",
-      "summary": "好喜欢798，看展也好开心～🎨",
-      "likes": 407,
+      "title": "🇲🇾槟城复古怀旧风的咖啡馆📻 你去了吗？",
+      "summary": "🇲🇾槟城复古怀旧风的咖啡馆📻 你去了吗？",
+      "likes": 359,
       "platform": "小红书",
       "source_type": "频道热门",
       "sentiment": "中性偏多",
       "creator_type": "小红书博主",
-      "publish_time": "2026-03-06T14:44:36.268961+00:00"
+      "publish_time": "2026-03-06T14:59:13.718323+00:00"
     },
     {
-      "title": "想念费城的五顿饭😭",
-      "summary": "想念费城的五顿饭😭",
-      "likes": 347,
+      "title": "新加坡｜🌙钢筋水泥中的一抹浪漫～❤️❤️❤️",
+      "summary": "新加坡｜🌙钢筋水泥中的一抹浪漫～❤️❤️❤️",
+      "likes": 319,
       "platform": "小红书",
       "source_type": "频道热门",
       "sentiment": "中性偏多",
       "creator_type": "小红书博主",
-      "publish_time": "2026-03-06T14:44:33.425255+00:00"
+      "publish_time": "2026-03-06T14:59:13.718342+00:00"
     },
     {
-      "title": "人生得意须尽欢",
-      "summary": "人生得意须尽欢",
-      "likes": 325,
+      "title": "自制可爱零食柜",
+      "summary": "自制可爱零食柜",
+      "likes": 281,
       "platform": "小红书",
       "source_type": "频道热门",
       "sentiment": "中性偏多",
       "creator_type": "小红书博主",
-      "publish_time": "2026-03-06T14:44:33.425221+00:00"
+      "publish_time": "2026-03-06T14:59:13.718296+00:00"
     },
     {
-      "title": "一边偷吃炸鸡一边减肥",
-      "summary": "一边偷吃炸鸡一边减肥",
-      "likes": 316,
+      "title": "特色豆花面",
+      "summary": "特色豆花面",
+      "likes": 280,
       "platform": "小红书",
       "source_type": "频道热门",
       "sentiment": "中性偏多",
       "creator_type": "小红书博主",
-      "publish_time": "2026-03-06T14:44:33.425310+00:00"
+      "publish_time": "2026-03-06T14:59:13.718352+00:00"
     },
     {
-      "title": "麻辣羊头",
-      "summary": "麻辣羊头",
-      "likes": 301,
+      "title": "今天吃烩面➕三个汉堡",
+      "summary": "今天吃烩面➕三个汉堡",
+      "likes": 269,
       "platform": "小红书",
       "source_type": "频道热门",
       "sentiment": "中性偏多",
       "creator_type": "小红书博主",
-      "publish_time": "2026-03-06T14:44:33.425245+00:00"
-    },
-    {
-      "title": "工作日常‖甜品的装饰记录",
-      "summary": "工作日常‖甜品的装饰记录",
-      "likes": 253,
-      "platform": "小红书",
-      "source_type": "频道热门",
-      "sentiment": "中性偏多",
-      "creator_type": "小红书博主",
-      "publish_time": "2026-03-06T14:44:33.425300+00:00"
-    },
-    {
-      "title": "在Sunway工作不知道午餐吃什么？",
-      "summary": "在Sunway工作不知道午餐吃什么？",
-      "likes": 245,
-      "platform": "小红书",
-      "source_type": "频道热门",
-      "sentiment": "中性偏多",
-      "creator_type": "小红书博主",
-      "publish_time": "2026-03-06T14:44:33.425228+00:00"
-    },
-    {
-      "title": "我要免费机票之南航联名卡",
-      "summary": "我要免费机票之南航联名卡",
-      "likes": 224,
-      "platform": "小红书",
-      "source_type": "频道热门",
-      "sentiment": "中性偏多",
-      "creator_type": "小红书博主",
-      "publish_time": "2026-03-06T14:44:36.268994+00:00"
-    },
-    {
-      "title": "和大姐一起吃米线，偶遇帅哥粉丝，好开心！",
-      "summary": "和大姐一起吃米线，偶遇帅哥粉丝，好开心！",
-      "likes": 207,
-      "platform": "小红书",
-      "source_type": "频道热门",
-      "sentiment": "中性偏多",
-      "creator_type": "小红书博主",
-      "publish_time": "2026-03-06T14:44:33.425263+00:00"
-    },
-    {
-      "title": "喜欢海港城的橘子海日落🌇🇭🇰",
-      "summary": "喜欢海港城的橘子海日落🌇🇭🇰",
-      "likes": 206,
-      "platform": "小红书",
-      "source_type": "频道热门",
-      "sentiment": "中性偏多",
-      "creator_type": "小红书博主",
-      "publish_time": "2026-03-06T14:44:36.268978+00:00"
+      "publish_time": "2026-03-06T14:59:13.718359+00:00"
     },
     {
       "title": "小米新发布移动端Agent产品「Xiaomi miclaw」，开启小范围封测，对此你怎么看？",
       "summary": "3月6日，小米发布移动端Agent产品「Xiaomi miclaw」。 @小米技术发文称：基于小米 MiMo 大模型构建的 AI 交互测试产品Xiaomi miclaw，今日正式开启小范围封测。和传统AI助手相比，Xiaomi miclaw拥有系统底层能力、个人上下文理解、生态互联和自进化四个层次能力。Xiaomi miclaw 是我们探索 Agent 的一小步，本次封测不公开招募，采用邀请制，首",
-      "likes": 203,
+      "likes": 219,
       "platform": "知乎",
       "source_type": "热榜",
       "sentiment": "中性偏多",
       "creator_type": "聚合热榜",
-      "publish_time": "2026-03-06T14:44:24.340086+00:00"
+      "publish_time": "2026-03-06T14:59:11.665875+00:00"
     },
     {
-      "title": "来埃及开罗旅游90%的中国人都在这个青旅",
-      "summary": "来埃及开罗旅游90%的中国人都在这个青旅",
-      "likes": 197,
+      "title": "好好吃饭｜吃出自然健康瘦！",
+      "summary": "好好吃饭｜吃出自然健康瘦！",
+      "likes": 216,
       "platform": "小红书",
       "source_type": "频道热门",
       "sentiment": "中性偏多",
       "creator_type": "小红书博主",
-      "publish_time": "2026-03-06T14:44:36.268870+00:00"
+      "publish_time": "2026-03-06T14:59:13.718350+00:00"
     },
     {
-      "title": "打卡灌篮高手取景地——镰仓高校前",
-      "summary": "打卡灌篮高手取景地——镰仓高校前",
-      "likes": 197,
+      "title": "姐妹们，欲知后事如何，静等饭后分享",
+      "summary": "姐妹们，欲知后事如何，静等饭后分享",
+      "likes": 214,
       "platform": "小红书",
       "source_type": "频道热门",
       "sentiment": "中性偏多",
       "creator_type": "小红书博主",
-      "publish_time": "2026-03-06T14:44:36.268893+00:00"
+      "publish_time": "2026-03-06T14:59:13.718311+00:00"
     },
     {
-      "title": "来武汉旅游，吃完小吃就喝这个！",
-      "summary": "来武汉旅游，吃完小吃就喝这个！",
-      "likes": 192,
+      "title": "厦门本地人常去的！！好吃的嘞！！！",
+      "summary": "厦门本地人常去的！！好吃的嘞！！！",
+      "likes": 212,
       "platform": "小红书",
       "source_type": "频道热门",
       "sentiment": "中性偏多",
       "creator_type": "小红书博主",
-      "publish_time": "2026-03-06T14:44:36.268844+00:00"
+      "publish_time": "2026-03-06T14:59:13.718372+00:00"
     },
     {
-      "title": "7月早餐合集｜懒人快手早餐🥣",
-      "summary": "7月早餐合集｜懒人快手早餐🥣",
-      "likes": 183,
+      "title": "权威说话🔥Yelp 说洛杉矶🥇第一的炸鸡是它",
+      "summary": "权威说话🔥Yelp 说洛杉矶🥇第一的炸鸡是它",
+      "likes": 205,
       "platform": "小红书",
       "source_type": "频道热门",
       "sentiment": "中性偏多",
       "creator_type": "小红书博主",
-      "publish_time": "2026-03-06T14:44:33.425316+00:00"
+      "publish_time": "2026-03-06T14:59:13.718354+00:00"
     },
     {
-      "title": "化疗后一周 我又恢复啦～",
-      "summary": "化疗后一周 我又恢复啦～",
-      "likes": 174,
+      "title": "阁楼里的秘密",
+      "summary": "阁楼里的秘密",
+      "likes": 193,
       "platform": "小红书",
       "source_type": "频道热门",
       "sentiment": "中性偏多",
       "creator_type": "小红书博主",
-      "publish_time": "2026-03-06T14:44:36.268921+00:00"
+      "publish_time": "2026-03-06T14:59:13.718325+00:00"
     },
     {
-      "title": "在苏州，买到了最后一个🍮好好吃！！",
-      "summary": "在苏州，买到了最后一个🍮好好吃！！",
-      "likes": 173,
-      "platform": "小红书",
-      "source_type": "频道热门",
-      "sentiment": "中性偏多",
-      "creator_type": "小红书博主",
-      "publish_time": "2026-03-06T14:44:33.425274+00:00"
-    },
-    {
-      "title": "武汉遛娃1h达，海边度假+亲子玩水避暑攻略",
-      "summary": "武汉遛娃1h达，海边度假+亲子玩水避暑攻略",
-      "likes": 169,
-      "platform": "小红书",
-      "source_type": "频道热门",
-      "sentiment": "中性偏多",
-      "creator_type": "小红书博主",
-      "publish_time": "2026-03-06T14:44:36.268950+00:00"
-    },
-    {
-      "title": "Vlog |金融街的另一面，胡同里的手冲咖啡☕️",
-      "summary": "Vlog |金融街的另一面，胡同里的手冲咖啡☕️",
-      "likes": 164,
-      "platform": "小红书",
-      "source_type": "频道热门",
-      "sentiment": "中性偏多",
-      "creator_type": "小红书博主",
-      "publish_time": "2026-03-06T14:44:33.425240+00:00"
-    },
-    {
-      "title": "井水西瓜你有多少年没有吃上了",
-      "summary": "井水西瓜你有多少年没有吃上了",
-      "likes": 162,
-      "platform": "小红书",
-      "source_type": "频道热门",
-      "sentiment": "中性偏多",
-      "creator_type": "小红书博主",
-      "publish_time": "2026-03-06T14:44:33.425269+00:00"
-    },
-    {
-      "title": "汉南洞爬坡记",
-      "summary": "汉南洞爬坡记",
+      "title": "每天零食100大卡——草莓味栗米条🍓",
+      "summary": "每天零食100大卡——草莓味栗米条🍓",
       "likes": 160,
       "platform": "小红书",
       "source_type": "频道热门",
       "sentiment": "中性偏多",
       "creator_type": "小红书博主",
-      "publish_time": "2026-03-06T14:44:36.268904+00:00"
+      "publish_time": "2026-03-06T14:59:13.718336+00:00"
     },
     {
-      "title": "沩山大佛",
-      "summary": "沩山大佛",
-      "likes": 148,
+      "title": "最好的状态就是忠于自己热爱生活，知足上进",
+      "summary": "最好的状态就是忠于自己热爱生活，知足上进",
+      "likes": 138,
       "platform": "小红书",
       "source_type": "频道热门",
       "sentiment": "中性偏多",
       "creator_type": "小红书博主",
-      "publish_time": "2026-03-06T14:44:36.268973+00:00"
-    },
-    {
-      "title": "社区蛋糕咖啡店Vlog｜当我拥有一家蛋糕店…",
-      "summary": "社区蛋糕咖啡店Vlog｜当我拥有一家蛋糕店…",
-      "likes": 134,
-      "platform": "小红书",
-      "source_type": "频道热门",
-      "sentiment": "中性偏多",
-      "creator_type": "小红书博主",
-      "publish_time": "2026-03-06T14:44:33.425285+00:00"
+      "publish_time": "2026-03-06T14:59:13.718331+00:00"
     },
     {
       "title": "飞机头等舱真的比经济舱舒服很多吗？",
       "summary": "我一直坐经济舱，感觉长途飞行很累，总在想头等舱到底有哪些不一样的体验，值得花那么多钱吗？是不是能睡得更香？",
-      "likes": 130,
+      "likes": 132,
       "platform": "知乎",
       "source_type": "热榜",
       "sentiment": "中性偏多",
       "creator_type": "聚合热榜",
-      "publish_time": "2026-03-06T14:44:24.340129+00:00"
+      "publish_time": "2026-03-06T14:59:11.665902+00:00"
     },
     {
-      "title": "Shoya午市套餐，值",
-      "summary": "Shoya午市套餐，值",
-      "likes": 129,
+      "title": "家有两个小朋友的暑假素食生活-芝士炒面",
+      "summary": "家有两个小朋友的暑假素食生活-芝士炒面",
+      "likes": 126,
       "platform": "小红书",
       "source_type": "频道热门",
       "sentiment": "中性偏多",
       "creator_type": "小红书博主",
-      "publish_time": "2026-03-06T14:44:33.425295+00:00"
-    },
-    {
-      "title": "🇲🇾茨厂街真的好有80年代Feel～🚩",
-      "summary": "🇲🇾茨厂街真的好有80年代Feel～🚩",
-      "likes": 129,
-      "platform": "小红书",
-      "source_type": "频道热门",
-      "sentiment": "中性偏多",
-      "creator_type": "小红书博主",
-      "publish_time": "2026-03-06T14:44:33.425326+00:00"
-    },
-    {
-      "title": "低物欲生活｜挑战300元过一个月",
-      "summary": "低物欲生活｜挑战300元过一个月",
-      "likes": 123,
-      "platform": "小红书",
-      "source_type": "频道热门",
-      "sentiment": "中性偏多",
-      "creator_type": "小红书博主",
-      "publish_time": "2026-03-06T14:44:33.425233+00:00"
-    },
-    {
-      "title": "节后经济“回马枪”来了，透过2026年的春节账单，我们能看到哪些普通人未来一年的财富密码！",
-      "summary": "节后经济“回马枪”来了，透过2026年的春节账单，我们能看到哪些普通人未来一年的财富密码！",
-      "likes": 117,
-      "platform": "B站",
-      "source_type": "财经频道",
-      "sentiment": "中性偏多",
-      "creator_type": "视频社区",
-      "publish_time": "2026-03-06T14:44:24.264990+00:00"
-    },
-    {
-      "title": "极度舒适的环境",
-      "summary": "极度舒适的环境",
-      "likes": 115,
-      "platform": "小红书",
-      "source_type": "频道热门",
-      "sentiment": "中性偏多",
-      "creator_type": "小红书博主",
-      "publish_time": "2026-03-06T14:44:33.425305+00:00"
-    },
-    {
-      "title": "TES 发布公告「打野选手 Naiyou 存在违反赛事公平性行为」，对此你有什么想说的？",
-      "summary": "滔搏电子竞技俱乐部公告 2026年3月2日晚，结束第一赛段赛事后，对于打野选手杨子健（ID：naiyou）比赛中的反常表现，开启了违反赛事公平性行为的调查，并且向联盟通报该情况。 通过俱乐部调查取证发现杨子健（ID：naiyou）疑似存在严重违反俱乐部规章制度及职业操守、影响赛事公平性的不正当行为。俱乐部将目前已掌握的情况上报联盟，移交联盟纪律部门调查处理。联盟纪律团队已介入调查，我们将结合联盟调",
-      "likes": 113,
-      "platform": "知乎",
-      "source_type": "热榜",
-      "sentiment": "中性偏多",
-      "creator_type": "聚合热榜",
-      "publish_time": "2026-03-06T14:44:24.340409+00:00"
-    },
-    {
-      "title": "顾客在寿司郎吃出金枪鱼寄生虫卵，市场监管局已立案调查，这些虫卵吃了会有多大风险？消费者该如何维权？",
-      "summary": "据微信公众号“门头沟市场监管”消息，3月4日，北京市门头沟区市场监督管理局发布情况通报：针对市民反映“自己在门头沟区长安天街商场寿司郎吃出金枪鱼寄生虫卵”问题，我局高度重视，第一时间组织执法人员到现场进行检查，对店内剩余的金枪鱼板块（赤身）进行证据保存，并开展立案调查。市场监管部门将坚决维护消费者合法权益，依法严肃查处违法违规行为。https://mp.weixin.qq.com/s/JXwxVo",
-      "likes": 113,
-      "platform": "知乎",
-      "source_type": "热榜",
-      "sentiment": "偏空",
-      "creator_type": "聚合热榜",
-      "publish_time": "2026-03-06T14:44:24.340521+00:00"
-    },
-    {
-      "title": "如何评价字节的cuda agent新论文？",
-      "summary": "https://arxiv.org/abs/2602.24286#:~:text=We%20present%20CUDA%20Agent%2C%20a%20large-scale%20agentic%20reinforcement,and%20reinforcement%20learning%20algorithmic%20techniques%20enabling%20stable%20trai",
-      "likes": 113,
-      "platform": "知乎",
-      "source_type": "热榜",
-      "sentiment": "中性偏多",
-      "creator_type": "聚合热榜",
-      "publish_time": "2026-03-06T14:44:24.340550+00:00"
-    },
-    {
-      "title": "青岛｜到底什么时候去才能人少😭又便宜💰",
-      "summary": "青岛｜到底什么时候去才能人少😭又便宜💰",
-      "likes": 110,
-      "platform": "小红书",
-      "source_type": "频道热门",
-      "sentiment": "中性偏多",
-      "creator_type": "小红书博主",
-      "publish_time": "2026-03-06T14:44:36.268967+00:00"
-    },
-    {
-      "title": "京东 5000㎡ 幼儿园试运营，首招 50 名幼儿，试水背后是一笔怎样的经济账？会有其他大厂跟进吗？",
-      "summary": "3月5日消息，据《中国商界》杂志报道，在北京经济技术开发区政府指导与支持下，京东集团联合第一教育集团共同创办的京东雏鹰幼儿园已于3月2日正式开园试运行。 幼儿园位于京东青年城内，与京东全球总部北京园区仅一路之隔，用地面积达5035平方米，规划设置12个班级，首期春招开设3个班，迎来50位新生。 硬件配置方面，园区配备新风系统、地暖，每间教室面积超100平方米，并设有独立盥洗室；户外活动场地达150",
-      "likes": 95,
-      "platform": "知乎",
-      "source_type": "热榜",
-      "sentiment": "偏多",
-      "creator_type": "聚合热榜",
-      "publish_time": "2026-03-06T14:44:24.340880+00:00"
+      "publish_time": "2026-03-06T14:59:13.718317+00:00"
     },
     {
       "title": "政府工作报告提到，我国将调整优化消费税征税范围、税率，可能会怎么改？你更关心哪类商品的消费税变化？",
       "summary": "3月5日，十四届全国人大四次会议开幕，国务院总理李强作政府工作报告。 政府工作报告提到，2026年调整优化消费税征税范围、税率，并推进部分品目征收环节后移。我国将优化消费税征税范围税率_大河财立方",
-      "likes": 88,
+      "likes": 124,
       "platform": "知乎",
       "source_type": "热榜",
       "sentiment": "中性偏多",
       "creator_type": "聚合热榜",
-      "publish_time": "2026-03-06T14:44:24.340987+00:00"
+      "publish_time": "2026-03-06T14:59:11.666036+00:00"
     },
     {
-      "title": "🇸🇬宿醉后的早餐",
-      "summary": "🇸🇬宿醉后的早餐",
-      "likes": 73,
+      "title": "🇲🇾低卡又能吃得饱🍝低碳番茄酱魔芋意面",
+      "summary": "🇲🇾低卡又能吃得饱🍝低碳番茄酱魔芋意面",
+      "likes": 118,
       "platform": "小红书",
       "source_type": "频道热门",
       "sentiment": "中性偏多",
       "creator_type": "小红书博主",
-      "publish_time": "2026-03-06T14:44:33.425321+00:00"
+      "publish_time": "2026-03-06T14:59:13.718320+00:00"
     },
     {
-      "title": "8.2号棒棰岛劝退记，山峦街又封路了❗",
-      "summary": "8.2号棒棰岛劝退记，山峦街又封路了❗",
+      "title": "TES 发布公告「打野选手 Naiyou 存在违反赛事公平性行为」，对此你有什么想说的？",
+      "summary": "滔搏电子竞技俱乐部公告 2026年3月2日晚，结束第一赛段赛事后，对于打野选手杨子健（ID：naiyou）比赛中的反常表现，开启了违反赛事公平性行为的调查，并且向联盟通报该情况。 通过俱乐部调查取证发现杨子健（ID：naiyou）疑似存在严重违反俱乐部规章制度及职业操守、影响赛事公平性的不正当行为。俱乐部将目前已掌握的情况上报联盟，移交联盟纪律部门调查处理。联盟纪律团队已介入调查，我们将结合联盟调",
+      "likes": 106,
+      "platform": "知乎",
+      "source_type": "热榜",
+      "sentiment": "中性偏多",
+      "creator_type": "聚合热榜",
+      "publish_time": "2026-03-06T14:59:11.666104+00:00"
+    },
+    {
+      "title": "无锡恒隆黄油与面包开业了 把我吃腻为止！",
+      "summary": "无锡恒隆黄油与面包开业了 把我吃腻为止！",
+      "likes": 104,
+      "platform": "小红书",
+      "source_type": "频道热门",
+      "sentiment": "中性偏多",
+      "creator_type": "小红书博主",
+      "publish_time": "2026-03-06T14:59:13.718307+00:00"
+    },
+    {
+      "title": "顾客在寿司郎吃出金枪鱼寄生虫卵，市场监管局已立案调查，这些虫卵吃了会有多大风险？消费者该如何维权？",
+      "summary": "据微信公众号“门头沟市场监管”消息，3月4日，北京市门头沟区市场监督管理局发布情况通报：针对市民反映“自己在门头沟区长安天街商场寿司郎吃出金枪鱼寄生虫卵”问题，我局高度重视，第一时间组织执法人员到现场进行检查，对店内剩余的金枪鱼板块（赤身）进行证据保存，并开展立案调查。市场监管部门将坚决维护消费者合法权益，依法严肃查处违法违规行为。https://mp.weixin.qq.com/s/JXwxVo",
+      "likes": 99,
+      "platform": "知乎",
+      "source_type": "热榜",
+      "sentiment": "偏空",
+      "creator_type": "聚合热榜",
+      "publish_time": "2026-03-06T14:59:11.666225+00:00"
+    },
+    {
+      "title": "京东 5000㎡ 幼儿园试运营，首招 50 名幼儿，试水背后是一笔怎样的经济账？会有其他大厂跟进吗？",
+      "summary": "3月5日消息，据《中国商界》杂志报道，在北京经济技术开发区政府指导与支持下，京东集团联合第一教育集团共同创办的京东雏鹰幼儿园已于3月2日正式开园试运行。 幼儿园位于京东青年城内，与京东全球总部北京园区仅一路之隔，用地面积达5035平方米，规划设置12个班级，首期春招开设3个班，迎来50位新生。 硬件配置方面，园区配备新风系统、地暖，每间教室面积超100平方米，并设有独立盥洗室；户外活动场地达150",
+      "likes": 96,
+      "platform": "知乎",
+      "source_type": "热榜",
+      "sentiment": "偏多",
+      "creator_type": "聚合热榜",
+      "publish_time": "2026-03-06T14:59:11.666345+00:00"
+    },
+    {
+      "title": "如何评价字节的cuda agent新论文？",
+      "summary": "https://arxiv.org/abs/2602.24286#:~:text=We%20present%20CUDA%20Agent%2C%20a%20large-scale%20agentic%20reinforcement,and%20reinforcement%20learning%20algorithmic%20techniques%20enabling%20stable%20trai",
+      "likes": 89,
+      "platform": "知乎",
+      "source_type": "热榜",
+      "sentiment": "中性偏多",
+      "creator_type": "聚合热榜",
+      "publish_time": "2026-03-06T14:59:11.666440+00:00"
+    },
+    {
+      "title": "速冻🥟吃出仪式感，热爱生活才能被生活治愈",
+      "summary": "速冻🥟吃出仪式感，热爱生活才能被生活治愈",
+      "likes": 80,
+      "platform": "小红书",
+      "source_type": "频道热门",
+      "sentiment": "中性偏多",
+      "creator_type": "小红书博主",
+      "publish_time": "2026-03-06T14:59:13.718364+00:00"
+    },
+    {
+      "title": "🥓延吉外卖分享ㆍ烤五花肉便当",
+      "summary": "🥓延吉外卖分享ㆍ烤五花肉便当",
+      "likes": 75,
+      "platform": "小红书",
+      "source_type": "频道热门",
+      "sentiment": "中性偏多",
+      "creator_type": "小红书博主",
+      "publish_time": "2026-03-06T14:59:13.718344+00:00"
+    },
+    {
+      "title": "武汉的！！武汉的！！",
+      "summary": "武汉的！！武汉的！！",
       "likes": 65,
       "platform": "小红书",
       "source_type": "频道热门",
       "sentiment": "中性偏多",
       "creator_type": "小红书博主",
-      "publish_time": "2026-03-06T14:44:36.268916+00:00"
+      "publish_time": "2026-03-06T14:59:13.718357+00:00"
     },
     {
-      "title": "代表建议最低法定年假从5天提高到10天，回应了哪些关切？还需要哪些配套措施保障？",
-      "summary": "2026年2月18日，春节假期，广西北海的游客在海滩边休闲游玩。（视觉中国|供图） 刚刚过去的2026年春节，被称为“史上最长”春节假期。 9天时间里，民众北上奔赴冰雪之约，南下共赏灯会璀璨，在城市商圈的熙攘人流中穿梭，于县域大集的市井烟火里流连，全国消费市场“马力全开”。 来自商务部的数据显示，今年春节期间，全国重点零售和餐饮企业日均销售额较2025年春节假期增长5.7%，增速提高1.6个百分点",
-      "likes": 54,
-      "platform": "知乎",
-      "source_type": "热榜",
-      "sentiment": "中性",
-      "creator_type": "聚合热榜",
-      "publish_time": "2026-03-06T14:44:24.341216+00:00"
-    },
-    {
-      "title": "2026 年政府工作任务提出，加快重塑足球青训体系，如何解读？「青训」对于中国足球来说有多重要？",
-      "summary": "政府工作报告在介绍2026年政府工作任务时提出，加快重塑足球青训体系。积极发展赛事经济、冰雪经济、户外运动，建好用好群众身边的运动场地设施，培育更多特色群众体育赛事活动。（新华社）政府工作报告提出，加快重塑足球青训体系|界面新闻 · 快讯",
+      "title": "最好用的Agent框架是什么？",
+      "summary": "作为一个AI行业从业者，使用过几个框架。 Langgraph CrewAI OpenManus、MetaGPT Autogen Agentscope 一大票agent框架，究竟能解决什么问题呢？",
       "likes": 54,
       "platform": "知乎",
       "source_type": "热榜",
       "sentiment": "中性偏多",
       "creator_type": "聚合热榜",
-      "publish_time": "2026-03-06T14:44:24.341341+00:00"
+      "publish_time": "2026-03-06T14:59:11.666883+00:00"
     },
     {
-      "title": "政府工作报告提到启动新一轮「双一流」建设，建设国家交叉学科中心，会给高校带来哪些实质性变化？",
-      "summary": "两会新华社快讯：政府工作报告在介绍2026年政府工作任务时提出，完善人才培养与经济社会发展需要适配机制，分类推进高校改革，动态调整学科专业，启动新一轮“双一流”建设，建设国家交叉学科中心，加大拔尖创新人才自主培养力度。 新华社分享页",
-      "likes": 54,
-      "platform": "知乎",
-      "source_type": "热榜",
-      "sentiment": "中性偏多",
-      "creator_type": "聚合热榜",
-      "publish_time": "2026-03-06T14:44:24.341431+00:00"
-    },
-    {
-      "title": "它是安徽十大高山之一，夏天平均气温仅22度",
-      "summary": "它是安徽十大高山之一，夏天平均气温仅22度",
-      "likes": 50,
-      "platform": "小红书",
-      "source_type": "频道热门",
-      "sentiment": "中性偏多",
-      "creator_type": "小红书博主",
-      "publish_time": "2026-03-06T14:44:36.268938+00:00"
-    },
-    {
-      "title": "川大华西专硕｜live图，能动起来吗～",
-      "summary": "川大华西专硕｜live图，能动起来吗～",
-      "likes": 40,
-      "platform": "小红书",
-      "source_type": "频道热门",
-      "sentiment": "中性偏多",
-      "creator_type": "小红书博主",
-      "publish_time": "2026-03-06T14:44:36.268887+00:00"
-    },
-    {
-      "title": "芋圆冰来江东啦！",
-      "summary": "芋圆冰来江东啦！",
-      "likes": 35,
-      "platform": "小红书",
-      "source_type": "频道热门",
-      "sentiment": "中性偏多",
-      "creator_type": "小红书博主",
-      "publish_time": "2026-03-06T14:44:33.425336+00:00"
-    },
-    {
-      "title": "普宁| 说下你心目中普宁咖啡店TOP1吧",
-      "summary": "普宁| 说下你心目中普宁咖啡店TOP1吧",
+      "title": "🇯🇵｜是谁说一兰拉面不好吃？🍜🍜",
+      "summary": "🇯🇵｜是谁说一兰拉面不好吃？🍜🍜",
       "likes": 34,
       "platform": "小红书",
       "source_type": "频道热门",
       "sentiment": "中性偏多",
       "creator_type": "小红书博主",
-      "publish_time": "2026-03-06T14:44:33.425280+00:00"
+      "publish_time": "2026-03-06T14:59:13.718347+00:00"
     },
     {
-      "title": "珠海夏日避暑来森林餐厅吧",
-      "summary": "珠海夏日避暑来森林餐厅吧",
-      "likes": 13,
-      "platform": "小红书",
-      "source_type": "频道热门",
-      "sentiment": "中性偏多",
-      "creator_type": "小红书博主",
-      "publish_time": "2026-03-06T14:44:36.268932+00:00"
-    },
-    {
-      "title": "啊～我也吃了伯邑考🥲",
-      "summary": "啊～我也吃了伯邑考🥲",
-      "likes": 9,
-      "platform": "小红书",
-      "source_type": "频道热门",
-      "sentiment": "中性偏多",
-      "creator_type": "小红书博主",
-      "publish_time": "2026-03-06T14:44:33.425331+00:00"
-    },
-    {
-      "title": "下周油价或将迎年内最大涨幅",
-      "summary": "下周油价或将迎年内最大涨幅",
+      "title": "正式测定：所罗门群岛发生6.3级地震 震源深度10千米",
+      "summary": "【正式测定：所罗门群岛发生6.3级地震 震源深度10千米】财联社3月6日电，中国地震台网正式测定：03月06日22时27分在所罗门群岛（南纬11.45度，东经163.15度）发生6.3级地震，震源深度10千米。",
       "likes": 0,
-      "platform": "百度",
-      "source_type": "热搜",
+      "platform": "财联社",
+      "source_type": "电报",
+      "sentiment": "中性偏多",
+      "creator_type": "财经资讯平台",
+      "publish_time": "2026-03-06T14:58:17+00:00"
+    },
+    {
+      "title": "呷哺呷哺：预计2025年净亏损约2.9亿-3.1亿元 较2024年同期收窄",
+      "summary": "【呷哺呷哺：预计2025年净亏损约2.9亿-3.1亿元 较2024年同期收窄】财联社3月6日电，呷哺呷哺在港交所公告，预期2025年收入约为38亿元，同比减少约20%；2025年净亏损约2.9亿-3.1亿元，较2024年同期收窄约22.2%-27.2%。",
+      "likes": 0,
+      "platform": "财联社",
+      "source_type": "电报",
+      "sentiment": "中性偏多",
+      "creator_type": "财经资讯平台",
+      "publish_time": "2026-03-06T14:56:23+00:00"
+    },
+    {
+      "title": "财联社3月6日电，美国银行全球研究将奈飞目标价位从149美元下调至125美元。",
+      "summary": "财联社3月6日电，美国银行全球研究将奈飞目标价位从149美元下调至125美元。",
+      "likes": 0,
+      "platform": "财联社",
+      "source_type": "电报",
+      "sentiment": "中性偏多",
+      "creator_type": "财经资讯平台",
+      "publish_time": "2026-03-06T14:55:46+00:00"
+    },
+    {
+      "title": "中东海上战争险费率敲定 油轮日租金近80万美元一周跳涨4倍",
+      "summary": "【中东海上战争险费率敲定 油轮日租金近80万美元一周跳涨4倍】财联社3月6日电，影响霍尔木兹海峡复航的一个制约因素——航运战争险费率，有了初步的解决方案；但各家航运公司敢不敢、以及何时开始通行该战区，还有待后续观察。财新3月6日从几家航运企业获悉，国际保险公司已重新签订进入波斯湾和霍尔木兹海峡的船舶新战争险合同，战争险费率为船体重置价值的1%，并且每7天续保一次——战前，波斯湾的战争险费率仅为0.",
+      "likes": 0,
+      "platform": "财联社",
+      "source_type": "电报",
+      "sentiment": "中性偏多",
+      "creator_type": "财经资讯平台",
+      "publish_time": "2026-03-06T14:54:42+00:00"
+    },
+    {
+      "title": "美联储官员古尔斯比：希望能在今年年底前开始降息",
+      "summary": "【美联储官员古尔斯比：希望能在今年年底前开始降息】财联社3月6日电，美联储官员古尔斯比表示，今天发布的非农就业报告结果大幅不及预期。如果情况持续数月，那会令人感到担忧。希望能在今年年底前开始降息。",
+      "likes": 0,
+      "platform": "财联社",
+      "source_type": "电报",
+      "sentiment": "中性偏多",
+      "creator_type": "财经资讯平台",
+      "publish_time": "2026-03-06T14:52:07+00:00"
+    },
+    {
+      "title": "中东航线运价暴涨 多家外资船司征收紧急冲突附加费",
+      "summary": "【中东航线运价暴涨 多家外资船司征收紧急冲突附加费】财联社3月6日电，据统计，当前全球约11%的海运贸易量需经由霍尔木兹海峡。连日来，受地缘局势影响，霍尔木兹海峡的船舶交通几乎完全停滞。业内人士告诉记者，对于在途货物，目前一些外资船司宣布征收“紧急冲突附加费”，价格在每个集装箱1000美元至3000美元不等。此外，位于霍尔木兹海峡周边的印巴区域、红海区域的航运成本也在大幅上涨。“目前到红海的港口的",
+      "likes": 0,
+      "platform": "财联社",
+      "source_type": "电报",
       "sentiment": "极度看多",
-      "creator_type": "聚合热榜",
-      "publish_time": "2026-03-06T14:44:24.405434+00:00"
+      "creator_type": "财经资讯平台",
+      "publish_time": "2026-03-06T14:47:03+00:00"
     },
     {
-      "title": "国产AI短剧《霍去病》火到海外",
-      "summary": "国产AI短剧《霍去病》火到海外",
+      "title": "国际原油飙升 美股石油股表现强劲",
+      "summary": "【国际原油飙升 美股石油股表现强劲】财联社3月6日电，国际原油飙升，美股石油股表现强劲，Battalion Oil一度暴涨50%，美国能源涨超15%，西方石油涨超3%，康菲石油、埃克森美孚涨近2%；美国原油ETF大涨超10%，本周累涨近30%。",
       "likes": 0,
-      "platform": "百度",
-      "source_type": "热搜",
-      "sentiment": "中性偏多",
-      "creator_type": "聚合热榜",
-      "publish_time": "2026-03-06T14:44:24.405483+00:00"
-    },
-    {
-      "title": "烧坏几十台宇树机器人换来“全能王”",
-      "summary": "烧坏几十台宇树机器人换来“全能王”",
-      "likes": 0,
-      "platform": "百度",
-      "source_type": "热搜",
-      "sentiment": "中性偏多",
-      "creator_type": "聚合热榜",
-      "publish_time": "2026-03-06T14:44:24.405506+00:00"
-    },
-    {
-      "title": "雷军：小米机器人在拧螺丝了",
-      "summary": "雷军：小米机器人在拧螺丝了",
-      "likes": 0,
-      "platform": "百度",
-      "source_type": "热搜",
-      "sentiment": "中性偏多",
-      "creator_type": "聚合热榜",
-      "publish_time": "2026-03-06T14:44:24.405590+00:00"
-    },
-    {
-      "title": "猫尾巴被扫地机器人卷入 拖行10分钟",
-      "summary": "猫尾巴被扫地机器人卷入 拖行10分钟",
-      "likes": 0,
-      "platform": "百度",
-      "source_type": "热搜",
-      "sentiment": "中性偏多",
-      "creator_type": "聚合热榜",
-      "publish_time": "2026-03-06T14:44:24.405651+00:00"
-    },
-    {
-      "title": "又一个10万亿产业要来了",
-      "summary": "又一个10万亿产业要来了",
-      "likes": 0,
-      "platform": "百度",
-      "source_type": "财经热搜",
-      "sentiment": "中性偏多",
-      "creator_type": "聚合热榜",
-      "publish_time": "2026-03-06T14:44:26.001305+00:00"
-    },
-    {
-      "title": "财政部长：我们将当好“铁公鸡”",
-      "summary": "财政部长：我们将当好“铁公鸡”",
-      "likes": 0,
-      "platform": "百度",
-      "source_type": "财经热搜",
-      "sentiment": "中性偏多",
-      "creator_type": "聚合热榜",
-      "publish_time": "2026-03-06T14:44:26.001322+00:00"
-    },
-    {
-      "title": "长城汽车魏建军就抄袭路虎海报道歉",
-      "summary": "长城汽车魏建军就抄袭路虎海报道歉",
-      "likes": 0,
-      "platform": "百度",
-      "source_type": "财经热搜",
-      "sentiment": "中性偏多",
-      "creator_type": "聚合热榜",
-      "publish_time": "2026-03-06T14:44:26.001330+00:00"
-    },
-    {
-      "title": "OpenClaw爆火",
-      "summary": "OpenClaw爆火",
-      "likes": 0,
-      "platform": "百度",
-      "source_type": "财经热搜",
-      "sentiment": "中性偏多",
-      "creator_type": "聚合热榜",
-      "publish_time": "2026-03-06T14:44:26.001337+00:00"
-    },
-    {
-      "title": "BBA大降价 二线豪华品牌怎么办",
-      "summary": "BBA大降价 二线豪华品牌怎么办",
-      "likes": 0,
-      "platform": "百度",
-      "source_type": "财经热搜",
-      "sentiment": "中性偏多",
-      "creator_type": "聚合热榜",
-      "publish_time": "2026-03-06T14:44:26.001344+00:00"
-    },
-    {
-      "title": "央行今年将降准降息",
-      "summary": "央行今年将降准降息",
-      "likes": 0,
-      "platform": "百度",
-      "source_type": "财经热搜",
-      "sentiment": "中性偏多",
-      "creator_type": "聚合热榜",
-      "publish_time": "2026-03-06T14:44:26.001351+00:00"
-    },
-    {
-      "title": "贾国龙卸任西贝主品牌CEO",
-      "summary": "贾国龙卸任西贝主品牌CEO",
-      "likes": 0,
-      "platform": "百度",
-      "source_type": "财经热搜",
-      "sentiment": "中性偏多",
-      "creator_type": "聚合热榜",
-      "publish_time": "2026-03-06T14:44:26.001357+00:00"
-    },
-    {
-      "title": "重点打造6大新兴支柱产业",
-      "summary": "重点打造6大新兴支柱产业",
-      "likes": 0,
-      "platform": "百度",
-      "source_type": "财经热搜",
-      "sentiment": "中性偏多",
-      "creator_type": "聚合热榜",
-      "publish_time": "2026-03-06T14:44:26.001364+00:00"
-    },
-    {
-      "title": "雷军：5年内在限定场所可实现无人驾驶",
-      "summary": "雷军：5年内在限定场所可实现无人驾驶",
-      "likes": 0,
-      "platform": "百度",
-      "source_type": "财经热搜",
-      "sentiment": "中性偏多",
-      "creator_type": "聚合热榜",
-      "publish_time": "2026-03-06T14:44:26.001371+00:00"
-    },
-    {
-      "title": "发改委主任点赞无人机在长江送外卖",
-      "summary": "发改委主任点赞无人机在长江送外卖",
-      "likes": 0,
-      "platform": "百度",
-      "source_type": "财经热搜",
-      "sentiment": "中性偏多",
-      "creator_type": "聚合热榜",
-      "publish_time": "2026-03-06T14:44:26.001377+00:00"
-    },
-    {
-      "title": "东方航空：中东航线部分航班恢复运行",
-      "summary": "东方航空：中东航线部分航班恢复运行",
-      "likes": 0,
-      "platform": "百度",
-      "source_type": "财经热搜",
-      "sentiment": "中性偏多",
-      "creator_type": "聚合热榜",
-      "publish_time": "2026-03-06T14:44:26.001383+00:00"
-    },
-    {
-      "title": "全球银行品牌价值500强出炉",
-      "summary": "全球银行品牌价值500强出炉",
-      "likes": 0,
-      "platform": "百度",
-      "source_type": "财经热搜",
-      "sentiment": "中性偏多",
-      "creator_type": "聚合热榜",
-      "publish_time": "2026-03-06T14:44:26.001390+00:00"
-    },
-    {
-      "title": "中国网剧在全球市场营收占比达90%",
-      "summary": "中国网剧在全球市场营收占比达90%",
-      "likes": 0,
-      "platform": "百度",
-      "source_type": "财经热搜",
-      "sentiment": "中性偏多",
-      "creator_type": "聚合热榜",
-      "publish_time": "2026-03-06T14:44:26.001397+00:00"
-    },
-    {
-      "title": "尹同跃称奇瑞不参与低水平价格战",
-      "summary": "尹同跃称奇瑞不参与低水平价格战",
-      "likes": 0,
-      "platform": "百度",
-      "source_type": "财经热搜",
-      "sentiment": "中性偏多",
-      "creator_type": "聚合热榜",
-      "publish_time": "2026-03-06T14:44:26.001405+00:00"
-    },
-    {
-      "title": "今年中央财政安排1000亿元促内需",
-      "summary": "今年中央财政安排1000亿元促内需",
-      "likes": 0,
-      "platform": "百度",
-      "source_type": "财经热搜",
-      "sentiment": "中性偏多",
-      "creator_type": "聚合热榜",
-      "publish_time": "2026-03-06T14:44:26.001411+00:00"
-    },
-    {
-      "title": "预计今年GDP增量超6万亿元",
-      "summary": "预计今年GDP增量超6万亿元",
-      "likes": 0,
-      "platform": "百度",
-      "source_type": "财经热搜",
-      "sentiment": "中性偏多",
-      "creator_type": "聚合热榜",
-      "publish_time": "2026-03-06T14:44:26.001417+00:00"
-    },
-    {
-      "title": "君乐宝在泉州成立新公司",
-      "summary": "君乐宝在泉州成立新公司",
-      "likes": 0,
-      "platform": "百度",
-      "source_type": "财经热搜",
-      "sentiment": "中性偏多",
-      "creator_type": "聚合热榜",
-      "publish_time": "2026-03-06T14:44:26.001423+00:00"
-    },
-    {
-      "title": "周大福回应黄金耳机盒卖78.88万",
-      "summary": "周大福回应黄金耳机盒卖78.88万",
-      "likes": 0,
-      "platform": "百度",
-      "source_type": "财经热搜",
-      "sentiment": "中性偏多",
-      "creator_type": "聚合热榜",
-      "publish_time": "2026-03-06T14:44:26.001430+00:00"
-    },
-    {
-      "title": "今年财政资金规模安排三方面创新高",
-      "summary": "今年财政资金规模安排三方面创新高",
-      "likes": 0,
-      "platform": "百度",
-      "source_type": "财经热搜",
+      "platform": "财联社",
+      "source_type": "电报",
       "sentiment": "极度看多",
-      "creator_type": "聚合热榜",
-      "publish_time": "2026-03-06T14:44:26.001435+00:00"
+      "creator_type": "财经资讯平台",
+      "publish_time": "2026-03-06T14:46:11+00:00"
     },
     {
-      "title": "商务部：机器人成我国外贸新标签",
-      "summary": "商务部：机器人成我国外贸新标签",
+      "title": "财联社3月6日电，美股加密货币概念股回落，Riot Platforms跌近7%，BMNR跌超5%，Robinhood、IREN跌超4%，Strategy跌近3%",
+      "summary": "财联社3月6日电，美股加密货币概念股回落，Riot Platforms跌近7%，BMNR跌超5%，Robinhood、IREN跌超4%，Strategy跌近3%，Coinbase跌超2%。",
       "likes": 0,
-      "platform": "百度",
-      "source_type": "财经热搜",
+      "platform": "财联社",
+      "source_type": "电报",
       "sentiment": "中性偏多",
-      "creator_type": "聚合热榜",
-      "publish_time": "2026-03-06T14:44:26.001442+00:00"
+      "creator_type": "财经资讯平台",
+      "publish_time": "2026-03-06T14:44:47+00:00"
     },
     {
-      "title": "马年春节线下实体消费增速反超线上",
-      "summary": "马年春节线下实体消费增速反超线上",
+      "title": "财联社3月6日电，随着油价上涨，英国两年期国债收益率攀升20个基点。",
+      "summary": "财联社3月6日电，随着油价上涨，英国两年期国债收益率攀升20个基点。",
       "likes": 0,
-      "platform": "百度",
-      "source_type": "财经热搜",
-      "sentiment": "中性偏多",
-      "creator_type": "聚合热榜",
-      "publish_time": "2026-03-06T14:44:26.001448+00:00"
-    },
-    {
-      "title": "AI相关产业规模将超10万亿元",
-      "summary": "AI相关产业规模将超10万亿元",
-      "likes": 0,
-      "platform": "百度",
-      "source_type": "财经热搜",
-      "sentiment": "中性偏多",
-      "creator_type": "聚合热榜",
-      "publish_time": "2026-03-06T14:44:26.001455+00:00"
-    },
-    {
-      "title": "蔚来：firefly萤火虫正式登陆泰国",
-      "summary": "蔚来：firefly萤火虫正式登陆泰国",
-      "likes": 0,
-      "platform": "百度",
-      "source_type": "财经热搜",
-      "sentiment": "中性偏多",
-      "creator_type": "聚合热榜",
-      "publish_time": "2026-03-06T14:44:26.001461+00:00"
-    },
-    {
-      "title": "雷军：人形机器人将大规模进工厂",
-      "summary": "雷军：人形机器人将大规模进工厂",
-      "likes": 0,
-      "platform": "百度",
-      "source_type": "财经热搜",
-      "sentiment": "中性偏多",
-      "creator_type": "聚合热榜",
-      "publish_time": "2026-03-06T14:44:26.001468+00:00"
-    },
-    {
-      "title": "魔法原子宣布CTO等多项人事任命",
-      "summary": "魔法原子宣布CTO等多项人事任命",
-      "likes": 0,
-      "platform": "百度",
-      "source_type": "财经热搜",
-      "sentiment": "中性偏多",
-      "creator_type": "聚合热榜",
-      "publish_time": "2026-03-06T14:44:26.001474+00:00"
-    },
-    {
-      "title": "湖北宜化：季戊四醇项目已投产",
-      "summary": "湖北宜化：季戊四醇项目已投产",
-      "likes": 0,
-      "platform": "百度",
-      "source_type": "财经热搜",
-      "sentiment": "中性偏多",
-      "creator_type": "聚合热榜",
-      "publish_time": "2026-03-06T14:44:26.001480+00:00"
-    },
-    {
-      "title": "A股全线收涨 超4200只个股上涨",
-      "summary": "A股全线收涨 超4200只个股上涨",
-      "likes": 0,
-      "platform": "百度",
-      "source_type": "财经热搜",
+      "platform": "财联社",
+      "source_type": "电报",
       "sentiment": "偏多",
-      "creator_type": "聚合热榜",
-      "publish_time": "2026-03-06T14:44:26.001485+00:00"
+      "creator_type": "财经资讯平台",
+      "publish_time": "2026-03-06T14:41:25+00:00"
+    },
+    {
+      "title": "财联社3月6日电，美国10至30年期国债收益率触及日内高位，油价延续上涨势头。",
+      "summary": "财联社3月6日电，美国10至30年期国债收益率触及日内高位，油价延续上涨势头。",
+      "likes": 0,
+      "platform": "财联社",
+      "source_type": "电报",
+      "sentiment": "偏多",
+      "creator_type": "财经资讯平台",
+      "publish_time": "2026-03-06T14:40:47+00:00"
+    },
+    {
+      "title": "财联社3月6日电，委内瑞拉2月CPI环比涨幅放缓至14.6%，前值为32.6%。",
+      "summary": "财联社3月6日电，委内瑞拉2月CPI环比涨幅放缓至14.6%，前值为32.6%。",
+      "likes": 0,
+      "platform": "财联社",
+      "source_type": "电报",
+      "sentiment": "中性偏多",
+      "creator_type": "财经资讯平台",
+      "publish_time": "2026-03-06T14:40:47+00:00"
+    },
+    {
+      "title": "所罗门群岛附近发生6.4级左右地震",
+      "summary": "【所罗门群岛附近发生6.4级左右地震】财联社3月6日电，中国地震台网自动测定：03月06日22时27分在所罗门群岛附近（南纬11.52度，东经163.08度）发生6.4级左右地震，最终结果以正式速报为准。",
+      "likes": 0,
+      "platform": "财联社",
+      "source_type": "电报",
+      "sentiment": "中性偏多",
+      "creator_type": "财经资讯平台",
+      "publish_time": "2026-03-06T14:40:19+00:00"
+    },
+    {
+      "title": "伊朗德黑兰传出巨大爆炸声",
+      "summary": "【伊朗德黑兰传出巨大爆炸声】财联社3月6日电，当地时间6日获悉，伊朗德黑兰传出巨大爆炸声。 (央视新闻)",
+      "likes": 0,
+      "platform": "财联社",
+      "source_type": "电报",
+      "sentiment": "中性偏多",
+      "creator_type": "财经资讯平台",
+      "publish_time": "2026-03-06T14:36:26+00:00"
+    },
+    {
+      "title": "美油涨幅进一步扩大至10% 续创2024年4月以来新高",
+      "summary": "【美油涨幅进一步扩大至10% 续创2024年4月以来新高】财联社3月6日电，WTI原油涨10.27%，报89.333美元/桶，续创2024年4月以来新高。布伦特原油涨7.10%，报91.471美元/桶，续创2024年4月以来新高。美国总统特朗普6日在社交媒体上宣称，“与伊朗不会达成任何协议，除非其无条件投降”。",
+      "likes": 0,
+      "platform": "财联社",
+      "source_type": "电报",
+      "sentiment": "中性偏多",
+      "creator_type": "财经资讯平台",
+      "publish_time": "2026-03-06T14:36:15+00:00"
+    },
+    {
+      "title": "美股航空股走低",
+      "summary": "【美股航空股走低】财联社3月6日电，美股航空股走低，标普1500航空指数下跌3.6%，连续第六个交易日走低，达美航空跌超3%，联合大陆航空跌超4%。",
+      "likes": 0,
+      "platform": "财联社",
+      "source_type": "电报",
+      "sentiment": "偏空",
+      "creator_type": "财经资讯平台",
+      "publish_time": "2026-03-06T14:35:49+00:00"
+    },
+    {
+      "title": "财联社3月6日电，美国能源部长赖特表示，已采取短期措施帮助降低油价。",
+      "summary": "财联社3月6日电，美国能源部长赖特表示，已采取短期措施帮助降低油价。",
+      "likes": 0,
+      "platform": "财联社",
+      "source_type": "电报",
+      "sentiment": "中性偏多",
+      "creator_type": "财经资讯平台",
+      "publish_time": "2026-03-06T14:34:55+00:00"
+    },
+    {
+      "title": "财联社3月6日电，美股罗素2000指数下跌2%。",
+      "summary": "财联社3月6日电，美股罗素2000指数下跌2%。",
+      "likes": 0,
+      "platform": "财联社",
+      "source_type": "电报",
+      "sentiment": "偏空",
+      "creator_type": "财经资讯平台",
+      "publish_time": "2026-03-06T14:33:57+00:00"
+    },
+    {
+      "title": "国防部回应澳大利亚炒作所谓中国军机不安全接近其舰载机",
+      "summary": "【国防部回应澳大利亚炒作所谓中国军机不安全接近其舰载机】财联社3月6日电，国防部新闻发言人蒋斌就澳大利亚炒作所谓中国军机不安全接近其舰载机答记者问。记者：澳大利亚国防部称，3月4日一架澳军舰载直升机在黄海国际水域执行联合国安理会决议期间，中方军机不安全接近澳舰载机。请问对此有何评论？\n\n蒋斌：澳方有关言论纯属歪曲事实、颠倒黑白，我们对此强烈不满、坚决反对。近日，澳“图文巴”号护卫舰打着所谓“执行联",
+      "likes": 0,
+      "platform": "财联社",
+      "source_type": "电报",
+      "sentiment": "中性",
+      "creator_type": "财经资讯平台",
+      "publish_time": "2026-03-06T14:33:52+00:00"
+    },
+    {
+      "title": "伊朗外长就军舰遭袭事件与印度和斯里兰卡外长通话",
+      "summary": "【伊朗外长就军舰遭袭事件与印度和斯里兰卡外长通话】财联社3月6日电，伊朗外长阿拉格齐6日与印度和斯里兰卡外长通电话，强烈谴责美国在没有任何警告的情况下在国际水域袭击伊朗“德纳”号护卫舰。伊朗外交部6日发表声明说，阿拉格齐分别与印度外长苏杰生、斯里兰卡外长维吉塔·赫拉特通电话。 (新华社)",
+      "likes": 0,
+      "platform": "财联社",
+      "source_type": "电报",
+      "sentiment": "中性偏多",
+      "creator_type": "财经资讯平台",
+      "publish_time": "2026-03-06T14:32:06+00:00"
+    },
+    {
+      "title": "美股三大指数集体低开 纳指跌1.4%",
+      "summary": "【美股三大指数集体低开 纳指跌1.4%】财联社3月6日电，美股三大指数均低开超1%，纳指跌1.4%，道指跌1.4%，标普500指数跌1.2%。科技股走低，英特尔、西部数据、美光科技跌超3%，英伟达、AMD、亚马逊、谷歌跌超1%。石油股走高，康菲石油、埃克森美孚涨超1%。",
+      "likes": 0,
+      "platform": "财联社",
+      "source_type": "电报",
+      "sentiment": "偏多",
+      "creator_type": "财经资讯平台",
+      "publish_time": "2026-03-06T14:31:02+00:00"
+    },
+    {
+      "title": "财联社3月6日电，美国总统特朗普认为汽油价格会“很快”下降。",
+      "summary": "财联社3月6日电，美国总统特朗普认为汽油价格会“很快”下降。",
+      "likes": 0,
+      "platform": "财联社",
+      "source_type": "电报",
+      "sentiment": "中性偏多",
+      "creator_type": "财经资讯平台",
+      "publish_time": "2026-03-06T14:30:22+00:00"
+    },
+    {
+      "title": "以军称精准打击一名伊朗高级指挥官",
+      "summary": "【以军称精准打击一名伊朗高级指挥官】财联社3月6日电，以色列国防军称，以军精准打击了伊朗德黑兰的一名伊方高级指挥官。",
+      "likes": 0,
+      "platform": "财联社",
+      "source_type": "电报",
+      "sentiment": "中性偏多",
+      "creator_type": "财经资讯平台",
+      "publish_time": "2026-03-06T14:26:25+00:00"
+    },
+    {
+      "title": "财联社3月6日电，白宫经济顾问哈塞特表示，近期不会讨论释放战略石油储备事宜。",
+      "summary": "财联社3月6日电，白宫经济顾问哈塞特表示，近期不会讨论释放战略石油储备事宜。",
+      "likes": 0,
+      "platform": "财联社",
+      "source_type": "电报",
+      "sentiment": "中性偏多",
+      "creator_type": "财经资讯平台",
+      "publish_time": "2026-03-06T14:20:14+00:00"
+    },
+    {
+      "title": "深交所：本周对近期股价异常波动的“豫能控股”进行重点监控",
+      "summary": "【深交所：本周对近期股价异常波动的“豫能控股”进行重点监控】财联社3月6日电，深交所监管动态显示，3月2日至3月6日，本所共对199起证券异常交易行为采取了自律监管措施，涉及盘中拉抬打压、虚假申报等异常交易情形；对近期股价异常波动的“豫能控股”进行重点监控；共对6起上市公司重大事项进行核查，并上报证监会4起涉嫌违法违规案件线索。",
+      "likes": 0,
+      "platform": "财联社",
+      "source_type": "电报",
+      "sentiment": "中性偏多",
+      "creator_type": "财经资讯平台",
+      "publish_time": "2026-03-06T14:19:04+00:00"
+    },
+    {
+      "title": "伊朗驻黎巴嫩大使馆附近区域遭以军空袭",
+      "summary": "【伊朗驻黎巴嫩大使馆附近区域遭以军空袭】财联社3月6日电，据黎巴嫩媒体6日报道，伊朗驻黎巴嫩大使馆附近区域遭以色列军队空袭。 (新华社)",
+      "likes": 0,
+      "platform": "财联社",
+      "source_type": "电报",
+      "sentiment": "中性偏多",
+      "creator_type": "财经资讯平台",
+      "publish_time": "2026-03-06T14:18:36+00:00"
+    },
+    {
+      "title": "财联社3月6日电，白宫经济顾问哈塞特表示，正目睹生产力的爆发式增长，预计今年将实现4%的增长。",
+      "summary": "财联社3月6日电，白宫经济顾问哈塞特表示，正目睹生产力的爆发式增长，预计今年将实现4%的增长。",
+      "likes": 0,
+      "platform": "财联社",
+      "source_type": "电报",
+      "sentiment": "极度看多",
+      "creator_type": "财经资讯平台",
+      "publish_time": "2026-03-06T14:14:02+00:00"
+    },
+    {
+      "title": "特朗普宣称“与伊朗不会达成任何协议”",
+      "summary": "【特朗普宣称“与伊朗不会达成任何协议”】财联社3月6日电，美国总统特朗普6日在社交媒体上宣称，“与伊朗不会达成任何协议，除非其无条件投降”。他还称美国“及其许多盟友”要“让伊朗再次伟大！” (新华社)",
+      "likes": 0,
+      "platform": "财联社",
+      "source_type": "电报",
+      "sentiment": "中性偏多",
+      "creator_type": "财经资讯平台",
+      "publish_time": "2026-03-06T14:13:26+00:00"
+    },
+    {
+      "title": "加密货币全线下跌 比特币跌超5%",
+      "summary": "【加密货币全线下跌 比特币跌超5%】财联社3月6日电，行情显示，比特币跌至68765.1美元，过去24小时内跌5.2%；行情显示，以太坊跌至2004.96美元，过去24小时内跌5.46%。",
+      "likes": 0,
+      "platform": "财联社",
+      "source_type": "电报",
+      "sentiment": "偏空",
+      "creator_type": "财经资讯平台",
+      "publish_time": "2026-03-06T14:11:40+00:00"
+    },
+    {
+      "title": "化工品期货夜盘全线上涨 燃油涨16%苯乙烯涨9%",
+      "summary": "【化工品期货夜盘全线上涨 燃油涨16%苯乙烯涨9%】财联社3月6日电，化工品期货夜盘全线上涨，燃油2605涨15.82%，低硫燃油2605涨14.99%，原油2604涨12.91%，苯乙烯2604涨8.99%，甲醇2605涨8.11%，乙二醇2605涨7.82%，LPG2604涨7.12%，瓶片2605涨7.02%，对二甲苯2605涨7.02%，PTA2605涨7.01%，合成橡胶2604涨6.9",
+      "likes": 0,
+      "platform": "财联社",
+      "source_type": "电报",
+      "sentiment": "偏多",
+      "creator_type": "财经资讯平台",
+      "publish_time": "2026-03-06T14:09:04+00:00"
+    },
+    {
+      "title": "财联社3月6日电，惠誉确认霍尼韦尔评级为“A”，取消负面评级观察，展望稳定。",
+      "summary": "财联社3月6日电，惠誉确认霍尼韦尔评级为“A”，取消负面评级观察，展望稳定。",
+      "likes": 0,
+      "platform": "财联社",
+      "source_type": "电报",
+      "sentiment": "中性",
+      "creator_type": "财经资讯平台",
+      "publish_time": "2026-03-06T14:08:28+00:00"
+    },
+    {
+      "title": "美国非农就业人数意外大减且失业率回升 或使美联储重新聚焦就业",
+      "summary": "【美国非农就业人数意外大减且失业率回升 或使美联储重新聚焦就业】财联社3月6日电，美国雇主二月份意外削减就业人数，失业率上升，引发外界对劳动力市场健康状况的质疑。美国劳工统计局周五公布的数据显示，继年初强劲开局后，上月非农就业人数减少9.2万人。失业率攀升至4.4%。就业人数下降部分源于罢工活动导致的医疗保健业就业减少。这份报告对劳动力市场是否正在企稳提出了疑问。此前，美国经历了几十年来除衰退期以",
+      "likes": 0,
+      "platform": "财联社",
+      "source_type": "电报",
+      "sentiment": "偏多",
+      "creator_type": "财经资讯平台",
+      "publish_time": "2026-03-06T14:07:29+00:00"
+    },
+    {
+      "title": "财联社3月6日电，蒙牛乳业预计2025年公司拥有人应占利润将约为人民币14亿元至16亿元。",
+      "summary": "财联社3月6日电，蒙牛乳业预计2025年公司拥有人应占利润将约为人民币14亿元至16亿元。",
+      "likes": 0,
+      "platform": "财联社",
+      "source_type": "电报",
+      "sentiment": "中性偏多",
+      "creator_type": "财经资讯平台",
+      "publish_time": "2026-03-06T14:05:59+00:00"
+    },
+    {
+      "title": "财联社3月6日晚间新闻精选",
+      "summary": "【财联社3月6日晚间新闻精选】\n1、国家发改委主任郑栅洁表示，集成电路、航空航天、生物医药等六大新兴支柱产业相关产值到2030年有望扩大到十万亿元以上。\n2、国家发改委主任郑栅洁表示，将推进水网、电网、算力网、新型通信网、城市地下管网，物流网和重点领域建设，今年这些方面的投资将超过7万亿元。\n3、财政部部长蓝佛安表示，今年继续坚持更加积极的基调，在去年总量扩张的基础上保持力度不减。\n4、央行行长潘",
+      "likes": 0,
+      "platform": "财联社",
+      "source_type": "电报",
+      "sentiment": "极度看多",
+      "creator_type": "财经资讯平台",
+      "publish_time": "2026-03-06T14:04:37+00:00"
+    },
+    {
+      "title": "财联社3月6日电，南非主要股指下跌3.1%，至116,457.10点。",
+      "summary": "财联社3月6日电，南非主要股指下跌3.1%，至116,457.10点。",
+      "likes": 0,
+      "platform": "财联社",
+      "source_type": "电报",
+      "sentiment": "偏空",
+      "creator_type": "财经资讯平台",
+      "publish_time": "2026-03-06T13:58:48+00:00"
+    },
+    {
+      "title": "财联社3月6日电，美国天然气期货涨超4%，现报3.144美元/百万英热。",
+      "summary": "财联社3月6日电，美国天然气期货涨超4%，现报3.144美元/百万英热。",
+      "likes": 0,
+      "platform": "财联社",
+      "source_type": "电报",
+      "sentiment": "中性偏多",
+      "creator_type": "财经资讯平台",
+      "publish_time": "2026-03-06T13:57:36+00:00"
+    },
+    {
+      "title": "一艘拖船在霍尔木兹海峡遭不明物体击中",
+      "summary": "【一艘拖船在霍尔木兹海峡遭不明物体击中】财联社3月6日电，英国海上贸易行动办公室表示，其收到报告称，一艘拖船在霍尔木兹海峡航行时遭不明物体击中。据悉，事发地点位于阿曼以北约6海里的霍尔木兹海峡附近海域。目前相关情况仍在进一步核实中。 (央视新闻)",
+      "likes": 0,
+      "platform": "财联社",
+      "source_type": "电报",
+      "sentiment": "中性偏多",
+      "creator_type": "财经资讯平台",
+      "publish_time": "2026-03-06T13:56:51+00:00"
+    },
+    {
+      "title": "财联社3月6日电，大商所焦煤期货主力合约日内涨超5%，现报1162.5元/吨。",
+      "summary": "财联社3月6日电，大商所焦煤期货主力合约日内涨超5%，现报1162.5元/吨。",
+      "likes": 0,
+      "platform": "财联社",
+      "source_type": "电报",
+      "sentiment": "中性偏多",
+      "creator_type": "财经资讯平台",
+      "publish_time": "2026-03-06T13:56:50+00:00"
+    },
+    {
+      "title": "美油涨幅进一步扩大至8%",
+      "summary": "【美油涨幅进一步扩大至8%】财联社3月6日电，WTI原油涨8.21%，报87.661美元/桶；布伦特原油涨5.60%，报90.197美元/桶。",
+      "likes": 0,
+      "platform": "财联社",
+      "source_type": "电报",
+      "sentiment": "中性偏多",
+      "creator_type": "财经资讯平台",
+      "publish_time": "2026-03-06T13:56:08+00:00"
+    },
+    {
+      "title": "财联社3月6日电，美股恐慌指数VIX最新上涨3.12点至26.87点。",
+      "summary": "财联社3月6日电，美股恐慌指数VIX最新上涨3.12点至26.87点。",
+      "likes": 0,
+      "platform": "财联社",
+      "source_type": "电报",
+      "sentiment": "偏多",
+      "creator_type": "财经资讯平台",
+      "publish_time": "2026-03-06T13:51:49+00:00"
+    },
+    {
+      "title": "财联社3月6日电，据媒体报道，科威特因储油罐已满而削减部分油田的石油产量。",
+      "summary": "财联社3月6日电，据媒体报道，科威特因储油罐已满而削减部分油田的石油产量。",
+      "likes": 0,
+      "platform": "财联社",
+      "source_type": "电报",
+      "sentiment": "中性偏多",
+      "creator_type": "财经资讯平台",
+      "publish_time": "2026-03-06T13:50:51+00:00"
+    },
+    {
+      "title": "证监会明确短线交易监管规定的适用主体和券种范围",
+      "summary": "【证监会明确短线交易监管规定的适用主体和券种范围】财联社3月6日电，证监会发布《关于短线交易监管的若干规定》。《规定》明确适用主体和券种范围。在短线交易主体上，对于买入卖出时均具备大股东、董监高身份和买入时不具备特定身份但卖出时具备的，纳入规制范围。明确所涉证券范围包括股票及存托凭证、可交换公司债券（以下简称可交债）、可转债等其他具有股权性质的证券。",
+      "likes": 0,
+      "platform": "财联社",
+      "source_type": "电报",
+      "sentiment": "中性偏多",
+      "creator_type": "财经资讯平台",
+      "publish_time": "2026-03-06T13:49:32+00:00"
+    },
+    {
+      "title": "财联社3月6日电，纳斯达克100期货指数进一步下跌至1.5%。",
+      "summary": "财联社3月6日电，纳斯达克100期货指数进一步下跌至1.5%。",
+      "likes": 0,
+      "platform": "财联社",
+      "source_type": "电报",
+      "sentiment": "偏空",
+      "creator_type": "财经资讯平台",
+      "publish_time": "2026-03-06T13:49:19+00:00"
+    },
+    {
+      "title": "财联社3月6日电，富时A50中国指数期货跌幅扩大至1%。",
+      "summary": "财联社3月6日电，富时A50中国指数期货跌幅扩大至1%。",
+      "likes": 0,
+      "platform": "财联社",
+      "source_type": "电报",
+      "sentiment": "中性偏多",
+      "creator_type": "财经资讯平台",
+      "publish_time": "2026-03-06T13:48:47+00:00"
+    },
+    {
+      "title": "希腊将部署“爱国者”防空系统和F-16战机协防保加利亚",
+      "summary": "【希腊将部署“爱国者”防空系统和F-16战机协防保加利亚】财联社3月6日电，希腊国防部长登迪亚斯宣布，应保加利亚政府的请求，希腊将部署一套“爱国者”防空系统和两架F-16战斗机至北部靠近保加利亚边境的位置，以帮助保加利亚防范可能遭受的弹道导弹袭击。",
+      "likes": 0,
+      "platform": "财联社",
+      "source_type": "电报",
+      "sentiment": "中性偏多",
+      "creator_type": "财经资讯平台",
+      "publish_time": "2026-03-06T13:48:34+00:00"
+    },
+    {
+      "title": "布伦特原油2024年4月以来首次升破90美元/桶 本周累计涨23%",
+      "summary": "【布伦特原油2024年4月以来首次升破90美元/桶 本周累计涨23%】财联社3月6日电，供应中断的担忧及航运成本抬升继续推动油价大幅上涨，布伦特原油期货向上触及90美元/桶，盘中大涨5.3%，续创2024年4月以来新高。全球基准布伦特原油本周累计上涨23%。WTI原油日内涨幅达7.0%，报87.02美元/桶。消息称，科威特削减部分油田石油产量。",
+      "likes": 0,
+      "platform": "财联社",
+      "source_type": "电报",
+      "sentiment": "极度看多",
+      "creator_type": "财经资讯平台",
+      "publish_time": "2026-03-06T13:47:23+00:00"
+    },
+    {
+      "title": "证监会明确13种短线交易豁免情形",
+      "summary": "【证监会明确13种短线交易豁免情形】财联社3月6日电，证监会发布《关于短线交易监管的若干规定》。《规定》明确了13种豁免情形，主要涵盖3类情况：一是根据产品或者业务制度设计，市场对相关业务环节有明确预期，需要支持业务发展的，如优先股转股，可转债转股、赎回、回售，可交债换股、赎回、回售，ETF认购、申购、赎回，股权激励相关授予、登记、行权，做市业务等。二是因客观非交易因素导致持股变动的，如司法强制执",
+      "likes": 0,
+      "platform": "财联社",
+      "source_type": "电报",
+      "sentiment": "偏空",
+      "creator_type": "财经资讯平台",
+      "publish_time": "2026-03-06T13:46:40+00:00"
+    },
+    {
+      "title": "证监会明确短线交易持股和交易时点的认定计算标准",
+      "summary": "【证监会明确短线交易持股和交易时点的认定计算标准】财联社3月6日电，证监会发布《关于短线交易监管的若干规定》。《规定》明确持股和交易时点的认定计算标准。结合监管实践，明确了一系列认定和计算标准，具体包括：一是买入、卖出时点以证券过户登记日为准。二是大股东百分之五以上持股比例按照同一上市公司、新三板挂牌公司在境内外已发行或者挂牌并公开转让的股份合并计算。三是香港中央结算有限公司在互联互通机制下作为名",
+      "likes": 0,
+      "platform": "财联社",
+      "source_type": "电报",
+      "sentiment": "中性偏多",
+      "creator_type": "财经资讯平台",
+      "publish_time": "2026-03-06T13:45:44+00:00"
+    },
+    {
+      "title": "财联社3月6日电，英国海事贸易行动办公室表示，第三方报告称一艘拖船遭不明物体袭击。",
+      "summary": "财联社3月6日电，英国海事贸易行动办公室表示，第三方报告称一艘拖船遭不明物体袭击。",
+      "likes": 0,
+      "platform": "财联社",
+      "source_type": "电报",
+      "sentiment": "中性偏多",
+      "creator_type": "财经资讯平台",
+      "publish_time": "2026-03-06T13:45:08+00:00"
+    },
+    {
+      "title": "财联社3月6日电，西班牙首相桑切斯6日称，美国和以色列对伊朗的军事行动是“极其严重的错误”。",
+      "summary": "财联社3月6日电，西班牙首相桑切斯6日称，美国和以色列对伊朗的军事行动是“极其严重的错误”。",
+      "likes": 0,
+      "platform": "财联社",
+      "source_type": "电报",
+      "sentiment": "中性偏多",
+      "creator_type": "财经资讯平台",
+      "publish_time": "2026-03-06T13:43:56+00:00"
+    },
+    {
+      "title": "证监会发布《关于短线交易监管的若干规定》",
+      "summary": "【证监会发布《关于短线交易监管的若干规定》】财联社3月6日电，证监会发布《关于短线交易监管的若干规定》。主要内容包括：一是明确适用主体和券种范围。规定买入卖出时均具备大股东、董监高身份和买入时不具备但卖出时具备的，需遵守短线交易制度。规定“其他具有股权性质的证券”包括存托凭证、可交债、可转债等，细化明确监管要求。二是明确持股和交易时点的认定计算标准。规定买卖时点为证券过户登记日，大股东持股比例按同",
+      "likes": 0,
+      "platform": "财联社",
+      "source_type": "电报",
+      "sentiment": "中性偏多",
+      "creator_type": "财经资讯平台",
+      "publish_time": "2026-03-06T13:41:44+00:00"
+    },
+    {
+      "title": "随着伊朗战争推高油价约18%，特朗普政府权衡各种应对选项",
+      "summary": "随着美国原油和汽油价格上涨，美国政府官员们正考虑油轮保险、海军护航以及可能释放石油储备等措施。 与伊朗冲突相关的油价上涨正开始将华盛顿更深地拉入能源市场管理。",
+      "likes": 0,
+      "platform": "新浪财经",
+      "source_type": "财经新闻",
+      "sentiment": "偏多",
+      "creator_type": "财经资讯平台",
+      "publish_time": "2026-03-06T14:57:04+00:00"
+    },
+    {
+      "title": "印度重新转向俄罗斯石油",
+      "summary": "与特朗普总统达成的贸易协议本应让印度停止进口俄罗斯石油。但中东冲突切断了其他替代供应。2024 年，一艘俄罗斯油轮航行在博斯普鲁斯海峡...",
+      "likes": 0,
+      "platform": "新浪财经",
+      "source_type": "财经新闻",
+      "sentiment": "中性偏多",
+      "creator_type": "财经资讯平台",
+      "publish_time": "2026-03-06T14:56:06+00:00"
+    },
+    {
+      "title": "UPS市值对联邦快递领先优势缩窄至不足10亿美元",
+      "summary": "随着UPS股价本周下跌超10%，而联邦快递反弹至2026年创纪录高位，两家包裹巨头之间长期存在的估值差距正在缩小。 UPS数十年来对联邦快递的估值领先优势急剧缩小...",
+      "likes": 0,
+      "platform": "新浪财经",
+      "source_type": "财经新闻",
+      "sentiment": "偏多",
+      "creator_type": "财经资讯平台",
+      "publish_time": "2026-03-06T14:55:02+00:00"
+    },
+    {
+      "title": "布伦特原油价格突破每桶90美元",
+      "summary": "受伊朗冲突扰乱中东供应的影响，油价继续攀升。作为国际基准的布伦特原油期货价格周五早盘一度升破每桶90美元，之后又回落至该价位下方。",
+      "likes": 0,
+      "platform": "新浪财经",
+      "source_type": "财经新闻",
+      "sentiment": "偏多",
+      "creator_type": "财经资讯平台",
+      "publish_time": "2026-03-06T14:53:47+00:00"
+    },
+    {
+      "title": "随着打车价格上涨9.6%，优步探索司机订阅模式",
+      "summary": "优步正在招聘经理，负责开发和测试全球司机订阅策略。 随着打车市场竞争压力加剧，优步可能正预示着其将更深入地推动针对司机的订阅模式。",
+      "likes": 0,
+      "platform": "新浪财经",
+      "source_type": "财经新闻",
+      "sentiment": "偏多",
+      "creator_type": "财经资讯平台",
+      "publish_time": "2026-03-06T14:52:43+00:00"
+    },
+    {
+      "title": "F-35战备率不达标 五角大楼暗示为该项目追加120亿美元维持费",
+      "summary": "目前美军海军陆战队F-35C完全任务能力率报告为22%，而目标为75%。 鉴于F-35战备率仍不达标 五角大楼暗示为该项目追加120亿美元维持费。",
+      "likes": 0,
+      "platform": "新浪财经",
+      "source_type": "财经新闻",
+      "sentiment": "中性偏多",
+      "creator_type": "财经资讯平台",
+      "publish_time": "2026-03-06T14:48:59+00:00"
+    },
+    {
+      "title": "美国司法部：涉及特朗普的爱泼斯坦档案因被误认为是重复文件而遭扣留",
+      "summary": "美国司法部表示，已公布一批此前被错误扣留的爱泼斯坦档案。其中包括美国联邦调查局（FBI）的文件，详细记录了一名女性对美国总统特朗普提出的未经证实的性行为不端指控。",
+      "likes": 0,
+      "platform": "新浪财经",
+      "source_type": "财经新闻",
+      "sentiment": "中性偏多",
+      "creator_type": "财经资讯平台",
+      "publish_time": "2026-03-06T14:46:55+00:00"
+    },
+    {
+      "title": "伊朗遭袭后油价飙升17%，美元有望创2024年以来最佳周度表现",
+      "summary": "油价飙升和避险资金流动正推动美元创下自2024年以来最强单周涨幅。 随着投资者在美国对伊朗发动袭击后转向避险资产，美元正迈向一年多来最强劲的周度表现。",
+      "likes": 0,
+      "platform": "新浪财经",
+      "source_type": "财经新闻",
+      "sentiment": "极度看多",
+      "creator_type": "财经资讯平台",
+      "publish_time": "2026-03-06T14:46:20+00:00"
+    },
+    {
+      "title": "美国经济2月减少9.2万个就业岗位，失业率升至4.4%",
+      "summary": "美国劳工统计局周五发布的最新数据显示，上月美国企业招聘意外大幅下滑，雇主估计削减了9.2 万个就业岗位。 当月发生大规模劳工罢工，且美国多州遭遇强寒潮天气...",
+      "likes": 0,
+      "platform": "新浪财经",
+      "source_type": "财经新闻",
+      "sentiment": "中性偏多",
+      "creator_type": "财经资讯平台",
+      "publish_time": "2026-03-06T14:45:57+00:00"
+    },
+    {
+      "title": "贝莱德将2500万美元贷款减记至零，引发对私人信贷的担忧",
+      "summary": "一份文件显示，贝莱德TCP资本仅在对Infinite Commerce的贷款进行平价估值三个月后，就将其持有的第二留置权贷款价值抹去。",
+      "likes": 0,
+      "platform": "新浪财经",
+      "source_type": "财经新闻",
+      "sentiment": "中性偏多",
+      "creator_type": "财经资讯平台",
+      "publish_time": "2026-03-06T14:44:17+00:00"
     },
     {
       "title": "1月美国零售销售降幅超预期，创八个月来最大跌幅",
@@ -1519,16 +2397,6 @@
       "sentiment": "中性偏多",
       "creator_type": "财经资讯平台",
       "publish_time": "2026-03-06T14:13:00+00:00"
-    },
-    {
-      "title": "美国非农就业人数意外大减且失业率回升 或使美联储重新聚焦就业",
-      "summary": "美国雇主二月份意外削减就业人数，失业率上升，引发外界对劳动力市场健康状况的质疑。 美国劳工统计局周五公布的数据显示，继年初强劲开局后，上月非农就业人数减少9...",
-      "likes": 0,
-      "platform": "新浪财经",
-      "source_type": "财经新闻",
-      "sentiment": "中性偏多",
-      "creator_type": "财经资讯平台",
-      "publish_time": "2026-03-06T14:11:14+00:00"
     },
     {
       "title": "美国30年期抵押贷款利率回升至6%以上",
@@ -1751,104 +2619,544 @@
       "publish_time": "2026-03-06T13:56:36+00:00"
     },
     {
-      "title": "原油价格逼近两年高点，股市震荡",
-      "summary": "旅游股和周期性股票随皇家加勒比和卡特彼勒下跌，而零售商沃尔玛和好市多因燃料通胀担忧小幅走低；芯片股英伟达和AMD涨跌互现，交易员正在权衡中东风险。",
+      "title": "伊朗总统：一些国家已开始调解冲突",
+      "summary": "伊朗总统：一些国家已开始调解冲突",
       "likes": 0,
-      "platform": "新浪财经",
-      "source_type": "财经新闻",
-      "sentiment": "偏空",
-      "creator_type": "财经资讯平台",
-      "publish_time": "2026-03-06T13:56:14+00:00"
+      "platform": "百度",
+      "source_type": "热搜",
+      "sentiment": "中性偏多",
+      "creator_type": "聚合热榜",
+      "publish_time": "2026-03-06T14:59:12.201511+00:00"
     },
     {
-      "title": "美元受美国疲软就业数据影响下跌",
-      "summary": "在美国非农就业报告显示2月份就业人数意外下降后，美元下跌，这为进一步降息提供了理由。2月份就业人数减少92，000人，而相关调查经济学家此前预测为增加50，000人。",
+      "title": "下周油价或将迎年内最大涨幅",
+      "summary": "下周油价或将迎年内最大涨幅",
       "likes": 0,
-      "platform": "新浪财经",
-      "source_type": "财经新闻",
-      "sentiment": "偏空",
-      "creator_type": "财经资讯平台",
-      "publish_time": "2026-03-06T13:55:53+00:00"
-    },
-    {
-      "title": "油价因霍尔木兹海峡关闭担忧而跳涨",
-      "summary": "由于霍尔木兹海峡油轮运输停滞，且受伊朗冲突消息影响，美国汽油价格数日内上涨约20美分，美国原油基金追踪的原油价格飙升至每桶80美元以上。",
-      "likes": 0,
-      "platform": "新浪财经",
-      "source_type": "财经新闻",
+      "platform": "百度",
+      "source_type": "热搜",
       "sentiment": "极度看多",
-      "creator_type": "财经资讯平台",
-      "publish_time": "2026-03-06T13:55:43+00:00"
+      "creator_type": "聚合热榜",
+      "publish_time": "2026-03-06T14:59:12.201671+00:00"
     },
     {
-      "title": "知情人士：科威特因原油库存饱和削减石油产量",
-      "summary": "据知情人士透露，由于原油库存空间耗尽，科威特已开始对部分油田实施减产，这一迹象表明中东正面临大范围储油危机，给全球石油市场带来新的风险。",
+      "title": "国产AI短剧《霍去病》火到海外",
+      "summary": "国产AI短剧《霍去病》火到海外",
       "likes": 0,
-      "platform": "新浪财经",
-      "source_type": "财经新闻",
-      "sentiment": "偏空",
-      "creator_type": "财经资讯平台",
-      "publish_time": "2026-03-06T13:51:00+00:00"
+      "platform": "百度",
+      "source_type": "热搜",
+      "sentiment": "中性偏多",
+      "creator_type": "聚合热榜",
+      "publish_time": "2026-03-06T14:59:12.201710+00:00"
     },
     {
-      "title": "美国2月非农就业人数意外减少9.2万人，失业率升至4.4%",
-      "summary": "美国劳工统计局周五公布，受极端冬季天气和大型医疗保健机构罢工影响，美国经济 2 月出现就业岗位流失。 当月非农就业人数减少 9.2 万人，远低于市场预期的增加 5 万人...",
+      "title": "烧坏几十台宇树机器人换来“全能王”",
+      "summary": "烧坏几十台宇树机器人换来“全能王”",
       "likes": 0,
-      "platform": "新浪财经",
-      "source_type": "财经新闻",
+      "platform": "百度",
+      "source_type": "热搜",
+      "sentiment": "中性偏多",
+      "creator_type": "聚合热榜",
+      "publish_time": "2026-03-06T14:59:12.201726+00:00"
+    },
+    {
+      "title": "雷军：小米机器人在拧螺丝了",
+      "summary": "雷军：小米机器人在拧螺丝了",
+      "likes": 0,
+      "platform": "百度",
+      "source_type": "热搜",
+      "sentiment": "中性偏多",
+      "creator_type": "聚合热榜",
+      "publish_time": "2026-03-06T14:59:12.201797+00:00"
+    },
+    {
+      "title": "猫尾巴被扫地机器人卷入 拖行10分钟",
+      "summary": "猫尾巴被扫地机器人卷入 拖行10分钟",
+      "likes": 0,
+      "platform": "百度",
+      "source_type": "热搜",
+      "sentiment": "中性偏多",
+      "creator_type": "聚合热榜",
+      "publish_time": "2026-03-06T14:59:12.201852+00:00"
+    },
+    {
+      "title": "又一个10万亿产业要来了",
+      "summary": "又一个10万亿产业要来了",
+      "likes": 0,
+      "platform": "百度",
+      "source_type": "财经热搜",
+      "sentiment": "中性偏多",
+      "creator_type": "聚合热榜",
+      "publish_time": "2026-03-06T14:59:13.382536+00:00"
+    },
+    {
+      "title": "长城汽车魏建军就抄袭路虎海报道歉",
+      "summary": "长城汽车魏建军就抄袭路虎海报道歉",
+      "likes": 0,
+      "platform": "百度",
+      "source_type": "财经热搜",
+      "sentiment": "中性偏多",
+      "creator_type": "聚合热榜",
+      "publish_time": "2026-03-06T14:59:13.382568+00:00"
+    },
+    {
+      "title": "财政部长：我们将当好“铁公鸡”",
+      "summary": "财政部长：我们将当好“铁公鸡”",
+      "likes": 0,
+      "platform": "百度",
+      "source_type": "财经热搜",
+      "sentiment": "中性偏多",
+      "creator_type": "聚合热榜",
+      "publish_time": "2026-03-06T14:59:13.382578+00:00"
+    },
+    {
+      "title": "BBA大降价 二线豪华品牌怎么办",
+      "summary": "BBA大降价 二线豪华品牌怎么办",
+      "likes": 0,
+      "platform": "百度",
+      "source_type": "财经热搜",
+      "sentiment": "中性偏多",
+      "creator_type": "聚合热榜",
+      "publish_time": "2026-03-06T14:59:13.382587+00:00"
+    },
+    {
+      "title": "贾国龙卸任西贝主品牌CEO",
+      "summary": "贾国龙卸任西贝主品牌CEO",
+      "likes": 0,
+      "platform": "百度",
+      "source_type": "财经热搜",
+      "sentiment": "中性偏多",
+      "creator_type": "聚合热榜",
+      "publish_time": "2026-03-06T14:59:13.382595+00:00"
+    },
+    {
+      "title": "重点打造6大新兴支柱产业",
+      "summary": "重点打造6大新兴支柱产业",
+      "likes": 0,
+      "platform": "百度",
+      "source_type": "财经热搜",
+      "sentiment": "中性偏多",
+      "creator_type": "聚合热榜",
+      "publish_time": "2026-03-06T14:59:13.382603+00:00"
+    },
+    {
+      "title": "尹同跃称奇瑞不参与低水平价格战",
+      "summary": "尹同跃称奇瑞不参与低水平价格战",
+      "likes": 0,
+      "platform": "百度",
+      "source_type": "财经热搜",
+      "sentiment": "中性偏多",
+      "creator_type": "聚合热榜",
+      "publish_time": "2026-03-06T14:59:13.382611+00:00"
+    },
+    {
+      "title": "雷军：5年内在限定场所可实现无人驾驶",
+      "summary": "雷军：5年内在限定场所可实现无人驾驶",
+      "likes": 0,
+      "platform": "百度",
+      "source_type": "财经热搜",
+      "sentiment": "中性偏多",
+      "creator_type": "聚合热榜",
+      "publish_time": "2026-03-06T14:59:13.382619+00:00"
+    },
+    {
+      "title": "OpenClaw爆火",
+      "summary": "OpenClaw爆火",
+      "likes": 0,
+      "platform": "百度",
+      "source_type": "财经热搜",
+      "sentiment": "中性偏多",
+      "creator_type": "聚合热榜",
+      "publish_time": "2026-03-06T14:59:13.382627+00:00"
+    },
+    {
+      "title": "发改委主任点赞无人机在长江送外卖",
+      "summary": "发改委主任点赞无人机在长江送外卖",
+      "likes": 0,
+      "platform": "百度",
+      "source_type": "财经热搜",
+      "sentiment": "中性偏多",
+      "creator_type": "聚合热榜",
+      "publish_time": "2026-03-06T14:59:13.382635+00:00"
+    },
+    {
+      "title": "东方航空：中东航线部分航班恢复运行",
+      "summary": "东方航空：中东航线部分航班恢复运行",
+      "likes": 0,
+      "platform": "百度",
+      "source_type": "财经热搜",
+      "sentiment": "中性偏多",
+      "creator_type": "聚合热榜",
+      "publish_time": "2026-03-06T14:59:13.382643+00:00"
+    },
+    {
+      "title": "全球银行品牌价值500强出炉",
+      "summary": "全球银行品牌价值500强出炉",
+      "likes": 0,
+      "platform": "百度",
+      "source_type": "财经热搜",
+      "sentiment": "中性偏多",
+      "creator_type": "聚合热榜",
+      "publish_time": "2026-03-06T14:59:13.382652+00:00"
+    },
+    {
+      "title": "央行今年将降准降息",
+      "summary": "央行今年将降准降息",
+      "likes": 0,
+      "platform": "百度",
+      "source_type": "财经热搜",
+      "sentiment": "中性偏多",
+      "creator_type": "聚合热榜",
+      "publish_time": "2026-03-06T14:59:13.382660+00:00"
+    },
+    {
+      "title": "今年中央财政安排1000亿元促内需",
+      "summary": "今年中央财政安排1000亿元促内需",
+      "likes": 0,
+      "platform": "百度",
+      "source_type": "财经热搜",
+      "sentiment": "中性偏多",
+      "creator_type": "聚合热榜",
+      "publish_time": "2026-03-06T14:59:13.382668+00:00"
+    },
+    {
+      "title": "商务部：机器人成我国外贸新标签",
+      "summary": "商务部：机器人成我国外贸新标签",
+      "likes": 0,
+      "platform": "百度",
+      "source_type": "财经热搜",
+      "sentiment": "中性偏多",
+      "creator_type": "聚合热榜",
+      "publish_time": "2026-03-06T14:59:13.382683+00:00"
+    },
+    {
+      "title": "君乐宝在泉州成立新公司",
+      "summary": "君乐宝在泉州成立新公司",
+      "likes": 0,
+      "platform": "百度",
+      "source_type": "财经热搜",
+      "sentiment": "中性偏多",
+      "creator_type": "聚合热榜",
+      "publish_time": "2026-03-06T14:59:13.382690+00:00"
+    },
+    {
+      "title": "周大福回应黄金耳机盒卖78.88万",
+      "summary": "周大福回应黄金耳机盒卖78.88万",
+      "likes": 0,
+      "platform": "百度",
+      "source_type": "财经热搜",
+      "sentiment": "中性偏多",
+      "creator_type": "聚合热榜",
+      "publish_time": "2026-03-06T14:59:13.382699+00:00"
+    },
+    {
+      "title": "今年财政资金规模安排三方面创新高",
+      "summary": "今年财政资金规模安排三方面创新高",
+      "likes": 0,
+      "platform": "百度",
+      "source_type": "财经热搜",
+      "sentiment": "极度看多",
+      "creator_type": "聚合热榜",
+      "publish_time": "2026-03-06T14:59:13.382705+00:00"
+    },
+    {
+      "title": "马年春节线下实体消费增速反超线上",
+      "summary": "马年春节线下实体消费增速反超线上",
+      "likes": 0,
+      "platform": "百度",
+      "source_type": "财经热搜",
+      "sentiment": "中性偏多",
+      "creator_type": "聚合热榜",
+      "publish_time": "2026-03-06T14:59:13.382715+00:00"
+    },
+    {
+      "title": "AI相关产业规模将超10万亿元",
+      "summary": "AI相关产业规模将超10万亿元",
+      "likes": 0,
+      "platform": "百度",
+      "source_type": "财经热搜",
+      "sentiment": "中性偏多",
+      "creator_type": "聚合热榜",
+      "publish_time": "2026-03-06T14:59:13.382738+00:00"
+    },
+    {
+      "title": "蔚来：firefly萤火虫正式登陆泰国",
+      "summary": "蔚来：firefly萤火虫正式登陆泰国",
+      "likes": 0,
+      "platform": "百度",
+      "source_type": "财经热搜",
+      "sentiment": "中性偏多",
+      "creator_type": "聚合热榜",
+      "publish_time": "2026-03-06T14:59:13.382747+00:00"
+    },
+    {
+      "title": "雷军：人形机器人将大规模进工厂",
+      "summary": "雷军：人形机器人将大规模进工厂",
+      "likes": 0,
+      "platform": "百度",
+      "source_type": "财经热搜",
+      "sentiment": "中性偏多",
+      "creator_type": "聚合热榜",
+      "publish_time": "2026-03-06T14:59:13.382755+00:00"
+    },
+    {
+      "title": "中国网剧在全球市场营收占比达90%",
+      "summary": "中国网剧在全球市场营收占比达90%",
+      "likes": 0,
+      "platform": "百度",
+      "source_type": "财经热搜",
+      "sentiment": "中性偏多",
+      "creator_type": "聚合热榜",
+      "publish_time": "2026-03-06T14:59:13.382862+00:00"
+    },
+    {
+      "title": "魔法原子宣布CTO等多项人事任命",
+      "summary": "魔法原子宣布CTO等多项人事任命",
+      "likes": 0,
+      "platform": "百度",
+      "source_type": "财经热搜",
+      "sentiment": "中性偏多",
+      "creator_type": "聚合热榜",
+      "publish_time": "2026-03-06T14:59:13.382893+00:00"
+    },
+    {
+      "title": "湖北宜化：季戊四醇项目已投产",
+      "summary": "湖北宜化：季戊四醇项目已投产",
+      "likes": 0,
+      "platform": "百度",
+      "source_type": "财经热搜",
+      "sentiment": "中性偏多",
+      "creator_type": "聚合热榜",
+      "publish_time": "2026-03-06T14:59:13.382902+00:00"
+    },
+    {
+      "title": "A股全线收涨 超4200只个股上涨",
+      "summary": "A股全线收涨 超4200只个股上涨",
+      "likes": 0,
+      "platform": "百度",
+      "source_type": "财经热搜",
+      "sentiment": "偏多",
+      "creator_type": "聚合热榜",
+      "publish_time": "2026-03-06T14:59:13.382912+00:00"
+    },
+    {
+      "title": "河南那个矿机老板，估计这两天人都傻了。年前撒钱有多风光，年后开工就有多“头疼”。销售大厅直接给挤成了春运火车站。\n \n农历新年后的开工潮里，河南长垣一家起重机制",
+      "summary": "河南那个矿机老板，估计这两天人都傻了。年前撒钱有多风光，年后开工就有多“头疼”。销售大厅直接给挤成了春运火车站。\n \n农历新年后的开工潮里，河南长垣一家起重机制造企业，用一场堪称火爆的场景，刷新了人们对实体经济的认知。\n \n来自全国各地的采购商把销售大厅挤得水泄不通，人群摩肩接踵，连落脚的地方都十分",
+      "likes": 0,
+      "platform": "抖音",
+      "source_type": "头条财经",
       "sentiment": "中性偏多",
       "creator_type": "财经资讯平台",
-      "publish_time": "2026-03-06T13:50:46+00:00"
+      "publish_time": "2026-03-06T14:59:17.099899+00:00"
     },
     {
-      "title": "伊朗战争引发供应危机，日本或动用部分国家石油储备",
-      "summary": "日本知名媒体周五报道称，为应对当前扰乱全球能源供应的伊朗危机，日本政府可能会动用部分石油储备。此举可能与其他国家协同进行，也可能单独实施。",
+      "title": "日本政府最近急得像热锅上的蚂蚁，因为他们发现，自己派往中国重庆的新任总领事，人是选好了，行李也打包了，可就是进不来。\n\n重庆总领事馆在日本对华布局里分量不轻。它",
+      "summary": "日本政府最近急得像热锅上的蚂蚁，因为他们发现，自己派往中国重庆的新任总领事，人是选好了，行李也打包了，可就是进不来。\n\n重庆总领事馆在日本对华布局里分量不轻。它负责的西南片区，是中国西部开放的重要门户，日企在这里的汽车零部件、制造业供应链、农产品贸易和民间往来都靠这个点来衔接。过去几年，日本企业在成",
       "likes": 0,
-      "platform": "新浪财经",
-      "source_type": "财经新闻",
+      "platform": "抖音",
+      "source_type": "头条财经",
       "sentiment": "中性偏多",
       "creator_type": "财经资讯平台",
-      "publish_time": "2026-03-06T13:48:33+00:00"
+      "publish_time": "2026-03-06T14:59:17.099925+00:00"
     },
     {
-      "title": "中东战事加剧，铝价重启涨势，有望创下逾18个月最佳周度表现",
-      "summary": "铝价周五再次上涨，此前一个交易日刚刚结束了连续三天的涨势。由于美国及以色列对伊朗的战争引发供应担忧，铝价正迈向逾18个月来的最大单周涨幅。",
+      "title": "美以那边，F-35天天飞，导弹天天扔，炸了2400多个目标，连伊朗首都的国防部大楼都挨了导弹。可你发现没有？伊朗那些油田、炼油厂、天然气设施，一个都没挨炸。\n\n",
+      "summary": "美以那边，F-35天天飞，导弹天天扔，炸了2400多个目标，连伊朗首都的国防部大楼都挨了导弹。可你发现没有？伊朗那些油田、炼油厂、天然气设施，一个都没挨炸。\n\n不是美军炸不到，是他们压根不敢炸。\n\n咱们得先想明白一个问题：美国这次打伊朗，到底图啥？\n\n特朗普在电视上说的那些理由——摧毁导弹能力、消灭",
       "likes": 0,
-      "platform": "新浪财经",
-      "source_type": "财经新闻",
+      "platform": "抖音",
+      "source_type": "头条财经",
+      "sentiment": "中性偏多",
+      "creator_type": "财经资讯平台",
+      "publish_time": "2026-03-06T14:59:17.099937+00:00"
+    },
+    {
+      "title": "欧洲人是真的有点慌了，一个外国专家原话是这么说的：“我们这辈子，从没见过像中国这样的对手”\n以前总觉得，不就是当年日本车、韩国车那套打法嘛，靠便宜货抢市场，我们",
+      "summary": "欧洲人是真的有点慌了，一个外国专家原话是这么说的：“我们这辈子，从没见过像中国这样的对手”\n以前总觉得，不就是当年日本车、韩国车那套打法嘛，靠便宜货抢市场，我们扛得住\n\n现在他们想明白了，根本不是一回事\n“这次相当于15个日本同时扑过来”\n\n这放在几年前，要是有人跟他们说，欧洲的制造业会被中国全方位",
+      "likes": 0,
+      "platform": "抖音",
+      "source_type": "头条财经",
+      "sentiment": "中性偏多",
+      "creator_type": "财经资讯平台",
+      "publish_time": "2026-03-06T14:59:17.099948+00:00"
+    },
+    {
+      "title": "当年中央拨款5个亿，造了3万多平米的雷神山医院，如今还在用吗？",
+      "summary": "这些年一直有人传，雷神山医院早就荒废了。杂草长到半人高，设备生锈没人管。说中央花5个亿建的3万多平米大楼，纯属浪费。这些话传得有鼻子有眼，不少人信了。但事实真不是这样，这座当年创造奇迹的医院，现在的状态可能超出很多人的想象。",
+      "likes": 0,
+      "platform": "抖音",
+      "source_type": "头条财经",
+      "sentiment": "中性偏多",
+      "creator_type": "财经资讯平台",
+      "publish_time": "2026-03-06T14:59:17.099960+00:00"
+    },
+    {
+      "title": "利好！降准降息大消息",
+      "summary": "央行行长潘功胜：今年将灵活高效运用降准降息等多种货币政策工具。潘功胜表示，2026年人民银行将实施适度宽松的货币政策，灵活高效地运用降准降息等多种货币政策工具，发挥增量和存量、货币政策和财政政策的集成协同效应。",
+      "likes": 0,
+      "platform": "抖音",
+      "source_type": "头条财经",
       "sentiment": "偏多",
       "creator_type": "财经资讯平台",
-      "publish_time": "2026-03-06T13:46:45+00:00"
+      "publish_time": "2026-03-06T14:59:17.099967+00:00"
     },
     {
-      "title": "海湾石油供应担忧冲击市场，股市下跌",
-      "summary": "周五，随着美伊战争引发对石油供应的新一轮担忧，促使交易员重新思考对央行降息的预期，欧洲股市与美国期货一同下跌。 全球和美国基准油价均升至2024年年中以来的最高水平...",
+      "title": "黄金都要靠边站！2026年真正“疯涨”的，竟是你随手扔的旧东西？",
+      "summary": "2026年开年没多久，新能源车、人工智能设备和储能项目建得飞快，对镍、钴、铜、锂这些关键金属的需求一下子冲上去。原矿开采跟不上节奏，价格就往上走。结果呢，家里那些旧手机、废旧动力电池、淘汰的笔记本电脑电源线、旧电动车电池组，反而成了抢手货。",
       "likes": 0,
-      "platform": "新浪财经",
-      "source_type": "财经新闻",
-      "sentiment": "偏空",
+      "platform": "抖音",
+      "source_type": "头条财经",
+      "sentiment": "极度看多",
       "creator_type": "财经资讯平台",
-      "publish_time": "2026-03-06T13:45:38+00:00"
+      "publish_time": "2026-03-06T14:59:17.099972+00:00"
     },
     {
-      "title": "伊朗与以色列战争暴露西方铝市场脆弱性",
-      "summary": "伊朗战争暴露了西方在铝供应方面日益严重的脆弱性。铝是一种被美国列为关键制造业投入品的金属。 在海湾地区生产商Qatalum（挪威海德鲁公司与卡塔尔铝业制造公司的合资企业...",
+      "title": "告诉大家一个坏消息：福州，武汉已出现4大怪象，值得每个人深思",
+      "summary": "但跟一位从深圳回武汉的程序员老张喝酒时，他说了句大实话:“以前在深圳是大厂拧螺丝，虽然累但钱给到位;现在回了武汉，发现是‘血汗工厂’升级版——拿着当地看似体面的薪水，干着三个人的活，加班到深夜，安全感却还不如在深圳。”",
       "likes": 0,
-      "platform": "新浪财经",
-      "source_type": "财经新闻",
+      "platform": "抖音",
+      "source_type": "头条财经",
       "sentiment": "中性偏多",
       "creator_type": "财经资讯平台",
-      "publish_time": "2026-03-06T13:42:31+00:00"
+      "publish_time": "2026-03-06T14:59:17.099983+00:00"
     },
     {
-      "title": "一周连番打击重创伊朗海军 战力更多依赖袖珍潜艇与快艇",
-      "summary": "过去一周伊朗海军遭受毁灭性打击，大多数水面舰艇受损或被摧毁，使该国不得不更多依赖小型舰船，如袖珍潜艇和配备导弹的快艇。",
+      "title": "68岁股民实盘日记｜长期稳定盈利，不惧涨跌｜2026年03月06日",
+      "summary": "今日港股收盘了，能建H股涨0.04港币，报收1.37港币，涨幅3.01%，全天高开低走。我今日多次操作能建H股进行低买高卖，单日盈利约3000元；2026年至今，我在能建H股高抛低吸累计盈利约46600元。我目前持有能建H股82万股，浮亏16.",
       "likes": 0,
-      "platform": "新浪财经",
-      "source_type": "财经新闻",
+      "platform": "抖音",
+      "source_type": "头条财经",
+      "sentiment": "中性",
+      "creator_type": "财经资讯平台",
+      "publish_time": "2026-03-06T14:59:17.099995+00:00"
+    },
+    {
+      "title": "中国最怕的局面真来了！",
+      "summary": "中国最怕的局面真来了！",
+      "likes": 0,
+      "platform": "抖音",
+      "source_type": "头条财经",
       "sentiment": "中性偏多",
       "creator_type": "财经资讯平台",
-      "publish_time": "2026-03-06T13:42:23+00:00"
+      "publish_time": "2026-03-06T14:59:17.100002+00:00"
+    },
+    {
+      "title": "失去中国市场后，大量水果烂地里卖不出去，现在开始后悔得罪中国",
+      "summary": "越南榴莲在中国曾一年狂赚30亿，但是他们不好好种水果，却在果子里添加有毒物质。澳大利亚水果对华出口占比曾经超一半，却连吃带拿的天天嫌中国检疫太严。",
+      "likes": 0,
+      "platform": "抖音",
+      "source_type": "头条财经",
+      "sentiment": "中性偏多",
+      "creator_type": "财经资讯平台",
+      "publish_time": "2026-03-06T14:59:19.731535+00:00"
+    },
+    {
+      "title": "[太阳]浙江女子在13年之内生了9个孩子，她表示自己不想浪费丈夫的好基因，目标是凑齐十二生肖，后来她丈夫身份曝光，人们直呼不简单！\n \n2010年，那会儿田东霞",
+      "summary": "[太阳]浙江女子在13年之内生了9个孩子，她表示自己不想浪费丈夫的好基因，目标是凑齐十二生肖，后来她丈夫身份曝光，人们直呼不简单！\n \n2010年，那会儿田东霞刚上大学没多久，结果意外怀孕了，学业直接按了暂停键，在温州老宅的秋千上，89年出生的她摸着肚子，那是老大“梦琪”还在肚子里的时候。\n \n谁能",
+      "likes": 0,
+      "platform": "抖音",
+      "source_type": "头条财经",
+      "sentiment": "中性偏多",
+      "creator_type": "财经资讯平台",
+      "publish_time": "2026-03-06T14:59:19.731565+00:00"
+    },
+    {
+      "title": "“老板大气！”安徽，男子找一货车司机运送345箱酒，送到后，他掀开雨布发现最少有300箱酒被淋湿，司机说：340元运费我不要了，你看咋弄吧。然后，开车走了。等男",
+      "summary": "“老板大气！”安徽，男子找一货车司机运送345箱酒，送到后，他掀开雨布发现最少有300箱酒被淋湿，司机说：340元运费我不要了，你看咋弄吧。然后，开车走了。等男子给司机发信息协商时，不料，对方竟然把拉黑，微信也删除了。男子无奈，哈哈一笑说：我从来没打算让他赔一毛钱。之后，说了一番话令人感动。网友：司",
+      "likes": 0,
+      "platform": "抖音",
+      "source_type": "头条财经",
+      "sentiment": "中性偏多",
+      "creator_type": "财经资讯平台",
+      "publish_time": "2026-03-06T14:59:19.731578+00:00"
+    },
+    {
+      "title": "38岁老板娘沦为陪睡工具：揭秘黑茶高端骗局，入局者10有9个离婚",
+      "summary": "“年入百万、喝茶致富、女性独立、高端人脉”，这些听起来光鲜亮丽的词，曾让无数中年女性热血沸腾。可现实却是:有人为此倾家荡产，有人被逼到出卖身体，更有人亲手拆散了原本安稳的家庭。",
+      "likes": 0,
+      "platform": "抖音",
+      "source_type": "头条财经",
+      "sentiment": "中性偏多",
+      "creator_type": "财经资讯平台",
+      "publish_time": "2026-03-06T14:59:19.731588+00:00"
+    },
+    {
+      "title": "万里外一颗炮弹落下，义乌8万商户的生意全变了",
+      "summary": "文|赵赵编辑|赵赵2026年的春天刚到，一个让人揪心的故事在义乌商圈里重新被提起。做了四十多年外贸的龚永强，至今忘不了十多年前那个伊朗客户。那人在家里坐着，货刚收到手，尾款还没来得及打，一颗炮弹从天上掉下来，人没了。",
+      "likes": 0,
+      "platform": "抖音",
+      "source_type": "头条财经",
+      "sentiment": "中性偏多",
+      "creator_type": "财经资讯平台",
+      "publish_time": "2026-03-06T14:59:19.731600+00:00"
+    },
+    {
+      "title": "天台上的绝望：家住武汉65层高楼，日子没法过了！",
+      "summary": "天台上的绝望：家住武汉65层高楼，日子没法过了！",
+      "likes": 0,
+      "platform": "抖音",
+      "source_type": "头条财经",
+      "sentiment": "中性偏多",
+      "creator_type": "财经资讯平台",
+      "publish_time": "2026-03-06T14:59:19.731607+00:00"
+    },
+    {
+      "title": "凤凰独家丨一艘中国散货船通过霍尔木兹海峡？船舶运营方公司CEO回应",
+      "summary": "凤凰网《风暴眼》查询船运数据平台MagicPort发现，这艘名为“铁娘子号”的船舶商务经理为“上海塞图斯海运有限公司”。",
+      "likes": 0,
+      "platform": "抖音",
+      "source_type": "头条财经",
+      "sentiment": "中性偏多",
+      "creator_type": "财经资讯平台",
+      "publish_time": "2026-03-06T14:59:19.731616+00:00"
+    },
+    {
+      "title": "A股涨到4124.19点，迹象很明显，下周一，3月9号，市场可能这样走",
+      "summary": "在昨天的文章里就给大家说了，多头双次进攻是一个很值得关注的信号，当然很多人可能提出另一个观点，就是说多头双次进攻有没有可能意味着多头的能力不足？因为如果多头能一次就。股市拉上去的话，为什么要双次进攻？双次进攻是不是跟昨天的解释有点相矛盾？",
+      "likes": 0,
+      "platform": "抖音",
+      "source_type": "头条财经",
+      "sentiment": "中性偏多",
+      "creator_type": "财经资讯平台",
+      "publish_time": "2026-03-06T14:59:19.731627+00:00"
+    },
+    {
+      "title": "（全国两会）全国人大代表刘汉元：建议将光伏制造环节纳入能源行业管理",
+      "summary": "（全国两会）全国人大代表刘汉元：建议将光伏制造环节纳入能源行业管理",
+      "likes": 0,
+      "platform": "东方财富",
+      "source_type": "快讯",
+      "sentiment": "中性偏多",
+      "creator_type": "财经资讯平台",
+      "publish_time": "2026-03-06 22:52:07"
+    },
+    {
+      "title": "中信建投证券研究所所长、首席经济学家黄文涛：资本市场政策更加注重制度建设和深化改革",
+      "summary": "中信建投证券研究所所长、首席经济学家黄文涛：资本市场政策更加注重制度建设和深化改革",
+      "likes": 0,
+      "platform": "东方财富",
+      "source_type": "快讯",
+      "sentiment": "中性偏多",
+      "creator_type": "财经资讯平台",
+      "publish_time": "2026-03-06 22:52:06"
+    },
+    {
+      "title": "全国政协委员曹鹏：为新就业群体织密“保障网”，以“超级供应链”撬动大市场｜两会声音",
+      "summary": "全国政协委员曹鹏：为新就业群体织密“保障网”，以“超级供应链”撬动大市场｜两会声音",
+      "likes": 0,
+      "platform": "东方财富",
+      "source_type": "快讯",
+      "sentiment": "中性偏多",
+      "creator_type": "财经资讯平台",
+      "publish_time": "2026-03-06 22:44:31"
+    },
+    {
+      "title": "深市代表委员集体发声，聚焦改革赋能与质量回报",
+      "summary": "深市代表委员集体发声，聚焦改革赋能与质量回报",
+      "likes": 0,
+      "platform": "东方财富",
+      "source_type": "快讯",
+      "sentiment": "中性偏多",
+      "creator_type": "财经资讯平台",
+      "publish_time": "2026-03-06 22:41:01"
     },
     {
       "title": "全国政协委员贺晗建议：建立人形机器人国家级场景上岗清单",
@@ -1891,16 +3199,6 @@
       "publish_time": "2026-03-06 22:23:24"
     },
     {
-      "title": "化工品期货夜盘全线上涨 燃油涨16%苯乙烯涨9%",
-      "summary": "化工品期货夜盘全线上涨 燃油涨16%苯乙烯涨9%",
-      "likes": 0,
-      "platform": "东方财富",
-      "source_type": "快讯",
-      "sentiment": "偏多",
-      "creator_type": "财经资讯平台",
-      "publish_time": "2026-03-06 22:11:06"
-    },
-    {
       "title": "3月6日晚间央视新闻联播要闻集锦",
       "summary": "3月6日晚间央视新闻联播要闻集锦",
       "likes": 0,
@@ -1911,46 +3209,6 @@
       "publish_time": "2026-03-06 22:09:45"
     },
     {
-      "title": "本田汽车计划把在中国生产的纯电动汽车销往日本",
-      "summary": "本田汽车计划把在中国生产的纯电动汽车销往日本",
-      "likes": 0,
-      "platform": "东方财富",
-      "source_type": "快讯",
-      "sentiment": "中性偏多",
-      "creator_type": "财经资讯平台",
-      "publish_time": "2026-03-06 22:09:07"
-    },
-    {
-      "title": "深市公司董事长、实控人等热议记者会：承诺真金白银回报，提升投资者获得感",
-      "summary": "深市公司董事长、实控人等热议记者会：承诺真金白银回报，提升投资者获得感",
-      "likes": 0,
-      "platform": "东方财富",
-      "source_type": "快讯",
-      "sentiment": "中性偏多",
-      "creator_type": "财经资讯平台",
-      "publish_time": "2026-03-06 22:01:59"
-    },
-    {
-      "title": "大商所焦煤期货主力合约日内涨超5%",
-      "summary": "大商所焦煤期货主力合约日内涨超5%",
-      "likes": 0,
-      "platform": "东方财富",
-      "source_type": "快讯",
-      "sentiment": "中性偏多",
-      "creator_type": "财经资讯平台",
-      "publish_time": "2026-03-06 21:56:58"
-    },
-    {
-      "title": "政府工作报告涉及债市有哪些要点？机构热议，3月或存在降准窗口",
-      "summary": "政府工作报告涉及债市有哪些要点？机构热议，3月或存在降准窗口",
-      "likes": 0,
-      "platform": "东方财富",
-      "source_type": "快讯",
-      "sentiment": "中性偏多",
-      "creator_type": "财经资讯平台",
-      "publish_time": "2026-03-06 21:56:31"
-    },
-    {
       "title": "派评 | 近期值得关注的 App",
       "summary": "派评 | 近期值得关注的 App",
       "likes": 0,
@@ -1958,7 +3216,7 @@
       "source_type": "热榜",
       "sentiment": "中性偏多",
       "creator_type": "财经资讯平台",
-      "publish_time": "2026-03-06T14:44:27.057255+00:00"
+      "publish_time": "2026-03-06T14:59:14.168453+00:00"
     },
     {
       "title": "本周看什么 | 最近值得一看的 10 部作品",
@@ -1968,7 +3226,7 @@
       "source_type": "热榜",
       "sentiment": "中性偏多",
       "creator_type": "财经资讯平台",
-      "publish_time": "2026-03-06T14:44:27.057267+00:00"
+      "publish_time": "2026-03-06T14:59:14.168472+00:00"
     },
     {
       "title": "当恐惧有了两种模样：《生化危机 9：安魂曲》评测",
@@ -1978,7 +3236,7 @@
       "source_type": "热榜",
       "sentiment": "中性偏多",
       "creator_type": "财经资讯平台",
-      "publish_time": "2026-03-06T14:44:27.057271+00:00"
+      "publish_time": "2026-03-06T14:59:14.168477+00:00"
     },
     {
       "title": "年度征文｜LLM 眼中的好文章：少数派 2025 热门内容解码",
@@ -1988,7 +3246,7 @@
       "source_type": "热榜",
       "sentiment": "中性偏多",
       "creator_type": "财经资讯平台",
-      "publish_time": "2026-03-06T14:44:27.057274+00:00"
+      "publish_time": "2026-03-06T14:59:14.168483+00:00"
     },
     {
       "title": "年度征文｜AI 十字路口：当机器学会「思考」，我们应该知道什么？",
@@ -1998,7 +3256,7 @@
       "source_type": "热榜",
       "sentiment": "中性偏多",
       "creator_type": "财经资讯平台",
-      "publish_time": "2026-03-06T14:44:27.057277+00:00"
+      "publish_time": "2026-03-06T14:59:14.168487+00:00"
     },
     {
       "title": "新玩意 236｜少数派的编辑们最近买了啥？",
@@ -2008,7 +3266,7 @@
       "source_type": "热榜",
       "sentiment": "中性偏多",
       "creator_type": "财经资讯平台",
-      "publish_time": "2026-03-06T14:44:27.057280+00:00"
+      "publish_time": "2026-03-06T14:59:14.168492+00:00"
     },
     {
       "title": "本周看什么 | 最近值得一看的 8 部作品",
@@ -2018,7 +3276,7 @@
       "source_type": "热榜",
       "sentiment": "中性偏多",
       "creator_type": "财经资讯平台",
-      "publish_time": "2026-03-06T14:44:27.057283+00:00"
+      "publish_time": "2026-03-06T14:59:14.168496+00:00"
     },
     {
       "title": "OpenClaw：高强度使用两周，这个 AI 工具颠覆了我的工作流",
@@ -2028,7 +3286,7 @@
       "source_type": "热榜",
       "sentiment": "中性偏多",
       "creator_type": "财经资讯平台",
-      "publish_time": "2026-03-06T14:44:27.057286+00:00"
+      "publish_time": "2026-03-06T14:59:14.168501+00:00"
     },
     {
       "title": "从特斯拉一日自驾，看纯电在日本的实际体验",
@@ -2038,7 +3296,7 @@
       "source_type": "热榜",
       "sentiment": "中性偏多",
       "creator_type": "财经资讯平台",
-      "publish_time": "2026-03-06T14:44:27.057289+00:00"
+      "publish_time": "2026-03-06T14:59:14.168506+00:00"
     },
     {
       "title": "新玩意 235｜少数派的编辑们最近买了啥？",
@@ -2048,7 +3306,7 @@
       "source_type": "热榜",
       "sentiment": "中性偏多",
       "creator_type": "财经资讯平台",
-      "publish_time": "2026-03-06T14:44:27.057292+00:00"
+      "publish_time": "2026-03-06T14:59:14.168510+00:00"
     },
     {
       "title": "醒醒现在是 2015：小米 1S 和红米 Note 背后的机圈历史",
@@ -2058,7 +3316,7 @@
       "source_type": "热榜",
       "sentiment": "中性偏多",
       "creator_type": "财经资讯平台",
-      "publish_time": "2026-03-06T14:44:27.057295+00:00"
+      "publish_time": "2026-03-06T14:59:14.168515+00:00"
     },
     {
       "title": "新玩意 234｜少数派的编辑们最近买了啥？",
@@ -2068,7 +3326,7 @@
       "source_type": "热榜",
       "sentiment": "中性偏多",
       "creator_type": "财经资讯平台",
-      "publish_time": "2026-03-06T14:44:27.057297+00:00"
+      "publish_time": "2026-03-06T14:59:14.168519+00:00"
     },
     {
       "title": "截稿顺延｜将设计装进耳朵：少数派×飞傲联名 CD 机盖板设计大赛",
@@ -2078,7 +3336,7 @@
       "source_type": "热榜",
       "sentiment": "中性偏多",
       "creator_type": "财经资讯平台",
-      "publish_time": "2026-03-06T14:44:27.057301+00:00"
+      "publish_time": "2026-03-06T14:59:14.168523+00:00"
     },
     {
       "title": "插混换到纯电的两万公里后，我不再有里程焦虑了",
@@ -2088,7 +3346,7 @@
       "source_type": "热榜",
       "sentiment": "中性偏多",
       "creator_type": "财经资讯平台",
-      "publish_time": "2026-03-06T14:44:27.057303+00:00"
+      "publish_time": "2026-03-06T14:59:14.168527+00:00"
     },
     {
       "title": "出门在外也能远程 CLI Coding：我的 SSH 远程开发方案分享",
@@ -2098,7 +3356,7 @@
       "source_type": "热榜",
       "sentiment": "中性偏多",
       "creator_type": "财经资讯平台",
-      "publish_time": "2026-03-06T14:44:27.057307+00:00"
+      "publish_time": "2026-03-06T14:59:14.168532+00:00"
     },
     {
       "title": "巴掌大的小主机 Khadas Mind 2，究竟能用来干什么？",
@@ -2108,7 +3366,7 @@
       "source_type": "热榜",
       "sentiment": "中性偏多",
       "creator_type": "财经资讯平台",
-      "publish_time": "2026-03-06T14:44:27.057310+00:00"
+      "publish_time": "2026-03-06T14:59:14.168537+00:00"
     },
     {
       "title": "深度横评：2026 年，AI 生成 PPT 到底进化到什么程度了？",
@@ -2118,7 +3376,7 @@
       "source_type": "热榜",
       "sentiment": "中性偏多",
       "creator_type": "财经资讯平台",
-      "publish_time": "2026-03-06T14:44:27.057313+00:00"
+      "publish_time": "2026-03-06T14:59:14.168541+00:00"
     },
     {
       "title": "我的 AI 工具日常使用与工作流是怎样的？",
@@ -2128,7 +3386,7 @@
       "source_type": "热榜",
       "sentiment": "中性偏多",
       "creator_type": "财经资讯平台",
-      "publish_time": "2026-03-06T14:44:27.057315+00:00"
+      "publish_time": "2026-03-06T14:59:14.168545+00:00"
     },
     {
       "title": "新玩意 233｜少数派的编辑们最近买了啥？",
@@ -2138,7 +3396,7 @@
       "source_type": "热榜",
       "sentiment": "中性偏多",
       "creator_type": "财经资讯平台",
-      "publish_time": "2026-03-06T14:44:27.057318+00:00"
+      "publish_time": "2026-03-06T14:59:14.168549+00:00"
     },
     {
       "title": "普通人更要多动手：聊聊我把 Claude Code 变成个人助手后的那些事",
@@ -2148,692 +3406,372 @@
       "source_type": "热榜",
       "sentiment": "中性偏多",
       "creator_type": "财经资讯平台",
-      "publish_time": "2026-03-06T14:44:27.057322+00:00"
+      "publish_time": "2026-03-06T14:59:14.168570+00:00"
     },
     {
-      "title": "财联社3月6日电，随着油价上涨，英国两年期国债收益率攀升20个基点。",
-      "summary": "财联社3月6日电，随着油价上涨，英国两年期国债收益率攀升20个基点。",
+      "title": "黄金股ETF（159562）跌幅收窄，机构：黄金投资情绪已趋于谨慎",
+      "summary": "黄金股ETF（159562）跟踪中证沪深港黄金产业股票指数，该指数从内地与香港市场中，选取50只市值较大且业务涉及黄金采掘、冶炼、销售的上市公司证券作为指数样本，以反映内地与香港市场中黄金产业上市公司证券的整体表现。",
       "likes": 0,
-      "platform": "财联社",
-      "source_type": "电报",
+      "platform": "东方财富",
+      "source_type": "搜索-黄金",
+      "sentiment": "偏空",
+      "creator_type": "财经资讯平台",
+      "publish_time": "2026-03-06 12:14:15"
+    },
+    {
+      "title": "“古法黄金”越涨越买？君佩紧随老铺黄金提价，背后是真爆火还是饥饿营销",
+      "summary": "君佩成立于2004年，据工作人员透露，其一开始主要做珠宝，后续做出战略转型，将黄金和珠宝结合起来，当前其给自己的定位是“珠宝级黄金”。不同于老铺黄金将产品分为“素金款”（纯黄金）和“点钻款”，君佩当前产品大部分都是“黄金+镶嵌”组合。",
+      "likes": 0,
+      "platform": "东方财富",
+      "source_type": "搜索-黄金",
+      "sentiment": "中性偏多",
+      "creator_type": "财经资讯平台",
+      "publish_time": "2026-03-06 22:44:46"
+    },
+    {
+      "title": "理财掘金多资产①|理财配置黄金已超百亿，黄金股性价比被看好",
+      "summary": "同时，他建议可以关注黄金股的投资机会，其认为在当前的估值水平下，黄金股比实物黄金更具性价比。部分黄金股的估值和今年以来截至昨日收盘的行情如下： 　　数据来源：wind，财联社整理 　　另一理财公司相关负责人也对财联社表示，黄金属于战略性配置，核心是为了分散投资，对冲风险。",
+      "likes": 0,
+      "platform": "东方财富",
+      "source_type": "搜索-黄金",
       "sentiment": "偏多",
       "creator_type": "财经资讯平台",
-      "publish_time": "2026-03-06T14:41:25+00:00"
+      "publish_time": "2026-03-06 12:03:17"
     },
     {
-      "title": "财联社3月6日电，美国10至30年期国债收益率触及日内高位，油价延续上涨势头。",
-      "summary": "财联社3月6日电，美国10至30年期国债收益率触及日内高位，油价延续上涨势头。",
+      "title": "中东战火扰乱物流 迪拜黄金出现罕见折价交易",
+      "summary": "阿联酋，尤其是迪拜，是全球重要的黄金精炼和贸易中心，不仅向亚洲各地出口黄金，也是瑞士、英国及多个非洲国家转运黄金的重要枢纽。 　　由于中东战事蔓延，阿联酋部分领空被关闭；与此同时，美国和以色列对伊朗发动的军事打击已进入第七天，目前仍看不到结束迹象。 　　黄金通常通过客机货舱运输。",
       "likes": 0,
-      "platform": "财联社",
-      "source_type": "电报",
+      "platform": "东方财富",
+      "source_type": "搜索-黄金",
+      "sentiment": "中性偏多",
+      "creator_type": "财经资讯平台",
+      "publish_time": "2026-03-06 21:27:06"
+    },
+    {
+      "title": "美股黄金、白银股走低",
+      "summary": "美股黄金、白银股走低，赫克拉矿业、科尔黛伦矿业跌超3%，金田、金罗斯黄金、埃氏金业、泛美白银、纽曼矿业、哈莫尼黄金跌超2%。",
+      "likes": 0,
+      "platform": "东方财富",
+      "source_type": "搜索-黄金",
+      "sentiment": "偏空",
+      "creator_type": "财经资讯平台",
+      "publish_time": "2026-03-05 22:40:07"
+    },
+    {
+      "title": "世界黄金协会：2月全球黄金ETF净流入53亿美元",
+      "summary": "南方财经3月5日电，世界黄金协会称，2月全球黄金ETF净流入53亿美元，实现连续第九个月资金流入，并创下有史以来最强劲的年度开局。由于金价持续上涨推高估值，全球黄金资产管理总规模（AUM）攀升至7010亿美元的历史新高，全球持仓量达到4171吨。",
+      "likes": 0,
+      "platform": "东方财富",
+      "source_type": "搜索-黄金",
       "sentiment": "偏多",
       "creator_type": "财经资讯平台",
-      "publish_time": "2026-03-06T14:40:47+00:00"
+      "publish_time": "2026-03-05 22:50:07"
     },
     {
-      "title": "财联社3月6日电，委内瑞拉2月CPI环比涨幅放缓至14.6%，前值为32.6%。",
-      "summary": "财联社3月6日电，委内瑞拉2月CPI环比涨幅放缓至14.6%，前值为32.6%。",
+      "title": "黄金股大幅低开 四川黄金、招金黄金跌停",
+      "summary": "人民财讯3月4日电，黄金股大幅低开，晓程科技跌超10%，四川黄金、招金黄金跌停，西部黄金、湖南黄金、湖南白银跌幅居前。",
       "likes": 0,
-      "platform": "财联社",
-      "source_type": "电报",
+      "platform": "东方财富",
+      "source_type": "搜索-黄金",
       "sentiment": "中性偏多",
       "creator_type": "财经资讯平台",
-      "publish_time": "2026-03-06T14:40:47+00:00"
+      "publish_time": "2026-03-04 09:38:21"
     },
     {
-      "title": "所罗门群岛附近发生6.4级左右地震",
-      "summary": "【所罗门群岛附近发生6.4级左右地震】财联社3月6日电，中国地震台网自动测定：03月06日22时27分在所罗门群岛附近（南纬11.52度，东经163.08度）发生6.4级左右地震，最终结果以正式速报为准。",
+      "title": "金价冲高致黄金首饰消费量降超3成！老凤祥2025年营收净利延续双降，加码眼镜、黄金精炼业务欲破解主业困局",
+      "summary": "根据中国黄金协会的统计，2025年我国黄金消费量950.096吨，同比下降3.57%，其中黄金首饰消费量为363.836吨，同比下降31.61%。本报告期公司黄金珠宝首饰的营业收入、净利润同比有一定下降。",
       "likes": 0,
-      "platform": "财联社",
-      "source_type": "电报",
+      "platform": "东方财富",
+      "source_type": "搜索-黄金",
       "sentiment": "中性偏多",
       "creator_type": "财经资讯平台",
-      "publish_time": "2026-03-06T14:40:19+00:00"
+      "publish_time": "2026-03-06 20:04:17"
     },
     {
-      "title": "伊朗德黑兰传出巨大爆炸声",
-      "summary": "【伊朗德黑兰传出巨大爆炸声】财联社3月6日电，当地时间6日获悉，伊朗德黑兰传出巨大爆炸声。 (央视新闻)",
+      "title": "现货白银短线拉涨1.5%",
+      "summary": "现货白银短线拉涨1.5%，现货黄金涨0.65%。",
       "likes": 0,
-      "platform": "财联社",
-      "source_type": "电报",
+      "platform": "东方财富",
+      "source_type": "搜索-白银",
       "sentiment": "中性偏多",
       "creator_type": "财经资讯平台",
-      "publish_time": "2026-03-06T14:36:26+00:00"
+      "publish_time": "2026-03-06 21:33:26"
     },
     {
-      "title": "美油涨幅进一步扩大至10% 续创2024年4月以来新高",
-      "summary": "【美油涨幅进一步扩大至10% 续创2024年4月以来新高】财联社3月6日电，WTI原油涨10.27%，报89.333美元/桶，续创2024年4月以来新高。布伦特原油涨7.10%，报91.471美元/桶，续创2024年4月以来新高。美国总统特朗普6日在社交媒体上宣称，“与伊朗不会达成任何协议，除非其无条件投降”。",
+      "title": "现货白银涨超1%",
+      "summary": "南方财经3月6日电，现货白银涨超1%，现报83.67美元/盎司。",
       "likes": 0,
-      "platform": "财联社",
-      "source_type": "电报",
+      "platform": "东方财富",
+      "source_type": "搜索-白银",
       "sentiment": "中性偏多",
       "creator_type": "财经资讯平台",
-      "publish_time": "2026-03-06T14:36:15+00:00"
+      "publish_time": "2026-03-06 09:57:25"
     },
     {
-      "title": "美股航空股走低",
-      "summary": "【美股航空股走低】财联社3月6日电，美股航空股走低，标普1500航空指数下跌3.6%，连续第六个交易日走低，达美航空跌超3%，联合大陆航空跌超4%。",
+      "title": "现货白银涨近2%",
+      "summary": "人民财讯3月6日电，截至发稿，现货白银涨近2%，现货黄金涨近1%。",
       "likes": 0,
-      "platform": "财联社",
-      "source_type": "电报",
-      "sentiment": "偏空",
-      "creator_type": "财经资讯平台",
-      "publish_time": "2026-03-06T14:35:49+00:00"
-    },
-    {
-      "title": "财联社3月6日电，美国能源部长赖特表示，已采取短期措施帮助降低油价。",
-      "summary": "财联社3月6日电，美国能源部长赖特表示，已采取短期措施帮助降低油价。",
-      "likes": 0,
-      "platform": "财联社",
-      "source_type": "电报",
+      "platform": "东方财富",
+      "source_type": "搜索-白银",
       "sentiment": "中性偏多",
       "creator_type": "财经资讯平台",
-      "publish_time": "2026-03-06T14:34:55+00:00"
+      "publish_time": "2026-03-06 09:59:00"
     },
     {
-      "title": "财联社3月6日电，美股罗素2000指数下跌2%。",
-      "summary": "财联社3月6日电，美股罗素2000指数下跌2%。",
+      "title": "现货白银日内涨幅扩大至2%",
+      "summary": "南方财经3月6日电，现货白银日内涨幅扩大至2%，报83.9美元/盎司。",
       "likes": 0,
-      "platform": "财联社",
-      "source_type": "电报",
-      "sentiment": "偏空",
-      "creator_type": "财经资讯平台",
-      "publish_time": "2026-03-06T14:33:57+00:00"
-    },
-    {
-      "title": "国防部回应澳大利亚炒作所谓中国军机不安全接近其舰载机",
-      "summary": "【国防部回应澳大利亚炒作所谓中国军机不安全接近其舰载机】财联社3月6日电，国防部新闻发言人蒋斌就澳大利亚炒作所谓中国军机不安全接近其舰载机答记者问。记者：澳大利亚国防部称，3月4日一架澳军舰载直升机在黄海国际水域执行联合国安理会决议期间，中方军机不安全接近澳舰载机。请问对此有何评论？\n\n蒋斌：澳方有关言论纯属歪曲事实、颠倒黑白，我们对此强烈不满、坚决反对。近日，澳“图文巴”号护卫舰打着所谓“执行联",
-      "likes": 0,
-      "platform": "财联社",
-      "source_type": "电报",
-      "sentiment": "中性",
-      "creator_type": "财经资讯平台",
-      "publish_time": "2026-03-06T14:33:52+00:00"
-    },
-    {
-      "title": "伊朗外长就军舰遭袭事件与印度和斯里兰卡外长通话",
-      "summary": "【伊朗外长就军舰遭袭事件与印度和斯里兰卡外长通话】财联社3月6日电，伊朗外长阿拉格齐6日与印度和斯里兰卡外长通电话，强烈谴责美国在没有任何警告的情况下在国际水域袭击伊朗“德纳”号护卫舰。伊朗外交部6日发表声明说，阿拉格齐分别与印度外长苏杰生、斯里兰卡外长维吉塔·赫拉特通电话。 (新华社)",
-      "likes": 0,
-      "platform": "财联社",
-      "source_type": "电报",
+      "platform": "东方财富",
+      "source_type": "搜索-白银",
       "sentiment": "中性偏多",
       "creator_type": "财经资讯平台",
-      "publish_time": "2026-03-06T14:32:06+00:00"
+      "publish_time": "2026-03-06 09:57:29"
     },
     {
-      "title": "美股三大指数集体低开 纳指跌1.4%",
-      "summary": "【美股三大指数集体低开 纳指跌1.4%】财联社3月6日电，美股三大指数均低开超1%，纳指跌1.4%，道指跌1.4%，标普500指数跌1.2%。科技股走低，英特尔、西部数据、美光科技跌超3%，英伟达、AMD、亚马逊、谷歌跌超1%。石油股走高，康菲石油、埃克森美孚涨超1%。",
+      "title": "现货白银跌超1%",
+      "summary": "南方财经3月5日电，现货白银跌超1%，现报83.13美元/盎司。",
       "likes": 0,
-      "platform": "财联社",
-      "source_type": "电报",
+      "platform": "东方财富",
+      "source_type": "搜索-白银",
+      "sentiment": "中性偏多",
+      "creator_type": "财经资讯平台",
+      "publish_time": "2026-03-05 14:07:12"
+    },
+    {
+      "title": "现货白银收涨1.87%",
+      "summary": "每经AI快讯，当地时间3月4日，国际银价反弹，现货白银收涨1.87%，报83.54美元/盎司。",
+      "likes": 0,
+      "platform": "东方财富",
+      "source_type": "搜索-白银",
       "sentiment": "偏多",
       "creator_type": "财经资讯平台",
-      "publish_time": "2026-03-06T14:31:02+00:00"
+      "publish_time": "2026-03-05 06:20:27"
     },
     {
-      "title": "财联社3月6日电，美国总统特朗普认为汽油价格会“很快”下降。",
-      "summary": "财联社3月6日电，美国总统特朗普认为汽油价格会“很快”下降。",
+      "title": "现货黄金白银短线跳水 现货白银跌7%",
+      "summary": "现货黄金白银短线跳水，现货黄金跌1.70%，报5231.46美元/盎司；现货白银跌7%，报83.07美元/盎司。",
       "likes": 0,
-      "platform": "财联社",
-      "source_type": "电报",
-      "sentiment": "中性偏多",
+      "platform": "东方财富",
+      "source_type": "搜索-白银",
+      "sentiment": "极度悲观",
       "creator_type": "财经资讯平台",
-      "publish_time": "2026-03-06T14:30:22+00:00"
+      "publish_time": "2026-03-03 17:29:39"
     },
     {
-      "title": "以军称精准打击一名伊朗高级指挥官",
-      "summary": "【以军称精准打击一名伊朗高级指挥官】财联社3月6日电，以色列国防军称，以军精准打击了伊朗德黑兰的一名伊方高级指挥官。",
+      "title": "永太科技高管增持计划提前完成 505万元真金白银传递发展信心",
+      "summary": "在市场波动背景下，公司核心管理层斥资逾505万元“真金白银”增持，体现了管理层对公司未来发展及长期投资价值的坚定看好，进一步增强市场投资者信心。",
       "likes": 0,
-      "platform": "财联社",
-      "source_type": "电报",
-      "sentiment": "中性偏多",
-      "creator_type": "财经资讯平台",
-      "publish_time": "2026-03-06T14:26:25+00:00"
-    },
-    {
-      "title": "财联社3月6日电，白宫经济顾问哈塞特表示，近期不会讨论释放战略石油储备事宜。",
-      "summary": "财联社3月6日电，白宫经济顾问哈塞特表示，近期不会讨论释放战略石油储备事宜。",
-      "likes": 0,
-      "platform": "财联社",
-      "source_type": "电报",
-      "sentiment": "中性偏多",
-      "creator_type": "财经资讯平台",
-      "publish_time": "2026-03-06T14:20:14+00:00"
-    },
-    {
-      "title": "深交所：本周对近期股价异常波动的“豫能控股”进行重点监控",
-      "summary": "【深交所：本周对近期股价异常波动的“豫能控股”进行重点监控】财联社3月6日电，深交所监管动态显示，3月2日至3月6日，本所共对199起证券异常交易行为采取了自律监管措施，涉及盘中拉抬打压、虚假申报等异常交易情形；对近期股价异常波动的“豫能控股”进行重点监控；共对6起上市公司重大事项进行核查，并上报证监会4起涉嫌违法违规案件线索。",
-      "likes": 0,
-      "platform": "财联社",
-      "source_type": "电报",
-      "sentiment": "中性偏多",
-      "creator_type": "财经资讯平台",
-      "publish_time": "2026-03-06T14:19:04+00:00"
-    },
-    {
-      "title": "伊朗驻黎巴嫩大使馆附近区域遭以军空袭",
-      "summary": "【伊朗驻黎巴嫩大使馆附近区域遭以军空袭】财联社3月6日电，据黎巴嫩媒体6日报道，伊朗驻黎巴嫩大使馆附近区域遭以色列军队空袭。 (新华社)",
-      "likes": 0,
-      "platform": "财联社",
-      "source_type": "电报",
-      "sentiment": "中性偏多",
-      "creator_type": "财经资讯平台",
-      "publish_time": "2026-03-06T14:18:36+00:00"
-    },
-    {
-      "title": "财联社3月6日电，白宫经济顾问哈塞特表示，正目睹生产力的爆发式增长，预计今年将实现4%的增长。",
-      "summary": "财联社3月6日电，白宫经济顾问哈塞特表示，正目睹生产力的爆发式增长，预计今年将实现4%的增长。",
-      "likes": 0,
-      "platform": "财联社",
-      "source_type": "电报",
-      "sentiment": "极度看多",
-      "creator_type": "财经资讯平台",
-      "publish_time": "2026-03-06T14:14:02+00:00"
-    },
-    {
-      "title": "特朗普宣称“与伊朗不会达成任何协议”",
-      "summary": "【特朗普宣称“与伊朗不会达成任何协议”】财联社3月6日电，美国总统特朗普6日在社交媒体上宣称，“与伊朗不会达成任何协议，除非其无条件投降”。他还称美国“及其许多盟友”要“让伊朗再次伟大！” (新华社)",
-      "likes": 0,
-      "platform": "财联社",
-      "source_type": "电报",
-      "sentiment": "中性偏多",
-      "creator_type": "财经资讯平台",
-      "publish_time": "2026-03-06T14:13:26+00:00"
-    },
-    {
-      "title": "加密货币全线下跌 比特币跌超5%",
-      "summary": "【加密货币全线下跌 比特币跌超5%】财联社3月6日电，行情显示，比特币跌至68765.1美元，过去24小时内跌5.2%；行情显示，以太坊跌至2004.96美元，过去24小时内跌5.46%。",
-      "likes": 0,
-      "platform": "财联社",
-      "source_type": "电报",
-      "sentiment": "偏空",
-      "creator_type": "财经资讯平台",
-      "publish_time": "2026-03-06T14:11:40+00:00"
-    },
-    {
-      "title": "财联社3月6日电，惠誉确认霍尼韦尔评级为“A”，取消负面评级观察，展望稳定。",
-      "summary": "财联社3月6日电，惠誉确认霍尼韦尔评级为“A”，取消负面评级观察，展望稳定。",
-      "likes": 0,
-      "platform": "财联社",
-      "source_type": "电报",
-      "sentiment": "中性",
-      "creator_type": "财经资讯平台",
-      "publish_time": "2026-03-06T14:08:28+00:00"
-    },
-    {
-      "title": "财联社3月6日电，蒙牛乳业预计2025年公司拥有人应占利润将约为人民币14亿元至16亿元。",
-      "summary": "财联社3月6日电，蒙牛乳业预计2025年公司拥有人应占利润将约为人民币14亿元至16亿元。",
-      "likes": 0,
-      "platform": "财联社",
-      "source_type": "电报",
-      "sentiment": "中性偏多",
-      "creator_type": "财经资讯平台",
-      "publish_time": "2026-03-06T14:05:59+00:00"
-    },
-    {
-      "title": "财联社3月6日晚间新闻精选",
-      "summary": "【财联社3月6日晚间新闻精选】\n1、国家发改委主任郑栅洁表示，集成电路、航空航天、生物医药等六大新兴支柱产业相关产值到2030年有望扩大到十万亿元以上。\n2、国家发改委主任郑栅洁表示，将推进水网、电网、算力网、新型通信网、城市地下管网，物流网和重点领域建设，今年这些方面的投资将超过7万亿元。\n3、财政部部长蓝佛安表示，今年继续坚持更加积极的基调，在去年总量扩张的基础上保持力度不减。\n4、央行行长潘",
-      "likes": 0,
-      "platform": "财联社",
-      "source_type": "电报",
-      "sentiment": "极度看多",
-      "creator_type": "财经资讯平台",
-      "publish_time": "2026-03-06T14:04:37+00:00"
-    },
-    {
-      "title": "财联社3月6日电，南非主要股指下跌3.1%，至116,457.10点。",
-      "summary": "财联社3月6日电，南非主要股指下跌3.1%，至116,457.10点。",
-      "likes": 0,
-      "platform": "财联社",
-      "source_type": "电报",
-      "sentiment": "偏空",
-      "creator_type": "财经资讯平台",
-      "publish_time": "2026-03-06T13:58:48+00:00"
-    },
-    {
-      "title": "财联社3月6日电，美国天然气期货涨超4%，现报3.144美元/百万英热。",
-      "summary": "财联社3月6日电，美国天然气期货涨超4%，现报3.144美元/百万英热。",
-      "likes": 0,
-      "platform": "财联社",
-      "source_type": "电报",
-      "sentiment": "中性偏多",
-      "creator_type": "财经资讯平台",
-      "publish_time": "2026-03-06T13:57:36+00:00"
-    },
-    {
-      "title": "一艘拖船在霍尔木兹海峡遭不明物体击中",
-      "summary": "【一艘拖船在霍尔木兹海峡遭不明物体击中】财联社3月6日电，英国海上贸易行动办公室表示，其收到报告称，一艘拖船在霍尔木兹海峡航行时遭不明物体击中。据悉，事发地点位于阿曼以北约6海里的霍尔木兹海峡附近海域。目前相关情况仍在进一步核实中。 (央视新闻)",
-      "likes": 0,
-      "platform": "财联社",
-      "source_type": "电报",
-      "sentiment": "中性偏多",
-      "creator_type": "财经资讯平台",
-      "publish_time": "2026-03-06T13:56:51+00:00"
-    },
-    {
-      "title": "财联社3月6日电，大商所焦煤期货主力合约日内涨超5%，现报1162.5元/吨。",
-      "summary": "财联社3月6日电，大商所焦煤期货主力合约日内涨超5%，现报1162.5元/吨。",
-      "likes": 0,
-      "platform": "财联社",
-      "source_type": "电报",
-      "sentiment": "中性偏多",
-      "creator_type": "财经资讯平台",
-      "publish_time": "2026-03-06T13:56:50+00:00"
-    },
-    {
-      "title": "美油涨幅进一步扩大至8%",
-      "summary": "【美油涨幅进一步扩大至8%】财联社3月6日电，WTI原油涨8.21%，报87.661美元/桶；布伦特原油涨5.60%，报90.197美元/桶。",
-      "likes": 0,
-      "platform": "财联社",
-      "source_type": "电报",
-      "sentiment": "中性偏多",
-      "creator_type": "财经资讯平台",
-      "publish_time": "2026-03-06T13:56:08+00:00"
-    },
-    {
-      "title": "财联社3月6日电，美股恐慌指数VIX最新上涨3.12点至26.87点。",
-      "summary": "财联社3月6日电，美股恐慌指数VIX最新上涨3.12点至26.87点。",
-      "likes": 0,
-      "platform": "财联社",
-      "source_type": "电报",
+      "platform": "东方财富",
+      "source_type": "搜索-白银",
       "sentiment": "偏多",
       "creator_type": "财经资讯平台",
-      "publish_time": "2026-03-06T13:51:49+00:00"
+      "publish_time": "2026-03-06 22:50:33"
     },
     {
-      "title": "财联社3月6日电，据媒体报道，科威特因储油罐已满而削减部分油田的石油产量。",
-      "summary": "财联社3月6日电，据媒体报道，科威特因储油罐已满而削减部分油田的石油产量。",
+      "title": "有色/贵金属 | 美元美债大幅走强 贵金属价格深度调整",
+      "summary": "贵金属 　　观点：美元美债大幅走强，贵金属价格深度调整 　　随着中东冲突持续，美元美债和国际油价大幅走强，对贵金属价格形成双重压制。能源价格飙升影响通胀潜在提高，使得市场下调降息预期，推动美元指数和国债收益率出现反弹，从而对贵金属价格形成明显压制。",
       "likes": 0,
-      "platform": "财联社",
-      "source_type": "电报",
-      "sentiment": "中性偏多",
-      "creator_type": "财经资讯平台",
-      "publish_time": "2026-03-06T13:50:51+00:00"
-    },
-    {
-      "title": "证监会明确短线交易监管规定的适用主体和券种范围",
-      "summary": "【证监会明确短线交易监管规定的适用主体和券种范围】财联社3月6日电，证监会发布《关于短线交易监管的若干规定》。《规定》明确适用主体和券种范围。在短线交易主体上，对于买入卖出时均具备大股东、董监高身份和买入时不具备特定身份但卖出时具备的，纳入规制范围。明确所涉证券范围包括股票及存托凭证、可交换公司债券（以下简称可交债）、可转债等其他具有股权性质的证券。",
-      "likes": 0,
-      "platform": "财联社",
-      "source_type": "电报",
-      "sentiment": "中性偏多",
-      "creator_type": "财经资讯平台",
-      "publish_time": "2026-03-06T13:49:32+00:00"
-    },
-    {
-      "title": "财联社3月6日电，纳斯达克100期货指数进一步下跌至1.5%。",
-      "summary": "财联社3月6日电，纳斯达克100期货指数进一步下跌至1.5%。",
-      "likes": 0,
-      "platform": "财联社",
-      "source_type": "电报",
-      "sentiment": "偏空",
-      "creator_type": "财经资讯平台",
-      "publish_time": "2026-03-06T13:49:19+00:00"
-    },
-    {
-      "title": "财联社3月6日电，富时A50中国指数期货跌幅扩大至1%。",
-      "summary": "财联社3月6日电，富时A50中国指数期货跌幅扩大至1%。",
-      "likes": 0,
-      "platform": "财联社",
-      "source_type": "电报",
-      "sentiment": "中性偏多",
-      "creator_type": "财经资讯平台",
-      "publish_time": "2026-03-06T13:48:47+00:00"
-    },
-    {
-      "title": "希腊将部署“爱国者”防空系统和F-16战机协防保加利亚",
-      "summary": "【希腊将部署“爱国者”防空系统和F-16战机协防保加利亚】财联社3月6日电，希腊国防部长登迪亚斯宣布，应保加利亚政府的请求，希腊将部署一套“爱国者”防空系统和两架F-16战斗机至北部靠近保加利亚边境的位置，以帮助保加利亚防范可能遭受的弹道导弹袭击。",
-      "likes": 0,
-      "platform": "财联社",
-      "source_type": "电报",
-      "sentiment": "中性偏多",
-      "creator_type": "财经资讯平台",
-      "publish_time": "2026-03-06T13:48:34+00:00"
-    },
-    {
-      "title": "布伦特原油2024年4月以来首次升破90美元/桶 本周累计涨23%",
-      "summary": "【布伦特原油2024年4月以来首次升破90美元/桶 本周累计涨23%】财联社3月6日电，供应中断的担忧及航运成本抬升继续推动油价大幅上涨，布伦特原油期货向上触及90美元/桶，盘中大涨5.3%，续创2024年4月以来新高。全球基准布伦特原油本周累计上涨23%。WTI原油日内涨幅达7.0%，报87.02美元/桶。消息称，科威特削减部分油田石油产量。",
-      "likes": 0,
-      "platform": "财联社",
-      "source_type": "电报",
+      "platform": "东方财富",
+      "source_type": "搜索-贵金属",
       "sentiment": "极度看多",
       "creator_type": "财经资讯平台",
-      "publish_time": "2026-03-06T13:47:23+00:00"
+      "publish_time": "2026-03-04 09:04:28"
     },
     {
-      "title": "证监会明确13种短线交易豁免情形",
-      "summary": "【证监会明确13种短线交易豁免情形】财联社3月6日电，证监会发布《关于短线交易监管的若干规定》。《规定》明确了13种豁免情形，主要涵盖3类情况：一是根据产品或者业务制度设计，市场对相关业务环节有明确预期，需要支持业务发展的，如优先股转股，可转债转股、赎回、回售，可交债换股、赎回、回售，ETF认购、申购、赎回，股权激励相关授予、登记、行权，做市业务等。二是因客观非交易因素导致持股变动的，如司法强制执",
+      "title": "贵金属 短期波动难撼牛市根基",
+      "summary": "整体来看，相对疲软的经济数据有利于后续美联储的降息操作，有利于贵金属的上涨。其次，春节假期后首周中东紧张局势加剧。上周末中东战火重燃，贵金属作为风险对冲与价值锚定工具的战略地位持续强化。最后，关税风波再起，特朗普政府关税政策的反复无常也为贵金属提供较强的避险支撑。",
       "likes": 0,
-      "platform": "财联社",
-      "source_type": "电报",
-      "sentiment": "偏空",
-      "creator_type": "财经资讯平台",
-      "publish_time": "2026-03-06T13:46:40+00:00"
-    },
-    {
-      "title": "证监会明确短线交易持股和交易时点的认定计算标准",
-      "summary": "【证监会明确短线交易持股和交易时点的认定计算标准】财联社3月6日电，证监会发布《关于短线交易监管的若干规定》。《规定》明确持股和交易时点的认定计算标准。结合监管实践，明确了一系列认定和计算标准，具体包括：一是买入、卖出时点以证券过户登记日为准。二是大股东百分之五以上持股比例按照同一上市公司、新三板挂牌公司在境内外已发行或者挂牌并公开转让的股份合并计算。三是香港中央结算有限公司在互联互通机制下作为名",
-      "likes": 0,
-      "platform": "财联社",
-      "source_type": "电报",
-      "sentiment": "中性偏多",
-      "creator_type": "财经资讯平台",
-      "publish_time": "2026-03-06T13:45:44+00:00"
-    },
-    {
-      "title": "财联社3月6日电，英国海事贸易行动办公室表示，第三方报告称一艘拖船遭不明物体袭击。",
-      "summary": "财联社3月6日电，英国海事贸易行动办公室表示，第三方报告称一艘拖船遭不明物体袭击。",
-      "likes": 0,
-      "platform": "财联社",
-      "source_type": "电报",
-      "sentiment": "中性偏多",
-      "creator_type": "财经资讯平台",
-      "publish_time": "2026-03-06T13:45:08+00:00"
-    },
-    {
-      "title": "财联社3月6日电，西班牙首相桑切斯6日称，美国和以色列对伊朗的军事行动是“极其严重的错误”。",
-      "summary": "财联社3月6日电，西班牙首相桑切斯6日称，美国和以色列对伊朗的军事行动是“极其严重的错误”。",
-      "likes": 0,
-      "platform": "财联社",
-      "source_type": "电报",
-      "sentiment": "中性偏多",
-      "creator_type": "财经资讯平台",
-      "publish_time": "2026-03-06T13:43:56+00:00"
-    },
-    {
-      "title": "证监会发布《关于短线交易监管的若干规定》",
-      "summary": "【证监会发布《关于短线交易监管的若干规定》】财联社3月6日电，证监会发布《关于短线交易监管的若干规定》。主要内容包括：一是明确适用主体和券种范围。规定买入卖出时均具备大股东、董监高身份和买入时不具备但卖出时具备的，需遵守短线交易制度。规定“其他具有股权性质的证券”包括存托凭证、可交债、可转债等，细化明确监管要求。二是明确持股和交易时点的认定计算标准。规定买卖时点为证券过户登记日，大股东持股比例按同",
-      "likes": 0,
-      "platform": "财联社",
-      "source_type": "电报",
-      "sentiment": "中性偏多",
-      "creator_type": "财经资讯平台",
-      "publish_time": "2026-03-06T13:41:44+00:00"
-    },
-    {
-      "title": "财联社3月6日电，标普500指数期货和纳斯达克100指数期货进一步下跌至盘中低点。",
-      "summary": "财联社3月6日电，标普500指数期货和纳斯达克100指数期货进一步下跌至盘中低点。",
-      "likes": 0,
-      "platform": "财联社",
-      "source_type": "电报",
-      "sentiment": "偏空",
-      "creator_type": "财经资讯平台",
-      "publish_time": "2026-03-06T13:38:04+00:00"
-    },
-    {
-      "title": "财联社3月6日电，交易员预计美联储6月降息的概率已升至约50%，此前在就业数据公布前仅为35%。",
-      "summary": "财联社3月6日电，交易员预计美联储6月降息的概率已升至约50%，此前在就业数据公布前仅为35%。",
-      "likes": 0,
-      "platform": "财联社",
-      "source_type": "电报",
-      "sentiment": "中性偏多",
-      "creator_type": "财经资讯平台",
-      "publish_time": "2026-03-06T13:37:52+00:00"
-    },
-    {
-      "title": "财联社3月6日电，美国2月份平均时薪同比增长3.8%，预期为增长3.7%。",
-      "summary": "财联社3月6日电，美国2月份平均时薪同比增长3.8%，预期为增长3.7%。",
-      "likes": 0,
-      "platform": "财联社",
-      "source_type": "电报",
-      "sentiment": "中性偏多",
-      "creator_type": "财经资讯平台",
-      "publish_time": "2026-03-06T13:35:29+00:00"
-    },
-    {
-      "title": "财联社3月6日电，交易员加大押注，预计美联储将在2026年至少降息一次。",
-      "summary": "财联社3月6日电，交易员加大押注，预计美联储将在2026年至少降息一次。",
-      "likes": 0,
-      "platform": "财联社",
-      "source_type": "电报",
-      "sentiment": "中性偏多",
-      "creator_type": "财经资讯平台",
-      "publish_time": "2026-03-06T13:33:01+00:00"
-    },
-    {
-      "title": "财联社3月6日电，现货白银短线拉涨1.5%，现货黄金涨0.65%。此前美国2月非农就业人数意外减少9.2万人，预估为增加5.5万。",
-      "summary": "财联社3月6日电，现货白银短线拉涨1.5%，现货黄金涨0.65%。此前美国2月非农就业人数意外减少9.2万人，预估为增加5.5万。",
-      "likes": 0,
-      "platform": "财联社",
-      "source_type": "电报",
-      "sentiment": "中性偏多",
-      "creator_type": "财经资讯平台",
-      "publish_time": "2026-03-06T13:32:40+00:00"
-    },
-    {
-      "title": "美股期指跌幅扩大 纳指期货跌1.1%",
-      "summary": "【美股期指跌幅扩大 纳指期货跌1.1%】财联社3月6日电，美股期指跌幅扩大，截至目前，道指期货跌0.9%，纳指期货跌1.1%，标普500指数期货跌0.9%。消息面上，美国2月非农就业人数意外减少9.2万人，预估为增加5.5万。",
-      "likes": 0,
-      "platform": "财联社",
-      "source_type": "电报",
-      "sentiment": "中性偏多",
-      "creator_type": "财经资讯平台",
-      "publish_time": "2026-03-06T13:31:19+00:00"
-    },
-    {
-      "title": "美国2月非农就业人数意外减少9.2万人 预估为增加5.5万",
-      "summary": "【美国2月非农就业人数意外减少9.2万人 预估为增加5.5万】财联社3月6日电，美国2月非农就业人数减少9.2万，预估为增加5.5万。美国2月私营领域就业人数减8.6万，政府部门就业人数减6000。美国1月非农就业人数修正至增12.6万，12月修正至减1.7万。",
-      "likes": 0,
-      "platform": "财联社",
-      "source_type": "电报",
-      "sentiment": "中性偏多",
-      "creator_type": "财经资讯平台",
-      "publish_time": "2026-03-06T13:30:29+00:00"
-    },
-    {
-      "title": "财联社3月6日电，美国1月零售销售环比下降0.2%，预估为-0.3%，前值为0%。",
-      "summary": "财联社3月6日电，美国1月零售销售环比下降0.2%，预估为-0.3%，前值为0%。",
-      "likes": 0,
-      "platform": "财联社",
-      "source_type": "电报",
-      "sentiment": "中性偏多",
-      "creator_type": "财经资讯平台",
-      "publish_time": "2026-03-06T13:30:23+00:00"
-    },
-    {
-      "title": "一觉醒来，俄伊反目成仇，粮食断供逼疯伊朗，9000万人沦为牺牲品",
-      "summary": "中东彻底乱套了，一场关乎9000多万人吃饭、牵扯全球能源命脉的大危机，正在疯狂蔓延，没人能独善其身。",
-      "likes": 0,
-      "platform": "抖音",
-      "source_type": "头条财经",
-      "sentiment": "中性偏多",
-      "creator_type": "财经资讯平台",
-      "publish_time": "2026-03-06T14:44:30.134660+00:00"
-    },
-    {
-      "title": "日本政府最近急得像热锅上的蚂蚁，因为他们发现，自己派往中国重庆的新任总领事，人是选好了，行李也打包了，可就是进不来。\n\n重庆总领事馆在日本对华布局里分量不轻。它",
-      "summary": "日本政府最近急得像热锅上的蚂蚁，因为他们发现，自己派往中国重庆的新任总领事，人是选好了，行李也打包了，可就是进不来。\n\n重庆总领事馆在日本对华布局里分量不轻。它负责的西南片区，是中国西部开放的重要门户，日企在这里的汽车零部件、制造业供应链、农产品贸易和民间往来都靠这个点来衔接。过去几年，日本企业在成",
-      "likes": 0,
-      "platform": "抖音",
-      "source_type": "头条财经",
-      "sentiment": "中性偏多",
-      "creator_type": "财经资讯平台",
-      "publish_time": "2026-03-06T14:44:30.134691+00:00"
-    },
-    {
-      "title": "三峡能源跌、大秦铁路涨、赛力斯，今天这三只票把市场分成两拨人",
-      "summary": "收盘了，看一眼账户。大盘今天红得挺喜庆，沪指涨了0.38%，深成指涨0.59%，创业板涨0.38%。4200多只个股飘红，涨停的一大把，成交量还有2.2万亿。可偏偏就有那么几只票，让持仓的人高兴不起来。三峡能源、大秦铁路、赛力斯。三只票，三个板块，三种姿势。",
-      "likes": 0,
-      "platform": "抖音",
-      "source_type": "头条财经",
+      "platform": "东方财富",
+      "source_type": "搜索-贵金属",
       "sentiment": "极度看多",
       "creator_type": "财经资讯平台",
-      "publish_time": "2026-03-06T14:44:30.134701+00:00"
+      "publish_time": "2026-03-05 10:32:26"
     },
     {
-      "title": "当年中央拨款5个亿，造了3万多平米的雷神山医院，如今还在用吗？",
-      "summary": "这些年一直有人传，雷神山医院早就荒废了。杂草长到半人高，设备生锈没人管。说中央花5个亿建的3万多平米大楼，纯属浪费。这些话传得有鼻子有眼，不少人信了。但事实真不是这样，这座当年创造奇迹的医院，现在的状态可能超出很多人的想象。",
+      "title": "启用动态交易限额 国有大行升级贵金属业务风控",
+      "summary": "近期贵金属市场波动明显加大，多家银行陆续加强贵金属业务风险管控。 　　3月3日晚间，建设银行发布公告称，为进一步做好风险防控，我行将自3月4日起对建行金（含易存金）实施动态交易限额管理。",
       "likes": 0,
-      "platform": "抖音",
-      "source_type": "头条财经",
+      "platform": "东方财富",
+      "source_type": "搜索-贵金属",
+      "sentiment": "偏空",
+      "creator_type": "财经资讯平台",
+      "publish_time": "2026-03-06 01:03:31"
+    },
+    {
+      "title": "有色/贵金属 | 碳酸锂：下游补库进行时",
+      "summary": "新能源早评 　　碳酸锂：下游补库进行时 　　【行情回顾】碳酸锂期货主力合约收于153060元/吨，日环比+1.46%。成交量29.71万手，日环比-33.24%；持仓量33.90万手，日环比-593手。碳酸锂LC2605-LC2609月差为Contango结构，日环比+240元/吨",
+      "likes": 0,
+      "platform": "东方财富",
+      "source_type": "搜索-贵金属",
       "sentiment": "中性偏多",
       "creator_type": "财经资讯平台",
-      "publish_time": "2026-03-06T14:44:30.134714+00:00"
+      "publish_time": "2026-03-05 09:03:33"
     },
     {
-      "title": "刚刚，央行行长、证监会主席集体发声！信号很强烈",
-      "summary": "文 | 付一夫就在刚刚，一场备受瞩目的经济主题记者会召开完毕。国家发改委、财政部、商务部、中国人民银行、中国证监会的一把手在会上集体亮相，就发展改革、财政预算、商务、金融证券等核心议题回答中外记者提问。",
+      "title": "贵金属板块持续回调，湖南黄金等股跌超3%",
+      "summary": "人民财讯3月6日电，贵金属板块持续回调，四川黄金、中金黄金、湖南黄金盘初跌超3%，紫金矿业、晓程科技、西部黄金等股跟跌。",
       "likes": 0,
-      "platform": "抖音",
-      "source_type": "头条财经",
-      "sentiment": "中性偏多",
+      "platform": "东方财富",
+      "source_type": "搜索-贵金属",
+      "sentiment": "偏空",
       "creator_type": "财经资讯平台",
-      "publish_time": "2026-03-06T14:44:30.134725+00:00"
+      "publish_time": "2026-03-06 09:41:12"
     },
     {
-      "title": "利好！降准降息大消息",
-      "summary": "央行行长潘功胜：今年将灵活高效运用降准降息等多种货币政策工具。潘功胜表示，2026年人民银行将实施适度宽松的货币政策，灵活高效地运用降准降息等多种货币政策工具，发挥增量和存量、货币政策和财政政策的集成协同效应。",
+      "title": "A股全线收涨，超4200只个股上涨，油气、贵金属、煤炭等板块回调",
+      "summary": "油气、贵金属、煤炭等大宗商品股多数回调，通源石油、陕西黑猫、石化油服等股下挫。",
       "likes": 0,
-      "platform": "抖音",
-      "source_type": "头条财经",
+      "platform": "东方财富",
+      "source_type": "搜索-贵金属",
       "sentiment": "偏多",
       "creator_type": "财经资讯平台",
-      "publish_time": "2026-03-06T14:44:30.134732+00:00"
+      "publish_time": "2026-03-06 15:43:15"
     },
     {
-      "title": "欧洲人是真的有点慌了，一个外国专家原话是这么说的：“我们这辈子，从没见过像中国这样的对手”\n以前总觉得，不就是当年日本车、韩国车那套打法嘛，靠便宜货抢市场，我们",
-      "summary": "欧洲人是真的有点慌了，一个外国专家原话是这么说的：“我们这辈子，从没见过像中国这样的对手”\n以前总觉得，不就是当年日本车、韩国车那套打法嘛，靠便宜货抢市场，我们扛得住\n\n现在他们想明白了，根本不是一回事\n“这次相当于15个日本同时扑过来”\n\n这放在几年前，要是有人跟他们说，欧洲的制造业会被中国全方位",
+      "title": "多家银行密集提示贵金属投资风险",
+      "summary": "南方财经3月4日电，在近日地缘冲突升级的背景下，招商银行在官网发布通告称，近期贵金属价格波动加剧，请客户提高贵金属业务的风险防范意识，理性开展贵金属投资活动。请及时关注持仓情况、保证金余额变化，合理控制仓位，注意分散配置，避免单一重仓贵金属。",
       "likes": 0,
-      "platform": "抖音",
-      "source_type": "头条财经",
-      "sentiment": "中性偏多",
-      "creator_type": "财经资讯平台",
-      "publish_time": "2026-03-06T14:44:30.134744+00:00"
-    },
-    {
-      "title": "诡异之处在于，狂轰滥炸了七八天，美国以色列一直没有攻击伊朗的油气设施！不是仁慈而手下留情，不是不想炸，而是投鼠忌器，是不敢炸！\n\n美以连着炸了七天，只打军事目标",
-      "summary": "诡异之处在于，狂轰滥炸了七八天，美国以色列一直没有攻击伊朗的油气设施！不是仁慈而手下留情，不是不想炸，而是投鼠忌器，是不敢炸！\n\n美以连着炸了七天，只打军事目标和高层人员，偏偏不动伊朗的油田、炼油厂。\n很多人以为他们心软，其实是真不敢。\n\n伊朗早就放话，谁敢炸油气设施，就把整个中东的油气田全毁掉。",
-      "likes": 0,
-      "platform": "抖音",
-      "source_type": "头条财经",
-      "sentiment": "中性偏多",
-      "creator_type": "财经资讯平台",
-      "publish_time": "2026-03-06T14:44:30.134758+00:00"
-    },
-    {
-      "title": "告诉大家一个坏消息：福州，武汉已出现4大怪象，值得每个人深思",
-      "summary": "但跟一位从深圳回武汉的程序员老张喝酒时，他说了句大实话:“以前在深圳是大厂拧螺丝，虽然累但钱给到位;现在回了武汉，发现是‘血汗工厂’升级版——拿着当地看似体面的薪水，干着三个人的活，加班到深夜，安全感却还不如在深圳。”",
-      "likes": 0,
-      "platform": "抖音",
-      "source_type": "头条财经",
-      "sentiment": "中性偏多",
-      "creator_type": "财经资讯平台",
-      "publish_time": "2026-03-06T14:44:30.134771+00:00"
-    },
-    {
-      "title": "黄金都要靠边站！2026年真正“疯涨”的，竟是你随手扔的旧东西？",
-      "summary": "2026年开年没多久，新能源车、人工智能设备和储能项目建得飞快，对镍、钴、铜、锂这些关键金属的需求一下子冲上去。原矿开采跟不上节奏，价格就往上走。结果呢，家里那些旧手机、废旧动力电池、淘汰的笔记本电脑电源线、旧电动车电池组，反而成了抢手货。",
-      "likes": 0,
-      "platform": "抖音",
-      "source_type": "头条财经",
-      "sentiment": "极度看多",
-      "creator_type": "财经资讯平台",
-      "publish_time": "2026-03-06T14:44:30.134775+00:00"
-    },
-    {
-      "title": "[太阳]浙江女子在13年之内生了9个孩子，她表示自己不想浪费丈夫的好基因，目标是凑齐十二生肖，后来她丈夫身份曝光，人们直呼不简单！\n \n2010年，那会儿田东霞",
-      "summary": "[太阳]浙江女子在13年之内生了9个孩子，她表示自己不想浪费丈夫的好基因，目标是凑齐十二生肖，后来她丈夫身份曝光，人们直呼不简单！\n \n2010年，那会儿田东霞刚上大学没多久，结果意外怀孕了，学业直接按了暂停键，在温州老宅的秋千上，89年出生的她摸着肚子，那是老大“梦琪”还在肚子里的时候。\n \n谁能",
-      "likes": 0,
-      "platform": "抖音",
-      "source_type": "头条财经",
-      "sentiment": "中性偏多",
-      "creator_type": "财经资讯平台",
-      "publish_time": "2026-03-06T14:44:32.858664+00:00"
-    },
-    {
-      "title": "河南那个矿机老板，估计这两天人都傻了。年前撒钱有多风光，年后开工就有多“头疼”。销售大厅直接给挤成了春运火车站。\n \n农历新年后的开工潮里，河南长垣一家起重机制",
-      "summary": "河南那个矿机老板，估计这两天人都傻了。年前撒钱有多风光，年后开工就有多“头疼”。销售大厅直接给挤成了春运火车站。\n \n农历新年后的开工潮里，河南长垣一家起重机制造企业，用一场堪称火爆的场景，刷新了人们对实体经济的认知。\n \n来自全国各地的采购商把销售大厅挤得水泄不通，人群摩肩接踵，连落脚的地方都十分",
-      "likes": 0,
-      "platform": "抖音",
-      "source_type": "头条财经",
-      "sentiment": "中性偏多",
-      "creator_type": "财经资讯平台",
-      "publish_time": "2026-03-06T14:44:32.858690+00:00"
-    },
-    {
-      "title": "38岁老板娘沦为陪睡工具：揭秘黑茶高端骗局，入局者10有9个离婚",
-      "summary": "“年入百万、喝茶致富、女性独立、高端人脉”，这些听起来光鲜亮丽的词，曾让无数中年女性热血沸腾。可现实却是:有人为此倾家荡产，有人被逼到出卖身体，更有人亲手拆散了原本安稳的家庭。",
-      "likes": 0,
-      "platform": "抖音",
-      "source_type": "头条财经",
-      "sentiment": "中性偏多",
-      "creator_type": "财经资讯平台",
-      "publish_time": "2026-03-06T14:44:32.858703+00:00"
-    },
-    {
-      "title": "“火到人民日报了！”广州，一女子办了张信用卡，每月都按时在还款日还款，6年之后，女子偶然发现，银行6年时间扣走她1万多元利的息，女子联系客服，客服说她没在还款日",
-      "summary": "“火到人民日报了！”广州，一女子办了张信用卡，每月都按时在还款日还款，6年之后，女子偶然发现，银行6年时间扣走她1万多元利的息，女子联系客服，客服说她没在还款日还款，女子在APP里一看，这才发现，还款页面有一行小字: 今日还款，次日到账，也就是说，在还款日还款，第2天才能到账，这样一来，成了逾期，就",
-      "likes": 0,
-      "platform": "抖音",
-      "source_type": "头条财经",
-      "sentiment": "中性偏多",
-      "creator_type": "财经资讯平台",
-      "publish_time": "2026-03-06T14:44:32.858717+00:00"
-    },
-    {
-      "title": "天台上的绝望：家住武汉65层高楼，日子没法过了！",
-      "summary": "天台上的绝望：家住武汉65层高楼，日子没法过了！",
-      "likes": 0,
-      "platform": "抖音",
-      "source_type": "头条财经",
-      "sentiment": "中性偏多",
-      "creator_type": "财经资讯平台",
-      "publish_time": "2026-03-06T14:44:32.858726+00:00"
-    },
-    {
-      "title": "伊朗局势再次提醒我们，一旦中国固态电池实现突破，并在新能源汽车、储能等领域全面普及，未来天下再起纷争，中国也可以真正做到 “云淡风轻”。\n\n固态电池技术进展已经",
-      "summary": "伊朗局势再次提醒我们，一旦中国固态电池实现突破，并在新能源汽车、储能等领域全面普及，未来天下再起纷争，中国也可以真正做到 “云淡风轻”。\n\n固态电池技术进展已经超出很多人预期。宁德时代凝聚态固态电池中试线投产，能量密度达到420Wh/kg，循环次数超过5000次，已经锁定高端车型配套，2027年进入",
-      "likes": 0,
-      "platform": "抖音",
-      "source_type": "头条财经",
+      "platform": "东方财富",
+      "source_type": "搜索-贵金属",
       "sentiment": "偏多",
       "creator_type": "财经资讯平台",
-      "publish_time": "2026-03-06T14:44:32.858734+00:00"
+      "publish_time": "2026-03-04 20:28:32"
     },
     {
-      "title": "十年期国债将跌破2%！利率下行，港股互联网迎估值重构的核动力！",
-      "summary": "穿越叙事迷雾：利率下行周期中的港股互联网价值重估最近两个季度，恒生互联网板块经历了显著的调整，相关个股对投资组合净值形成了明显拖累。市场情绪的转向主要源于双重担忧：一是对AI技术革命叙事可持续性的普遍质疑，二是对监管政策环境不确定性的持续忧虑。",
+      "title": "贵金属概念集体走弱 四川黄金跌停",
+      "summary": "南方财经3月4日电，贵金属概念集体走弱，四川黄金跌停，晓程科技跌超10%，招金黄金跌停价开盘，西部黄金、湖南黄金、湖南白银、赤峰黄金、山东黄金大幅低开。消息面上，昨日现货黄金跌破5000美元/盎司，现货白银跌破79美元/盎司。",
       "likes": 0,
-      "platform": "抖音",
-      "source_type": "头条财经",
+      "platform": "东方财富",
+      "source_type": "搜索-贵金属",
       "sentiment": "中性偏多",
       "creator_type": "财经资讯平台",
-      "publish_time": "2026-03-06T14:44:32.858747+00:00"
+      "publish_time": "2026-03-04 09:31:42"
     },
     {
-      "title": "凤凰独家丨一艘中国散货船通过霍尔木兹海峡？船舶运营方公司CEO回应",
-      "summary": "凤凰网《风暴眼》查询船运数据平台MagicPort发现，这艘名为“铁娘子号”的船舶商务经理为“上海塞图斯海运有限公司”。",
+      "title": "开评：三大指数集体低开 油服工程、贵金属等板块指数跌幅居前",
+      "summary": "油服工程、贵金属等板块指数跌幅居前。",
       "likes": 0,
-      "platform": "抖音",
-      "source_type": "头条财经",
+      "platform": "东方财富",
+      "source_type": "搜索-贵金属",
       "sentiment": "中性偏多",
       "creator_type": "财经资讯平台",
-      "publish_time": "2026-03-06T14:44:32.858758+00:00"
+      "publish_time": "2026-03-06 09:41:42"
     },
     {
-      "title": "美国中东乱局反送神助攻！中国两大行业将迎国运级爆发",
-      "summary": "有的路走着走着，就进了死胡同。美国在中东这一通折腾，看着是想拿捏全球能源命脉，实则可能是给太平洋对岸递了一把“神助攻”。",
+      "title": "有色/贵金属 | 镍产业链下方存在较强价格支撑 后续关注镍矿配额落地情况",
+      "summary": "贵金属：贵金属震荡运行。在地缘政治风险持续升温的背景下，部分投资者选择逢低买入，使金银价格在经历短暂回调后重新获得支撑。综合来看，美国经济数据呈现出一定韧性，然而，在地缘政治风险主导市场的当下，这些宏观数据的影响被显著弱化。",
       "likes": 0,
-      "platform": "抖音",
-      "source_type": "头条财经",
+      "platform": "东方财富",
+      "source_type": "搜索-贵金属",
+      "sentiment": "偏空",
+      "creator_type": "财经资讯平台",
+      "publish_time": "2026-03-06 09:14:41"
+    },
+    {
+      "title": "WTI原油期货涨超8%",
+      "summary": "人民财讯3月6日电，WTI原油期货涨8.21%，报87.661美元/桶；布伦特原油期货涨5.6%，报90.197美元/桶。",
+      "likes": 0,
+      "platform": "东方财富",
+      "source_type": "搜索-原油",
+      "sentiment": "中性偏多",
+      "creator_type": "财经资讯平台",
+      "publish_time": "2026-03-06 22:05:40"
+    },
+    {
+      "title": "日本油企申请释放国家战略储备原油",
+      "summary": "此外，日本超过90%的原油进口依赖中东，部分炼油企业近日向政府申请释放国家战略储备原油来应对潜在的能源危机。",
+      "likes": 0,
+      "platform": "东方财富",
+      "source_type": "搜索-原油",
+      "sentiment": "中性偏多",
+      "creator_type": "财经资讯平台",
+      "publish_time": "2026-03-06 19:05:43"
+    },
+    {
+      "title": "WTI原油涨幅扩大至3.6%",
+      "summary": "WTI原油涨幅扩大至3.6%，报83.9美元/桶。",
+      "likes": 0,
+      "platform": "东方财富",
+      "source_type": "搜索-原油",
+      "sentiment": "中性偏多",
+      "creator_type": "财经资讯平台",
+      "publish_time": "2026-03-06 17:40:38"
+    },
+    {
+      "title": "国际原油期货结算价大幅收涨 WTI原油大涨超8%",
+      "summary": "国际原油期货结算价大幅收涨。WTI原油期货4月合约收涨8.51%，报81.01美元/桶。布伦特原油期货5月合约涨4.93%，报85.41美元/桶。",
+      "likes": 0,
+      "platform": "东方财富",
+      "source_type": "搜索-原油",
       "sentiment": "极度看多",
       "creator_type": "财经资讯平台",
-      "publish_time": "2026-03-06T14:44:32.858763+00:00"
+      "publish_time": "2026-03-06 03:31:38"
+    },
+    {
+      "title": "原油主力合约收跌0.14%",
+      "summary": "南财智讯3月6日电，盘后期货数据显示，上期能源的原油主力合约收跌0.14%，收盘报664.8元/桶，日内资金流入10.39亿元。其他相关指标见下表：",
+      "likes": 0,
+      "platform": "东方财富",
+      "source_type": "搜索-原油",
+      "sentiment": "中性偏多",
+      "creator_type": "财经资讯平台",
+      "publish_time": "2026-03-06 15:48:06"
+    },
+    {
+      "title": "WTI原油期货涨4% 布伦特原油涨3.46%",
+      "summary": "WTI原油期货涨4%，报77.6美元/桶；布伦特原油涨3.46%，报84.21美元/桶。",
+      "likes": 0,
+      "platform": "东方财富",
+      "source_type": "搜索-原油",
+      "sentiment": "中性偏多",
+      "creator_type": "财经资讯平台",
+      "publish_time": "2026-03-05 12:19:50"
+    },
+    {
+      "title": "WTI原油期货涨幅扩大至6%",
+      "summary": "人民财讯3月6日电，WTI原油期货涨幅扩大至6%，触及86美元/桶。",
+      "likes": 0,
+      "platform": "东方财富",
+      "source_type": "搜索-原油",
+      "sentiment": "中性偏多",
+      "creator_type": "财经资讯平台",
+      "publish_time": "2026-03-06 20:11:46"
+    },
+    {
+      "title": "国际原油走高",
+      "summary": "国际原油走高，WTI原油涨3.49%，报77.262美元/桶；布伦特原油涨2.93%，报83.781美元/桶。",
+      "likes": 0,
+      "platform": "东方财富",
+      "source_type": "搜索-原油",
+      "sentiment": "偏多",
+      "creator_type": "财经资讯平台",
+      "publish_time": "2026-03-05 10:24:53"
+    },
+    {
+      "title": "WTI原油期货涨幅扩大至4%",
+      "summary": "人民财讯3月6日电，WTI原油期货涨幅扩大至4%，报84.297美元/桶，创2024年7月以来新高；布伦特原油期货涨近2%，报86.911美元/桶。",
+      "likes": 0,
+      "platform": "东方财富",
+      "source_type": "搜索-原油",
+      "sentiment": "中性偏多",
+      "creator_type": "财经资讯平台",
+      "publish_time": "2026-03-06 17:48:17"
     }
   ],
   "source_counts": {
-    "知乎": 12,
-    "百度": 32,
-    "新浪财经": 50,
-    "东方财富": 30,
+    "知乎": 10,
     "财联社": 50,
+    "新浪财经": 50,
     "微博": 3,
-    "B站": 30,
-    "抖音": 30,
-    "小红书": 48
+    "百度": 34,
+    "小红书": 51,
+    "B站": 81,
+    "抖音": 31,
+    "东方财富": 66
   },
-  "total": 282,
-  "fetch_time": "2026-03-06 22:44:36",
-  "fetch_ts": 1772808276,
+  "total": 371,
+  "fetch_time": "2026-03-06 22:59:24",
+  "fetch_ts": 1772809164,
   "errors": []
 }
