@@ -476,12 +476,12 @@
   font-weight: 700;
 }
 .sfai-flow-in {
-  background: linear-gradient(135deg, #dcfce7, #bbf7d0);
-  color: #15803d;
-}
-.sfai-flow-out {
   background: linear-gradient(135deg, #fee2e2, #fecaca);
   color: #dc2626;
+}
+.sfai-flow-out {
+  background: linear-gradient(135deg, #dcfce7, #bbf7d0);
+  color: #15803d;
 }
 .sfai-flow-arrow {
   font-size: 24rpx;
@@ -541,12 +541,12 @@
   border: 1rpx solid transparent;
 }
 .sfai-action-card.action-bg-buy {
-  background: linear-gradient(135deg, #ecfdf5 0%, #f0fdf4 100%);
-  border-color: #bbf7d0;
-}
-.sfai-action-card.action-bg-sell {
   background: linear-gradient(135deg, #fef2f2 0%, #fff5f5 100%);
   border-color: #fecaca;
+}
+.sfai-action-card.action-bg-sell {
+  background: linear-gradient(135deg, #ecfdf5 0%, #f0fdf4 100%);
+  border-color: #bbf7d0;
 }
 .sfai-action-card.action-bg-hold {
   background: linear-gradient(135deg, #fefce8 0%, #fffbeb 100%);
@@ -566,18 +566,18 @@
   padding: 6rpx 18rpx;
   border-radius: 20rpx;
 }
-.sfai-action-badge.action-buy { background: #22c55e; color: #fff; }
-.sfai-action-badge.action-sell { background: #ef4444; color: #fff; }
+.sfai-action-badge.action-buy { background: #ef4444; color: #fff; }
+.sfai-action-badge.action-sell { background: #22c55e; color: #fff; }
 .sfai-action-badge.action-hold { background: #eab308; color: #fff; }
-.sfai-action-badge.action-add { background: #22c55e; color: #fff; }
-.sfai-action-badge.action-reduce { background: #f97316; color: #fff; }
+.sfai-action-badge.action-add { background: #ef4444; color: #fff; }
+.sfai-action-badge.action-reduce { background: #22c55e; color: #fff; }
 .sfai-action-card.action-bg-add {
-  background: linear-gradient(135deg, #ecfdf5 0%, #f0fdf4 100%);
-  border-color: #bbf7d0;
+  background: linear-gradient(135deg, #fef2f2 0%, #fff5f5 100%);
+  border-color: #fecaca;
 }
 .sfai-action-card.action-bg-reduce {
-  background: linear-gradient(135deg, #fff7ed 0%, #fffbeb 100%);
-  border-color: #fed7aa;
+  background: linear-gradient(135deg, #ecfdf5 0%, #f0fdf4 100%);
+  border-color: #bbf7d0;
 }
 
 /* 一周走势 */
@@ -1217,8 +1217,8 @@
   font-weight: 600;
 }
 
-.ai-sig-buy  { background: rgba(52,211,153,0.2); color: #34d399; }
-.ai-sig-sell { background: rgba(248,113,113,0.2); color: #f87171; }
+.ai-sig-buy  { background: rgba(239,68,68,0.2); color: #ef4444; }
+.ai-sig-sell { background: rgba(34,197,94,0.2); color: #22c55e; }
 .ai-sig-hold { background: rgba(251,191,36,0.2); color: #fbbf24; }
 
 .ai-sig-bottom {
@@ -1285,8 +1285,8 @@
   border-radius: 20rpx;
 }
 
-.ai-fp-buy  { background: rgba(52,211,153,0.2); color: #34d399; }
-.ai-fp-sell { background: rgba(248,113,113,0.2); color: #f87171; }
+.ai-fp-buy  { background: rgba(239,68,68,0.2); color: #ef4444; }
+.ai-fp-sell { background: rgba(34,197,94,0.2); color: #22c55e; }
 .ai-fp-hold { background: rgba(251,191,36,0.2); color: #fbbf24; }
 
 .ai-fp-compare {

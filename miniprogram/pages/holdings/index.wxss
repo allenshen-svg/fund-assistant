@@ -594,11 +594,11 @@
 }
 
 .wk-fund-card.wk-fund-buy {
-  border-left-color: #34d399;
+  border-left-color: #f87171;
 }
 
 .wk-fund-card.wk-fund-sell {
-  border-left-color: #f87171;
+  border-left-color: #34d399;
 }
 
 .wk-fund-card.wk-fund-hold {
@@ -638,13 +638,13 @@
 }
 
 .wk-action-buy {
-  background: rgba(52,211,153,0.2);
-  color: #34d399;
+  background: rgba(239,68,68,0.2);
+  color: #ef4444;
 }
 
 .wk-action-sell {
-  background: rgba(248,113,113,0.2);
-  color: #f87171;
+  background: rgba(34,197,94,0.2);
+  color: #22c55e;
 }
 
 .wk-action-hold {
