@@ -11,7 +11,7 @@
 function fmtMoney(val) {
   if (val === '' || val === null || val === undefined) return '--';
   var num = parseFloat(val);
-  if (isNaN(num)) return val;
+  if (isNaN(num)) return '' + val;
   var sign = num < 0 ? '-' : '';
   var absStr = Math.abs(num).toFixed(2);
   var parts = absStr.split('.');
@@ -23,7 +23,7 @@ function fmtMoney(val) {
     if (count > 0 && count % 3 === 0) {
       result = ',' + result;
     }
-    result = intPart[i] + result;
+    result = intPart.charAt(i) + result;
     count++;
   }
   return sign + result + '.' + decPart;
@@ -36,15 +36,16 @@ function fmtMoney(val) {
  */
 function fmtNum(val) {
   if (val === '' || val === null || val === undefined) return '--';
-  var str = String(val);
+  var str = '' + val;
   // 处理带+号的情况
   var prefix = '';
-  if (str[0] === '+' || str[0] === '-') {
-    prefix = str[0];
+  var ch = str.charAt(0);
+  if (ch === '+' || ch === '-') {
+    prefix = ch;
     str = str.substring(1);
   }
   var numVal = parseFloat(str);
-  if (isNaN(numVal)) return val;
+  if (isNaN(numVal)) return '' + val;
   var parts = str.split('.');
   var intPart = parts[0];
   var decPart = parts.length > 1 ? ('.' + parts[1]) : '';
@@ -54,7 +55,7 @@ function fmtNum(val) {
     if (count > 0 && count % 3 === 0) {
       result = ',' + result;
     }
-    result = intPart[i] + result;
+    result = intPart.charAt(i) + result;
     count++;
   }
   return prefix + result + decPart;
