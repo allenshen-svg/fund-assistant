@@ -90,6 +90,9 @@ function matchSectorFlow(type, sectorFlows, fundName) {
   const baseTags = TYPE_TAG_MAP[type] || [type];
   const extra = FLOW_EXTRA_TAGS[type] || [];
   let tags = baseTags.concat(extra);
+  const normalize = (s) => String(s || '').replace(/[\s\u3000]/g, '');
+  const exactTags = new Set(baseTags.map(normalize));
+  const extraTags = new Set(extra.map(normalize));
 
   // 对"其他"或匹配不到时，根据基金名称推断板块
   if (fundName) {
@@ -100,6 +103,47 @@ function matchSectorFlow(type, sectorFlows, fundName) {
       }
     }
   }
+
+  const allTags = Array.from(new Set(tags)).map(normalize).filter(Boolean);
+  if (!allTags.length) return null;
+
+  const tagWeight = (tag) => {
+    if (exactTags.has(tag)) return 100;
+    if (extraTags.has(tag)) return 70;
+    return 85;
+  };
+
+  let best = null;
+  let bestScore = -1;
+
+  for (const flow of sectorFlows) {
+    const flowName = normalize(flow && flow.name);
+    if (!flowName) continue;
+
+    let score = -1;
+    for (const tag of allTags) {
+      if (!tag) continue;
+      const base = tagWeight(tag);
+      if (flowName === tag) {
+        score = Math.max(score, base + 30);
+      } else if (flowName.includes(tag) || tag.includes(flowName)) {
+        score = Math.max(score, base + 15);
+      }
+    }
+
+    if (score < 0) continue;
+
+    const mainNetAbs = Math.abs(Number(flow.mainNet || 0));
+    const mainPctAbs = Math.abs(Number(flow.mainPct || 0));
+    const totalScore = score * 1000000 + Math.round(mainNetAbs) + Math.round(mainPctAbs * 1000);
+
+    if (totalScore > bestScore) {
+      bestScore = totalScore;
+      best = flow;
+    }
+  }
+
+  if (best) return best;
 
   for (const flow of sectorFlows) {
     if (tags.some(tag => flow.name.includes(tag) || tag.includes(flow.name))) {

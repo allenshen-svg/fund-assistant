@@ -387,13 +387,16 @@ Page({
       // 附加板块资金流原始数据到结果
       const sf = matchSectorFlow(fund.type, sectorFlowsData, fund.name);
       if (sf) {
+        const flowPct = Number(sf.pct || 0);
+        const flowMainPct = Number(sf.mainPct || 0);
+        const flowMainNet = Number(sf.mainNet || 0);
         result._sectorFlow = {
           name: sf.name,
-          mainNet: sf.mainNet,
-          mainPct: sf.mainPct,
-          pct: sf.pct,
-          flowText: (sf.mainNet >= 0 ? '+' : '') + (sf.mainNet / 1e8).toFixed(2) + '亿',
-          flowDir: sf.mainNet >= 0 ? 'in' : 'out',
+          mainNet: flowMainNet,
+          mainPct: Number.isFinite(flowMainPct) ? flowMainPct.toFixed(2) : '0.00',
+          pct: Number.isFinite(flowPct) ? flowPct.toFixed(2) : '0.00',
+          flowText: (flowMainNet >= 0 ? '+' : '') + (flowMainNet / 1e8).toFixed(2) + '亿',
+          flowDir: flowMainNet >= 0 ? 'in' : 'out',
         };
       }
 
