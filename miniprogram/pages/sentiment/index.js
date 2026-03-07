@@ -78,7 +78,7 @@ Page({
     selectedCommodityKey: 'gold',
     secCommodityTrend: true,
     commodityCanvasW: 320,
-    commodityCanvasH: 160,
+    commodityCanvasH: 190,
 
     // —— KOL vs 散户 ——
     kolSections: [],
@@ -127,7 +127,7 @@ Page({
   onLoad() {
     const info = wx.getWindowInfo ? wx.getWindowInfo() : wx.getSystemInfoSync();
     const canvasW = Math.max(260, (info && info.windowWidth ? info.windowWidth : 375) - 72);
-    this.setData({ commodityCanvasW: canvasW, commodityCanvasH: 180 });
+    this.setData({ commodityCanvasW: canvasW, commodityCanvasH: 190 });
   },
 
   onShow() {
@@ -451,9 +451,11 @@ Page({
     if (pts.length < 2) return;
 
     const width = this.data.commodityCanvasW || 320;
-    const height = this.data.commodityCanvasH || 160;
+    const height = this.data.commodityCanvasH || 190;
     const ctx = wx.createCanvasContext('commodityTrendCanvas', this);
-    const padding = { left: 10, right: 10, top: 14, bottom: 14 };
+
+    // left padding accommodates Y-axis labels (~7chars × ~5.5px + 6px gap = 46)
+    const padding = { left: 48, right: 14, top: 18, bottom: 22 };
     const plotW = width - padding.left - padding.right;
     const plotH = height - padding.top - padding.bottom;
 
@@ -461,21 +463,46 @@ Page({
     let maxVal = Math.max.apply(null, pts);
     if (minVal === maxVal) { maxVal += 1; minVal -= 1; }
 
-    // 背景网格
+    // 辅助：值 → Y坐标
+    const toY = function(v) {
+      return padding.top + (maxVal - v) * plotH / (maxVal - minVal);
+    };
+    // 辅助：索引 → X坐标
+    const toX = function(i) {
+      return padding.left + plotW * i / (pts.length - 1);
+    };
+    // 辅助：格式化价格（保留3位小数，去掉多余0）
+    const fmtV = function(v) {
+      const s = v.toFixed(3);
+      // 去掉末尾多余的0，但保留至少2位小数
+      return s.replace(/(\.\d\d)0+$/, '$1');
+    };
+
+    // ===== 清空 =====
     ctx.clearRect(0, 0, width, height);
-    ctx.setStrokeStyle('rgba(148,163,184,0.25)');
-    ctx.setLineWidth(1);
-    for (let i = 0; i <= 3; i++) {
-      const y = padding.top + (plotH * i / 3);
+
+    // ===== Y轴标签 + 水平网格 =====
+    const yTicks = [maxVal, (maxVal + minVal) / 2, minVal];
+    ctx.setFontSize(9);
+    ctx.setTextAlign('right');
+    yTicks.forEach(function(v, idx) {
+      const y = toY(v);
+      // 网格线
+      ctx.setStrokeStyle('rgba(148,163,184,0.22)');
+      ctx.setLineWidth(0.8);
       ctx.beginPath();
       ctx.moveTo(padding.left, y);
       ctx.lineTo(width - padding.right, y);
       ctx.stroke();
-    }
+      // 刻度文字
+      ctx.setFillStyle('rgba(148,163,184,0.85)');
+      ctx.fillText(fmtV(v), padding.left - 4, y + 3.5);
+    });
 
-    // 起始基准线（灰色虚线风格 — 每隔6px画2px短线）
-    const baseY = padding.top + (maxVal - pts[0]) * plotH / (maxVal - minVal);
-    ctx.setStrokeStyle('rgba(148,163,184,0.50)');
+    // ===== 起始基准虚线（起点价位） =====
+    const baseV = pts[0];
+    const baseY = toY(baseV);
+    ctx.setStrokeStyle('rgba(148,163,184,0.55)');
     ctx.setLineWidth(1);
     ctx.beginPath();
     for (let x = padding.left; x < width - padding.right; x += 8) {
@@ -484,25 +511,89 @@ Page({
     }
     ctx.stroke();
 
-    // 折线（当前选中品种，加粗）
+    // ===== 折线 =====
     ctx.setStrokeStyle(item.color || '#3b82f6');
     ctx.setLineWidth(2.5);
     ctx.beginPath();
     for (let i = 0; i < pts.length; i++) {
-      const x = padding.left + (plotW * i / (pts.length - 1));
-      const y = padding.top + (maxVal - pts[i]) * plotH / (maxVal - minVal);
+      const x = toX(i);
+      const y = toY(pts[i]);
       if (i === 0) ctx.moveTo(x, y);
       else ctx.lineTo(x, y);
     }
     ctx.stroke();
 
-    // 终点圆点
-    const endX = padding.left + plotW;
-    const endY = padding.top + (maxVal - pts[pts.length - 1]) * plotH / (maxVal - minVal);
+    // ===== 标记最高 / 最低点 =====
+    let maxIdx = 0, minIdx = 0;
+    for (let i = 1; i < pts.length; i++) {
+      if (pts[i] > pts[maxIdx]) maxIdx = i;
+      if (pts[i] < pts[minIdx]) minIdx = i;
+    }
+    const markPoint = function(idx, isMax) {
+      const mx = toX(idx);
+      const my = toY(pts[idx]);
+      const label = fmtV(pts[idx]);
+      const pct = ((pts[idx] - baseV) / baseV * 100);
+      const pctStr = (pct >= 0 ? '+' : '') + pct.toFixed(1) + '%';
+      const fullLabel = label + ' (' + pctStr + ')';
+
+      // 小空心圆
+      ctx.setStrokeStyle(item.color || '#3b82f6');
+      ctx.setFillStyle('#ffffff');
+      ctx.setLineWidth(1.5);
+      ctx.beginPath();
+      ctx.arc(mx, my, 3, 0, 2 * Math.PI);
+      ctx.fill();
+      ctx.stroke();
+
+      // 文字气泡
+      const textW = fullLabel.length * 5.2;
+      let tx = mx - textW / 2;
+      if (tx < padding.left) tx = padding.left;
+      if (tx + textW > width - padding.right) tx = width - padding.right - textW;
+      const ty = isMax ? my - 7 : my + 14;
+
+      ctx.setFontSize(9);
+      ctx.setTextAlign('left');
+      ctx.setFillStyle(isMax ? 'rgba(239,68,68,0.90)' : 'rgba(34,197,94,0.90)');
+      ctx.fillText(fullLabel, tx, ty);
+    };
+
+    // 避免最高最低点重叠时跳过最低（若索引相差<10%则只标最高）
+    markPoint(maxIdx, true);
+    if (Math.abs(maxIdx - minIdx) > pts.length * 0.08) {
+      markPoint(minIdx, false);
+    }
+
+    // ===== 终点圆点 + 当前值标签 =====
+    const endX = toX(pts.length - 1);
+    const endY = toY(pts[pts.length - 1]);
     ctx.setFillStyle(item.color || '#3b82f6');
     ctx.beginPath();
     ctx.arc(endX, endY, 3.5, 0, 2 * Math.PI);
     ctx.fill();
+
+    // 终点右侧价格标签（靠左若超出右边界）
+    const endLabel = fmtV(pts[pts.length - 1]);
+    ctx.setFontSize(9);
+    ctx.setTextAlign('left');
+    ctx.setFillStyle(item.color || '#3b82f6');
+    const elx = endX + 5;
+    const rightEdge = elx + endLabel.length * 5.5;
+    if (rightEdge <= width) {
+      ctx.fillText(endLabel, elx, endY + 3.5);
+    } else {
+      ctx.setTextAlign('right');
+      ctx.fillText(endLabel, endX - 5, endY + 3.5);
+    }
+
+    // ===== X轴：起止日期提示 =====
+    ctx.setFontSize(9);
+    ctx.setFillStyle('rgba(148,163,184,0.70)');
+    ctx.setTextAlign('left');
+    ctx.fillText('30天前', padding.left, height - 4);
+    ctx.setTextAlign('right');
+    ctx.fillText('今日', width - padding.right, height - 4);
 
     ctx.draw();
   },
