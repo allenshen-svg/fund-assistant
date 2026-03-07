@@ -1,0 +1,307 @@
+{
+  "updated_at": "2026-03-07T11:24:08.670881+08:00",
+  "breaking": [
+    {
+      "id": "rtb_90044cd9",
+      "title": "美对伊战争引发能源供应中断",
+      "reason": "伊朗战争导致全球能源供应紧张，美国汽油价格飙升",
+      "source": "Reuters",
+      "category": "geopolitics",
+      "catIcon": "🌍",
+      "impact": 15,
+      "impactClass": "up",
+      "impactAbs": 15,
+      "sectors_positive": [
+        "能源"
+      ],
+      "sectors_negative": [
+        "消费者"
+      ],
+      "advice": "关注能源股",
+      "timestamp": "2026-03-07T11:24:08.670881+08:00",
+      "isRealtime": true
+    },
+    {
+      "id": "rtb_6fd78612",
+      "title": "美国对以色列军火销售未经过国会审查",
+      "reason": "美国直接批准对以色列的军火销售，可能加剧中东紧张局势",
+      "source": "Reuters",
+      "category": "geopolitics",
+      "catIcon": "🌍",
+      "impact": 12,
+      "impactClass": "up",
+      "impactAbs": 12,
+      "sectors_positive": [
+        "军工"
+      ],
+      "sectors_negative": [
+        "和平相关"
+      ],
+      "advice": "关注军工股",
+      "timestamp": "2026-03-07T11:24:08.670881+08:00",
+      "isRealtime": true
+    },
+    {
+      "id": "rtb_c128e807",
+      "title": "美联储官员呼吁降低通胀",
+      "reason": "美联储官员表示中央银行必须降低通胀，暗示可能降息",
+      "source": "Reuters",
+      "category": "monetary",
+      "catIcon": "🏦",
+      "impact": 10,
+      "impactClass": "up",
+      "impactAbs": 10,
+      "sectors_positive": [
+        "债券"
+      ],
+      "sectors_negative": [
+        "利率敏感型股票"
+      ],
+      "advice": "关注利率变动",
+      "timestamp": "2026-03-07T11:24:08.670881+08:00",
+      "isRealtime": true
+    },
+    {
+      "id": "rtb_748ed063",
+      "title": "黄金价格大幅上涨",
+      "reason": "地缘政治紧张和通胀预期推高黄金价格",
+      "source": "Reuters",
+      "category": "commodity",
+      "catIcon": "📦",
+      "impact": 10,
+      "impactClass": "up",
+      "impactAbs": 10,
+      "sectors_positive": [
+        "黄金ETF"
+      ],
+      "sectors_negative": [
+        "无"
+      ],
+      "advice": "考虑配置黄金",
+      "timestamp": "2026-03-07T11:24:08.670881+08:00",
+      "isRealtime": true
+    },
+    {
+      "id": "rtb_f0e6d7dc",
+      "title": "美国石油价格创历史最大周涨幅",
+      "reason": "地缘政治紧张导致石油价格上涨，可能推高通胀",
+      "source": "CNBC",
+      "category": "commodity",
+      "catIcon": "📦",
+      "impact": 10,
+      "impactClass": "up",
+      "impactAbs": 10,
+      "sectors_positive": [
+        "能源"
+      ],
+      "sectors_negative": [
+        "消费者"
+      ],
+      "advice": "关注能源股",
+      "timestamp": "2026-03-07T11:24:08.670881+08:00",
+      "isRealtime": true
+    },
+    {
+      "id": "rtb_e2ade648",
+      "title": "恒生科技指数上涨",
+      "reason": "地缘政治紧张和科技行业基本面良好推动科技股上涨",
+      "source": "Reuters",
+      "category": "market",
+      "catIcon": "📊",
+      "impact": 8,
+      "impactClass": "up",
+      "impactAbs": 8,
+      "sectors_positive": [
+        "科技"
+      ],
+      "sectors_negative": [
+        "无"
+      ],
+      "advice": "关注科技股",
+      "timestamp": "2026-03-07T11:24:08.670881+08:00",
+      "isRealtime": true
+    },
+    {
+      "id": "rtb_f10fa760",
+      "title": "美国制定严格AI指南",
+      "reason": "美国对AI的监管加强，可能推动AI行业健康发展",
+      "source": "FT",
+      "category": "technology",
+      "catIcon": "🤖",
+      "impact": 8,
+      "impactClass": "up",
+      "impactAbs": 8,
+      "sectors_positive": [
+        "AI"
+      ],
+      "sectors_negative": [
+        "无"
+      ],
+      "advice": "关注AI相关股票",
+      "timestamp": "2026-03-07T11:24:08.670881+08:00",
+      "isRealtime": true
+    },
+    {
+      "id": "rtb_baba2905",
+      "title": "美国对日本新关税规则表示担忧",
+      "reason": "美国担心新关税规则可能损害日本利益",
+      "source": "Reuters",
+      "category": "policy",
+      "catIcon": "📜",
+      "impact": 7,
+      "impactClass": "up",
+      "impactAbs": 7,
+      "sectors_positive": [
+        "无"
+      ],
+      "sectors_negative": [
+        "日本出口"
+      ],
+      "advice": "关注日本股市",
+      "timestamp": "2026-03-07T11:24:08.670881+08:00",
+      "isRealtime": true
+    },
+    {
+      "id": "rtb_38fe533d",
+      "title": "美国对伊朗战争持续，投资者担忧",
+      "reason": "美国和伊朗的战争进入第二周，市场担忧可能升级",
+      "source": "CNBC",
+      "category": "geopolitics",
+      "catIcon": "🌍",
+      "impact": 7,
+      "impactClass": "up",
+      "impactAbs": 7,
+      "sectors_positive": [
+        "无"
+      ],
+      "sectors_negative": [
+        "所有股票"
+      ],
+      "advice": "保持谨慎",
+      "timestamp": "2026-03-07T11:24:08.670881+08:00",
+      "isRealtime": true
+    },
+    {
+      "id": "rtb_a1c9acb0",
+      "title": "巴基斯坦因中东紧张局势提高燃料价格",
+      "reason": "中东紧张局势导致燃料价格上涨，可能引发通货膨胀",
+      "source": "Reuters",
+      "category": "geopolitics",
+      "catIcon": "🌍",
+      "impact": 6,
+      "impactClass": "up",
+      "impactAbs": 6,
+      "sectors_positive": [
+        "无"
+      ],
+      "sectors_negative": [
+        "消费者"
+      ],
+      "advice": "关注通货膨胀风险",
+      "timestamp": "2026-03-07T11:24:08.670881+08:00",
+      "isRealtime": true
+    }
+  ],
+  "anomalies": [
+    {
+      "id": "anom_国际银_1124",
+      "name": "国际银",
+      "fullName": "COMEX白银",
+      "icon": "🥈",
+      "price": 84.695,
+      "pct": 3.06,
+      "type": "global_commodity",
+      "tag": "白银",
+      "level": "🔴 剧烈",
+      "alert": "🥈 国际银大涨3.1%"
+    },
+    {
+      "id": "anom_军工_1124",
+      "name": "军工",
+      "fullName": "军工ETF",
+      "icon": "🛡️",
+      "price": 0.737,
+      "pct": 2.79,
+      "type": "sector",
+      "tag": "军工",
+      "level": "🟡 显著",
+      "alert": "🛡️ 军工大涨2.8%"
+    },
+    {
+      "id": "anom_港股科技_1124",
+      "name": "港股科技",
+      "fullName": "恒生科技",
+      "icon": "📱",
+      "price": 0.643,
+      "pct": 2.72,
+      "type": "sector",
+      "tag": "港股科技",
+      "level": "🟡 显著",
+      "alert": "📱 港股科技大涨2.7%"
+    },
+    {
+      "id": "anom_国际金_1124",
+      "name": "国际金",
+      "fullName": "COMEX黄金",
+      "icon": "🥇",
+      "price": 5181.3,
+      "pct": 2.02,
+      "type": "global_commodity",
+      "tag": "黄金",
+      "level": "🔴 剧烈",
+      "alert": "🥇 国际金大涨2.0%"
+    },
+    {
+      "id": "anom_恒指_1124",
+      "name": "恒指",
+      "fullName": "恒生指数",
+      "icon": "🇭🇰",
+      "price": 25757.29,
+      "pct": 1.72,
+      "type": "index",
+      "tag": "",
+      "level": "🟡 显著",
+      "alert": "🇭🇰 恒指大涨1.7%"
+    },
+    {
+      "id": "anom_纳指_1124",
+      "name": "纳指",
+      "fullName": "纳斯达克100",
+      "icon": "🇺🇸",
+      "price": 22387.68,
+      "pct": -1.59,
+      "type": "index",
+      "tag": "",
+      "level": "🟡 显著",
+      "alert": "🇺🇸 纳指大跌1.6%"
+    },
+    {
+      "id": "anom_标普_1124",
+      "name": "标普",
+      "fullName": "标普500",
+      "icon": "🇺🇸",
+      "price": 6740.02,
+      "pct": -1.33,
+      "type": "index",
+      "tag": "",
+      "level": "🟡 显著",
+      "alert": "🇺🇸 标普大跌1.3%"
+    }
+  ],
+  "meta": {
+    "sources_ok": [
+      "Reuters",
+      "Bloomberg",
+      "CNBC",
+      "MarketWatch",
+      "Yahoo Finance",
+      "Google News",
+      "财联社",
+      "新浪财经"
+    ],
+    "news_count": 10,
+    "anomaly_count": 7,
+    "model": "GLM-4-Flash",
+    "refresh_interval_seconds": 300
+  }
+}

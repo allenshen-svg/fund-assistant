@@ -50,12 +50,23 @@ FINANCE_KEYWORDS = [
     '央行', '降息', '降准', 'LPR', '利率', '通胀', 'CPI', 'PPI', 'GDP', 'PMI',
     '美联储', 'Fed', '加息', '缩表', '国债', '债券', '汇率', '人民币', '美元',
     '关税', '贸易战', '制裁', '地缘', '中东', '俄乌', '美伊',
+    # 地缘政治深度
+    '伊朗', '叙利亚', '以色列', '九合', '台海', '南海', '北约', '战争', '冲突',
+    '局势', '军事', '核武器', '导弹', '无人机', '英国脱欧',
+    '中美关系', '中美博弈', '科技战', '芯片战',
     # 投资/理财
     '基金', 'ETF', '牛市', '熊市', '涨停', '跌停', '抄底', '追高', '割肉',
     '仓位', '加仓', '减仓', '清仓', '满仓', '空仓', '定投',
     '主力', '资金', '北向', '融资', '融券', '杠杆',
     '茅台', '比亚迪', '宁德', '英伟达', 'NVIDIA', '特斯拉',
     'IPO', '分红', '回购', '并购', '重组',
+    # 经济/产业影响
+    '经济影响', '未来经济', '产业链', '供应链', '双循环', '内循环',
+    '科技革命', '数字经济', '碳中和', '绿色转型', '就业', '失业率',
+    '房价', '楼市', '出口', '进口', '外贸', '通缩', '滞胀',
+    # 石油/能源危机
+    '石油', '天然气', 'OPEC', '能源危机', '能源安全', '电价', '气价',
+    '白银', '银价', '贵金属', '铂金', '钯金',
 ]
 
 # 需要过滤的营销/博眼球关键词
@@ -63,6 +74,28 @@ NOISE_KEYWORDS = [
     '震惊', '不转不是中国人', '速看', '必看', '删前快看',
     '最后一次机会', '全仓梭哈', '晚了就来不及', '赶紧',
 ]
+
+# 娱乐/体育等无关内容排除关键词
+NOISE_CATEGORY_KW = [
+    '明星', '八卦', '绯闻', '综艺', '选秀', '偶像', '粉丝', '追星', '爱豆', '热播',
+    '电视剧', '电影', '票房', '娱乐圈', '离婚', '恋情', '官宣', '红毯', '颁奖',
+    '歌手', '演员', '导演', '变装', '综艺节目', '真人秀',
+    '足球', '篮球', 'NBA', 'CBA', '西甲', '英超', '世界杯', '欧冠',
+    '奥运', '亚运', '乒乓', '网球', '奖牌', '冠军赛',
+    '宠物', '猫咪', '狗狗', '美食教程', '减肥', '化妆', '穿搭',
+    '搞笑', '段子', '鬼畜', '整蛊',
+]
+_noise_cat_lower = [kw.lower() for kw in NOISE_CATEGORY_KW]
+
+def is_noise_category(text):
+    """检测是否属于娱乐/体育等无关类别"""
+    if not text:
+        return False
+    t = text.lower()
+    has_noise = any(kw in t for kw in _noise_cat_lower)
+    if has_noise and not is_finance_related(text):
+        return True
+    return False
 
 # 用户代理
 UA_MOBILE = 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1'
@@ -223,7 +256,8 @@ def fetch_douyin_finance_videos():
     """
     print("  🎬 抖音财经视频搜索...")
     items = []
-    search_keywords = ['AI算力', '股市', '基金', '黄金投资', '半导体', '新能源', '军工', '港股']
+    search_keywords = ['AI算力', '股市', '基金', '黄金投资', '半导体', '新能源', '军工',
+                         '港股', '石油经济', '伊朗制裁', '中东局势', 'AI未来经济']
 
     for kw in search_keywords:
         # 60 second API
@@ -308,7 +342,8 @@ def fetch_xiaohongshu_finance_notes():
     """
     print("  📝 小红书财经笔记搜索...")
     items = []
-    search_keywords = ['基金推荐', 'AI算力投资', '黄金还能买吗', '新能源基金', '消费基金', '港股ETF']
+    search_keywords = ['基金推荐', 'AI算力投资', '黄金还能买吗', '新能源基金', '消费基金', '港股ETF',
+                        '石油投资', '伊朗局势经济', '中东战争影响', 'AI对经济影响', '科技革命']
 
     for kw in search_keywords:
         url = f'https://www.xiaohongshu.com/search_result?keyword={quote(kw)}&type=51'
@@ -563,6 +598,13 @@ def process_items(all_items):
     # 去重
     unique = deduplicate(all_items)
 
+    # 过滤娱乐/体育无关内容
+    before_filter = len(unique)
+    unique = [item for item in unique if not is_noise_category(item.get('title', '') + ' ' + item.get('summary', ''))]
+    noise_filtered = before_filter - len(unique)
+    if noise_filtered > 0:
+        print(f"    🗑️ 过滤娱乐/体育噪音: {noise_filtered} 条")
+
     # 按热度排序
     unique.sort(key=lambda x: x.get('likes', 0), reverse=True)
 
@@ -595,6 +637,103 @@ def process_items(all_items):
         result.append(entry)
 
     return result
+
+
+# ==================== 趋势主题提取 ====================
+
+SOCIAL_TREND_THEMES = [
+    {'id': 'ai_tech',      'name': 'AI/科技革命',     'icon': '🤖', 'keywords': ['AI', '人工智能', '算力', '芯片', '半导体', '大模型', 'DeepSeek', '光模块', 'CPO', '机器人', '自动驾驶', '英伟达', 'NVIDIA', 'AMD', '科技']},
+    {'id': 'gold_metal',   'name': '黄金/贵金属',     'icon': '🥇', 'keywords': ['黄金', '金价', '白银', '银价', '贵金属', '铂金', '钯金']},
+    {'id': 'oil_energy',   'name': '石油/能源',       'icon': '🛢️', 'keywords': ['原油', '油价', '石油', '天然气', 'OPEC', '能源', '电价', '气价']},
+    {'id': 'geopolitics',  'name': '地缘政治',       'icon': '🌍', 'keywords': ['伊朗', '中东', '俄乌', '制裁', '战争', '冲突', '地缘', '关税', '贸易战', '军事', '以色列', '叙利亚', '台海', '南海', '中美关系']},
+    {'id': 'macro_policy', 'name': '宏观政策',       'icon': '🏛️', 'keywords': ['央行', '降息', '降准', 'LPR', '美联储', '加息', '通胀', 'CPI', 'GDP', 'PMI', '汇率', '人民币', '美元', '利率']},
+    {'id': 'new_energy',   'name': '新能源/碳中和',   'icon': '☀️', 'keywords': ['新能源', '光伏', '锂电', '碳酸锂', '储能', '风电', '氢能', '充电桩', '比亚迪', '特斯拉']},
+    {'id': 'military',     'name': '军工/国防',       'icon': '🚀', 'keywords': ['军工', '国防', '航天', '导弹', '卫星', '雷达', '舰船', '无人机']},
+    {'id': 'consumption',  'name': '消费/医药',       'icon': '🏥', 'keywords': ['消费', '白酒', '医药', '创新药', 'CXO', '茅台', '食品饮料', '餐饮']},
+    {'id': 'realestate',   'name': '房地产/基建',     'icon': '🏗️', 'keywords': ['地产', '房价', '楼市', '房地产', '基建', '建材', '水泥']},
+    {'id': 'hk_us_stock',  'name': '港股/美股',       'icon': '🌐', 'keywords': ['港股', '恒生', '美股', '纳斯达克', '道琼斯', '标普']},
+    {'id': 'a_share',      'name': 'A股/大盘',       'icon': '📈', 'keywords': ['A股', '股市', '大盘', '沪指', '上证', '深成', '创业板', '科创板']},
+    {'id': 'fund_etf',     'name': '基金/ETF',       'icon': '💰', 'keywords': ['基金', 'ETF', '定投', '净值', '基民', '公募', '私募']},
+    {'id': 'economy',      'name': '经济影响/趋势',   'icon': '📊', 'keywords': ['经济影响', '未来经济', '产业链', '供应链', '双循环', '科技革命', '数字经济', '碳中和', '就业', '失业率', '出口', '进口', '外贸', '通缩', '滞胀']},
+]
+
+
+def extract_social_trends(processed_items):
+    """从处理后的社媒数据提取跨平台趋势主题"""
+    import math
+    theme_data = {}
+    for th in SOCIAL_TREND_THEMES:
+        theme_data[th['id']] = {
+            'id': th['id'],
+            'name': th['name'],
+            'icon': th['icon'],
+            'mention_count': 0,
+            'total_engagement': 0,
+            'platforms': set(),
+            'sentiments': {'bullish': 0, 'bearish': 0, 'neutral': 0},
+            'sample_titles': [],
+            'keywords_hit': set(),
+        }
+
+    for item in processed_items:
+        text = (item.get('title', '') + ' ' + item.get('summary', '')).lower()
+        sentiment = item.get('sentiment', '中性')
+        platform = item.get('platform', '')
+        likes = item.get('likes', 0) or 0
+
+        for th in SOCIAL_TREND_THEMES:
+            matched = False
+            for kw in th['keywords']:
+                if kw.lower() in text:
+                    matched = True
+                    theme_data[th['id']]['keywords_hit'].add(kw)
+            if matched:
+                td = theme_data[th['id']]
+                td['mention_count'] += 1
+                td['total_engagement'] += likes
+                td['platforms'].add(platform)
+                if len(td['sample_titles']) < 5:
+                    title = item.get('title', '')
+                    if title and title not in td['sample_titles']:
+                        td['sample_titles'].append(title)
+                if '看多' in sentiment or '偏多' in sentiment or '乐观' in sentiment:
+                    td['sentiments']['bullish'] += 1
+                elif '看空' in sentiment or '偏空' in sentiment or '悲观' in sentiment:
+                    td['sentiments']['bearish'] += 1
+                else:
+                    td['sentiments']['neutral'] += 1
+
+    results = []
+    for td in theme_data.values():
+        if td['mention_count'] == 0:
+            continue
+        heat = td['mention_count'] * 10 + (math.log10(td['total_engagement'] + 1) * 5)
+        s = td['sentiments']
+        total_s = s['bullish'] + s['bearish'] + s['neutral']
+        if total_s > 0:
+            if s['bullish'] / total_s > 0.5:
+                dom_sentiment = '偏多'
+            elif s['bearish'] / total_s > 0.5:
+                dom_sentiment = '偏空'
+            else:
+                dom_sentiment = '中性'
+        else:
+            dom_sentiment = '中性'
+        results.append({
+            'id': td['id'],
+            'name': td['name'],
+            'icon': td['icon'],
+            'mention_count': td['mention_count'],
+            'heat_score': round(heat, 1),
+            'platforms': sorted(td['platforms']),
+            'sentiment': dom_sentiment,
+            'sentiment_detail': td['sentiments'],
+            'sample_titles': td['sample_titles'][:3],
+            'keywords_hit': sorted(td['keywords_hit'])[:8],
+        })
+
+    results.sort(key=lambda x: x['heat_score'], reverse=True)
+    return results[:15]
 
 
 # ==================== 主流程 ====================
@@ -655,12 +794,19 @@ def main():
 
     print(f"  📋 去重+过滤后: {len(processed)} 条")
 
+    # 提取趋势主题
+    trends = extract_social_trends(processed)
+    print(f"  🔥 识别社媒趋势: {len(trends)} 个")
+    for t in trends[:5]:
+        print(f"      {t['icon']} {t['name']}: {t['mention_count']}条, 热度{t['heat_score']}")
+
     # 输出
     output = {
         'updated_at': NOW.isoformat(),
         'total_fetched': len(all_items),
         'total_processed': len(processed),
         'sources': list(set(item.get('platform', '') for item in processed)),
+        'trends': trends,
         'videos': processed,
     }
 

@@ -1,5 +1,5 @@
 const { getHoldings, getSettings } = require('../../utils/storage');
-const { fetchHotEvents, fetchIndices, fetchMultiFundEstimates, fetchSectorFlows, fetchMultiFundHistory, fetchCommodities, fetchSectorTopFunds, fetchSectorTopStocks, fetchServerFundPick } = require('../../utils/api');
+const { fetchHotEvents, fetchIndices, fetchMultiFundEstimates, fetchSectorFlows, fetchMultiFundHistory, fetchCommodities, fetchSectorTopFunds, fetchSectorTopStocks, fetchServerFundPick, fetchRealtimeBreaking } = require('../../utils/api');
 const { buildPlans, buildOverview, MODEL_PORTFOLIO, matchSectorFlow } = require('../../utils/advisor');
 const { getMarketStatus, isMarketOpen, formatPct, pctClass, formatTime, isTradingDay, formatMoney } = require('../../utils/market');
 const { runAIAnalysis, runSingleFundAI, getCachedAIResult, getAIConfig, runFundPickAI, getCachedFundPick, saveServerFundPick } = require('../../utils/ai');
@@ -54,6 +54,7 @@ Page({
 
     // 热点异动事件 (置顶地缘/商品)
     hotBreaking: [],
+    rtUpdatedAt: '',
 
     // 热点事件
     topEvents: [],
@@ -153,14 +154,15 @@ Page({
     const app = getApp();
     const codes = holdings.map(h => h.code);
 
-    // 并行获取: 指数 + 商品 + 热点 + 估值 + 历史净值 + 板块资金流
-    const [indicesData, commodityData, hotResult, estimates, historyData, sectorData] = await Promise.allSettled([
+    // 并行获取: 指数 + 商品 + 热点 + 估值 + 历史净值 + 板块资金流 + 实时突发
+    const [indicesData, commodityData, hotResult, estimates, historyData, sectorData, realtimeData] = await Promise.allSettled([
       fetchIndices(app.globalData.INDICES),
       fetchCommodities(app.globalData.COMMODITIES || []),
       fetchHotEvents(settings),
       fetchMultiFundEstimates(codes),
       fetchMultiFundHistory(codes),
       fetchSectorFlows(),
+      fetchRealtimeBreaking(settings),
     ]);
 
     // 指数行情
@@ -229,9 +231,81 @@ Page({
       concepts: [c.name],
       advice: Math.abs(c.pct) >= 3 ? '关注偏离修复机会' : '观察后续走势',
     }));
-    const hotBreaking = [...breakingEvents, ...commodityAnomalies]
+
+    // ====== 实时突发新闻（路透社/彭博社/CNBC等）+ 全球市场异动 ======
+    const rtData = realtimeData.status === 'fulfilled' ? realtimeData.value : null;
+    const realtimeBreakingItems = [];
+    const realtimeAnomalyItems = [];
+    const rtUpdatedAt = (rtData && rtData.updated_at) ? String(rtData.updated_at).replace('T', ' ').slice(0, 16) : '';
+
+    if (rtData && Array.isArray(rtData.breaking)) {
+      rtData.breaking.forEach(item => {
+        const catIconMap = {
+          'geopolitics': '🌍', 'commodity': '📦', 'monetary': '🏦',
+          'technology': '🤖', 'market': '📊', 'policy': '📜',
+        };
+        const cat = item.category || 'market';
+        const isGeo = cat === 'geopolitics';
+        const isCommodity = cat === 'commodity' || cat === 'commodity_anomaly';
+        realtimeBreakingItems.push({
+          id: item.id || 'rtb_' + Math.random().toString(36).slice(2, 8),
+          title: item.title || '',
+          reason: item.reason || '',
+          analystView: item.analystView || '',
+          source: item.source || '',
+          category: cat,
+          catIcon: catIconMap[cat] || '📰',
+          impact: Number(item.impact || 0),
+          impactClass: Number(item.impact || 0) >= 0 ? 'up' : 'down',
+          impactAbs: Math.abs(Number(item.impact || 0)),
+          isGeo,
+          isCommodity,
+          isRealtime: true,
+          sectorsPos: (item.sectors_positive || []).join('、'),
+          sectorsNeg: (item.sectors_negative || []).join('、'),
+          advice: item.advice || '保持观察',
+        });
+      });
+    }
+
+    if (rtData && Array.isArray(rtData.anomalies)) {
+      rtData.anomalies.forEach(a => {
+        const pct = Number(a.pct || 0);
+        realtimeAnomalyItems.push({
+          id: a.id || 'anom_rt_' + Math.random().toString(36).slice(2, 8),
+          title: a.alert || (a.icon + ' ' + a.name + (pct >= 0 ? '大涨' : '大跌') + Math.abs(pct).toFixed(1) + '%'),
+          reason: a.level + '异动 · ' + a.fullName,
+          impact: Math.round(pct * 2),
+          impactClass: pct >= 0 ? 'up' : 'down',
+          impactAbs: Math.abs(Math.round(pct * 2)),
+          category: a.type === 'index' ? 'market' : 'commodity_anomaly',
+          catIcon: a.type === 'index' ? '📊' : '📦',
+          isGeo: false,
+          isCommodity: a.type !== 'index',
+          isRealtime: true,
+          source: '行情监控',
+          concepts: a.tag ? [a.tag] : [a.name],
+          advice: Math.abs(pct) >= 3 ? '关注偏离修复机会' : '观察后续走势',
+        });
+      });
+    }
+
+    // 合并所有来源：实时突发 > 原有事件 > 商品异动 > 实时异动
+    // 用标题前30字去重
+    const seenTitles = new Set();
+    const allBreakingRaw = [...realtimeBreakingItems, ...breakingEvents, ...commodityAnomalies, ...realtimeAnomalyItems];
+    const allBreakingDeduped = [];
+    allBreakingRaw.forEach(item => {
+      const key = String(item.title || '').replace(/\s+/g, '').slice(0, 30).toLowerCase();
+      if (key && !seenTitles.has(key)) {
+        seenTitles.add(key);
+        allBreakingDeduped.push(item);
+      }
+    });
+
+    const hotBreaking = allBreakingDeduped
       .sort((a, b) => b.impactAbs - a.impactAbs)
-      .slice(0, 8);
+      .slice(0, 12);
 
     // 基金估值
     const estData = estimates.status === 'fulfilled' ? estimates.value : {};
@@ -271,6 +345,7 @@ Page({
       topEvents, heatmap, sectorFlows,
       sourceLabel: hotData.source === 'remote' ? '远程数据' : '本地回退',
       updatedAt: String(hotData.data.updated_at || '--').replace('T', ' ').slice(0, 16),
+      rtUpdatedAt: rtUpdatedAt,
       loading: false,
     });
 

@@ -55,14 +55,21 @@
   <view class="card" wx:if="{{hotBreaking.length > 0}}">
     <view class="card-header">
       <text class="title">🔥 实时热点 · 异动</text>
-      <text class="chip red">{{hotBreaking.length}}条</text>
+      <view class="row" style="align-items:center;">
+        <text class="chip red">{{hotBreaking.length}}条</text>
+        <text class="sub" wx:if="{{rtUpdatedAt}}" style="margin-left:8rpx;font-size:20rpx;">⚡{{rtUpdatedAt}}</text>
+      </view>
     </view>
     <view class="breaking-list">
-      <view class="breaking-item {{item.isGeo ? 'geo' : 'comm'}}" wx:for="{{hotBreaking}}" wx:key="id">
+      <view class="breaking-item {{item.isGeo ? 'geo' : item.category === 'monetary' ? 'monetary' : item.category === 'technology' ? 'tech' : item.category === 'market' ? 'market' : 'comm'}}" wx:for="{{hotBreaking}}" wx:key="id">
         <view class="breaking-top">
-          <text class="breaking-cat">{{item.isGeo ? '🌍地缘' : '📦商品'}}</text>
-          <text class="breaking-title">{{item.title}}</text>
-          <text class="chip sm {{item.impactClass}}">{{item.impact >= 0 ? '+' : ''}}{{item.impact}}</text>
+          <text class="breaking-cat">{{item.catIcon || (item.isGeo ? '🌍' : '📦')}}{{item.category === 'geopolitics' ? '地缘' : item.category === 'monetary' ? '央行' : item.category === 'technology' ? '科技' : item.category === 'market' ? '市场' : item.category === 'policy' ? '政策' : '商品'}}</text>
+          <text class="breaking-source" wx:if="{{item.source}}">{{item.source}}</text>
+          <text class="rt-badge" wx:if="{{item.isRealtime}}">LIVE</text>
+        </view>
+        <text class="breaking-title">{{item.title}}</text>
+        <view class="breaking-impact-row">
+          <text class="chip sm {{item.impactClass}}">影响 {{item.impact >= 0 ? '+' : ''}}{{item.impact}}</text>
         </view>
         <text class="breaking-reason" wx:if="{{item.reason}}">{{item.reason}}</text>
         <text class="breaking-analyst" wx:if="{{item.analystView}}">🧭 分析师观点：{{item.analystView}}</text>

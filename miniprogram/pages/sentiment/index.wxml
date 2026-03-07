@@ -117,6 +117,55 @@
     </view>
   </view>
 
+  <!-- ====== 📊 社媒趋势热点 ====== -->
+  <view class="card" wx:if="{{socialTrends.length > 0}}">
+    <view class="card-header" bindtap="toggleSection" data-key="secTrends">
+      <text class="title">📊 社媒趋势热点</text>
+      <text class="sub">{{socialTrends.length}} 个主题</text>
+      <text class="toggle-icon">{{secTrends ? '▼' : '▶'}}</text>
+    </view>
+    <view wx:if="{{secTrends}}">
+      <view class="trend-list">
+        <view class="trend-item" wx:for="{{socialTrends}}" wx:key="id" bindtap="toggleTrendExpand" data-id="{{item.id}}">
+          <view class="trend-top">
+            <view class="trend-head">
+              <text class="trend-icon">{{item.icon}}</text>
+              <text class="trend-name">{{item.name}}</text>
+              <text class="sent-badge {{item.sentClass}}">{{item.sentiment}}</text>
+            </view>
+            <text class="trend-mentions">{{item.mentionCount}}条</text>
+          </view>
+          <view class="trend-heat-row">
+            <view class="trend-heat-bar-bg">
+              <view class="trend-heat-bar" style="width:{{item.heatBarWidth}}%;"></view>
+            </view>
+            <text class="trend-heat-val">🔥{{item.heatScore}}</text>
+          </view>
+          <view class="trend-platforms">
+            <text class="trend-platform-label">覆盖平台:</text>
+            <text class="trend-platform-text">{{item.platforms}}</text>
+          </view>
+          <!-- 展开详情 -->
+          <view class="trend-detail" wx:if="{{expandedTrend === item.id}}">
+            <view class="trend-keywords" wx:if="{{item.keywordsHit}}">
+              <text class="trend-detail-label">🏷️ 命中关键词</text>
+              <text class="trend-detail-text">{{item.keywordsHit}}</text>
+            </view>
+            <view class="trend-samples" wx:if="{{item.sampleTitles.length > 0}}">
+              <text class="trend-detail-label">📝 热门话题</text>
+              <view wx:for="{{item.sampleTitles}}" wx:for-item="st" wx:key="*this" class="trend-sample-row">
+                <text class="trend-sample-text">· {{st}}</text>
+              </view>
+            </view>
+          </view>
+          <view class="trend-expand-hint">
+            <text class="trend-expand-icon">{{expandedTrend === item.id ? '△ 收起' : '▽ 查看详情'}}</text>
+          </view>
+        </view>
+      </view>
+    </view>
+  </view>
+
   <!-- ====== KOL vs 散户 博弈拆解 ====== -->
   <view class="card" wx:if="{{kolSections.length > 0}}">
     <view class="card-header" bindtap="toggleSection" data-key="secKol">
@@ -297,7 +346,7 @@
 
   <!-- ====== Footer ====== -->
   <view class="footer" wx:if="{{!loading}}">
-    <text class="sub">数据来源：抖音/微博/东财/知乎/百度/B站/小红书 + AI分析</text>
+    <text class="sub">数据来源：抖音/微博/东财/知乎/百度/B站/小红书 + AI趋势分析</text>
     <text class="sub" style="margin-top:6rpx;">⚠️ 本分析不构成投资建议</text>
   </view>
 

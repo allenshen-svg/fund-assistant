@@ -230,6 +230,153 @@
   font-weight: 700;
 }
 
+/* ====== 社媒趋势热点 ====== */
+.trend-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+}
+
+.trend-item {
+  padding: 18rpx;
+  border-radius: 14rpx;
+  background: rgba(59,130,246,0.04);
+  border: 1rpx solid rgba(59,130,246,0.10);
+  border-left: 6rpx solid rgba(59,130,246,0.35);
+}
+
+.trend-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10rpx;
+}
+
+.trend-head {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  flex: 1;
+}
+
+.trend-icon {
+  font-size: 32rpx;
+}
+
+.trend-name {
+  font-size: 28rpx;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.trend-mentions {
+  font-size: 22rpx;
+  color: var(--text-sub);
+  flex-shrink: 0;
+  padding: 4rpx 12rpx;
+  background: rgba(148,163,184,0.10);
+  border-radius: 999rpx;
+}
+
+.trend-heat-row {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+  margin-bottom: 8rpx;
+}
+
+.trend-heat-bar-bg {
+  flex: 1;
+  height: 16rpx;
+  background: var(--elevated-4);
+  border-radius: 8rpx;
+  overflow: hidden;
+}
+
+.trend-heat-bar {
+  height: 100%;
+  border-radius: 8rpx;
+  background: linear-gradient(90deg, #f59e0b, #ef4444);
+  transition: width 0.5s ease;
+}
+
+.trend-heat-val {
+  font-size: 22rpx;
+  color: #f59e0b;
+  font-weight: 700;
+  flex-shrink: 0;
+  width: 90rpx;
+  text-align: right;
+}
+
+.trend-platforms {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  margin-bottom: 4rpx;
+}
+
+.trend-platform-label {
+  font-size: 20rpx;
+  color: var(--text-faint);
+  flex-shrink: 0;
+}
+
+.trend-platform-text {
+  font-size: 20rpx;
+  color: var(--text-sub);
+  font-weight: 500;
+}
+
+.trend-detail {
+  margin-top: 12rpx;
+  padding-top: 12rpx;
+  border-top: 1rpx solid var(--border-subtle);
+}
+
+.trend-keywords {
+  margin-bottom: 10rpx;
+}
+
+.trend-detail-label {
+  font-size: 22rpx;
+  font-weight: 600;
+  color: var(--text-sub);
+  display: block;
+  margin-bottom: 6rpx;
+}
+
+.trend-detail-text {
+  font-size: 22rpx;
+  color: var(--text-body);
+  line-height: 1.6;
+  display: block;
+}
+
+.trend-samples {
+  margin-bottom: 6rpx;
+}
+
+.trend-sample-row {
+  padding: 4rpx 0;
+}
+
+.trend-sample-text {
+  font-size: 22rpx;
+  color: var(--text-body);
+  line-height: 1.6;
+}
+
+.trend-expand-hint {
+  text-align: center;
+  margin-top: 6rpx;
+}
+
+.trend-expand-icon {
+  font-size: 20rpx;
+  color: var(--text-faint);
+}
+
 /* ====== KOL vs 散户 ====== */
 .kol-card {
   padding: 18rpx;

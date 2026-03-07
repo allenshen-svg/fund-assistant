@@ -1,5 +1,5 @@
 const { getSettings } = require('../../utils/storage');
-const { fetchHotEvents, fetchSentimentData, fetchAnalysisData, fetchUSMarketData, triggerRefresh, triggerReanalyze, getServerBase, fetchMultiFundHistory } = require('../../utils/api');
+const { fetchHotEvents, fetchSentimentData, fetchAnalysisData, fetchUSMarketData, fetchSocialTrends, triggerRefresh, triggerReanalyze, getServerBase, fetchMultiFundHistory } = require('../../utils/api');
 
 const COMMODITY_PROXY_FUNDS = [
   { key: 'gold',       name: '黄金',   code: '518880', color: '#f59e0b' },
@@ -95,6 +95,11 @@ Page({
     // —— AI 完整报告 ——
     aiReport: '',
 
+    // —— 社媒趋势热点 ——
+    socialTrends: [],
+    secTrends: true,
+    expandedTrend: '',
+
     // —— 原有热力图 + 事件 ——
     heatmap: [],
     events: [],
@@ -147,6 +152,11 @@ Page({
         this._drawCommodityTrendCanvas();
       }
     });
+  },
+
+  toggleTrendExpand(e) {
+    const id = e.currentTarget.dataset.id;
+    this.setData({ expandedTrend: this.data.expandedTrend === id ? '' : id });
   },
 
   /* ====== 手动触发舆情采集 + AI 分析 ====== */
@@ -241,13 +251,14 @@ Page({
     const serverBase = getServerBase(settings);
     const dataSettings = serverBase ? { ...settings, apiBase: serverBase } : settings;
 
-    // 并行获取：舆情 + AI分析 + 美股 + 热点事件
-    const [sentimentRes, analysisRes, usRes, hotRes, commodityHistRes] = await Promise.allSettled([
+    // 并行获取：舆情 + AI分析 + 美股 + 热点事件 + 社媒趋势
+    const [sentimentRes, analysisRes, usRes, hotRes, commodityHistRes, trendsRes] = await Promise.allSettled([
       fetchSentimentData(dataSettings),
       fetchAnalysisData(dataSettings),
       fetchUSMarketData(dataSettings),
       fetchHotEvents(settings),
       fetchMultiFundHistory(COMMODITY_PROXY_FUNDS.map(i => i.code)),
+      fetchSocialTrends(dataSettings),
     ]);
 
     const sentimentData = sentimentRes.status === 'fulfilled' ? sentimentRes.value : null;
@@ -255,6 +266,7 @@ Page({
     const usData = usRes.status === 'fulfilled' ? usRes.value : null;
     const hotData = hotRes.status === 'fulfilled' ? hotRes.value : null;
     const commodityHist = commodityHistRes.status === 'fulfilled' ? commodityHistRes.value : null;
+    const trendsData = trendsRes.status === 'fulfilled' ? trendsRes.value : null;
 
     const batch = { loading: false };
 
@@ -381,6 +393,49 @@ Page({
       const validKeys = batch.commodityTrends.map(t => t.key);
       if (validKeys.length > 0 && !validKeys.includes(this.data.selectedCommodityKey)) {
         batch.selectedCommodityKey = validKeys[0];
+      }
+    }
+
+    // ========== 4.5 社媒趋势热点 ==========
+    if (trendsData && trendsData.trends && trendsData.trends.length > 0) {
+      batch.socialTrends = trendsData.trends.map(t => ({
+        id: t.id,
+        name: t.name,
+        icon: t.icon,
+        mentionCount: t.mention_count || 0,
+        heatScore: t.heat_score || 0,
+        platforms: (t.platforms || []).join('/'),
+        sentiment: t.sentiment || '中性',
+        sentClass: /偏多|看多/.test(t.sentiment) ? 'pos' : /偏空|看空/.test(t.sentiment) ? 'neg' : 'neu',
+        sampleTitles: t.sample_titles || [],
+        keywordsHit: (t.keywords_hit || []).join('、'),
+        heatBarWidth: 0,
+      }));
+      // 计算热度条百分比 (相对最大值)
+      const maxHeat = Math.max(...batch.socialTrends.map(t => t.heatScore), 1);
+      batch.socialTrends.forEach(t => {
+        t.heatBarWidth = Math.round((t.heatScore / maxHeat) * 100);
+      });
+    } else {
+      // 兜底: 从 sentimentData.trends 提取
+      if (sentimentData && sentimentData.trends && sentimentData.trends.length > 0) {
+        batch.socialTrends = sentimentData.trends.map(t => ({
+          id: t.id,
+          name: t.name,
+          icon: t.icon,
+          mentionCount: t.mention_count || 0,
+          heatScore: t.heat_score || 0,
+          platforms: (t.platforms || []).join('/'),
+          sentiment: t.sentiment || '中性',
+          sentClass: /偏多|看多/.test(t.sentiment) ? 'pos' : /偏空|看空/.test(t.sentiment) ? 'neg' : 'neu',
+          sampleTitles: t.sample_titles || [],
+          keywordsHit: (t.keywords_hit || []).join('、'),
+          heatBarWidth: 0,
+        }));
+        const maxHeat = Math.max(...batch.socialTrends.map(t => t.heatScore), 1);
+        batch.socialTrends.forEach(t => {
+          t.heatBarWidth = Math.round((t.heatScore / maxHeat) * 100);
+        });
       }
     }
 

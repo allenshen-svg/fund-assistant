@@ -546,6 +546,42 @@ function fetchServerFundPick(settings) {
   });
 }
 
+/**
+ * 获取实时突发新闻 + 全球市场异动
+ * 返回 { breaking[], anomalies[], updated_at, meta }
+ */
+function fetchRealtimeBreaking(settings) {
+  const base = String((settings && settings.apiBase) || '').replace(/\/$/, '');
+  const url = `${base}/data/realtime_breaking.json?_t=${Date.now()}`;
+  return new Promise((resolve) => {
+    wx.request({
+      url,
+      timeout: 8000,
+      success(res) {
+        if (res.statusCode >= 200 && res.statusCode < 300 && res.data && Array.isArray(res.data.breaking)) {
+          resolve(res.data);
+        } else {
+          // 兜底: 尝试 API 路由
+          const apiUrl = `${base}/api/realtime-breaking?_t=${Date.now()}`;
+          wx.request({
+            url: apiUrl,
+            timeout: 8000,
+            success(apiRes) {
+              if (apiRes.statusCode >= 200 && apiRes.statusCode < 300 && apiRes.data && Array.isArray(apiRes.data.breaking)) {
+                resolve(apiRes.data);
+              } else {
+                resolve(null);
+              }
+            },
+            fail() { resolve(null); }
+          });
+        }
+      },
+      fail() { resolve(null); }
+    });
+  });
+}
+
 module.exports = {
   fetchHotEvents,
   fetchIndices,
@@ -558,6 +594,8 @@ module.exports = {
   fetchSentimentData,
   fetchAnalysisData,
   fetchUSMarketData,
+  fetchSocialTrends,
+  fetchRealtimeBreaking,
   triggerRefresh,
   triggerReanalyze,
   getServerBase: _getServerBase,
@@ -629,6 +667,45 @@ function fetchUSMarketData(settings) {
           resolve(res.data);
         } else {
           resolve(null);
+        }
+      },
+      fail() { resolve(null); }
+    });
+  });
+}
+
+/**
+ * 获取社交媒体趋势热点
+ * 优先从 sentiment_cache.json 的 trends 字段读取
+ * 兑底从 /api/social-trends 读取
+ * 返回 { trends[], fetch_time }
+ */
+function fetchSocialTrends(settings) {
+  // 尝试从 sentiment_cache.json 获取 (内含 trends)
+  const base = String((settings && settings.apiBase) || '').replace(/\/$/, '');
+  const url = `${base}/data/sentiment_cache.json?_t=${Date.now()}`;
+  return new Promise((resolve) => {
+    wx.request({
+      url,
+      timeout: 12000,
+      success(res) {
+        if (res.statusCode >= 200 && res.statusCode < 300 && res.data && Array.isArray(res.data.trends) && res.data.trends.length > 0) {
+          resolve({ trends: res.data.trends, fetch_time: res.data.fetch_time });
+        } else {
+          // 兑底: 尝试 social_media_videos.json
+          const smUrl = `${base}/data/social_media_videos.json?_t=${Date.now()}`;
+          wx.request({
+            url: smUrl,
+            timeout: 10000,
+            success(smRes) {
+              if (smRes.statusCode >= 200 && smRes.statusCode < 300 && smRes.data && Array.isArray(smRes.data.trends)) {
+                resolve({ trends: smRes.data.trends, fetch_time: smRes.data.updated_at });
+              } else {
+                resolve(null);
+              }
+            },
+            fail() { resolve(null); }
+          });
         }
       },
       fail() { resolve(null); }

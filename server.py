@@ -21,6 +21,7 @@ from flask import Flask, jsonify, send_from_directory, request
 from scripts.collector import collect_and_save, load_cache, load_us_market_cache, fetch_us_market, CACHE_FILE
 from scripts.analyzer import load_analysis_cache, analyze_and_save, ANALYSIS_CACHE
 from scripts.fetch_events import main as fetch_hot_events
+from scripts.fetch_realtime_breaking import main as fetch_realtime_breaking
 from scripts.fund_pick import run_fund_pick, load_fund_pick_cache
 
 app = Flask(__name__, static_folder=None)
@@ -85,6 +86,32 @@ def api_refresh():
     return jsonify({'status': 'started', 'message': '采集已启动'})
 
 
+@app.route('/api/social-trends')
+def api_social_trends():
+    """返回社交媒体趋势热点（从 sentiment_cache 提取的 trends 字段）"""
+    cache = load_cache()
+    if cache and cache.get('trends'):
+        return jsonify({
+            'trends': cache['trends'],
+            'fetch_time': cache.get('fetch_time'),
+            'total_items': cache.get('total', 0),
+        })
+    # 兜底: 尝试从 social_media_videos.json 读取
+    sm_path = os.path.join(ROOT_DIR, 'data', 'social_media_videos.json')
+    if os.path.exists(sm_path):
+        try:
+            with open(sm_path, 'r', encoding='utf-8') as f:
+                sm_data = json.load(f)
+            return jsonify({
+                'trends': sm_data.get('trends', []),
+                'fetch_time': sm_data.get('updated_at'),
+                'total_items': sm_data.get('total_processed', 0),
+            })
+        except Exception:
+            pass
+    return jsonify({'trends': [], 'message': '暂无趋势数据'}), 200
+
+
 @app.route('/api/hot-events')
 def api_hot_events():
     """返回最新热点事件数据（与 /data/hot_events.json 相同内容，但走 API 路由）"""
@@ -94,6 +121,30 @@ def api_hot_events():
     try:
         with open(hot_path, 'r', encoding='utf-8') as f:
             data = json.load(f)
+        return jsonify(data)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/realtime-breaking')
+def api_realtime_breaking():
+    """返回实时突发新闻 + 全球市场异动数据"""
+    rt_path = os.path.join(ROOT_DIR, 'data', 'realtime_breaking.json')
+    if not os.path.exists(rt_path):
+        return jsonify({'breaking': [], 'anomalies': [], 'message': '暂无实时数据'}), 200
+    try:
+        with open(rt_path, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+        # 标记缓存年龄
+        updated = data.get('updated_at', '')
+        if updated:
+            try:
+                from datetime import timezone as _tz
+                ut = datetime.fromisoformat(updated)
+                age = (datetime.now(ut.tzinfo or _tz.utc) - ut).total_seconds()
+                data['cache_age_seconds'] = int(age)
+            except Exception:
+                pass
         return jsonify(data)
     except Exception as e:
         return jsonify({'error': str(e)}), 500
@@ -346,6 +397,45 @@ def scheduler_loop():
             time.sleep(10)
 
 
+# ==================== 实时突发新闻高频采集线程 ====================
+_rt_breaking_lock = threading.Lock()
+_rt_breaking_running = False
+
+REALTIME_INTERVAL_TRADING = int(os.environ.get('REALTIME_INTERVAL_TRADING', 300))    # 交易时段5分钟
+REALTIME_INTERVAL_OFF = int(os.environ.get('REALTIME_INTERVAL_OFF', 900))            # 非交易时段15分钟
+
+def realtime_breaking_loop():
+    """高频实时突发新闻采集线程（交易时段每5分钟，非交易时段每15分钟）"""
+    global _rt_breaking_running
+    time.sleep(8)  # 启动后等8秒
+    print('[realtime_breaking] ⚡ 实时突发新闻监控线程已启动')
+
+    while True:
+        if _rt_breaking_running:
+            time.sleep(5)
+            continue
+
+        interval = REALTIME_INTERVAL_TRADING if is_trading_hours() else REALTIME_INTERVAL_OFF
+        trading_label = '交易时段' if is_trading_hours() else '非交易时段'
+
+        with _rt_breaking_lock:
+            _rt_breaking_running = True
+            try:
+                print(f'\n[realtime_breaking] {datetime.now().strftime("%H:%M:%S")} [{trading_label}] 采集实时突发...')
+                fetch_realtime_breaking()
+                print(f'[realtime_breaking] ✅ 完成，下次: {interval}秒后')
+            except SystemExit:
+                print('[realtime_breaking] ⚠️ 脚本调用了 sys.exit，已拦截')
+            except Exception as e:
+                print(f'[realtime_breaking] ❌ 异常: {e}')
+                import traceback
+                traceback.print_exc()
+            finally:
+                _rt_breaking_running = False
+
+        time.sleep(interval)
+
+
 def fund_pick_scheduler_loop():
     """每日 14:50 自动执行选基金/股票
 
@@ -406,6 +496,9 @@ def _ensure_scheduler():
         t2 = threading.Thread(target=fund_pick_scheduler_loop, daemon=True)
         t2.start()
         print('[scheduler] 选基金定时线程已启动 (每日14:50)')
+        t3 = threading.Thread(target=realtime_breaking_loop, daemon=True)
+        t3.start()
+        print('[scheduler] ⚡ 实时突发新闻线程已启动 (交易时段每5分钟)')
 
 # gunicorn 兼容：通过 before_request 在第一次请求时启动采集线程
 @app.before_request
@@ -424,15 +517,17 @@ if __name__ == '__main__':
 ║  📊 Fund-Assistant 舆情分析后端                  ║
 ║  端口: {PORT:<6}                                  ║
 ║  采集间隔: {COLLECT_INTERVAL}秒 ({COLLECT_INTERVAL//60}分钟)                       ║
+║  实时突发: 交易{REALTIME_INTERVAL_TRADING}秒/非交易{REALTIME_INTERVAL_OFF}秒       ║
 ║  选基金: 每日 14:50 自动执行                     ║
 ║  API:                                            ║
-║    GET  /api/sentiment  → 舆情数据               ║
-║    GET  /api/analysis   → AI分析结果             ║
-║    GET  /api/fund-pick  → AI选基结果             ║
-║    POST /api/refresh    → 手动刷新               ║
-║    POST /api/reanalyze  → 重新AI分析             ║
-║    POST /api/fund-pick/trigger → 手动触发选基    ║
-║    GET  /api/status     → 服务状态               ║
+║    GET  /api/sentiment        → 舆情数据         ║
+║    GET  /api/analysis         → AI分析结果       ║
+║    GET  /api/fund-pick        → AI选基结果       ║
+║    GET  /api/realtime-breaking→ 实时突发+异动    ║
+║    POST /api/refresh          → 手动刷新         ║
+║    POST /api/reanalyze        → 重新AI分析       ║
+║    POST /api/fund-pick/trigger→ 手动触发选基     ║
+║    GET  /api/status           → 服务状态         ║
 ╚══════════════════════════════════════════════════╝
 ''')
     app.run(host='0.0.0.0', port=PORT, debug=False)
