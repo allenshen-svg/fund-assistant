@@ -168,6 +168,43 @@
 .us-pct { font-size: 24rpx; font-weight: 700; margin-top: 4rpx; }
 .us-amp { font-size: 20rpx; color: var(--text-faint); margin-top: 2rpx; }
 
+/* ====== 大宗商品近1月走势 ====== */
+.commodity-trend-canvas {
+  display: block;
+  border-radius: 12rpx;
+  background: rgba(148,163,184,0.04);
+}
+
+.commodity-legend {
+  margin-top: 14rpx;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12rpx 18rpx;
+}
+
+.commodity-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+}
+
+.commodity-dot {
+  width: 14rpx;
+  height: 14rpx;
+  border-radius: 50%;
+}
+
+.commodity-name {
+  font-size: 22rpx;
+  color: var(--text);
+  font-weight: 600;
+}
+
+.commodity-pct {
+  font-size: 22rpx;
+  font-weight: 700;
+}
+
 /* ====== KOL vs 散户 ====== */
 .kol-card {
   padding: 18rpx;

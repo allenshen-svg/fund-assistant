@@ -1,5 +1,11 @@
 const { getSettings } = require('../../utils/storage');
-const { fetchHotEvents, fetchSentimentData, fetchAnalysisData, fetchUSMarketData, triggerRefresh, triggerReanalyze, getServerBase } = require('../../utils/api');
+const { fetchHotEvents, fetchSentimentData, fetchAnalysisData, fetchUSMarketData, triggerRefresh, triggerReanalyze, getServerBase, fetchMultiFundHistory } = require('../../utils/api');
+
+const COMMODITY_PROXY_FUNDS = [
+  { key: 'gold', name: '黄金', code: '518880', color: '#f59e0b' },
+  { key: 'oil', name: '石油', code: '159697', color: '#22c55e' },
+  { key: 'nonferrous', name: '有色金属', code: '512400', color: '#3b82f6' },
+];
 
 /* ====== 金融关键词 (与 H5 sa-config 同步) ====== */
 const FINANCE_KW = [
@@ -63,6 +69,12 @@ Page({
     // —— 隔夜美股 ——
     usStocks: [],
 
+    // —— 大宗商品近1月走势 ——
+    commodityTrends: [],
+    secCommodityTrend: true,
+    commodityCanvasW: 320,
+    commodityCanvasH: 180,
+
     // —— KOL vs 散户 ——
     kolSections: [],
 
@@ -107,7 +119,11 @@ Page({
     refreshMsg: '',
   },
 
-  onLoad() {},
+  onLoad() {
+    const info = wx.getWindowInfo ? wx.getWindowInfo() : wx.getSystemInfoSync();
+    const canvasW = Math.max(260, (info && info.windowWidth ? info.windowWidth : 375) - 72);
+    this.setData({ commodityCanvasW: canvasW, commodityCanvasH: 180 });
+  },
 
   onShow() {
     this.loadAll();
@@ -119,7 +135,13 @@ Page({
 
   toggleSection(e) {
     const key = e.currentTarget.dataset.key;
-    if (key) this.setData({ [key]: !this.data[key] });
+    if (!key) return;
+    const nextVal = !this.data[key];
+    this.setData({ [key]: nextVal }, () => {
+      if (key === 'secCommodityTrend' && nextVal) {
+        this._drawCommodityTrendCanvas();
+      }
+    });
   },
 
   /* ====== 手动触发舆情采集 + AI 分析 ====== */
@@ -215,17 +237,19 @@ Page({
     const dataSettings = serverBase ? { ...settings, apiBase: serverBase } : settings;
 
     // 并行获取：舆情 + AI分析 + 美股 + 热点事件
-    const [sentimentRes, analysisRes, usRes, hotRes] = await Promise.allSettled([
+    const [sentimentRes, analysisRes, usRes, hotRes, commodityHistRes] = await Promise.allSettled([
       fetchSentimentData(dataSettings),
       fetchAnalysisData(dataSettings),
       fetchUSMarketData(dataSettings),
       fetchHotEvents(settings),
+      fetchMultiFundHistory(COMMODITY_PROXY_FUNDS.map(i => i.code)),
     ]);
 
     const sentimentData = sentimentRes.status === 'fulfilled' ? sentimentRes.value : null;
     const analysisData = analysisRes.status === 'fulfilled' ? analysisRes.value : null;
     const usData = usRes.status === 'fulfilled' ? usRes.value : null;
     const hotData = hotRes.status === 'fulfilled' ? hotRes.value : null;
+    const commodityHist = commodityHistRes.status === 'fulfilled' ? commodityHistRes.value : null;
 
     const batch = { loading: false };
 
@@ -328,7 +352,29 @@ Page({
       }));
     }
 
-    // ========== 4. 热点事件 (原有) ==========
+    // ========== 4. 大宗商品近1月走势 ==========
+    if (commodityHist) {
+      batch.commodityTrends = COMMODITY_PROXY_FUNDS.map(item => {
+        const hist = (commodityHist[item.code] || []).slice(-30);
+        if (!hist || hist.length < 2) return null;
+        const first = Number(hist[0].nav || 0);
+        const last = Number(hist[hist.length - 1].nav || 0);
+        if (!first || !last) return null;
+        const pct = ((last - first) / first) * 100;
+        return {
+          key: item.key,
+          name: item.name,
+          code: item.code,
+          color: item.color,
+          points: hist.map(h => Number(h.nav || 0)).filter(v => v > 0),
+          trendPct: pct,
+          trendPctStr: `${pct >= 0 ? '+' : ''}${pct.toFixed(2)}%`,
+          trendClass: pct >= 0 ? 'pct-up' : 'pct-down',
+        };
+      }).filter(Boolean);
+    }
+
+    // ========== 5. 热点事件 (原有) ==========
     if (hotData) {
       const hd = hotData.data || {};
       batch.heatmap = (hd.heatmap || []).map(item => ({
@@ -347,7 +393,7 @@ Page({
       }));
       batch.outlook = hd.outlook || null;
 
-      // ========== 5. 补充热力图板块到 KOL 博弈拆解 ==========
+      // ========== 6. 补充热力图板块到 KOL 博弈拆解 ==========
       const existingTargets = new Set((batch.kolSections || []).map(s => s.target));
       const topHeat = (hd.heatmap || []).slice(0, 10);
       const heatKols = topHeat
@@ -371,7 +417,73 @@ Page({
       batch.kolSections = (batch.kolSections || []).concat(heatKols);
     }
 
-    this.setData(batch);
+    this.setData(batch, () => {
+      if ((this.data.commodityTrends || []).length > 0 && this.data.secCommodityTrend) {
+        this._drawCommodityTrendCanvas();
+      }
+    });
+  },
+
+  _drawCommodityTrendCanvas() {
+    const trends = this.data.commodityTrends || [];
+    if (trends.length === 0) return;
+    const width = this.data.commodityCanvasW || 320;
+    const height = this.data.commodityCanvasH || 180;
+    const ctx = wx.createCanvasContext('commodityTrendCanvas', this);
+
+    const padding = { left: 10, right: 10, top: 12, bottom: 14 };
+    const plotW = width - padding.left - padding.right;
+    const plotH = height - padding.top - padding.bottom;
+
+    const allVals = [];
+    trends.forEach(item => {
+      (item.points || []).forEach(v => { if (!isNaN(v)) allVals.push(v); });
+    });
+    if (allVals.length < 2) return;
+
+    let minVal = Math.min.apply(null, allVals);
+    let maxVal = Math.max.apply(null, allVals);
+    if (minVal === maxVal) {
+      maxVal += 1;
+      minVal -= 1;
+    }
+
+    // 背景网格
+    ctx.clearRect(0, 0, width, height);
+    ctx.setStrokeStyle('rgba(148, 163, 184, 0.25)');
+    ctx.setLineWidth(1);
+    for (let i = 0; i <= 3; i++) {
+      const y = padding.top + (plotH * i / 3);
+      ctx.beginPath();
+      ctx.moveTo(padding.left, y);
+      ctx.lineTo(width - padding.right, y);
+      ctx.stroke();
+    }
+
+    // 折线
+    trends.forEach(item => {
+      const pts = item.points || [];
+      if (pts.length < 2) return;
+      ctx.setStrokeStyle(item.color || '#3b82f6');
+      ctx.setLineWidth(2);
+      ctx.beginPath();
+      for (let i = 0; i < pts.length; i++) {
+        const x = padding.left + (plotW * i / (pts.length - 1));
+        const y = padding.top + (maxVal - pts[i]) * plotH / (maxVal - minVal);
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+
+      const endX = padding.left + plotW;
+      const endY = padding.top + (maxVal - pts[pts.length - 1]) * plotH / (maxVal - minVal);
+      ctx.setFillStyle(item.color || '#3b82f6');
+      ctx.beginPath();
+      ctx.arc(endX, endY, 2.5, 0, 2 * Math.PI);
+      ctx.fill();
+    });
+
+    ctx.draw();
   },
 
   _sentimentLabel(val) {

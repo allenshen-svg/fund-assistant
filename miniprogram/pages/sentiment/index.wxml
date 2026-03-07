@@ -82,6 +82,28 @@
     </view>
   </view>
 
+  <!-- ====== 大宗商品近1月走势 ====== -->
+  <view class="card" wx:if="{{commodityTrends.length > 0}}">
+    <view class="card-header" bindtap="toggleSection" data-key="secCommodityTrend">
+      <text class="title">🛢️ 大宗商品近1月走势</text>
+      <text class="toggle-icon">{{secCommodityTrend ? '▼' : '▶'}}</text>
+    </view>
+    <view wx:if="{{secCommodityTrend}}">
+      <canvas
+        canvas-id="commodityTrendCanvas"
+        class="commodity-trend-canvas"
+        style="width:{{commodityCanvasW}}px;height:{{commodityCanvasH}}px;"
+      ></canvas>
+      <view class="commodity-legend">
+        <view class="commodity-legend-item" wx:for="{{commodityTrends}}" wx:key="key">
+          <view class="commodity-dot" style="background:{{item.color}};"></view>
+          <text class="commodity-name">{{item.name}}</text>
+          <text class="commodity-pct {{item.trendClass}}">{{item.trendPctStr}}</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
   <!-- ====== KOL vs 散户 博弈拆解 ====== -->
   <view class="card" wx:if="{{kolSections.length > 0}}">
     <view class="card-header" bindtap="toggleSection" data-key="secKol">
