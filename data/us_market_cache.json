@@ -10,9 +10,9 @@
       "amplitude": 1.3,
       "high": 47634.55,
       "low": 47009.01,
-      "volume": 541860483,
+      "volume": 544887771,
       "market_cap": null,
-      "timestamp": 1772832001000
+      "timestamp": 1772835742308
     },
     {
       "symbol": "NVDA",
@@ -24,7 +24,7 @@
       "amplitude": 3.24,
       "high": 182.7561,
       "low": 176.8201,
-      "volume": 187756044,
+      "volume": 189021949,
       "market_cap": 4321026000000.0,
       "timestamp": 1772831700011
     },
@@ -38,7 +38,7 @@
       "amplitude": 1.69,
       "high": 258.77,
       "low": 254.37,
-      "volume": 40589894,
+      "volume": 41120042,
       "market_cap": 3779806304400.0,
       "timestamp": 1772830800122
     },
@@ -52,7 +52,7 @@
       "amplitude": 4.84,
       "high": 343.51,
       "low": 327.404,
-      "volume": 38385563,
+      "volume": 39152159,
       "market_cap": 1565021951214.0,
       "timestamp": 1772831700012
     },
@@ -66,7 +66,7 @@
       "amplitude": 2.01,
       "high": 402.35,
       "low": 394.21,
-      "volume": 63595615,
+      "volume": 64054561,
       "market_cap": 1488702341012.0,
       "timestamp": 1772830800348
     },
@@ -80,9 +80,9 @@
       "amplitude": 0.91,
       "high": 6773.42,
       "low": 6711.56,
-      "volume": 3388876107,
+      "volume": 3407767395,
       "market_cap": null,
-      "timestamp": 1772832001000
+      "timestamp": 1772835738927
     },
     {
       "symbol": "AMD",
@@ -94,7 +94,7 @@
       "amplitude": 4.51,
       "high": 200.24,
       "low": 191.2501,
-      "volume": 33064006,
+      "volume": 33913779,
       "market_cap": 313739958518.0,
       "timestamp": 1772831700012
     },
@@ -108,7 +108,7 @@
       "amplitude": 4.01,
       "high": 335.04,
       "low": 321.49,
-      "volume": 8654313,
+      "volume": 8733675,
       "market_cap": 3040994000.0,
       "timestamp": 1772831700011
     },
@@ -122,11 +122,11 @@
       "amplitude": 1.26,
       "high": 22614.415,
       "low": 22328.135,
-      "volume": 9371653063,
+      "volume": 9538886523,
       "market_cap": null,
-      "timestamp": 1772833366000
+      "timestamp": 1772835359000
     }
   ],
-  "fetch_time": "2026-03-07 05:42:46",
-  "fetch_ts": 1772833366
+  "fetch_time": "2026-03-07 10:16:02",
+  "fetch_ts": 1772849762
 }

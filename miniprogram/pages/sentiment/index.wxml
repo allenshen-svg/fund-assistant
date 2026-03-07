@@ -89,18 +89,31 @@
       <text class="toggle-icon">{{secCommodityTrend ? '▼' : '▶'}}</text>
     </view>
     <view wx:if="{{secCommodityTrend}}">
+      <!-- 商品选择 tabs -->
+      <scroll-view scroll-x class="commodity-tabs">
+        <view
+          wx:for="{{commodityTrends}}"
+          wx:key="key"
+          class="commodity-tab {{item.key === selectedCommodityKey ? 'active' : ''}}"
+          style="{{item.key === selectedCommodityKey ? 'border-color:' + item.color + ';color:' + item.color : ''}}"
+          bindtap="onSelectCommodity"
+          data-key="{{item.key}}"
+        >{{item.name}}</view>
+      </scroll-view>
+      <!-- 走势图 -->
       <canvas
         canvas-id="commodityTrendCanvas"
         class="commodity-trend-canvas"
         style="width:{{commodityCanvasW}}px;height:{{commodityCanvasH}}px;"
       ></canvas>
-      <view class="commodity-legend">
-        <view class="commodity-legend-item" wx:for="{{commodityTrends}}" wx:key="key">
-          <view class="commodity-dot" style="background:{{item.color}};"></view>
-          <text class="commodity-name">{{item.name}}</text>
+      <!-- 选中商品涨跌信息 -->
+      <block wx:for="{{commodityTrends}}" wx:key="key">
+        <view wx:if="{{item.key === selectedCommodityKey}}" class="commodity-sel-info">
+          <view class="commodity-dot-lg" style="background:{{item.color}};"></view>
+          <text class="commodity-sel-name">{{item.name}} 近1月</text>
           <text class="commodity-pct {{item.trendClass}}">{{item.trendPctStr}}</text>
         </view>
-      </view>
+      </block>
     </view>
   </view>
 

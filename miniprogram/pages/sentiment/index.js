@@ -2,9 +2,13 @@ const { getSettings } = require('../../utils/storage');
 const { fetchHotEvents, fetchSentimentData, fetchAnalysisData, fetchUSMarketData, triggerRefresh, triggerReanalyze, getServerBase, fetchMultiFundHistory } = require('../../utils/api');
 
 const COMMODITY_PROXY_FUNDS = [
-  { key: 'gold', name: '黄金', code: '518880', color: '#f59e0b' },
-  { key: 'oil', name: '石油', code: '159697', color: '#22c55e' },
+  { key: 'gold',       name: '黄金',   code: '518880', color: '#f59e0b' },
+  { key: 'silver',     name: '白银',   code: '161226', color: '#94a3b8' },
+  { key: 'oil',        name: '石油',   code: '159697', color: '#22c55e' },
   { key: 'nonferrous', name: '有色金属', code: '512400', color: '#3b82f6' },
+  { key: 'coal',       name: '煤炭',   code: '515220', color: '#78716c' },
+  { key: 'soy',        name: '大豆',   code: '159985', color: '#84cc16' },
+  { key: 'chemical',   name: '化工',   code: '159870', color: '#a855f7' },
 ];
 
 /* ====== 金融关键词 (与 H5 sa-config 同步) ====== */
@@ -71,9 +75,10 @@ Page({
 
     // —— 大宗商品近1月走势 ——
     commodityTrends: [],
+    selectedCommodityKey: 'gold',
     secCommodityTrend: true,
     commodityCanvasW: 320,
-    commodityCanvasH: 180,
+    commodityCanvasH: 160,
 
     // —— KOL vs 散户 ——
     kolSections: [],
@@ -372,6 +377,11 @@ Page({
           trendClass: pct >= 0 ? 'pct-up' : 'pct-down',
         };
       }).filter(Boolean);
+      // ensure selectedCommodityKey is valid
+      const validKeys = batch.commodityTrends.map(t => t.key);
+      if (validKeys.length > 0 && !validKeys.includes(this.data.selectedCommodityKey)) {
+        batch.selectedCommodityKey = validKeys[0];
+      }
     }
 
     // ========== 5. 热点事件 (原有) ==========
@@ -424,33 +434,36 @@ Page({
     });
   },
 
+  onSelectCommodity(e) {
+    const key = e.currentTarget.dataset.key;
+    this.setData({ selectedCommodityKey: key }, () => {
+      if (this.data.secCommodityTrend) this._drawCommodityTrendCanvas();
+    });
+  },
+
   _drawCommodityTrendCanvas() {
     const trends = this.data.commodityTrends || [];
     if (trends.length === 0) return;
-    const width = this.data.commodityCanvasW || 320;
-    const height = this.data.commodityCanvasH || 180;
-    const ctx = wx.createCanvasContext('commodityTrendCanvas', this);
+    const selKey = this.data.selectedCommodityKey || (trends[0] && trends[0].key);
+    const item = trends.find(t => t.key === selKey) || trends[0];
+    if (!item) return;
+    const pts = item.points || [];
+    if (pts.length < 2) return;
 
-    const padding = { left: 10, right: 10, top: 12, bottom: 14 };
+    const width = this.data.commodityCanvasW || 320;
+    const height = this.data.commodityCanvasH || 160;
+    const ctx = wx.createCanvasContext('commodityTrendCanvas', this);
+    const padding = { left: 10, right: 10, top: 14, bottom: 14 };
     const plotW = width - padding.left - padding.right;
     const plotH = height - padding.top - padding.bottom;
 
-    const allVals = [];
-    trends.forEach(item => {
-      (item.points || []).forEach(v => { if (!isNaN(v)) allVals.push(v); });
-    });
-    if (allVals.length < 2) return;
-
-    let minVal = Math.min.apply(null, allVals);
-    let maxVal = Math.max.apply(null, allVals);
-    if (minVal === maxVal) {
-      maxVal += 1;
-      minVal -= 1;
-    }
+    let minVal = Math.min.apply(null, pts);
+    let maxVal = Math.max.apply(null, pts);
+    if (minVal === maxVal) { maxVal += 1; minVal -= 1; }
 
     // 背景网格
     ctx.clearRect(0, 0, width, height);
-    ctx.setStrokeStyle('rgba(148, 163, 184, 0.25)');
+    ctx.setStrokeStyle('rgba(148,163,184,0.25)');
     ctx.setLineWidth(1);
     for (let i = 0; i <= 3; i++) {
       const y = padding.top + (plotH * i / 3);
@@ -460,28 +473,36 @@ Page({
       ctx.stroke();
     }
 
-    // 折线
-    trends.forEach(item => {
-      const pts = item.points || [];
-      if (pts.length < 2) return;
-      ctx.setStrokeStyle(item.color || '#3b82f6');
-      ctx.setLineWidth(2);
-      ctx.beginPath();
-      for (let i = 0; i < pts.length; i++) {
-        const x = padding.left + (plotW * i / (pts.length - 1));
-        const y = padding.top + (maxVal - pts[i]) * plotH / (maxVal - minVal);
-        if (i === 0) ctx.moveTo(x, y);
-        else ctx.lineTo(x, y);
-      }
-      ctx.stroke();
+    // 起始基准线（灰色虚线风格 — 每隔6px画2px短线）
+    const baseY = padding.top + (maxVal - pts[0]) * plotH / (maxVal - minVal);
+    ctx.setStrokeStyle('rgba(148,163,184,0.50)');
+    ctx.setLineWidth(1);
+    ctx.beginPath();
+    for (let x = padding.left; x < width - padding.right; x += 8) {
+      ctx.moveTo(x, baseY);
+      ctx.lineTo(Math.min(x + 4, width - padding.right), baseY);
+    }
+    ctx.stroke();
 
-      const endX = padding.left + plotW;
-      const endY = padding.top + (maxVal - pts[pts.length - 1]) * plotH / (maxVal - minVal);
-      ctx.setFillStyle(item.color || '#3b82f6');
-      ctx.beginPath();
-      ctx.arc(endX, endY, 2.5, 0, 2 * Math.PI);
-      ctx.fill();
-    });
+    // 折线（当前选中品种，加粗）
+    ctx.setStrokeStyle(item.color || '#3b82f6');
+    ctx.setLineWidth(2.5);
+    ctx.beginPath();
+    for (let i = 0; i < pts.length; i++) {
+      const x = padding.left + (plotW * i / (pts.length - 1));
+      const y = padding.top + (maxVal - pts[i]) * plotH / (maxVal - minVal);
+      if (i === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+
+    // 终点圆点
+    const endX = padding.left + plotW;
+    const endY = padding.top + (maxVal - pts[pts.length - 1]) * plotH / (maxVal - minVal);
+    ctx.setFillStyle(item.color || '#3b82f6');
+    ctx.beginPath();
+    ctx.arc(endX, endY, 3.5, 0, 2 * Math.PI);
+    ctx.fill();
 
     ctx.draw();
   },
