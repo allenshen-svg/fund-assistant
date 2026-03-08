@@ -118,12 +118,23 @@
   </view>
 
   <!-- ====== 💡 投资建议 ====== -->
-  <view class="card" wx:if="{{holdingActions.length > 0}}">
+  <view class="card" wx:if="{{holdingActions.length > 0 || sectorActions.length > 0}}">
     <view class="card-header" bindtap="toggleSection" data-key="secAction">
       <text class="title">💡 投资建议</text>
       <text class="toggle-icon">{{secAction ? '▼' : '▶'}}</text>
     </view>
     <view wx:if="{{secAction}}">
+      <!-- 板块投资策略（来自深度分析） -->
+      <view class="sector-actions" wx:if="{{sectorActions.length > 0}}">
+        <view class="sector-action-item {{item.actClass}}" wx:for="{{sectorActions}}" wx:key="sector">
+          <view class="sector-action-header">
+            <text class="sector-action-icon">🏭</text>
+            <text class="sector-action-name">{{item.sector}}</text>
+          </view>
+          <text class="sector-action-text">{{item.strategy}}</text>
+        </view>
+      </view>
+      <!-- 基金类型操作建议 -->
       <view class="action-grid">
         <view class="action-item {{item.actClass}}" wx:for="{{holdingActions}}" wx:key="label">
           <text class="action-label">{{item.label}}</text>
@@ -172,39 +183,10 @@
     </view>
   </view>
 
-  <!-- ====== 📰 市场事件 ====== -->
-  <view class="card" wx:if="{{events.length > 0}}">
-    <view class="card-header" bindtap="toggleSection" data-key="secEvents">
-      <text class="title">📰 市场事件</text>
-      <text class="sub">共 {{events.length}} 条</text>
-      <text class="toggle-icon">{{secEvents ? '▼' : '▶'}}</text>
-    </view>
-    <view wx:if="{{secEvents}}">
-      <block wx:for="{{events}}" wx:key="id">
-        <view class="evt-item">
-          <view class="row">
-            <text class="evt-title">{{item.title}}</text>
-            <text class="chip {{item.impactClass}}">{{item.impactStr}}</text>
-          </view>
-          <view class="evt-meta">
-            <text class="chip gray" style="margin-right:8rpx;">{{item.category}}</text>
-            <text class="sub">情绪: {{item.sentimentLabel}}</text>
-          </view>
-          <text class="sub" wx:if="{{item.reason}}" style="margin-top:6rpx;">{{item.reason}}</text>
-          <view class="evt-sectors" wx:if="{{item.sectorsPos !== '--'}}">
-            <text class="sub pct-up">利好：{{item.sectorsPos}}</text>
-          </view>
-          <view class="evt-sectors" wx:if="{{item.sectorsNeg !== '--'}}">
-            <text class="sub pct-down">利空：{{item.sectorsNeg}}</text>
-          </view>
-          <text class="sub" wx:if="{{item.advice}}" style="margin-top:6rpx;color:#6c8aff;">💡 {{item.advice}}</text>
-        </view>
-      </block>
-    </view>
-  </view>
+
 
   <!-- ====== 空状态 ====== -->
-  <view wx:if="{{!loading && !aiAnalyzing && deepAnalysis.length === 0 && events.length === 0}}" class="empty-state">
+  <view wx:if="{{!loading && !aiAnalyzing && deepAnalysis.length === 0}}" class="empty-state">
     <text class="empty-icon">📭</text>
     <text class="sub">暂无舆情数据，正在等待AI分析...</text>
   </view>

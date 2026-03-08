@@ -306,6 +306,45 @@
   margin-bottom: 16rpx;
 }
 
+/* ====== 板块投资策略 ====== */
+.sector-actions {
+  margin-bottom: 18rpx;
+}
+.sector-action-item {
+  padding: 16rpx;
+  border-radius: 12rpx;
+  margin-bottom: 12rpx;
+  border-left: 6rpx solid var(--text-faint);
+  background: var(--elevated);
+}
+.sector-action-item.bullish {
+  border-left-color: #ef4444;
+  background: rgba(239,68,68,0.05);
+}
+.sector-action-item.bearish {
+  border-left-color: #22c55e;
+  background: rgba(34,197,94,0.05);
+}
+.sector-action-header {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  margin-bottom: 8rpx;
+}
+.sector-action-icon {
+  font-size: 26rpx;
+}
+.sector-action-name {
+  font-size: 26rpx;
+  font-weight: 700;
+  color: var(--text);
+}
+.sector-action-text {
+  font-size: 24rpx;
+  color: var(--text-sub);
+  line-height: 1.6;
+}
+
 /* ====== 操作指南 ====== */
 .action-grid {
   display: grid;

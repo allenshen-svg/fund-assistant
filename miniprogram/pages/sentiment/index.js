@@ -1,5 +1,5 @@
 const { getSettings } = require('../../utils/storage');
-const { fetchHotEvents, fetchAnalysisData, fetchUSMarketData, triggerRefresh, triggerReanalyze, getServerBase, fetchMultiFundHistory, fetchRealtimeBreaking, fetchSentimentData } = require('../../utils/api');
+const { fetchAnalysisData, fetchUSMarketData, triggerRefresh, triggerReanalyze, getServerBase, fetchMultiFundHistory, fetchSentimentData } = require('../../utils/api');
 
 const COMMODITY_PROXY_FUNDS = [
   { key: 'gold',       name: '黄金',   code: '518880', color: '#f59e0b' },
@@ -126,13 +126,12 @@ Page({
     bearish: '',
     tactical: '',
 
-    // —— 事件列表 ——
-    events: [],
+    // —— 板块投资策略 ——
+    sectorActions: [],
 
     // —— 折叠控制 ——
     secUsMarket: false,
     secAction: true,
-    secEvents: false,
 
     // —— 手动刷新 ——
     refreshing: false,
@@ -293,17 +292,14 @@ Page({
     const dataSettings = serverBase ? { ...settings, apiBase: serverBase } : settings;
 
     // 并行获取：AI分析 + 美股 + 热点事件 + 大宗商品 + 实时突发
-    const [analysisRes, usRes, hotRes, commodityHistRes, realtimeRes] = await Promise.allSettled([
+    const [analysisRes, usRes, commodityHistRes] = await Promise.allSettled([
       fetchAnalysisData(dataSettings),
       fetchUSMarketData(dataSettings),
-      fetchHotEvents(dataSettings),
       fetchMultiFundHistory(COMMODITY_PROXY_FUNDS.map(i => i.code)),
-      fetchRealtimeBreaking(dataSettings),
     ]);
 
     const analysisData = analysisRes.status === 'fulfilled' ? analysisRes.value : null;
     const usData = usRes.status === 'fulfilled' ? usRes.value : null;
-    const hotData = hotRes.status === 'fulfilled' ? hotRes.value : null;
     const commodityHist = commodityHistRes.status === 'fulfilled' ? commodityHistRes.value : null;
 
     const batch = { loading: false };
@@ -353,11 +349,18 @@ Page({
           contentHtml: _mdToHtml(d.content || ''),
           strategy: d.strategy || '',
           linkedCommodities: linked,
-          expanded: i === 0,  // 第一个板块默认展开
+          expanded: i < 2,  // 前两个板块默认展开
         };
       });
-      // 收集深度分析涉及的所有关键词用于事件去重
-      batch._deepTitles = deepRaw.map(d => d.title || '');
+      // 提取板块投资策略到投资建议区域
+      batch.sectorActions = deepRaw.filter(d => d.strategy).map(d => {
+        const sectorName = (d.title || '').split('：')[0].split(':')[0].trim();
+        return {
+          sector: sectorName,
+          strategy: d.strategy,
+          actClass: classifyAction(d.strategy),
+        };
+      });
 
       // —— 操作指南 ——
       const acts = analysisData.actions || {};
@@ -413,67 +416,7 @@ Page({
       }
     }
 
-    // ========== 4. 热点事件 + 实时突发合并 ==========
-    if (hotData) {
-      const hd = hotData.data || {};
-
-      var baseEvents = (hd.events || []).map(item => ({
-        ...item,
-        impactClass: Number(item.impact || 0) >= 0 ? 'up' : 'down',
-        impactStr: (Number(item.impact || 0) >= 0 ? '+' : '') + (item.impact || 0),
-        category: item.category || '其他',
-        sentimentLabel: this._sentimentLabel(item.sentiment),
-        sectorsPos: (item.sectors_positive || []).join('、') || '--',
-        sectorsNeg: (item.sectors_negative || []).join('、') || '--',
-      }));
-
-      var rtData = realtimeRes.status === 'fulfilled' ? realtimeRes.value : null;
-      var rtEvents = [];
-      if (rtData && Array.isArray(rtData.breaking)) {
-        rtEvents = rtData.breaking.map(function(item) {
-          var impact = Number(item.impact || 0);
-          return {
-            id: item.id || 'rtb_' + Math.random().toString(36).slice(2, 8),
-            title: item.title || '',
-            reason: item.reason || '',
-            source: item.source || '',
-            category: item.category || 'market',
-            impact: impact,
-            impactClass: impact >= 0 ? 'up' : 'down',
-            impactStr: (impact >= 0 ? '+' : '') + impact,
-            sentimentLabel: impact > 5 ? '偏多' : impact < -5 ? '偏空' : '中性',
-            sectors_positive: item.sectors_positive || [],
-            sectors_negative: item.sectors_negative || [],
-            sectorsPos: (item.sectors_positive || []).join('、') || '--',
-            sectorsNeg: (item.sectors_negative || []).join('、') || '--',
-            advice: item.advice || '',
-            isRealtime: true,
-          };
-        });
-      }
-
-      var merged = _dedupeEventList([].concat(rtEvents, baseEvents));
-      merged.sort(function(a, b) { return Math.abs(Number(b.impact || 0)) - Math.abs(Number(a.impact || 0)); });
-      // 去除已被深度分析覆盖的事件
-      var deepTitles = batch._deepTitles || [];
-      if (deepTitles.length > 0) {
-        merged = merged.filter(function(evt) {
-          var evtNorm = _normTitle(evt.title);
-          return !deepTitles.some(function(dt) {
-            var dtNorm = _normTitle(dt);
-            if (!dtNorm || !evtNorm) return false;
-            // 子串包含
-            if (evtNorm.includes(dtNorm) || dtNorm.includes(evtNorm)) return true;
-            // 高相似度
-            if (_bigramOverlap(evt.title, dt) >= 0.45) return true;
-            if (_tokenJaccard(evt.title, dt) >= 0.35) return true;
-            return false;
-          });
-        });
-      }
-      delete batch._deepTitles;
-      batch.events = merged;
-    }
+    // ========== 4. 事件数据已整合到板块深度分析中，不再单独展示 ==========
 
     this.setData(batch, () => {
       if ((this.data.commodityTrends || []).length > 0 && this.data.secCommodityTrend) {
@@ -650,13 +593,6 @@ Page({
     ctx.fillText('今日', width - padding.right, height - 4);
 
     ctx.draw();
-  },
-
-  _sentimentLabel(val) {
-    const s = parseFloat(val || 0);
-    if (s > 0.3) return '偏多';
-    if (s < -0.3) return '偏空';
-    return '中性';
   },
 });
 
