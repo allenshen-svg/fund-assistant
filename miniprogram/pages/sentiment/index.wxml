@@ -55,39 +55,20 @@
     </view>
   </view>
 
-  <!-- ====== 🔥 AI 深度事件分析（核心区域）====== -->
+  <!-- ====== 🔥 AI 板块深度分析（核心区域）====== -->
   <view class="card deep-section" wx:if="{{deepAnalysis.length > 0}}">
     <view class="card-header">
-      <text class="title">🔥 AI 深度事件分析</text>
-      <text class="sub">{{deepAnalysis.length}} 个重大事件</text>
+      <text class="title">🔥 板块深度影响分析</text>
+      <text class="sub">{{deepAnalysis.length}} 个板块</text>
     </view>
     <view class="deep-card" wx:for="{{deepAnalysis}}" wx:key="id">
-      <view class="deep-title-row">
-        <text class="deep-pin">📌</text>
+      <view class="deep-title-row" bindtap="toggleDeepCard" data-idx="{{index}}">
+        <text class="deep-pin">🏭</text>
         <text class="deep-title">{{item.title}}</text>
-      </view>
-      <!-- 冲击概述 -->
-      <view class="deep-field">
-        <text class="deep-label">💥 冲击概述</text>
-        <text class="deep-body">{{item.overview}}</text>
-      </view>
-      <!-- 产业链传导 -->
-      <view class="deep-field" wx:if="{{item.chains.length > 0}}">
-        <text class="deep-label">🔗 产业链传导</text>
-        <view class="deep-chain-list">
-          <text class="deep-chain-item" wx:for="{{item.chains}}" wx:for-item="chain" wx:key="*this">→ {{chain}}</text>
-        </view>
-      </view>
-      <!-- 受冲击产业 -->
-      <view class="deep-field" wx:if="{{item.industries.length > 0}}">
-        <text class="deep-label">🏭 受冲击产业</text>
-        <view class="deep-industry-list">
-          <text class="deep-industry-item" wx:for="{{item.industries}}" wx:for-item="ind" wx:key="*this">• {{ind}}</text>
-        </view>
+        <text class="toggle-icon">{{item.expanded ? '▼' : '▶'}}</text>
       </view>
       <!-- 关联大宗商品近1月走势 -->
       <view class="deep-commodity-row" wx:if="{{item.linkedCommodities.length > 0}}">
-        <text class="deep-label">📈 关联商品近1月走势</text>
         <view class="deep-commodity-pills">
           <view class="deep-commodity-pill" wx:for="{{item.linkedCommodities}}" wx:for-item="c" wx:key="key"
                 bindtap="onSelectCommodity" data-key="{{c.key}}">
@@ -97,20 +78,9 @@
           </view>
         </view>
       </view>
-      <!-- 中国市场影响 -->
-      <view class="deep-field">
-        <text class="deep-label">🇨🇳 中国市场影响</text>
-        <text class="deep-body">{{item.chinaImpact}}</text>
-      </view>
-      <!-- 时间节奏 -->
-      <view class="deep-field">
-        <text class="deep-label">⏰ 时间节奏</text>
-        <text class="deep-body">{{item.timeline}}</text>
-      </view>
-      <!-- 投资者策略 -->
-      <view class="deep-field strategy">
-        <text class="deep-label">🎯 投资者策略</text>
-        <text class="deep-body">{{item.strategy}}</text>
+      <!-- 展开的详细内容（rich-text 渲染 markdown） -->
+      <view wx:if="{{item.expanded}}" class="deep-content-wrap">
+        <rich-text nodes="{{item.contentHtml}}" class="deep-rich-content"></rich-text>
       </view>
     </view>
   </view>

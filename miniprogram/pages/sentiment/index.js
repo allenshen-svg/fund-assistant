@@ -342,23 +342,22 @@ Page({
       batch.radarSummary = analysisData.radar_summary || '--';
       batch.hotAssets = (db.hot_assets || []).map(a => ({ name: a }));
 
-      // —— 深度分析（关联大宗商品涨跌） ——
-      batch.deepAnalysis = (analysisData.deep_analysis || []).map((d, i) => {
-        const fullText = [d.title, d.overview, d.chinaImpact, d.strategy,
-          ...(d.chains || []), ...(d.industries || [])].join(' ');
+      // —— 深度分析（按板块，含完整 markdown→HTML） ——
+      const deepRaw = analysisData.deep_analysis || [];
+      batch.deepAnalysis = deepRaw.map((d, i) => {
+        const fullText = [d.title, d.content, d.strategy].join(' ');
         const linked = _matchCommodities(fullText, commodityHist);
         return {
           id: 'deep_' + i,
-          title: d.title || '未知事件',
-          overview: d.overview || '--',
-          chains: d.chains || [],
-          industries: d.industries || [],
-          chinaImpact: d.chinaImpact || '--',
-          timeline: d.timeline || '--',
-          strategy: d.strategy || '--',
+          title: d.title || '未知板块',
+          contentHtml: _mdToHtml(d.content || ''),
+          strategy: d.strategy || '',
           linkedCommodities: linked,
+          expanded: i === 0,  // 第一个板块默认展开
         };
       });
+      // 收集深度分析涉及的所有关键词用于事件去重
+      batch._deepTitles = deepRaw.map(d => d.title || '');
 
       // —— 操作指南 ——
       const acts = analysisData.actions || {};
@@ -455,6 +454,24 @@ Page({
 
       var merged = _dedupeEventList([].concat(rtEvents, baseEvents));
       merged.sort(function(a, b) { return Math.abs(Number(b.impact || 0)) - Math.abs(Number(a.impact || 0)); });
+      // 去除已被深度分析覆盖的事件
+      var deepTitles = batch._deepTitles || [];
+      if (deepTitles.length > 0) {
+        merged = merged.filter(function(evt) {
+          var evtNorm = _normTitle(evt.title);
+          return !deepTitles.some(function(dt) {
+            var dtNorm = _normTitle(dt);
+            if (!dtNorm || !evtNorm) return false;
+            // 子串包含
+            if (evtNorm.includes(dtNorm) || dtNorm.includes(evtNorm)) return true;
+            // 高相似度
+            if (_bigramOverlap(evt.title, dt) >= 0.45) return true;
+            if (_tokenJaccard(evt.title, dt) >= 0.35) return true;
+            return false;
+          });
+        });
+      }
+      delete batch._deepTitles;
       batch.events = merged;
     }
 
@@ -470,6 +487,12 @@ Page({
     this.setData({ selectedCommodityKey: key }, () => {
       if (this.data.secCommodityTrend) this._drawCommodityTrendCanvas();
     });
+  },
+
+  toggleDeepCard(e) {
+    const idx = e.currentTarget.dataset.idx;
+    const key = 'deepAnalysis[' + idx + '].expanded';
+    this.setData({ [key]: !this.data.deepAnalysis[idx].expanded });
   },
 
   _drawCommodityTrendCanvas() {
@@ -681,4 +704,50 @@ function classifyAction(advice) {
   if (/加仓|买入/.test(advice)) return 'bullish';
   if (/减仓|卖出|回避/.test(advice)) return 'bearish';
   return 'neutral';
+}
+
+/* ====== Markdown → HTML (用于 rich-text 渲染) ====== */
+function _mdToHtml(md) {
+  if (!md) return '';
+  var html = md;
+
+  // 表格转换: | xxx | yyy | → <table>
+  html = html.replace(/((?:\|[^\n]+\|\n)+)/g, function(tableBlock) {
+    var rows = tableBlock.trim().split('\n');
+    var out = '<table style="width:100%;border-collapse:collapse;font-size:12px;margin:8px 0;">';
+    rows.forEach(function(row, ri) {
+      // 跳过分隔行 |---|---|
+      if (/^\|[\s\-:]+\|/.test(row)) return;
+      var cells = row.split('|').filter(function(c, i, a) { return i > 0 && i < a.length - 1; });
+      var tag = ri === 0 ? 'th' : 'td';
+      var bgStyle = ri === 0 ? 'background:#f1f5f9;font-weight:700;' : (ri % 2 === 0 ? 'background:#fafbfc;' : '');
+      out += '<tr>';
+      cells.forEach(function(c) {
+        var val = c.replace(/\*\*/g, '').trim();
+        out += '<' + tag + ' style="border:1px solid #e2e8f0;padding:4px 6px;text-align:left;' + bgStyle + '">' + val + '</' + tag + '>';
+      });
+      out += '</tr>';
+    });
+    out += '</table>';
+    return out;
+  });
+
+  // 箭头链传导（单行 xxx → yyy → zzz）
+  html = html.replace(/^(.+→.+)$/gm, function(line) {
+    return '<div style="background:linear-gradient(90deg,rgba(251,191,36,0.08),rgba(239,68,68,0.08));padding:6px 10px;border-radius:6px;font-size:12px;color:#92400e;margin:6px 0;line-height:1.6;word-break:break-all;">' + line.replace(/→/g, ' <span style="color:#ef4444;">→</span> ') + '</div>';
+  });
+
+  // 标题 **xxx**（独立行）
+  html = html.replace(/^\*\*([^*]+)\*\*\s*$/gm, '<div style="font-weight:700;font-size:13px;color:#1e293b;margin:10px 0 4px;">\$1</div>');
+
+  // 粗体 inline
+  html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>\$1</strong>');
+
+  // 无序列表 - xxx
+  html = html.replace(/^- (.+)$/gm, '<div style="padding-left:12px;text-indent:-12px;margin:3px 0;line-height:1.6;">• \$1</div>');
+
+  // 换行
+  html = html.replace(/\n/g, '<br/>');
+
+  return '<div style="font-size:12px;color:#334155;line-height:1.7;">' + html + '</div>';
 }

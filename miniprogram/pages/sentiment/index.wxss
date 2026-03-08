@@ -225,9 +225,9 @@
   font-weight: 700;
 }
 
-/* ====== 国际热点深度影响分析 ====== */
+/* ====== 板块深度影响分析 ====== */
 
-/* ====== 国际热点深度影响分析 ====== */
+/* ====== 板块深度影响分析 ====== */
 .deep-card {
   padding: 20rpx;
   margin-bottom: 18rpx;
@@ -238,12 +238,11 @@
 }
 .deep-title-row {
   display: flex;
-  align-items: flex-start;
-  margin-bottom: 14rpx;
+  align-items: center;
+  gap: 8rpx;
 }
 .deep-pin {
   font-size: 28rpx;
-  margin-right: 8rpx;
   flex-shrink: 0;
 }
 .deep-title {
@@ -251,42 +250,18 @@
   font-weight: 700;
   color: var(--text);
   line-height: 1.5;
+  flex: 1;
 }
-.deep-field {
-  margin-bottom: 12rpx;
+.deep-content-wrap {
+  margin-top: 14rpx;
+  padding-top: 14rpx;
+  border-top: 1rpx solid rgba(239,68,68,0.10);
 }
-.deep-field.strategy {
-  padding: 12rpx;
-  border-radius: 10rpx;
-  background: rgba(59,130,246,0.06);
-  border: 1rpx solid rgba(59,130,246,0.12);
-}
-.deep-label {
-  font-size: 24rpx;
-  font-weight: 600;
-  color: var(--text-sub);
+.deep-rich-content {
   display: block;
-  margin-bottom: 6rpx;
-}
-.deep-body {
   font-size: 24rpx;
   color: var(--text-body);
   line-height: 1.7;
-  display: block;
-}
-.deep-chain-list,
-.deep-industry-list {
-  padding-left: 8rpx;
-}
-.deep-chain-item,
-.deep-industry-item {
-  font-size: 24rpx;
-  color: var(--text-body);
-  line-height: 1.8;
-  display: block;
-}
-.deep-chain-item {
-  color: #d97706;
 }
 
 /* 深度分析 - 关联商品涨跌 */
