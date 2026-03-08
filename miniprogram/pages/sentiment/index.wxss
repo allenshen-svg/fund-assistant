@@ -399,6 +399,8 @@
 .summary-line.bearish  { background: rgba(34,197,94,0.12); }
 .summary-line.tactical { background: rgba(59,130,246,0.12); }
 .summary-icon { font-size: 32rpx; flex-shrink: 0; }
+.summary-icon.bullish-icon { color: #ef4444; font-weight: 900; }
+.summary-icon.bearish-icon { color: #22c55e; font-weight: 900; }
 .summary-content { flex: 1; }
 .summary-head { font-size: 24rpx; font-weight: 700; color: var(--text); display: block; }
 .summary-body { font-size: 22rpx; color: var(--text-body); line-height: 1.6; display: block; margin-top: 4rpx; }

@@ -132,14 +132,14 @@
       </view>
       <view class="action-summary">
         <view class="summary-line bullish" wx:if="{{bullish !== '--'}}">
-          <text class="summary-icon">✅</text>
+          <text class="summary-icon bullish-icon">✔</text>
           <view class="summary-content">
             <text class="summary-head">胜率较高的方向</text>
             <text class="summary-body">{{bullish}}</text>
           </view>
         </view>
         <view class="summary-line bearish" wx:if="{{bearish !== '--'}}">
-          <text class="summary-icon">❌</text>
+          <text class="summary-icon bearish-icon">✘</text>
           <view class="summary-content">
             <text class="summary-head">必须回避的绞肉机</text>
             <text class="summary-body">{{bearish}}</text>
