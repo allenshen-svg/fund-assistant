@@ -48,19 +48,28 @@ AI_PROVIDERS = {
 
 DEFAULT_PROVIDER = os.environ.get('AI_PROVIDER', 'zhipu')
 DEFAULT_API_KEY = os.environ.get('AI_API_KEY', '4511f9dee1e64b7da49a539ddef85dfd.Z6HgN8s8cDhL2LeQ')
-DEFAULT_MODEL = os.environ.get('AI_MODEL', 'GLM-4-Flash')
+DEFAULT_MODEL = os.environ.get('AI_MODEL', 'GLM-4-Air')
 
 # ==================== Prompt ====================
 SYSTEM_PROMPT = """# 角色定义 (Role)
 你是一位顶尖的国际宏观局势分析师、地缘政治与大宗商品全产业链影响专家。
-你最强的能力在于：
-1. 对国际热点事件进行【按行业板块】的深层产业链冲击推演，每个板块的分析都必须深入、详尽、有数据
-2. 每个板块分析包含：概述冲击、关键影响清单、价格/成本传导链条、量化数据表格、中国市场影响、投资策略
+
+## 核心能力
+1. 对国际热点事件进行【按行业板块】的深层产业链冲击推演
+2. 每个板块的分析必须深入、详尽、有数据、有逻辑链，内容不少于500字
 3. 必须涵盖原油/能源板块（这是市场最关注的核心板块）
+4. 必须涵盖化工/化肥板块（能源危机对化工的二阶传导是核心分析点）
+
+## 硬性质量要求
+- 每个板块分析必须包含：关键影响概览(至少5个要点)、产业链传导路径(多级箭头链)、量化影响预测表格(至少4行)、投资策略
+- 表格必须有具体数字（百分比、金额、产量变动等），不能用"上涨趋势"等模糊词
+- 产业链传导必须是多级链条（至少3级），不能是简单的 A→B→C
+- 关键影响概览中每个要点必须包含具体数据（百分比、价格、成本占比等）
+- 你的输出总长度必须超过3000字，如果不到说明你的分析不够深入
 
 你必须严格按照指定格式输出。最后的 JSON 部分必须是合法的 JSON 代码块。
 你的分析必须有干货、有数据、有逻辑链条，绝不能输出空洞占位符。
-重点：🔥 板块深度影响分析 是你最核心的输出，必须按板块逐一深入分析，这是你存在的全部价值。"""
+🔥 板块深度影响分析 是你最核心的输出，必须按板块逐一深入分析，这是你存在的全部价值。"""
 
 def _load_us_market_summary():
     """读取美股缓存并生成摘要文本"""
@@ -118,18 +127,53 @@ def _load_breaking_events_summary():
         pass
     if not events:
         return ''
-    lines = ['[当前实时国际热点与市场事件]:']
-    for e in events:
-        lines.append(f"  [{e.get('category','')}] {e['title']} (影响:{e.get('impact',0):+d})")
+    # 按影响力排序，最重要的事件排前面
+    events.sort(key=lambda x: abs(x.get('impact', 0)), reverse=True)
+    lines = ['[当前实时国际热点与市场事件（按影响力排序）]:']
+    for i, e in enumerate(events):
+        lines.append(f"  【{i+1}】[{e.get('category','')}] {e['title']} (影响:{e.get('impact',0):+d})")
         if e.get('reason'):
-            lines.append(f"    原因: {e['reason']}")
+            lines.append(f"    详情: {e['reason']}")
         sp = e.get('sectors_positive', [])
         sn = e.get('sectors_negative', [])
+        concepts = e.get('concepts', [])
         if sp:
             lines.append(f"    利好板块: {', '.join(sp)}")
         if sn:
             lines.append(f"    利空板块: {', '.join(sn)}")
+        if concepts:
+            lines.append(f"    涉及概念: {', '.join(concepts[:5])}")
     return '\n'.join(lines)
+
+
+# ==================== 社媒数据筛选 ====================
+# 热点关键词 — 用于从社媒数据中优先筛选与热点事件相关的内容
+_HOT_KEYWORDS = [
+    '原油', '石油', '油价', '能源', '伊朗', '中东', '战争', '制裁', '封锁',
+    '化工', '化肥', '天然气', '黄金', '避险', '军工', '半导体', '芯片',
+    '关税', '贸易战', '美联储', '降息', '加息', '通胀', 'AI', '人工智能',
+    '稀土', '锂电', '新能源', '光伏', '特朗普', 'Trump', '俄罗斯', '乌克兰',
+]
+
+
+def _build_curated_social_data(items):
+    """从社媒数据中筛选与热点事件最相关的内容，确保AI聚焦关键信息"""
+    if not items:
+        return '[]'
+
+    scored = []
+    for item in items:
+        title = item.get('title', '') + ' ' + item.get('desc', '')
+        score = sum(1 for kw in _HOT_KEYWORDS if kw in title)
+        scored.append((score, item))
+
+    # 按关键词匹配度排序，相关的排前面
+    scored.sort(key=lambda x: x[0], reverse=True)
+
+    # 取前40条，其中至少前15条是高相关的
+    curated = [item for _, item in scored[:40]]
+
+    return json.dumps(curated, ensure_ascii=False, indent=2)
 
 
 def build_user_prompt(video_data_str):
@@ -139,8 +183,9 @@ def build_user_prompt(video_data_str):
 {us_summary}\n""" if us_summary else ''
 
     events_summary = _load_breaking_events_summary()
-    events_block = f"""\n\n# 实时国际热点事件 (Breaking Events)
-以下是最新的国际热点事件和市场异动。请对影响最大的 2-3 个事件进行深度产业链冲击分析。
+    events_block = f"""\n\n# 实时国际热点事件 (Breaking Events) — 这是你分析的核心输入
+⚠️ 以下事件按影响力排序，前3个是最重要的事件，你的板块分析必须围绕这些事件展开。
+请逐板块分析这些事件对原油/能源、化工/化肥、黄金/避险、军工等板块的产业链冲击。
 {events_summary}\n""" if events_summary else ''
 
     return f"""# 输入数据格式 (Input Context)
@@ -235,7 +280,8 @@ def call_ai(items, provider_id=None, api_key=None, model=None, temperature=0.6):
         raise ValueError(f'Unknown AI provider: {provider_id}')
 
     base_url = provider['base']
-    video_data_str = json.dumps(items[:60], ensure_ascii=False, indent=2)
+    # 优先选择与热点事件相关的社媒数据
+    video_data_str = _build_curated_social_data(items)
     user_prompt = build_user_prompt(video_data_str)
 
     print(f'  🧠 调用 AI: {provider["name"]} / {model}')
