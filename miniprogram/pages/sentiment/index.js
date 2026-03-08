@@ -153,6 +153,10 @@ Page({
     commodityCanvasW: 320,
     commodityCanvasH: 190,
 
+    // —— AI 自动分析状态 ——
+    aiAnalyzing: false,
+    aiAnalyzingMsg: '',
+
     // —— 国际热点深度分析 ——
     deepAnalysis: [],
     secDeepAnalysis: true,
@@ -174,7 +178,7 @@ Page({
 
     // —— 社媒趋势热点 ——
     socialTrends: [],
-    secTrends: true,
+    secTrends: false,
     expandedTrend: '',
 
     // —— 原有热力图 + 事件 ——
@@ -194,12 +198,12 @@ Page({
 
     // —— 折叠控制 ——
     secUsMarket: false,
-    secKol: true,
+    secKol: false,
     secAction: true,
     secVideos: false,
     secReport: false,
-    secHeatmap: true,
-    secEvents: true,
+    secHeatmap: false,
+    secEvents: false,
 
     // —— 手动刷新 ——
     refreshing: false,
@@ -213,7 +217,7 @@ Page({
   },
 
   onShow() {
-    this.loadAll();
+    this.loadAll().then(() => this._autoAnalyzeIfStale());
   },
 
   onPullDownRefresh() {
@@ -234,6 +238,44 @@ Page({
   toggleTrendExpand(e) {
     const id = e.currentTarget.dataset.id;
     this.setData({ expandedTrend: this.data.expandedTrend === id ? '' : id });
+  },
+
+  /* ====== 自动触发 AI 分析（分析数据过期时） ====== */
+  async _autoAnalyzeIfStale() {
+    if (this.data.aiAnalyzing || this.data.refreshing) return;
+    const settings = getSettings();
+    const serverBase = getServerBase(settings);
+    if (!serverBase) return;
+
+    const serverSettings = { ...settings, apiBase: serverBase };
+    const analysisData = await fetchAnalysisData(serverSettings);
+    const now = Math.floor(Date.now() / 1000);
+    const ts = (analysisData && analysisData.analysis_ts) || 0;
+    const age = now - ts;
+
+    if (age > 1800) {
+      this.setData({ aiAnalyzing: true, aiAnalyzingMsg: '🧠 AI 正在分析最新事件...' });
+      try {
+        const res = await triggerReanalyze(settings);
+        if (res.status === 'error') {
+          this.setData({ aiAnalyzing: false, aiAnalyzingMsg: '' });
+          return;
+        }
+        for (let i = 0; i < 20; i++) {
+          await _sleep(3000);
+          const fresh = await fetchAnalysisData(serverSettings);
+          if (fresh && fresh.analysis_ts && fresh.analysis_ts > ts) {
+            await this.loadAll();
+            break;
+          }
+          this.setData({ aiAnalyzingMsg: `🧠 AI 深度分析中... (${(i + 1) * 3}s)` });
+        }
+      } catch (e) {
+        console.error('Auto-analyze failed:', e);
+      } finally {
+        this.setData({ aiAnalyzing: false, aiAnalyzingMsg: '' });
+      }
+    }
   },
 
   /* ====== 手动触发舆情采集 + AI 分析 ====== */
@@ -382,17 +424,24 @@ Page({
       batch.radarSummary = analysisData.radar_summary || '--';
       batch.hotAssets = (db.hot_assets || []).map(a => ({ name: a }));
 
-      // —— 深度分析 ——
-      batch.deepAnalysis = (analysisData.deep_analysis || []).map((d, i) => ({
-        id: 'deep_' + i,
-        title: d.title || '未知事件',
-        overview: d.overview || '--',
-        chains: d.chains || [],
-        industries: d.industries || [],
-        chinaImpact: d.chinaImpact || '--',
-        timeline: d.timeline || '--',
-        strategy: d.strategy || '--',
-      }));
+      // —— 深度分析（关联大宗商品涨跌） ——
+      batch.deepAnalysis = (analysisData.deep_analysis || []).map((d, i) => {
+        // 从事件文本中匹配相关大宗商品
+        const fullText = [d.title, d.overview, d.chinaImpact, d.strategy,
+          ...(d.chains || []), ...(d.industries || [])].join(' ');
+        const linked = _matchCommodities(fullText, commodityHist);
+        return {
+          id: 'deep_' + i,
+          title: d.title || '未知事件',
+          overview: d.overview || '--',
+          chains: d.chains || [],
+          industries: d.industries || [],
+          chinaImpact: d.chinaImpact || '--',
+          timeline: d.timeline || '--',
+          strategy: d.strategy || '--',
+          linkedCommodities: linked,
+        };
+      });
 
       // —— KOL sections ——
       batch.kolSections = (analysisData.kol_sections || []).map(s => ({
@@ -790,6 +839,42 @@ Page({
 });
 
 /* ====== 辅助函数 ====== */
+
+/* 事件文本 → 关联大宗商品涨跌 */
+const COMMODITY_KEYWORDS = {
+  'oil':       ['原油','石油','油价','成品油','燃油','OPEC','霍尔木兹','中东','伊朗','海峡封锁','航运'],
+  'chemical':  ['化工','乙烯','丙烯','PTA','甲醇','尿素','炼化','石化'],
+  'gold':      ['黄金','金价','避险','贵金属','央行购金'],
+  'silver':    ['白银','银价','贵金属'],
+  'nonferrous':['有色金属','铜','铝','锌','镍','稀土','锂'],
+  'coal':      ['煤炭','焦煤','焦炭','动力煤','火电'],
+  'soy':       ['大豆','豆粕','农产品','粮食'],
+};
+
+function _matchCommodities(text, commodityHist) {
+  if (!text || !commodityHist) return [];
+  var results = [];
+  COMMODITY_PROXY_FUNDS.forEach(function(fund) {
+    var keywords = COMMODITY_KEYWORDS[fund.key] || [];
+    var matched = keywords.some(function(kw) { return text.indexOf(kw) >= 0; });
+    if (!matched) return;
+    var hist = (commodityHist[fund.code] || []).slice(-30);
+    if (hist.length < 2) return;
+    var first = Number(hist[0].nav || 0);
+    var last = Number(hist[hist.length - 1].nav || 0);
+    if (!first || !last) return;
+    var pct = ((last - first) / first) * 100;
+    results.push({
+      key: fund.key,
+      name: fund.name,
+      color: fund.color,
+      pct: pct,
+      pctStr: (pct >= 0 ? '+' : '') + pct.toFixed(2) + '%',
+      pctClass: pct >= 0 ? 'pct-up' : 'pct-down',
+    });
+  });
+  return results;
+}
 
 function _sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 

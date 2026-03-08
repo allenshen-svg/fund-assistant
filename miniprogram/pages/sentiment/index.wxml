@@ -6,7 +6,13 @@
     <text class="sub" style="margin-top:16rpx;">正在加载舆情数据...</text>
   </view>
 
-  <!-- ====== 总览信号卡 ====== -->
+  <!-- ====== AI 自动分析中 ====== -->
+  <view wx:if="{{aiAnalyzing}}" class="ai-analyzing-banner">
+    <view class="ai-pulse"></view>
+    <text class="ai-analyzing-text">{{aiAnalyzingMsg}}</text>
+  </view>
+
+  <!-- ====== 精简总览卡 ====== -->
   <view class="card summary-card" wx:if="{{!loading}}">
     <view class="summary-top">
       <view class="signal-box {{signalClass}}">
@@ -19,11 +25,9 @@
       </view>
     </view>
     <text class="radar-summary" wx:if="{{radarSummary !== '--'}}">🚨 {{radarSummary}}</text>
-    <!-- 热门资产 -->
     <view class="hot-assets" wx:if="{{hotAssets.length > 0}}">
       <text class="asset-pill" wx:for="{{hotAssets}}" wx:key="name">🔥 {{item.name}}</text>
     </view>
-    <!-- 指标条 -->
     <view class="gauge-row" wx:if="{{fomoLevel > 0 || panicLevel > 0}}">
       <view class="gauge-item">
         <text class="gauge-label">FOMO</text>
@@ -44,40 +48,69 @@
     <view class="summary-meta">
       <text class="chip {{sourceLabel === '远程分析' ? 'blue' : 'gray'}}">{{sourceLabel}}</text>
       <text class="sub">更新：{{updatedAt}}</text>
-    </view>
-    <!-- 手动刷新按钮 -->
-    <view class="refresh-bar">
-      <button class="btn-refresh {{refreshing ? 'disabled' : ''}}" bindtap="onManualRefresh" disabled="{{refreshing}}">
-        <text wx:if="{{!refreshing}}">🔄 手动刷新舆情分析</text>
-        <text wx:else>⏳ {{refreshMsg}}</text>
-      </button>
+      <view class="refresh-mini" bindtap="onManualRefresh" wx:if="{{!refreshing}}">
+        <text class="refresh-mini-text">🔄 刷新</text>
+      </view>
+      <text class="refresh-mini-text refreshing" wx:if="{{refreshing}}">⏳ {{refreshMsg}}</text>
     </view>
   </view>
 
-  <!-- ====== 数据源统计 ====== -->
-  <scroll-view class="src-bar" scroll-x wx:if="{{sourcePills.length > 0}}">
-    <view class="src-pill" wx:for="{{sourcePills}}" wx:key="name">
-      <text class="src-name">{{item.short}}</text>
-      <text class="src-count">{{item.count}}</text>
+  <!-- ====== 🔥 AI 深度事件分析（核心区域）====== -->
+  <view class="card deep-section" wx:if="{{deepAnalysis.length > 0}}">
+    <view class="card-header">
+      <text class="title">🔥 AI 深度事件分析</text>
+      <text class="sub">{{deepAnalysis.length}} 个重大事件</text>
     </view>
-    <view class="src-pill total">
-      <text class="src-name">合计</text>
-      <text class="src-count">{{totalItems}}</text>
-    </view>
-  </scroll-view>
-
-  <!-- ====== 隔夜美股 ====== -->
-  <view class="card" wx:if="{{usStocks.length > 0}}">
-    <view class="card-header" bindtap="toggleSection" data-key="secUsMarket">
-      <text class="title">🇺🇸 隔夜美股行情</text>
-      <text class="toggle-icon">{{secUsMarket ? '▼' : '▶'}}</text>
-    </view>
-    <view class="us-grid" wx:if="{{secUsMarket}}">
-      <view class="us-item" wx:for="{{usStocks}}" wx:key="symbol">
-        <text class="us-name">{{item.name}}</text>
-        <text class="us-price">{{item.price}}</text>
-        <text class="us-pct {{item.pctClass}}">{{item.pctStr}}</text>
-        <text class="us-amp">振幅 {{item.amplitude}}</text>
+    <view class="deep-card" wx:for="{{deepAnalysis}}" wx:key="id">
+      <view class="deep-title-row">
+        <text class="deep-pin">📌</text>
+        <text class="deep-title">{{item.title}}</text>
+      </view>
+      <!-- 冲击概述 -->
+      <view class="deep-field">
+        <text class="deep-label">💥 冲击概述</text>
+        <text class="deep-body">{{item.overview}}</text>
+      </view>
+      <!-- 产业链传导 -->
+      <view class="deep-field" wx:if="{{item.chains.length > 0}}">
+        <text class="deep-label">🔗 产业链传导</text>
+        <view class="deep-chain-list">
+          <text class="deep-chain-item" wx:for="{{item.chains}}" wx:for-item="chain" wx:key="*this">→ {{chain}}</text>
+        </view>
+      </view>
+      <!-- 受冲击产业 -->
+      <view class="deep-field" wx:if="{{item.industries.length > 0}}">
+        <text class="deep-label">🏭 受冲击产业</text>
+        <view class="deep-industry-list">
+          <text class="deep-industry-item" wx:for="{{item.industries}}" wx:for-item="ind" wx:key="*this">• {{ind}}</text>
+        </view>
+      </view>
+      <!-- 📈 关联大宗商品近1月走势（内嵌） -->
+      <view class="deep-commodity-row" wx:if="{{item.linkedCommodities.length > 0}}">
+        <text class="deep-label">📈 关联商品近1月走势</text>
+        <view class="deep-commodity-pills">
+          <view class="deep-commodity-pill" wx:for="{{item.linkedCommodities}}" wx:for-item="c" wx:key="key"
+                bindtap="onSelectCommodity" data-key="{{c.key}}">
+            <view class="deep-commodity-dot" style="background:{{c.color}};"></view>
+            <text class="deep-commodity-name">{{c.name}}</text>
+            <text class="deep-commodity-pct {{c.pctClass}}">{{c.pctStr}}</text>
+          </view>
+        </view>
+      </view>
+      <!-- 中国市场影响 -->
+      <view class="deep-field">
+        <text class="deep-label">🇨🇳 中国市场影响</text>
+        <text class="deep-body">{{item.chinaImpact}}</text>
+      </view>
+      <!-- 时间节奏 -->
+      <view class="deep-field">
+        <text class="deep-label">⏰ 时间节奏</text>
+        <text class="deep-body">{{item.timeline}}</text>
+      </view>
+      <!-- 投资者策略 -->
+      <view class="deep-field strategy">
+        <text class="deep-label">🎯 投资者策略</text>
+        <text class="deep-body">{{item.strategy}}</text>
       </view>
     </view>
   </view>
@@ -85,11 +118,10 @@
   <!-- ====== 大宗商品近1月走势 ====== -->
   <view class="card" wx:if="{{commodityTrends.length > 0}}">
     <view class="card-header" bindtap="toggleSection" data-key="secCommodityTrend">
-      <text class="title">🛢️ 大宗商品近1月走势</text>
+      <text class="title">📈 大宗商品走势</text>
       <text class="toggle-icon">{{secCommodityTrend ? '▼' : '▶'}}</text>
     </view>
     <view wx:if="{{secCommodityTrend}}">
-      <!-- 商品选择 tabs -->
       <scroll-view scroll-x class="commodity-tabs">
         <view
           wx:for="{{commodityTrends}}"
@@ -98,15 +130,13 @@
           style="{{item.key === selectedCommodityKey ? 'border-color:' + item.color + ';color:' + item.color : ''}}"
           bindtap="onSelectCommodity"
           data-key="{{item.key}}"
-        >{{item.name}}</view>
+        >{{item.name}} {{item.trendPctStr}}</view>
       </scroll-view>
-      <!-- 走势图 -->
       <canvas
         canvas-id="commodityTrendCanvas"
         class="commodity-trend-canvas"
         style="width:{{commodityCanvasW}}px;height:{{commodityCanvasH}}px;"
       ></canvas>
-      <!-- 选中商品涨跌信息 -->
       <block wx:for="{{commodityTrends}}" wx:key="key">
         <view wx:if="{{item.key === selectedCommodityKey}}" class="commodity-sel-info">
           <view class="commodity-dot-lg" style="background:{{item.color}};"></view>
@@ -114,6 +144,70 @@
           <text class="commodity-pct {{item.trendClass}}">{{item.trendPctStr}}</text>
         </view>
       </block>
+    </view>
+  </view>
+
+  <!-- ====== 💡 投资建议 ====== -->
+  <view class="card" wx:if="{{holdingActions.length > 0}}">
+    <view class="card-header" bindtap="toggleSection" data-key="secAction">
+      <text class="title">💡 投资建议</text>
+      <text class="toggle-icon">{{secAction ? '▼' : '▶'}}</text>
+    </view>
+    <view wx:if="{{secAction}}">
+      <view class="action-grid">
+        <view class="action-item {{item.actClass}}" wx:for="{{holdingActions}}" wx:key="label">
+          <text class="action-label">{{item.label}}</text>
+          <text class="action-advice">{{item.advice}}</text>
+        </view>
+      </view>
+      <view class="action-summary">
+        <view class="summary-line bullish" wx:if="{{bullish !== '--'}}">
+          <text class="summary-icon">✅</text>
+          <view class="summary-content">
+            <text class="summary-head">胜率较高的方向</text>
+            <text class="summary-body">{{bullish}}</text>
+          </view>
+        </view>
+        <view class="summary-line bearish" wx:if="{{bearish !== '--'}}">
+          <text class="summary-icon">❌</text>
+          <view class="summary-content">
+            <text class="summary-head">必须回避的绞肉机</text>
+            <text class="summary-body">{{bearish}}</text>
+          </view>
+        </view>
+        <view class="summary-line tactical" wx:if="{{tactical !== '--'}}">
+          <text class="summary-icon">⏱️</text>
+          <view class="summary-content">
+            <text class="summary-head">战术纪律</text>
+            <text class="summary-body">{{tactical}}</text>
+          </view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- ====== ⚖️ KOL vs 散户 ====== -->
+  <view class="card" wx:if="{{kolSections.length > 0}}">
+    <view class="card-header" bindtap="toggleSection" data-key="secKol">
+      <text class="title">⚖️ KOL vs 散户 博弈拆解</text>
+      <text class="toggle-icon">{{secKol ? '▼' : '▶'}}</text>
+    </view>
+    <view wx:if="{{secKol}}">
+      <view class="kol-card" wx:for="{{kolSections}}" wx:key="target">
+        <text class="kol-target">🎯 {{item.target}}</text>
+        <view class="kol-section">
+          <text class="kol-label">🎙️ KOL观点</text>
+          <text class="kol-body">{{item.kol}}</text>
+        </view>
+        <view class="kol-section">
+          <text class="kol-label">🐑 散户情绪</text>
+          <text class="kol-body">{{item.retail}}</text>
+        </view>
+        <view class="kol-section conclusion">
+          <text class="kol-label">⚡ 预期差结论</text>
+          <text class="kol-body">{{item.conclusion}}</text>
+        </view>
+      </view>
     </view>
   </view>
 
@@ -141,11 +235,6 @@
             </view>
             <text class="trend-heat-val">🔥{{item.heatScore}}</text>
           </view>
-          <view class="trend-platforms">
-            <text class="trend-platform-label">覆盖平台:</text>
-            <text class="trend-platform-text">{{item.platforms}}</text>
-          </view>
-          <!-- 展开详情 -->
           <view class="trend-detail" wx:if="{{expandedTrend === item.id}}">
             <view class="trend-keywords" wx:if="{{item.keywordsHit}}">
               <text class="trend-detail-label">🏷️ 命中关键词</text>
@@ -159,131 +248,42 @@
             </view>
           </view>
           <view class="trend-expand-hint">
-            <text class="trend-expand-icon">{{expandedTrend === item.id ? '△ 收起' : '▽ 查看详情'}}</text>
+            <text class="trend-expand-icon">{{expandedTrend === item.id ? '△ 收起' : '▽ 详情'}}</text>
           </view>
         </view>
       </view>
     </view>
   </view>
 
-  <!-- ====== 🔥 国际热点深度影响分析 ====== -->
-  <view class="card" wx:if="{{deepAnalysis.length > 0}}">
-    <view class="card-header" bindtap="toggleSection" data-key="secDeepAnalysis">
-      <text class="title">🔥 国际热点深度影响分析</text>
-      <text class="sub">{{deepAnalysis.length}} 个事件</text>
-      <text class="toggle-icon">{{secDeepAnalysis ? '▼' : '▶'}}</text>
+  <!-- ====== 数据源统计 ====== -->
+  <scroll-view class="src-bar" scroll-x wx:if="{{sourcePills.length > 0}}">
+    <view class="src-pill" wx:for="{{sourcePills}}" wx:key="name">
+      <text class="src-name">{{item.short}}</text>
+      <text class="src-count">{{item.count}}</text>
     </view>
-    <view wx:if="{{secDeepAnalysis}}">
-      <view class="deep-card" wx:for="{{deepAnalysis}}" wx:key="id">
-        <view class="deep-title-row">
-          <text class="deep-pin">📌</text>
-          <text class="deep-title">{{item.title}}</text>
-        </view>
-        <!-- 冲击概述 -->
-        <view class="deep-field">
-          <text class="deep-label">💥 冲击概述</text>
-          <text class="deep-body">{{item.overview}}</text>
-        </view>
-        <!-- 产业链传导 -->
-        <view class="deep-field" wx:if="{{item.chains.length > 0}}">
-          <text class="deep-label">🔗 产业链传导</text>
-          <view class="deep-chain-list">
-            <text class="deep-chain-item" wx:for="{{item.chains}}" wx:for-item="chain" wx:key="*this">→ {{chain}}</text>
-          </view>
-        </view>
-        <!-- 受冲击产业 -->
-        <view class="deep-field" wx:if="{{item.industries.length > 0}}">
-          <text class="deep-label">🏭 受冲击产业</text>
-          <view class="deep-industry-list">
-            <text class="deep-industry-item" wx:for="{{item.industries}}" wx:for-item="ind" wx:key="*this">• {{ind}}</text>
-          </view>
-        </view>
-        <!-- 中国市场影响 -->
-        <view class="deep-field">
-          <text class="deep-label">🇨🇳 中国市场影响</text>
-          <text class="deep-body">{{item.chinaImpact}}</text>
-        </view>
-        <!-- 时间节奏 -->
-        <view class="deep-field">
-          <text class="deep-label">⏰ 时间节奏</text>
-          <text class="deep-body">{{item.timeline}}</text>
-        </view>
-        <!-- 投资者策略 -->
-        <view class="deep-field strategy">
-          <text class="deep-label">🎯 投资者策略</text>
-          <text class="deep-body">{{item.strategy}}</text>
-        </view>
+    <view class="src-pill total">
+      <text class="src-name">合计</text>
+      <text class="src-count">{{totalItems}}</text>
+    </view>
+  </scroll-view>
+
+  <!-- ====== 🇺🇸 隔夜美股 ====== -->
+  <view class="card" wx:if="{{usStocks.length > 0}}">
+    <view class="card-header" bindtap="toggleSection" data-key="secUsMarket">
+      <text class="title">🇺🇸 隔夜美股行情</text>
+      <text class="toggle-icon">{{secUsMarket ? '▼' : '▶'}}</text>
+    </view>
+    <view class="us-grid" wx:if="{{secUsMarket}}">
+      <view class="us-item" wx:for="{{usStocks}}" wx:key="symbol">
+        <text class="us-name">{{item.name}}</text>
+        <text class="us-price">{{item.price}}</text>
+        <text class="us-pct {{item.pctClass}}">{{item.pctStr}}</text>
+        <text class="us-amp">振幅 {{item.amplitude}}</text>
       </view>
     </view>
   </view>
 
-  <!-- ====== KOL vs 散户 博弈拆解 ====== -->
-  <view class="card" wx:if="{{kolSections.length > 0}}">
-    <view class="card-header" bindtap="toggleSection" data-key="secKol">
-      <text class="title">⚖️ KOL vs 散户 博弈拆解</text>
-      <text class="toggle-icon">{{secKol ? '▼' : '▶'}}</text>
-    </view>
-    <view wx:if="{{secKol}}">
-      <view class="kol-card" wx:for="{{kolSections}}" wx:key="target">
-        <text class="kol-target">🎯 {{item.target}}</text>
-        <view class="kol-section">
-          <text class="kol-label">🎙️ KOL观点</text>
-          <text class="kol-body">{{item.kol}}</text>
-        </view>
-        <view class="kol-section">
-          <text class="kol-label">🐑 散户情绪</text>
-          <text class="kol-body">{{item.retail}}</text>
-        </view>
-        <view class="kol-section conclusion">
-          <text class="kol-label">⚡ 预期差结论</text>
-          <text class="kol-body">{{item.conclusion}}</text>
-        </view>
-      </view>
-    </view>
-  </view>
-
-  <!-- ====== 极简操作指南 ====== -->
-  <view class="card" wx:if="{{holdingActions.length > 0}}">
-    <view class="card-header" bindtap="toggleSection" data-key="secAction">
-      <text class="title">💡 极简操作指南</text>
-      <text class="toggle-icon">{{secAction ? '▼' : '▶'}}</text>
-    </view>
-    <view wx:if="{{secAction}}">
-      <!-- 持仓操作 -->
-      <view class="action-grid">
-        <view class="action-item {{item.actClass}}" wx:for="{{holdingActions}}" wx:key="label">
-          <text class="action-label">{{item.label}}</text>
-          <text class="action-advice">{{item.advice}}</text>
-        </view>
-      </view>
-      <!-- 综合建议 -->
-      <view class="action-summary">
-        <view class="summary-line bullish" wx:if="{{bullish !== '--'}}">
-          <text class="summary-icon">✅</text>
-          <view class="summary-content">
-            <text class="summary-head">胜率较高的方向</text>
-            <text class="summary-body">{{bullish}}</text>
-          </view>
-        </view>
-        <view class="summary-line bearish" wx:if="{{bearish !== '--'}}">
-          <text class="summary-icon">❌</text>
-          <view class="summary-content">
-            <text class="summary-head">必须回避的绞肉机</text>
-            <text class="summary-body">{{bearish}}</text>
-          </view>
-        </view>
-        <view class="summary-line tactical" wx:if="{{tactical !== '--'}}">
-          <text class="summary-icon">⏱️</text>
-          <view class="summary-content">
-            <text class="summary-head">战术纪律</text>
-            <text class="summary-body">{{tactical}}</text>
-          </view>
-        </view>
-      </view>
-    </view>
-  </view>
-
-  <!-- ====== 板块热力图 (原有) ====== -->
+  <!-- ====== 🌡️ 板块热力图 ====== -->
   <view class="card" wx:if="{{heatmap.length > 0}}">
     <view class="card-header" bindtap="toggleSection" data-key="secHeatmap">
       <text class="title">🌡️ 板块热力图</text>
@@ -305,60 +305,7 @@
     </view>
   </view>
 
-  <!-- ====== 市场展望 (原有) ====== -->
-  <view class="card" wx:if="{{outlook}}">
-    <view class="card-header">
-      <text class="title">🔮 市场展望</text>
-      <text class="chip {{outlook.score >= 55 ? 'up' : outlook.score <= 45 ? 'down' : 'gray'}}">
-        评分 {{outlook.score}}
-      </text>
-    </view>
-    <text class="outlook-text">{{outlook.summary || outlook.narrative || '--'}}</text>
-  </view>
-
-  <!-- ====== 原始数据流 ====== -->
-  <view class="card" wx:if="{{videoItems.length > 0}}">
-    <view class="card-header" bindtap="toggleSection" data-key="secVideos">
-      <text class="title">📱 原始数据流</text>
-      <text class="sub">{{videoItems.length}} 条</text>
-      <text class="toggle-icon">{{secVideos ? '▼' : '▶'}}</text>
-    </view>
-    <view wx:if="{{secVideos}}">
-      <view class="video-row {{item.isNoise ? 'noise' : ''}}" wx:for="{{videoItems}}" wx:key="index">
-        <view class="video-main">
-          <text class="video-title">{{item.title}}</text>
-          <text class="video-likes">{{item.likes}}</text>
-        </view>
-        <view class="video-meta">
-          <text class="sent-badge {{item.sentClass}}">{{item.sentiment}}</text>
-          <text class="video-platform">{{item.platform}}</text>
-          <text class="noise-tag" wx:if="{{item.isNoise}}">噪音</text>
-        </view>
-      </view>
-    </view>
-  </view>
-
-  <!-- ====== AI 完整报告 ====== -->
-  <view class="card" wx:if="{{aiReport}}">
-    <view class="card-header" bindtap="toggleSection" data-key="secReport">
-      <text class="title">🤖 AI 完整报告</text>
-      <text class="toggle-icon">{{secReport ? '▼' : '▶'}}</text>
-    </view>
-    <view class="ai-report" wx:if="{{secReport}}">
-      <text class="ai-report-text">{{aiReport}}</text>
-    </view>
-  </view>
-
-  <!-- ====== 筛选条 (事件) ====== -->
-  <scroll-view class="filter-scroll" scroll-x wx:if="{{events.length > 0}}">
-    <view class="filter-chip {{activeFilter === item.key ? 'active' : ''}}"
-          wx:for="{{filters}}" wx:key="key"
-          data-key="{{item.key}}" bindtap="onFilterTap">
-      {{item.label}}
-    </view>
-  </scroll-view>
-
-  <!-- ====== 事件列表 (原有) ====== -->
+  <!-- ====== 📰 市场事件 ====== -->
   <view class="card" wx:if="{{events.length > 0}}">
     <view class="card-header" bindtap="toggleSection" data-key="secEvents">
       <text class="title">📰 市场事件</text>
@@ -366,6 +313,13 @@
       <text class="toggle-icon">{{secEvents ? '▼' : '▶'}}</text>
     </view>
     <view wx:if="{{secEvents}}">
+      <scroll-view class="filter-scroll" scroll-x>
+        <view class="filter-chip {{activeFilter === item.key ? 'active' : ''}}"
+              wx:for="{{filters}}" wx:key="key"
+              data-key="{{item.key}}" bindtap="onFilterTap">
+          {{item.label}}
+        </view>
+      </scroll-view>
       <block wx:for="{{events}}" wx:key="id">
         <view class="evt-item" wx:if="{{activeFilter === 'all' || (activeFilter === 'positive' && item.impact > 0) || (activeFilter === 'negative' && item.impact < 0) || item.category === activeFilter}}">
           <view class="row">
@@ -389,10 +343,42 @@
     </view>
   </view>
 
+  <!-- ====== 原始数据流 ====== -->
+  <view class="card" wx:if="{{videoItems.length > 0}}">
+    <view class="card-header" bindtap="toggleSection" data-key="secVideos">
+      <text class="title">📱 原始数据流</text>
+      <text class="sub">{{videoItems.length}} 条</text>
+      <text class="toggle-icon">{{secVideos ? '▼' : '▶'}}</text>
+    </view>
+    <view wx:if="{{secVideos}}">
+      <view class="video-row {{item.isNoise ? 'noise' : ''}}" wx:for="{{videoItems}}" wx:key="index">
+        <view class="video-main">
+          <text class="video-title">{{item.title}}</text>
+          <text class="video-likes">{{item.likes}}</text>
+        </view>
+        <view class="video-meta">
+          <text class="sent-badge {{item.sentClass}}">{{item.sentiment}}</text>
+          <text class="video-platform">{{item.platform}}</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- ====== AI 完整报告 ====== -->
+  <view class="card" wx:if="{{aiReport}}">
+    <view class="card-header" bindtap="toggleSection" data-key="secReport">
+      <text class="title">🤖 AI 完整报告</text>
+      <text class="toggle-icon">{{secReport ? '▼' : '▶'}}</text>
+    </view>
+    <view class="ai-report" wx:if="{{secReport}}">
+      <text class="ai-report-text">{{aiReport}}</text>
+    </view>
+  </view>
+
   <!-- ====== 空状态 ====== -->
-  <view wx:if="{{!loading && events.length === 0 && kolSections.length === 0}}" class="empty-state">
+  <view wx:if="{{!loading && !aiAnalyzing && deepAnalysis.length === 0 && events.length === 0 && kolSections.length === 0}}" class="empty-state">
     <text class="empty-icon">📭</text>
-    <text class="sub">暂无舆情数据</text>
+    <text class="sub">暂无舆情数据，正在等待AI分析...</text>
   </view>
 
   <!-- ====== Footer ====== -->

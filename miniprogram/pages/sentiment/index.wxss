@@ -1,31 +1,52 @@
 /* ====== 总览信号卡 ====== */
 .summary-card { padding-bottom: 20rpx; }
 
-/* ====== 手动刷新按钮 ====== */
-.refresh-bar {
-  margin-top: 16rpx;
-  display: flex;
-  justify-content: center;
-}
-.btn-refresh {
+/* ====== AI 自动分析横幅 ====== */
+.ai-analyzing-banner {
   display: flex;
   align-items: center;
-  justify-content: center;
-  width: 100%;
-  padding: 16rpx 0;
-  font-size: 28rpx;
-  font-weight: 600;
-  color: #fff;
-  background: linear-gradient(135deg, #6366f1, #8b5cf6);
-  border: none;
+  gap: 14rpx;
+  padding: 20rpx 24rpx;
+  margin-bottom: 16rpx;
   border-radius: 16rpx;
-  letter-spacing: 2rpx;
+  background: linear-gradient(135deg, rgba(99,102,241,0.12), rgba(139,92,246,0.08));
+  border: 1rpx solid rgba(99,102,241,0.2);
 }
-.btn-refresh.disabled {
-  background: linear-gradient(135deg, #64748b, #94a3b8);
-  color: rgba(255,255,255,0.7);
+.ai-pulse {
+  width: 18rpx;
+  height: 18rpx;
+  border-radius: 50%;
+  background: #6366f1;
+  animation: aiPulse 1.2s ease-in-out infinite;
 }
-.btn-refresh::after { border: none; }
+@keyframes aiPulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.7); }
+}
+.ai-analyzing-text {
+  font-size: 26rpx;
+  color: #6366f1;
+  font-weight: 600;
+}
+
+/* ====== 精简刷新按钮 ====== */
+.refresh-mini {
+  margin-left: auto;
+  padding: 6rpx 16rpx;
+  border-radius: 999rpx;
+  background: rgba(99,102,241,0.10);
+  border: 1rpx solid rgba(99,102,241,0.20);
+}
+.refresh-mini-text {
+  font-size: 22rpx;
+  color: #6366f1;
+  font-weight: 600;
+}
+.refresh-mini-text.refreshing {
+  color: var(--text-sub);
+  margin-left: auto;
+  font-size: 20rpx;
+}
 .summary-top {
   display: flex;
   justify-content: space-between;
@@ -439,6 +460,48 @@
   color: #d97706;
 }
 
+/* 深度分析 - 关联商品涨跌 */
+.deep-commodity-row {
+  margin-bottom: 12rpx;
+}
+.deep-commodity-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10rpx;
+  margin-top: 6rpx;
+}
+.deep-commodity-pill {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  padding: 8rpx 16rpx;
+  border-radius: 999rpx;
+  background: rgba(148,163,184,0.08);
+  border: 1rpx solid rgba(148,163,184,0.15);
+}
+.deep-commodity-dot {
+  width: 14rpx;
+  height: 14rpx;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.deep-commodity-name {
+  font-size: 22rpx;
+  color: var(--text);
+  font-weight: 600;
+}
+.deep-commodity-pct {
+  font-size: 22rpx;
+  font-weight: 700;
+}
+
+/* 深度分析卡片样式 */
+.deep-section .card-header {
+  border-bottom: 1rpx solid rgba(239,68,68,0.10);
+  padding-bottom: 12rpx;
+  margin-bottom: 16rpx;
+}
+
 /* ====== KOL vs 散户 ====== */
 .kol-card {
   padding: 18rpx;
@@ -477,7 +540,7 @@
   display: block;
 }
 
-/* ====== 操作指南 ====== -->
+/* ====== 操作指南 ====== */
 .action-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
