@@ -1,5 +1,5 @@
 const { getHoldings, getSettings } = require('../../utils/storage');
-const { fetchHotEvents, fetchIndices, fetchMultiFundEstimates, fetchSectorFlows, fetchMultiFundHistory, fetchCommodities, fetchSectorTopFunds, fetchSectorTopStocks, fetchServerFundPick, fetchRealtimeBreaking, getServerBase } = require('../../utils/api');
+const { fetchHotEvents, fetchIndices, fetchMultiFundEstimates, fetchSectorFlows, fetchMultiFundHistory, fetchCommodities, fetchSectorTopFunds, fetchSectorTopStocks, fetchServerFundPick, fetchRealtimeBreaking, getServerBase, fetchSentimentData } = require('../../utils/api');
 const { buildPlans, buildOverview, MODEL_PORTFOLIO, matchSectorFlow } = require('../../utils/advisor');
 const { getMarketStatus, isMarketOpen, formatPct, pctClass, formatTime, isTradingDay, formatMoney } = require('../../utils/market');
 const { runAIAnalysis, runSingleFundAI, getCachedAIResult, getAIConfig, runFundPickAI, getCachedFundPick, saveServerFundPick } = require('../../utils/ai');
@@ -305,8 +305,8 @@ Page({
     const serverBase = getServerBase(settings);
     const rtSettings = serverBase ? { ...settings, apiBase: serverBase } : settings;
 
-    // 并行获取: 指数 + 商品 + 热点 + 估值 + 历史净值 + 板块资金流 + 实时突发
-    const [indicesData, commodityData, hotResult, estimates, historyData, sectorData, realtimeData] = await Promise.allSettled([
+    // 并行获取: 指数 + 商品 + 热点 + 估值 + 历史净值 + 板块资金流 + 实时突发 + 舆情
+    const [indicesData, commodityData, hotResult, estimates, historyData, sectorData, realtimeData, sentimentResult] = await Promise.allSettled([
       fetchIndices(app.globalData.INDICES),
       fetchCommodities(app.globalData.COMMODITIES || []),
       fetchHotEvents(rtSettings),
@@ -314,6 +314,7 @@ Page({
       fetchMultiFundHistory(codes),
       fetchSectorFlows(),
       fetchRealtimeBreaking(rtSettings),
+      fetchSentimentData(rtSettings),
     ]);
 
     // 指数行情
@@ -464,10 +465,54 @@ Page({
       });
     }
 
-    // 合并所有来源：实时突发 > 市场事件 > 商品异动 > 实时异动
+    // ====== 舆情社媒趋势 → 事件化 ======
+    const sentimentTrendItems = [];
+    const rawSentiment = sentimentResult.status === 'fulfilled' ? sentimentResult.value : null;
+    if (rawSentiment && Array.isArray(rawSentiment.trends)) {
+      const trendCatMap = {
+        geopolitics: 'geopolitics', 'military': 'geopolitics',
+        gold: 'commodity', oil: 'commodity', nonferrous: 'commodity', commodity: 'commodity',
+        ai: 'technology', tech: 'technology',
+        macro: 'monetary', policy: 'monetary', bond: 'monetary',
+        stock: 'market', real_estate: 'market', consumer: 'market', fund: 'market',
+        energy: 'commodity', hk_us: 'market', dividend: 'market',
+      };
+      rawSentiment.trends
+        .filter(t => (t.heat_score || 0) >= 100 && (t.sample_titles || []).length > 0)
+        .forEach(t => {
+          const bestTitle = t.sample_titles[0] || t.name;
+          const cat = trendCatMap[t.id] || 'market';
+          const catIconMap = { geopolitics: '🌍', commodity: '📦', monetary: '🏦', technology: '🤖', market: '📊', policy: '📜' };
+          const sentimentImpact = /偏多|看多/.test(t.sentiment) ? 3 : /偏空|看空/.test(t.sentiment) ? -3 : 0;
+          sentimentTrendItems.push({
+            id: 'sm_' + (t.id || Math.random().toString(36).slice(2, 8)),
+            title: bestTitle,
+            reason: t.icon + ' 社媒热度' + (t.heat_score || 0).toFixed(0) + '° · ' + (t.mention_count || 0) + '条讨论 · 情绪' + (t.sentiment || '中性'),
+            analystView: '',
+            source: '社媒舆情',
+            category: cat,
+            catIcon: catIconMap[cat] || '📊',
+            impact: sentimentImpact,
+            impactClass: sentimentImpact >= 0 ? 'up' : 'down',
+            impactAbs: Math.abs(sentimentImpact),
+            isGeo: cat === 'geopolitics',
+            isCommodity: cat === 'commodity',
+            isRealtime: false,
+            fromMarketEvent: false,
+            fromSentiment: true,
+            concepts: (t.keywords_hit || []).slice(0, 5),
+            sectorsPos: '',
+            sectorsNeg: '',
+            advice: '关注社媒声量变化，结合基本面判断',
+            eventTime: (rawSentiment.fetch_time || '').replace('T', ' ').slice(0, 16),
+          });
+        });
+    }
+
+    // 合并所有来源：实时突发 > 市场事件 > 商品异动 > 实时异动 > 舆情趋势
     // 语义去重，避免同一事件不同表述重复出现
     const seenMetas = [];
-    const allBreakingRaw = [...realtimeBreakingItems, ...marketEvents, ...commodityAnomalies, ...realtimeAnomalyItems];
+    const allBreakingRaw = [...realtimeBreakingItems, ...marketEvents, ...commodityAnomalies, ...realtimeAnomalyItems, ...sentimentTrendItems];
     const allBreakingDeduped = [];
     allBreakingRaw.forEach(item => {
       if (!isBreakingEventDuplicate(item, seenMetas)) {
@@ -478,9 +523,12 @@ Page({
 
     const sortedBreaking = allBreakingDeduped.sort(compareBreakingPriority);
     const marketCandidates = sortedBreaking.filter(i => i.fromMarketEvent);
+    const sentimentCandidates = sortedBreaking.filter(i => i.fromSentiment);
     const targetMarketCount = Math.min(3, marketCandidates.length);
-    let hotBreaking = sortedBreaking.slice(0, 12);
+    const targetSentimentCount = Math.min(2, sentimentCandidates.length);
+    let hotBreaking = sortedBreaking.slice(0, 15);
 
+    // 确保至少包含一定数量的市场事件
     const currentMarketCount = hotBreaking.filter(i => i.fromMarketEvent).length;
     if (currentMarketCount < targetMarketCount) {
       const need = targetMarketCount - currentMarketCount;
@@ -491,14 +539,24 @@ Page({
       if (extras.length > 0) {
         let extraIdx = 0;
         for (let i = hotBreaking.length - 1; i >= 0 && extraIdx < extras.length; i -= 1) {
-          if (!hotBreaking[i].fromMarketEvent) {
+          if (!hotBreaking[i].fromMarketEvent && !hotBreaking[i].fromSentiment) {
             hotBreaking[i] = extras[extraIdx];
             extraIdx += 1;
           }
         }
-        hotBreaking = hotBreaking.sort(compareBreakingPriority);
       }
     }
+
+    // 确保至少包含一定数量的舆情趋势
+    const currentSentimentCount = hotBreaking.filter(i => i.fromSentiment).length;
+    if (currentSentimentCount < targetSentimentCount) {
+      const need = targetSentimentCount - currentSentimentCount;
+      const extras = sentimentCandidates
+        .filter(s => !hotBreaking.some(h => h.id === s.id))
+        .slice(0, need);
+      extras.forEach(e => hotBreaking.push(e));
+    }
+    hotBreaking = hotBreaking.sort(compareBreakingPriority);
 
     const hotUpdatedRaw = hotData && hotData.data ? hotData.data.updated_at : '';
     const mergedRtUpdatedAt = parseEventTs(rtData && rtData.updated_at) >= parseEventTs(hotUpdatedRaw)

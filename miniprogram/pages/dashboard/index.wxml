@@ -68,6 +68,7 @@
           <text class="breaking-cat">{{item.catIcon || (item.isGeo ? '🌍' : '📦')}}{{item.category === 'geopolitics' ? '地缘' : item.category === 'monetary' ? '央行' : item.category === 'technology' ? '科技' : item.category === 'market' ? '市场' : item.category === 'policy' ? '政策' : '商品'}}</text>
           <text class="breaking-source" wx:if="{{item.source}}">{{item.source}}</text>
           <text class="rt-badge" wx:if="{{item.isRealtime}}">LIVE</text>
+          <text class="rt-badge sentiment" wx:if="{{item.fromSentiment}}">舆情</text>
         </view>
         <text class="breaking-title">{{item.title}}</text>
         <view class="breaking-impact-row">

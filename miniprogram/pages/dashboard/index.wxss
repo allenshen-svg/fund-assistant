@@ -196,6 +196,10 @@
   flex-shrink: 0;
   animation: rtPulse 2s ease-in-out infinite;
 }
+.rt-badge.sentiment {
+  background: #8b5cf6;
+  animation: none;
+}
 
 @keyframes rtPulse {
   0%, 100% { opacity: 1; }
