@@ -638,17 +638,17 @@ function _mdToHtml(md) {
   // 表格转换: | xxx | yyy | → <table>
   html = html.replace(/((?:\|[^\n]+\|\n)+)/g, function(tableBlock) {
     var rows = tableBlock.trim().split('\n');
-    var out = '<table style="width:100%;border-collapse:collapse;font-size:12px;margin:8px 0;">';
+    var out = '<table style="width:100%;border-collapse:collapse;font-size:12px;margin:8px 0;color:#e2e8f0;">';
     rows.forEach(function(row, ri) {
       // 跳过分隔行 |---|---|
       if (/^\|[\s\-:]+\|/.test(row)) return;
       var cells = row.split('|').filter(function(c, i, a) { return i > 0 && i < a.length - 1; });
       var tag = ri === 0 ? 'th' : 'td';
-      var bgStyle = ri === 0 ? 'background:#f1f5f9;font-weight:700;' : (ri % 2 === 0 ? 'background:#fafbfc;' : '');
+      var bgStyle = ri === 0 ? 'background:rgba(148,163,184,0.15);font-weight:700;' : (ri % 2 === 0 ? 'background:rgba(148,163,184,0.06);' : '');
       out += '<tr>';
       cells.forEach(function(c) {
         var val = c.replace(/\*\*/g, '').trim();
-        out += '<' + tag + ' style="border:1px solid #e2e8f0;padding:4px 6px;text-align:left;' + bgStyle + '">' + val + '</' + tag + '>';
+        out += '<' + tag + ' style="border:1px solid rgba(148,163,184,0.2);padding:4px 6px;text-align:left;' + bgStyle + '">' + val + '</' + tag + '>';
       });
       out += '</tr>';
     });
@@ -658,14 +658,14 @@ function _mdToHtml(md) {
 
   // 箭头链传导（单行 xxx → yyy → zzz）
   html = html.replace(/^(.+→.+)$/gm, function(line) {
-    return '<div style="background:linear-gradient(90deg,rgba(251,191,36,0.08),rgba(239,68,68,0.08));padding:6px 10px;border-radius:6px;font-size:12px;color:#92400e;margin:6px 0;line-height:1.6;word-break:break-all;">' + line.replace(/→/g, ' <span style="color:#ef4444;">→</span> ') + '</div>';
+    return '<div style="background:linear-gradient(90deg,rgba(251,191,36,0.15),rgba(239,68,68,0.12));padding:6px 10px;border-radius:6px;font-size:12px;color:#fbbf24;margin:6px 0;line-height:1.6;word-break:break-all;">' + line.replace(/→/g, ' <span style="color:#f87171;">→</span> ') + '</div>';
   });
 
   // 标题 **xxx**（独立行）
-  html = html.replace(/^\*\*([^*]+)\*\*\s*$/gm, '<div style="font-weight:700;font-size:13px;color:#1e293b;margin:10px 0 4px;">\$1</div>');
+  html = html.replace(/^\*\*([^*]+)\*\*\s*$/gm, '<div style="font-weight:700;font-size:13px;color:#f1f5f9;margin:10px 0 4px;">\$1</div>');
 
   // 粗体 inline
-  html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>\$1</strong>');
+  html = html.replace(/\*\*([^*]+)\*\*/g, '<strong style="color:#f1f5f9;">\$1</strong>');
 
   // 无序列表 - xxx
   html = html.replace(/^- (.+)$/gm, '<div style="padding-left:12px;text-indent:-12px;margin:3px 0;line-height:1.6;">• \$1</div>');
@@ -673,5 +673,5 @@ function _mdToHtml(md) {
   // 换行
   html = html.replace(/\n/g, '<br/>');
 
-  return '<div style="font-size:12px;color:#334155;line-height:1.7;">' + html + '</div>';
+  return '<div style="font-size:12px;color:#e2e8f0;line-height:1.7;">' + html + '</div>';
 }
