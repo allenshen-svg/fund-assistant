@@ -175,7 +175,7 @@
 
 
   <!-- ====== 空状态 ====== -->
-  <view wx:if="{{!loading && !aiAnalyzing && deepAnalysis.length === 0}}" class="empty-state">
+  <view wx:if="{{!loading && !aiAnalyzing && deepAnalysis.length === 0 && holdingActions.length === 0}}" class="empty-state">
     <text class="empty-icon">📭</text>
     <text class="sub">暂无舆情数据，正在等待AI分析...</text>
   </view>
