@@ -630,25 +630,44 @@ function classifyAction(advice) {
   return 'neutral';
 }
 
-/* ====== Markdown → HTML (用于 rich-text 渲染) ====== */
+/* ====== Markdown → HTML (用于 rich-text 渲染，自动适配明暗模式) ====== */
+function _getIsDark() {
+  try { return wx.getSystemInfoSync().theme === 'dark'; }
+  catch(e) { return false; }
+}
+
 function _mdToHtml(md) {
   if (!md) return '';
+  var dark = _getIsDark();
+  var C = dark ? {
+    text:'#e2e8f0', heading:'#f1f5f9', bold:'#f1f5f9',
+    chainText:'#fbbf24', chainArrow:'#f87171',
+    chainBg:'linear-gradient(90deg,rgba(251,191,36,0.15),rgba(239,68,68,0.12))',
+    tblText:'#e2e8f0', tblHeadBg:'rgba(148,163,184,0.15)',
+    tblAltBg:'rgba(148,163,184,0.06)', tblBorder:'rgba(148,163,184,0.2)',
+  } : {
+    text:'#334155', heading:'#1e293b', bold:'#1e293b',
+    chainText:'#92400e', chainArrow:'#ef4444',
+    chainBg:'linear-gradient(90deg,rgba(251,191,36,0.15),rgba(239,68,68,0.10))',
+    tblText:'#334155', tblHeadBg:'#f1f5f9',
+    tblAltBg:'#fafbfc', tblBorder:'#e2e8f0',
+  };
   var html = md;
 
   // 表格转换: | xxx | yyy | → <table>
   html = html.replace(/((?:\|[^\n]+\|\n)+)/g, function(tableBlock) {
     var rows = tableBlock.trim().split('\n');
-    var out = '<table style="width:100%;border-collapse:collapse;font-size:12px;margin:8px 0;color:#e2e8f0;">';
+    var out = '<table style="width:100%;border-collapse:collapse;font-size:12px;margin:8px 0;color:' + C.tblText + ';">';
     rows.forEach(function(row, ri) {
       // 跳过分隔行 |---|---|
       if (/^\|[\s\-:]+\|/.test(row)) return;
       var cells = row.split('|').filter(function(c, i, a) { return i > 0 && i < a.length - 1; });
       var tag = ri === 0 ? 'th' : 'td';
-      var bgStyle = ri === 0 ? 'background:rgba(148,163,184,0.15);font-weight:700;' : (ri % 2 === 0 ? 'background:rgba(148,163,184,0.06);' : '');
+      var bgStyle = ri === 0 ? 'background:' + C.tblHeadBg + ';font-weight:700;' : (ri % 2 === 0 ? 'background:' + C.tblAltBg + ';' : '');
       out += '<tr>';
       cells.forEach(function(c) {
         var val = c.replace(/\*\*/g, '').trim();
-        out += '<' + tag + ' style="border:1px solid rgba(148,163,184,0.2);padding:4px 6px;text-align:left;' + bgStyle + '">' + val + '</' + tag + '>';
+        out += '<' + tag + ' style="border:1px solid ' + C.tblBorder + ';padding:4px 6px;text-align:left;' + bgStyle + '">' + val + '</' + tag + '>';
       });
       out += '</tr>';
     });
@@ -658,20 +677,20 @@ function _mdToHtml(md) {
 
   // 箭头链传导（单行 xxx → yyy → zzz）
   html = html.replace(/^(.+→.+)$/gm, function(line) {
-    return '<div style="background:linear-gradient(90deg,rgba(251,191,36,0.15),rgba(239,68,68,0.12));padding:6px 10px;border-radius:6px;font-size:12px;color:#fbbf24;margin:6px 0;line-height:1.6;word-break:break-all;">' + line.replace(/→/g, ' <span style="color:#f87171;">→</span> ') + '</div>';
+    return '<div style="background:' + C.chainBg + ';padding:6px 10px;border-radius:6px;font-size:12px;color:' + C.chainText + ';margin:6px 0;line-height:1.6;word-break:break-all;">' + line.replace(/→/g, ' <span style="color:' + C.chainArrow + ';">→</span> ') + '</div>';
   });
 
   // 标题 **xxx**（独立行）
-  html = html.replace(/^\*\*([^*]+)\*\*\s*$/gm, '<div style="font-weight:700;font-size:13px;color:#f1f5f9;margin:10px 0 4px;">\$1</div>');
+  html = html.replace(/^\*\*([^*]+)\*\*\s*$/gm, '<div style="font-weight:700;font-size:13px;color:' + C.heading + ';margin:10px 0 4px;">$1</div>');
 
   // 粗体 inline
-  html = html.replace(/\*\*([^*]+)\*\*/g, '<strong style="color:#f1f5f9;">\$1</strong>');
+  html = html.replace(/\*\*([^*]+)\*\*/g, '<strong style="color:' + C.bold + ';">$1</strong>');
 
   // 无序列表 - xxx
-  html = html.replace(/^- (.+)$/gm, '<div style="padding-left:12px;text-indent:-12px;margin:3px 0;line-height:1.6;">• \$1</div>');
+  html = html.replace(/^- (.+)$/gm, '<div style="padding-left:12px;text-indent:-12px;margin:3px 0;line-height:1.6;">• $1</div>');
 
   // 换行
   html = html.replace(/\n/g, '<br/>');
 
-  return '<div style="font-size:12px;color:#e2e8f0;line-height:1.7;">' + html + '</div>';
+  return '<div style="font-size:12px;color:' + C.text + ';line-height:1.7;">' + html + '</div>';
 }
