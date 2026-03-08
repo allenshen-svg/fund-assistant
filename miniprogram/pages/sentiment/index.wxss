@@ -395,9 +395,9 @@
   padding: 14rpx;
   border-radius: 12rpx;
 }
-.summary-line.bullish  { background: rgba(34,197,94,0.06); }
-.summary-line.bearish  { background: rgba(239,68,68,0.06); }
-.summary-line.tactical { background: rgba(59,130,246,0.06); }
+.summary-line.bullish  { background: rgba(239,68,68,0.12); }
+.summary-line.bearish  { background: rgba(34,197,94,0.12); }
+.summary-line.tactical { background: rgba(59,130,246,0.12); }
 .summary-icon { font-size: 32rpx; flex-shrink: 0; }
 .summary-content { flex: 1; }
 .summary-head { font-size: 24rpx; font-weight: 700; color: var(--text); display: block; }
