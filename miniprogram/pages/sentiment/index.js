@@ -1,5 +1,5 @@
 const { getSettings } = require('../../utils/storage');
-const { fetchHotEvents, fetchSentimentData, fetchAnalysisData, fetchUSMarketData, fetchSocialTrends, triggerRefresh, triggerReanalyze, getServerBase, fetchMultiFundHistory } = require('../../utils/api');
+const { fetchHotEvents, fetchSentimentData, fetchAnalysisData, fetchUSMarketData, fetchSocialTrends, triggerRefresh, triggerReanalyze, getServerBase, fetchMultiFundHistory, fetchRealtimeBreaking } = require('../../utils/api');
 
 const COMMODITY_PROXY_FUNDS = [
   { key: 'gold',       name: '黄金',   code: '518880', color: '#f59e0b' },
@@ -46,6 +46,79 @@ const HEAT_KEYWORDS = [
   '贸易战','制裁','中东','俄乌',
   '科创板','创业板','北向','主力','龙头',
 ];
+
+/* ====== 事件语义去重 ====== */
+function _normTitle(text) {
+  return String(text || '').toLowerCase()
+    .replace(/[\s\u3000]+/g, '')
+    .replace(/["""'`·•:：，,。！？!？（）()\[\]【】、;；\-—]/g, '');
+}
+
+function _toBigrams(s) {
+  if (!s || s.length < 2) return s ? new Set([s]) : new Set();
+  var grams = new Set();
+  for (var i = 0; i < s.length - 1; i++) grams.add(s.slice(i, i + 2));
+  return grams;
+}
+
+function _bigramOverlap(a, b) {
+  var ga = _toBigrams(_normTitle(a));
+  var gb = _toBigrams(_normTitle(b));
+  if (!ga.size || !gb.size) return 0;
+  var inter = 0;
+  ga.forEach(function(v) { if (gb.has(v)) inter++; });
+  return inter / Math.max(1, Math.min(ga.size, gb.size));
+}
+
+function _tokenJaccard(a, b) {
+  var raw = function(t) {
+    return String(t || '').toLowerCase()
+      .replace(/[\s\u3000]+/g, '')
+      .replace(/["""'`·•:：，,。！？!？（）()\[\]【】、;；\-—]/g, '');
+  };
+  var tokA = (raw(a).match(/[\u4e00-\u9fff]{2,}|[a-z0-9]+/g) || []);
+  var tokB = (raw(b).match(/[\u4e00-\u9fff]{2,}|[a-z0-9]+/g) || []);
+  if (!tokA.length || !tokB.length) return 0;
+  var setA = {}; tokA.forEach(function(t) { setA[t] = 1; });
+  var setB = {}; tokB.forEach(function(t) { setB[t] = 1; });
+  var inter = 0;
+  Object.keys(setA).forEach(function(k) { if (setB[k]) inter++; });
+  var union = Object.keys(setA).length + Object.keys(setB).length - inter;
+  return union > 0 ? inter / union : 0;
+}
+
+function _dedupeEventList(items) {
+  var kept = [];
+  items.forEach(function(evt) {
+    var title = evt.title || '';
+    var cat = evt.category || '';
+    var isDup = false;
+    for (var i = 0; i < kept.length; i++) {
+      var kt = kept[i].title || '';
+      var kcat = kept[i].category || '';
+      var norm = _normTitle(title);
+      var knorm = _normTitle(kt);
+
+      // 完全相同
+      if (norm === knorm) { isDup = true; break; }
+
+      // 子串包含
+      if ((norm.includes(knorm) || knorm.includes(norm)) && Math.min(norm.length, knorm.length) >= 6) {
+        isDup = true; break;
+      }
+
+      var bs = _bigramOverlap(title, kt);
+      var tj = _tokenJaccard(title, kt);
+      var sameCat = cat && cat === kcat;
+
+      if (sameCat && bs >= 0.55) { isDup = true; break; }
+      if (sameCat && tj >= 0.45) { isDup = true; break; }
+      if (bs >= 0.50 && tj >= 0.40) { isDup = true; break; }
+    }
+    if (!isDup) kept.push(evt);
+  });
+  return kept;
+}
 
 Page({
   data: {
@@ -251,14 +324,15 @@ Page({
     const serverBase = getServerBase(settings);
     const dataSettings = serverBase ? { ...settings, apiBase: serverBase } : settings;
 
-    // 并行获取：舆情 + AI分析 + 美股 + 热点事件 + 社媒趋势
-    const [sentimentRes, analysisRes, usRes, hotRes, commodityHistRes, trendsRes] = await Promise.allSettled([
+    // 并行获取：舆情 + AI分析 + 美股 + 热点事件 + 实时突发 + 社媒趋势
+    const [sentimentRes, analysisRes, usRes, hotRes, commodityHistRes, trendsRes, realtimeRes] = await Promise.allSettled([
       fetchSentimentData(dataSettings),
       fetchAnalysisData(dataSettings),
       fetchUSMarketData(dataSettings),
-      fetchHotEvents(settings),
+      fetchHotEvents(dataSettings),
       fetchMultiFundHistory(COMMODITY_PROXY_FUNDS.map(i => i.code)),
       fetchSocialTrends(dataSettings),
+      fetchRealtimeBreaking(dataSettings),
     ]);
 
     const sentimentData = sentimentRes.status === 'fulfilled' ? sentimentRes.value : null;
@@ -439,7 +513,7 @@ Page({
       }
     }
 
-    // ========== 5. 热点事件 (原有) ==========
+    // ========== 5. 热点事件 + 实时突发合并 ==========
     if (hotData) {
       const hd = hotData.data || {};
       batch.heatmap = (hd.heatmap || []).map(item => ({
@@ -447,7 +521,9 @@ Page({
         tempClass: item.temperature > 70 ? 'hot' : item.temperature > 50 ? 'warm' : 'cool',
         trendIcon: item.trend === 'up' ? '↑' : item.trend === 'down' ? '↓' : '→',
       }));
-      batch.events = (hd.events || []).map(item => ({
+
+      // 基础事件来自 hot_events.json
+      var baseEvents = (hd.events || []).map(item => ({
         ...item,
         impactClass: Number(item.impact || 0) >= 0 ? 'up' : 'down',
         impactStr: (Number(item.impact || 0) >= 0 ? '+' : '') + (item.impact || 0),
@@ -456,6 +532,38 @@ Page({
         sectorsPos: (item.sectors_positive || []).join('、') || '--',
         sectorsNeg: (item.sectors_negative || []).join('、') || '--',
       }));
+
+      // 融合 realtime_breaking.json 的实时事件
+      var rtData = realtimeRes.status === 'fulfilled' ? realtimeRes.value : null;
+      var rtEvents = [];
+      if (rtData && Array.isArray(rtData.breaking)) {
+        rtEvents = rtData.breaking.map(function(item) {
+          var impact = Number(item.impact || 0);
+          return {
+            id: item.id || 'rtb_' + Math.random().toString(36).slice(2, 8),
+            title: item.title || '',
+            reason: item.reason || '',
+            source: item.source || '',
+            category: item.category || 'market',
+            impact: impact,
+            impactClass: impact >= 0 ? 'up' : 'down',
+            impactStr: (impact >= 0 ? '+' : '') + impact,
+            sentimentLabel: impact > 5 ? '偏多' : impact < -5 ? '偏空' : '中性',
+            sectors_positive: item.sectors_positive || [],
+            sectors_negative: item.sectors_negative || [],
+            sectorsPos: (item.sectors_positive || []).join('、') || '--',
+            sectorsNeg: (item.sectors_negative || []).join('、') || '--',
+            advice: item.advice || '',
+            isRealtime: true,
+          };
+        });
+      }
+
+      // 语义去重：bigram + token Jaccard（与首页 dashboard 一致）
+      var merged = _dedupeEventList([].concat(rtEvents, baseEvents));
+      merged.sort(function(a, b) { return Math.abs(Number(b.impact || 0)) - Math.abs(Number(a.impact || 0)); });
+      batch.events = merged;
+
       batch.outlook = hd.outlook || null;
 
       // ========== 6. 补充热力图板块到 KOL 博弈拆解 ==========

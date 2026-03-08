@@ -402,13 +402,13 @@ _rt_breaking_lock = threading.Lock()
 _rt_breaking_running = False
 
 REALTIME_INTERVAL_TRADING = int(os.environ.get('REALTIME_INTERVAL_TRADING', 300))    # 交易时段5分钟
-REALTIME_INTERVAL_OFF = int(os.environ.get('REALTIME_INTERVAL_OFF', 900))            # 非交易时段15分钟
+REALTIME_INTERVAL_OFF = int(os.environ.get('REALTIME_INTERVAL_OFF', 300))              # 非交易时段也5分钟(全天候高频)
 
 def realtime_breaking_loop():
-    """高频实时突发新闻采集线程（交易时段每5分钟，非交易时段每15分钟）"""
+    """全天候高频实时突发新闻采集线程（每5分钟，24/7不间断）"""
     global _rt_breaking_running
     time.sleep(8)  # 启动后等8秒
-    print('[realtime_breaking] ⚡ 实时突发新闻监控线程已启动')
+    print('[realtime_breaking] ⚡ 实时突发新闻监控线程已启动 (全天候24/7)')
 
     while True:
         if _rt_breaking_running:

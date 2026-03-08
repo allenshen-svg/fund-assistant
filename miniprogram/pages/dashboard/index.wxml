@@ -57,6 +57,8 @@
       <text class="title">🔥 实时热点 · 异动</text>
       <view class="row" style="align-items:center;">
         <text class="chip red">{{hotBreaking.length}}条</text>
+        <text class="rt-live-dot">●</text>
+        <text class="sub" wx:if="{{rtCountdown}}" style="margin-left:4rpx;font-size:20rpx;color:#10b981;">{{rtCountdown}}</text>
         <text class="sub" wx:if="{{rtUpdatedAt}}" style="margin-left:8rpx;font-size:20rpx;">⚡{{rtUpdatedAt}}</text>
       </view>
     </view>

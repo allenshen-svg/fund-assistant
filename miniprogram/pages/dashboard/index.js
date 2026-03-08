@@ -1,5 +1,5 @@
 const { getHoldings, getSettings } = require('../../utils/storage');
-const { fetchHotEvents, fetchIndices, fetchMultiFundEstimates, fetchSectorFlows, fetchMultiFundHistory, fetchCommodities, fetchSectorTopFunds, fetchSectorTopStocks, fetchServerFundPick, fetchRealtimeBreaking } = require('../../utils/api');
+const { fetchHotEvents, fetchIndices, fetchMultiFundEstimates, fetchSectorFlows, fetchMultiFundHistory, fetchCommodities, fetchSectorTopFunds, fetchSectorTopStocks, fetchServerFundPick, fetchRealtimeBreaking, getServerBase } = require('../../utils/api');
 const { buildPlans, buildOverview, MODEL_PORTFOLIO, matchSectorFlow } = require('../../utils/advisor');
 const { getMarketStatus, isMarketOpen, formatPct, pctClass, formatTime, isTradingDay, formatMoney } = require('../../utils/market');
 const { runAIAnalysis, runSingleFundAI, getCachedAIResult, getAIConfig, runFundPickAI, getCachedFundPick, saveServerFundPick } = require('../../utils/ai');
@@ -19,6 +19,133 @@ function buildAnalystFallback(item) {
   return impact >= 0
     ? '事件驱动偏强但拥挤度上升，建议回撤分批而非追涨'
     : '风险偏好回落，建议降低杠杆并等待二次确认信号';
+}
+
+function normalizeBreakingTitle(text) {
+  const stopWords = [
+    '美国对', '消息', '快讯', 'live', '最新', 'breaking',
+    '引发', '导致', '面临', '可能', '造成',
+  ];
+  let normalized = String(text || '')
+    .toLowerCase()
+    .replace(/\s+/g, '')
+    .replace(/[“”"'`·•:：，,。！？!？（）()【】\[\]、;；\-—]/g, '');
+  stopWords.forEach(word => {
+    normalized = normalized.replace(new RegExp(word, 'g'), '');
+  });
+  return normalized;
+}
+
+function toBigrams(text) {
+  const clean = normalizeBreakingTitle(text);
+  if (!clean) return new Set();
+  if (clean.length < 2) return new Set([clean]);
+  const grams = new Set();
+  for (let i = 0; i < clean.length - 1; i += 1) {
+    grams.add(clean.slice(i, i + 2));
+  }
+  return grams;
+}
+
+function setOverlapRatio(aSet, bSet) {
+  if (!aSet || !bSet || aSet.size === 0 || bSet.size === 0) return 0;
+  let overlap = 0;
+  aSet.forEach(v => { if (bSet.has(v)) overlap += 1; });
+  const denom = Math.max(1, Math.min(aSet.size, bSet.size));
+  return overlap / denom;
+}
+
+function buildThemeSet(item) {
+  const values = [];
+  const concepts = Array.isArray(item && item.concepts) ? item.concepts : [];
+  const sectorsPos = String(item && item.sectorsPos || '').split('、').filter(Boolean);
+  const sectorsNeg = String(item && item.sectorsNeg || '').split('、').filter(Boolean);
+
+  values.push(String(item && item.category || ''));
+  values.push(String(item && item.reason || ''));
+  values.push(String(item && item.title || ''));
+  values.push.apply(values, concepts);
+  values.push.apply(values, sectorsPos);
+  values.push.apply(values, sectorsNeg);
+
+  const set = new Set();
+  values.forEach(v => {
+    const key = normalizeBreakingTitle(v);
+    if (key && key.length >= 2) set.add(key);
+  });
+  return set;
+}
+
+function buildBreakingDedupMeta(item) {
+  return {
+    titleKey: normalizeBreakingTitle(item && item.title || ''),
+    titleBigrams: toBigrams(item && item.title || ''),
+    titleRaw: String(item && item.title || ''),
+    themeSet: buildThemeSet(item),
+    category: String(item && item.category || ''),
+    eventTs: parseEventTs(item && item.eventTime),
+  };
+}
+
+function tokenJaccard(a, b) {
+  var rawA = String(a || '').toLowerCase().replace(/[\s\u3000]+/g, '').replace(/["""'`·•:：，,。！？!？（）()【】\[\]、;；\-—]/g, '');
+  var rawB = String(b || '').toLowerCase().replace(/[\s\u3000]+/g, '').replace(/["""'`·•:：，,。！？!？（）()【】\[\]、;；\-—]/g, '');
+  if (!rawA || !rawB) return 0;
+  var tokA = rawA.match(/[\u4e00-\u9fff]{2,}|[a-z0-9]+/g) || [];
+  var tokB = rawB.match(/[\u4e00-\u9fff]{2,}|[a-z0-9]+/g) || [];
+  if (!tokA.length || !tokB.length) return 0;
+  var setA = {}; tokA.forEach(function(t) { setA[t] = 1; });
+  var setB = {}; tokB.forEach(function(t) { setB[t] = 1; });
+  var inter = 0;
+  Object.keys(setA).forEach(function(k) { if (setB[k]) inter++; });
+  var union = Object.keys(setA).length + Object.keys(setB).length - inter;
+  return union > 0 ? inter / union : 0;
+}
+
+function isBreakingEventDuplicate(item, seenMetas) {
+  const current = buildBreakingDedupMeta(item);
+  if (!current.titleKey) return true;
+
+  for (let i = 0; i < seenMetas.length; i += 1) {
+    const prev = seenMetas[i];
+    if (!prev || !prev.titleKey) continue;
+
+    if (prev.titleKey === current.titleKey) return true;
+
+    const minLen = Math.min(prev.titleKey.length, current.titleKey.length);
+    if ((prev.titleKey.includes(current.titleKey) || current.titleKey.includes(prev.titleKey)) && minLen >= 6) {
+      const closeTime = Math.abs((prev.eventTs || 0) - (current.eventTs || 0)) <= 48 * 3600 * 1000;
+      if (closeTime || !prev.eventTs || !current.eventTs) return true;
+    }
+
+    const titleSim = setOverlapRatio(prev.titleBigrams, current.titleBigrams);
+    const themeSim = setOverlapRatio(prev.themeSet, current.themeSet);
+    const tokenSim = tokenJaccard(prev.titleRaw, current.titleRaw);
+    const sameCategory = prev.category && current.category && prev.category === current.category;
+    const timeGap = Math.abs((prev.eventTs || 0) - (current.eventTs || 0));
+    const in24h = timeGap <= 24 * 3600 * 1000;
+    const in48h = timeGap <= 48 * 3600 * 1000;
+
+    if (sameCategory && titleSim >= 0.55 && (in24h || !prev.eventTs || !current.eventTs)) return true;
+    if (sameCategory && tokenSim >= 0.45 && (in48h || !prev.eventTs || !current.eventTs)) return true;
+    if (titleSim >= 0.50 && themeSim >= 0.45 && (in48h || !prev.eventTs || !current.eventTs)) return true;
+    if (tokenSim >= 0.55 && themeSim >= 0.40 && (in48h || !prev.eventTs || !current.eventTs)) return true;
+  }
+  return false;
+}
+
+function parseEventTs(value) {
+  if (!value) return 0;
+  const ts = Date.parse(String(value));
+  return Number.isNaN(ts) ? 0 : ts;
+}
+
+function compareBreakingPriority(a, b) {
+  const impactDiff = Number(b.impactAbs || 0) - Number(a.impactAbs || 0);
+  if (impactDiff !== 0) return impactDiff;
+  const timeDiff = parseEventTs(b.eventTime) - parseEventTs(a.eventTime);
+  if (timeDiff !== 0) return timeDiff;
+  return Number(!!b.isRealtime) - Number(!!a.isRealtime);
 }
 
 Page({
@@ -55,6 +182,7 @@ Page({
     // 热点异动事件 (置顶地缘/商品)
     hotBreaking: [],
     rtUpdatedAt: '',
+    rtCountdown: '',
 
     // 热点事件
     topEvents: [],
@@ -68,6 +196,7 @@ Page({
 
     // 定时器
     _timer: null,
+    _rtTimer: null,
 
     // AI 分析
     showAI: false,
@@ -120,14 +249,32 @@ Page({
       } catch(e) { console.error('timer error:', e); }
     }, 30000);
     this.setData({ _timer: timer });
+
+    // 实时热点全天候高频轮询 (60秒)
+    this._rtNextRefresh = Date.now() + 60000;
+    const rtTimer = setInterval(() => {
+      try {
+        const remain = Math.max(0, Math.ceil((this._rtNextRefresh - Date.now()) / 1000));
+        if (remain > 0) {
+          this.setData({ rtCountdown: remain + 's' });
+        } else {
+          this.setData({ rtCountdown: '刷新中...' });
+          this.refreshBreaking().catch(e => console.error('refreshBreaking error:', e));
+          this._rtNextRefresh = Date.now() + 60000;
+        }
+      } catch(e) { console.error('rtTimer error:', e); }
+    }, 1000);
+    this.setData({ _rtTimer: rtTimer });
   },
 
   onHide() {
     if (this.data._timer) { clearInterval(this.data._timer); this.setData({ _timer: null }); }
+    if (this.data._rtTimer) { clearInterval(this.data._rtTimer); this.setData({ _rtTimer: null }); }
   },
 
   onUnload() {
     if (this.data._timer) clearInterval(this.data._timer);
+    if (this.data._rtTimer) clearInterval(this.data._rtTimer);
   },
 
   onPullDownRefresh() {
@@ -154,15 +301,19 @@ Page({
     const app = getApp();
     const codes = holdings.map(h => h.code);
 
+    // 实时突发优先从 Flask 服务器获取（与舆情页保持一致）
+    const serverBase = getServerBase(settings);
+    const rtSettings = serverBase ? { ...settings, apiBase: serverBase } : settings;
+
     // 并行获取: 指数 + 商品 + 热点 + 估值 + 历史净值 + 板块资金流 + 实时突发
     const [indicesData, commodityData, hotResult, estimates, historyData, sectorData, realtimeData] = await Promise.allSettled([
       fetchIndices(app.globalData.INDICES),
       fetchCommodities(app.globalData.COMMODITIES || []),
-      fetchHotEvents(settings),
+      fetchHotEvents(rtSettings),
       fetchMultiFundEstimates(codes),
       fetchMultiFundHistory(codes),
       fetchSectorFlows(),
-      fetchRealtimeBreaking(settings),
+      fetchRealtimeBreaking(rtSettings),
     ]);
 
     // 指数行情
@@ -182,7 +333,7 @@ Page({
     const hotData = hotResult.status === 'fulfilled' ? hotResult.value : { source: 'local', data: { heatmap: [], events: [] } };
     // 用真实行情数据修正热力图趋势方向
     const heatmap = this._fixHeatmapTrends((hotData.data.heatmap || []).slice(0, 14), commodities, indices);
-    const allEvents = (hotData.data.events || []).map(item => {
+    const allEvents = (hotData.data.events || []).map((item, idx) => {
       const rawReason = item.reason || '';
       const reasonHasAnalyst = rawReason.indexOf('分析师观点：') >= 0;
       const analystViewFromReason = reasonHasAnalyst
@@ -195,10 +346,11 @@ Page({
       const analystView = item.analyst_view || analystViewFromReason || buildAnalystFallback(item);
 
       return {
-        id: item.id, title: item.title, advice: item.advice || '保持观察',
+        id: item.id || ('evt_hot_' + idx), title: item.title, advice: item.advice || '保持观察',
         reason: cleanReason,
         analystView,
         category: item.category || '',
+        source: item.source || '市场事件',
         concepts: item.concepts || [],
         sectorsPos: (item.sectors_positive || []).join('、'),
         sectorsNeg: (item.sectors_negative || []).join('、'),
@@ -206,6 +358,7 @@ Page({
         impactClass: Number(item.impact || 0) >= 0 ? 'up' : 'down',
         impactAbs: Math.abs(Number(item.impact || 0)),
         confidence: Number(item.confidence || 0),
+        eventTime: item.time || item.timestamp || hotData.data.updated_at || '',
         isGeo: item.category === 'geopolitics',
         isCommodity: item.category === 'commodity',
         isTemplate: !!item.is_template,
@@ -217,8 +370,23 @@ Page({
     const sortedEvents = [...dynamicEvents, ...templateEvents];
     const topEvents = sortedEvents.slice(0, 5);
 
-    // 热点异动: 仅取动态事件，排除静态模板
-    const breakingEvents = allEvents.filter(e => !e.isTemplate && (e.isGeo || e.isCommodity || e.impactAbs >= 10));
+    // 热点异动: 并入“市场事件”动态流（排除静态模板）
+    const marketEvents = allEvents.filter(e => !e.isTemplate).map(e => ({
+      ...e,
+      catIcon: e.category === 'geopolitics'
+        ? '🌍'
+        : e.category === 'monetary'
+        ? '🏦'
+        : e.category === 'technology'
+        ? '🤖'
+        : e.category === 'market'
+        ? '📊'
+        : e.category === 'policy'
+        ? '📜'
+        : '📦',
+      isRealtime: false,
+      fromMarketEvent: true,
+    }));
     const commodityAnomalies = commodities.filter(c => Math.abs(c.pct) >= 1.5).map(c => ({
       id: 'anom_' + c.code,
       title: c.icon + ' ' + c.name + (c.pct >= 0 ? '大涨' : '大跌') + ' ' + c.pctStr,
@@ -230,6 +398,8 @@ Page({
       isGeo: false, isCommodity: true,
       concepts: [c.name],
       advice: Math.abs(c.pct) >= 3 ? '关注偏离修复机会' : '观察后续走势',
+      eventTime: hotData.data.updated_at || '',
+      fromMarketEvent: false,
     }));
 
     // ====== 实时突发新闻（路透社/彭博社/CNBC等）+ 全球市场异动 ======
@@ -264,6 +434,8 @@ Page({
           sectorsPos: (item.sectors_positive || []).join('、'),
           sectorsNeg: (item.sectors_negative || []).join('、'),
           advice: item.advice || '保持观察',
+          eventTime: item.timestamp || rtData.updated_at || '',
+          fromMarketEvent: false,
         });
       });
     }
@@ -286,26 +458,52 @@ Page({
           source: '行情监控',
           concepts: a.tag ? [a.tag] : [a.name],
           advice: Math.abs(pct) >= 3 ? '关注偏离修复机会' : '观察后续走势',
+          eventTime: a.timestamp || rtData.updated_at || '',
+          fromMarketEvent: false,
         });
       });
     }
 
-    // 合并所有来源：实时突发 > 原有事件 > 商品异动 > 实时异动
-    // 用标题前30字去重
-    const seenTitles = new Set();
-    const allBreakingRaw = [...realtimeBreakingItems, ...breakingEvents, ...commodityAnomalies, ...realtimeAnomalyItems];
+    // 合并所有来源：实时突发 > 市场事件 > 商品异动 > 实时异动
+    // 语义去重，避免同一事件不同表述重复出现
+    const seenMetas = [];
+    const allBreakingRaw = [...realtimeBreakingItems, ...marketEvents, ...commodityAnomalies, ...realtimeAnomalyItems];
     const allBreakingDeduped = [];
     allBreakingRaw.forEach(item => {
-      const key = String(item.title || '').replace(/\s+/g, '').slice(0, 30).toLowerCase();
-      if (key && !seenTitles.has(key)) {
-        seenTitles.add(key);
+      if (!isBreakingEventDuplicate(item, seenMetas)) {
+        seenMetas.push(buildBreakingDedupMeta(item));
         allBreakingDeduped.push(item);
       }
     });
 
-    const hotBreaking = allBreakingDeduped
-      .sort((a, b) => b.impactAbs - a.impactAbs)
-      .slice(0, 12);
+    const sortedBreaking = allBreakingDeduped.sort(compareBreakingPriority);
+    const marketCandidates = sortedBreaking.filter(i => i.fromMarketEvent);
+    const targetMarketCount = Math.min(3, marketCandidates.length);
+    let hotBreaking = sortedBreaking.slice(0, 12);
+
+    const currentMarketCount = hotBreaking.filter(i => i.fromMarketEvent).length;
+    if (currentMarketCount < targetMarketCount) {
+      const need = targetMarketCount - currentMarketCount;
+      const extras = marketCandidates
+        .filter(m => !hotBreaking.some(h => h.id === m.id))
+        .slice(0, need);
+
+      if (extras.length > 0) {
+        let extraIdx = 0;
+        for (let i = hotBreaking.length - 1; i >= 0 && extraIdx < extras.length; i -= 1) {
+          if (!hotBreaking[i].fromMarketEvent) {
+            hotBreaking[i] = extras[extraIdx];
+            extraIdx += 1;
+          }
+        }
+        hotBreaking = hotBreaking.sort(compareBreakingPriority);
+      }
+    }
+
+    const hotUpdatedRaw = hotData && hotData.data ? hotData.data.updated_at : '';
+    const mergedRtUpdatedAt = parseEventTs(rtData && rtData.updated_at) >= parseEventTs(hotUpdatedRaw)
+      ? rtUpdatedAt
+      : String(hotUpdatedRaw || '').replace('T', ' ').slice(0, 16);
 
     // 基金估值
     const estData = estimates.status === 'fulfilled' ? estimates.value : {};
@@ -345,7 +543,7 @@ Page({
       topEvents, heatmap, sectorFlows,
       sourceLabel: hotData.source === 'remote' ? '远程数据' : '本地回退',
       updatedAt: String(hotData.data.updated_at || '--').replace('T', ' ').slice(0, 16),
-      rtUpdatedAt: rtUpdatedAt,
+      rtUpdatedAt: mergedRtUpdatedAt,
       loading: false,
     });
 
@@ -355,6 +553,85 @@ Page({
       console.error('[loadAll] error:', e);
       this.setData({ loading: false, debugError: 'loadAll内部: ' + (e.message || String(e)) });
     }
+  },
+
+  async refreshBreaking() {
+    const settings = getSettings();
+    const serverBase = getServerBase(settings);
+    const rtSettings = serverBase ? { ...settings, apiBase: serverBase } : settings;
+
+    const rtData = await fetchRealtimeBreaking(rtSettings);
+    if (!rtData || !Array.isArray(rtData.breaking)) return;
+
+    const realtimeBreakingItems = [];
+    rtData.breaking.forEach(function(item) {
+      var catIconMap = {
+        'geopolitics': '🌍', 'commodity': '📦', 'monetary': '🏦',
+        'technology': '🤖', 'market': '📊', 'policy': '📜',
+      };
+      var cat = item.category || 'market';
+      realtimeBreakingItems.push({
+        id: item.id || 'rtb_' + Math.random().toString(36).slice(2, 8),
+        title: item.title || '',
+        reason: item.reason || '',
+        analystView: item.analystView || '',
+        source: item.source || '',
+        category: cat,
+        catIcon: catIconMap[cat] || '📰',
+        impact: Number(item.impact || 0),
+        impactClass: Number(item.impact || 0) >= 0 ? 'up' : 'down',
+        impactAbs: Math.abs(Number(item.impact || 0)),
+        isGeo: cat === 'geopolitics',
+        isCommodity: cat === 'commodity' || cat === 'commodity_anomaly',
+        isRealtime: true,
+        sectorsPos: (item.sectors_positive || []).join('、'),
+        sectorsNeg: (item.sectors_negative || []).join('、'),
+        advice: item.advice || '保持观察',
+        eventTime: item.timestamp || rtData.updated_at || '',
+        fromMarketEvent: false,
+      });
+    });
+
+    var realtimeAnomalyItems = [];
+    if (Array.isArray(rtData.anomalies)) {
+      rtData.anomalies.forEach(function(a) {
+        var pct = Number(a.pct || 0);
+        realtimeAnomalyItems.push({
+          id: a.id || 'anom_rt_' + Math.random().toString(36).slice(2, 8),
+          title: a.alert || (a.icon + ' ' + a.name + (pct >= 0 ? '大涨' : '大跌') + Math.abs(pct).toFixed(1) + '%'),
+          reason: a.level + '异动 · ' + a.fullName,
+          impact: Math.round(pct * 2),
+          impactClass: pct >= 0 ? 'up' : 'down',
+          impactAbs: Math.abs(Math.round(pct * 2)),
+          category: a.type === 'index' ? 'market' : 'commodity_anomaly',
+          catIcon: a.type === 'index' ? '📊' : '📦',
+          isGeo: false,
+          isCommodity: a.type !== 'index',
+          isRealtime: true,
+          source: '行情监控',
+          concepts: a.tag ? [a.tag] : [a.name],
+          advice: Math.abs(pct) >= 3 ? '关注偏离修复机会' : '观察后续走势',
+          eventTime: a.timestamp || rtData.updated_at || '',
+          fromMarketEvent: false,
+        });
+      });
+    }
+
+    // 保留现有 marketEvent 项（来自 hot_events），与新实时数据合并去重
+    var existingMarket = (this.data.hotBreaking || []).filter(function(i) { return i.fromMarketEvent; });
+    var allBreakingRaw = [].concat(realtimeBreakingItems, existingMarket, realtimeAnomalyItems);
+    var seenMetas = [];
+    var allBreakingDeduped = [];
+    allBreakingRaw.forEach(function(item) {
+      if (!isBreakingEventDuplicate(item, seenMetas)) {
+        seenMetas.push(buildBreakingDedupMeta(item));
+        allBreakingDeduped.push(item);
+      }
+    });
+
+    var hotBreaking = allBreakingDeduped.sort(compareBreakingPriority).slice(0, 12);
+    var rtUpdatedAt = String(rtData.updated_at || '').replace('T', ' ').slice(0, 16);
+    this.setData({ hotBreaking: hotBreaking, rtUpdatedAt: rtUpdatedAt });
   },
 
   async refreshQuotes() {

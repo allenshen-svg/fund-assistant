@@ -1,6 +1,30 @@
 {
-  "updated_at": "2026-03-07T11:24:08.670881+08:00",
+  "updated_at": "2026-03-08T11:15:04.989888+08:00",
   "breaking": [
+    {
+      "id": "rtb_8a9eef24",
+      "title": "伊朗无人机袭击油轮",
+      "reason": "伊朗相关袭船事件升级航运与能源中断风险，原油与避险资产波动或放大",
+      "source": "Bloomberg",
+      "category": "geopolitics",
+      "catIcon": "🌍",
+      "impact": 15,
+      "impactClass": "up",
+      "impactAbs": 15,
+      "sectors_positive": [
+        "能源",
+        "军工",
+        "黄金"
+      ],
+      "sectors_negative": [
+        "航运",
+        "航空",
+        "高耗能"
+      ],
+      "advice": "提高防守仓位并跟踪油价波动",
+      "timestamp": "2026-03-07T17:58:27.423242+08:00",
+      "isRealtime": true
+    },
     {
       "id": "rtb_90044cd9",
       "title": "美对伊战争引发能源供应中断",
@@ -19,6 +43,66 @@
       ],
       "advice": "关注能源股",
       "timestamp": "2026-03-07T11:24:08.670881+08:00",
+      "isRealtime": true
+    },
+    {
+      "id": "rtb_2ab2d0ad",
+      "title": "伊朗暂停对邻国军事行动",
+      "reason": "除非遭受攻击，伊朗宣布暂停对邻国的军事行动，地缘政治紧张局势缓解。",
+      "source": "Reuters",
+      "category": "geopolitics",
+      "catIcon": "🌍",
+      "impact": 15,
+      "impactClass": "up",
+      "impactAbs": 15,
+      "sectors_positive": [
+        "能源"
+      ],
+      "sectors_negative": [
+        "军工"
+      ],
+      "advice": "关注能源板块机会",
+      "timestamp": "2026-03-07T17:58:27.423242+08:00",
+      "isRealtime": true
+    },
+    {
+      "id": "rtb_9e54c612",
+      "title": "普京呼吁立即停止伊朗冲突",
+      "reason": "俄罗斯总统普京呼吁立即停止伊朗冲突，国际社会对和平解决的关注增加。",
+      "source": "Reuters",
+      "category": "geopolitics",
+      "catIcon": "🌍",
+      "impact": 14,
+      "impactClass": "up",
+      "impactAbs": 14,
+      "sectors_positive": [
+        "能源"
+      ],
+      "sectors_negative": [
+        "军工"
+      ],
+      "advice": "关注地缘政治风险",
+      "timestamp": "2026-03-07T17:58:27.423242+08:00",
+      "isRealtime": true
+    },
+    {
+      "id": "rtb_b4ba67c3",
+      "title": "俄罗斯对乌克兰发动无人机和导弹袭击",
+      "reason": "俄罗斯对乌克兰的袭击导致至少7人死亡，乌克兰局势进一步恶化。",
+      "source": "Reuters",
+      "category": "geopolitics",
+      "catIcon": "🌍",
+      "impact": 13,
+      "impactClass": "up",
+      "impactAbs": 13,
+      "sectors_positive": [
+        "军工"
+      ],
+      "sectors_negative": [
+        "能源"
+      ],
+      "advice": "关注军工板块机会",
+      "timestamp": "2026-03-07T17:58:27.423242+08:00",
       "isRealtime": true
     },
     {
@@ -42,43 +126,43 @@
       "isRealtime": true
     },
     {
-      "id": "rtb_c128e807",
-      "title": "美联储官员呼吁降低通胀",
-      "reason": "美联储官员表示中央银行必须降低通胀，暗示可能降息",
+      "id": "rtb_ac084864",
+      "title": "美国股市收盘下跌，油价飙升12%",
+      "reason": "美国股市因油价飙升和就业市场疲软而收盘下跌，市场担忧全球经济。",
       "source": "Reuters",
-      "category": "monetary",
-      "catIcon": "🏦",
-      "impact": 10,
+      "category": "market",
+      "catIcon": "📊",
+      "impact": 12,
       "impactClass": "up",
-      "impactAbs": 10,
+      "impactAbs": 12,
       "sectors_positive": [
-        "债券"
+        "能源"
       ],
       "sectors_negative": [
-        "利率敏感型股票"
+        "金融"
       ],
-      "advice": "关注利率变动",
-      "timestamp": "2026-03-07T11:24:08.670881+08:00",
+      "advice": "谨慎投资金融板块",
+      "timestamp": "2026-03-07T17:58:27.423242+08:00",
       "isRealtime": true
     },
     {
-      "id": "rtb_748ed063",
-      "title": "黄金价格大幅上涨",
-      "reason": "地缘政治紧张和通胀预期推高黄金价格",
+      "id": "rtb_13b2059c",
+      "title": "印度提高液化石油气价格",
+      "reason": "由于伊朗战争影响供应，印度提高液化石油气价格，全球能源价格可能进一步上涨。",
       "source": "Reuters",
       "category": "commodity",
       "catIcon": "📦",
-      "impact": 10,
+      "impact": 11,
       "impactClass": "up",
-      "impactAbs": 10,
+      "impactAbs": 11,
       "sectors_positive": [
-        "黄金ETF"
+        "能源"
       ],
       "sectors_negative": [
-        "无"
+        "消费者"
       ],
-      "advice": "考虑配置黄金",
-      "timestamp": "2026-03-07T11:24:08.670881+08:00",
+      "advice": "关注能源板块机会",
+      "timestamp": "2026-03-07T17:58:27.423242+08:00",
       "isRealtime": true
     },
     {
@@ -102,109 +186,118 @@
       "isRealtime": true
     },
     {
-      "id": "rtb_e2ade648",
-      "title": "恒生科技指数上涨",
-      "reason": "地缘政治紧张和科技行业基本面良好推动科技股上涨",
+      "id": "rtb_eb140b70",
+      "title": "黎巴嫩酒店遭以色列空袭",
+      "reason": "黎巴嫩表示，以色列对贝鲁特一家酒店发动空袭，造成四人死亡",
       "source": "Reuters",
+      "category": "geopolitics",
+      "catIcon": "🌍",
+      "impact": 10,
+      "impactClass": "up",
+      "impactAbs": 10,
+      "sectors_positive": [],
+      "sectors_negative": [],
+      "advice": "关注中东地区地缘政治风险",
+      "timestamp": "2026-03-08T11:15:04.989888+08:00",
+      "isRealtime": true
+    },
+    {
+      "id": "rtb_c128e807",
+      "title": "美联储官员呼吁降低通胀",
+      "reason": "美联储官员表示中央银行必须降低通胀，暗示可能降息",
+      "source": "Reuters",
+      "category": "monetary",
+      "catIcon": "🏦",
+      "impact": 10,
+      "impactClass": "up",
+      "impactAbs": 10,
+      "sectors_positive": [
+        "债券"
+      ],
+      "sectors_negative": [
+        "利率敏感型股票"
+      ],
+      "advice": "关注利率变动",
+      "timestamp": "2026-03-07T11:24:08.670881+08:00",
+      "isRealtime": true
+    },
+    {
+      "id": "rtb_9c79c495",
+      "title": "奥斯陆美国大使馆爆炸",
+      "reason": "挪威警方称美国大使馆发生爆炸，造成轻微损害",
+      "source": "Reuters",
+      "category": "geopolitics",
+      "catIcon": "🌍",
+      "impact": 10,
+      "impactClass": "up",
+      "impactAbs": 10,
+      "sectors_positive": [],
+      "sectors_negative": [],
+      "advice": "关注地缘政治风险",
+      "timestamp": "2026-03-08T11:15:04.989888+08:00",
+      "isRealtime": true
+    },
+    {
+      "id": "rtb_4de5e688",
+      "title": "恒生指数上涨1.7%",
+      "reason": "恒生指数上涨，受益于军工ETF和恒生科技板块的上涨。",
+      "source": "市场快照",
       "category": "market",
       "catIcon": "📊",
-      "impact": 8,
+      "impact": 10,
       "impactClass": "up",
-      "impactAbs": 8,
+      "impactAbs": 10,
       "sectors_positive": [
+        "军工",
         "科技"
       ],
-      "sectors_negative": [
-        "无"
-      ],
-      "advice": "关注科技股",
-      "timestamp": "2026-03-07T11:24:08.670881+08:00",
+      "sectors_negative": [],
+      "advice": "关注军工和科技板块",
+      "timestamp": "2026-03-07T17:58:27.423242+08:00",
       "isRealtime": true
     },
     {
-      "id": "rtb_f10fa760",
-      "title": "美国制定严格AI指南",
-      "reason": "美国对AI的监管加强，可能推动AI行业健康发展",
-      "source": "FT",
-      "category": "technology",
-      "catIcon": "🤖",
-      "impact": 8,
-      "impactClass": "up",
-      "impactAbs": 8,
-      "sectors_positive": [
-        "AI"
-      ],
-      "sectors_negative": [
-        "无"
-      ],
-      "advice": "关注AI相关股票",
-      "timestamp": "2026-03-07T11:24:08.670881+08:00",
-      "isRealtime": true
-    },
-    {
-      "id": "rtb_baba2905",
-      "title": "美国对日本新关税规则表示担忧",
-      "reason": "美国担心新关税规则可能损害日本利益",
+      "id": "rtb_748ed063",
+      "title": "黄金价格大幅上涨",
+      "reason": "地缘政治紧张和通胀预期推高黄金价格",
       "source": "Reuters",
-      "category": "policy",
-      "catIcon": "📜",
-      "impact": 7,
+      "category": "commodity",
+      "catIcon": "📦",
+      "impact": 10,
       "impactClass": "up",
-      "impactAbs": 7,
+      "impactAbs": 10,
       "sectors_positive": [
-        "无"
+        "黄金ETF"
       ],
       "sectors_negative": [
-        "日本出口"
+        "无"
       ],
-      "advice": "关注日本股市",
+      "advice": "考虑配置黄金",
       "timestamp": "2026-03-07T11:24:08.670881+08:00",
       "isRealtime": true
     },
     {
-      "id": "rtb_38fe533d",
-      "title": "美国对伊朗战争持续，投资者担忧",
-      "reason": "美国和伊朗的战争进入第二周，市场担忧可能升级",
-      "source": "CNBC",
-      "category": "geopolitics",
-      "catIcon": "🌍",
-      "impact": 7,
+      "id": "rtb_0e0e7040",
+      "title": "纳斯达克100指数下跌1.6%",
+      "reason": "纳斯达克100指数下跌，主要受科技股影响。",
+      "source": "市场快照",
+      "category": "market",
+      "catIcon": "📊",
+      "impact": 9,
       "impactClass": "up",
-      "impactAbs": 7,
-      "sectors_positive": [
-        "无"
-      ],
+      "impactAbs": 9,
+      "sectors_positive": [],
       "sectors_negative": [
-        "所有股票"
+        "科技"
       ],
-      "advice": "保持谨慎",
-      "timestamp": "2026-03-07T11:24:08.670881+08:00",
-      "isRealtime": true
-    },
-    {
-      "id": "rtb_a1c9acb0",
-      "title": "巴基斯坦因中东紧张局势提高燃料价格",
-      "reason": "中东紧张局势导致燃料价格上涨，可能引发通货膨胀",
-      "source": "Reuters",
-      "category": "geopolitics",
-      "catIcon": "🌍",
-      "impact": 6,
-      "impactClass": "up",
-      "impactAbs": 6,
-      "sectors_positive": [
-        "无"
-      ],
-      "sectors_negative": [
-        "消费者"
-      ],
-      "advice": "关注通货膨胀风险",
-      "timestamp": "2026-03-07T11:24:08.670881+08:00",
+      "advice": "关注科技板块风险",
+      "timestamp": "2026-03-07T17:58:27.423242+08:00",
       "isRealtime": true
     }
   ],
   "anomalies": [
     {
-      "id": "anom_国际银_1124",
+      "id": "anom_国际银_1115",
       "name": "国际银",
       "fullName": "COMEX白银",
       "icon": "🥈",
@@ -216,7 +309,7 @@
       "alert": "🥈 国际银大涨3.1%"
     },
     {
-      "id": "anom_军工_1124",
+      "id": "anom_军工_1115",
       "name": "军工",
       "fullName": "军工ETF",
       "icon": "🛡️",
@@ -228,7 +321,7 @@
       "alert": "🛡️ 军工大涨2.8%"
     },
     {
-      "id": "anom_港股科技_1124",
+      "id": "anom_港股科技_1115",
       "name": "港股科技",
       "fullName": "恒生科技",
       "icon": "📱",
@@ -240,7 +333,7 @@
       "alert": "📱 港股科技大涨2.7%"
     },
     {
-      "id": "anom_国际金_1124",
+      "id": "anom_国际金_1115",
       "name": "国际金",
       "fullName": "COMEX黄金",
       "icon": "🥇",
@@ -252,7 +345,7 @@
       "alert": "🥇 国际金大涨2.0%"
     },
     {
-      "id": "anom_恒指_1124",
+      "id": "anom_恒指_1115",
       "name": "恒指",
       "fullName": "恒生指数",
       "icon": "🇭🇰",
@@ -264,7 +357,7 @@
       "alert": "🇭🇰 恒指大涨1.7%"
     },
     {
-      "id": "anom_纳指_1124",
+      "id": "anom_纳指_1115",
       "name": "纳指",
       "fullName": "纳斯达克100",
       "icon": "🇺🇸",
@@ -276,7 +369,7 @@
       "alert": "🇺🇸 纳指大跌1.6%"
     },
     {
-      "id": "anom_标普_1124",
+      "id": "anom_标普_1115",
       "name": "标普",
       "fullName": "标普500",
       "icon": "🇺🇸",
@@ -299,7 +392,7 @@
       "财联社",
       "新浪财经"
     ],
-    "news_count": 10,
+    "news_count": 15,
     "anomaly_count": 7,
     "model": "GLM-4-Flash",
     "refresh_interval_seconds": 300

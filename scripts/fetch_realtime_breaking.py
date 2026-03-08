@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 基金助手 - 实时突发新闻 & 全球市场异动监控
-高频运行（交易时段每5分钟），提供近实时的国际媒体头条 + 市场异动自动告警
+全天候24/7高频运行（每5分钟），提供近实时的国际媒体头条 + 市场异动自动告警
 
 数据源:
   新闻: Reuters(Google News代理), Bloomberg(Google News代理), CNBC, MarketWatch, Yahoo Finance, BBC
@@ -279,6 +279,118 @@ def _dedup_items(items):
             seen.add(key)
             result.append(it)
     return result
+
+
+def _normalize_event_title(text):
+    t = str(text or '').lower().strip()
+    t = re.sub(r'\s+', '', t)
+    t = re.sub(r'[^\w\u4e00-\u9fff]', '', t)
+    for sw in [
+        'breaking', 'live', 'update', '最新', '快讯', '消息',
+        '引发', '导致', '面临', '可能', '造成',
+    ]:
+        t = t.replace(sw, '')
+    return t
+
+
+def _title_similarity(a, b):
+    if not a or not b:
+        return 0.0
+    if a == b:
+        return 1.0
+    if (a in b or b in a) and min(len(a), len(b)) >= 8:
+        return 0.95
+
+    def grams(s):
+        if len(s) <= 2:
+            return {s}
+        return {s[i:i + 2] for i in range(len(s) - 1)}
+
+    ga, gb = grams(a), grams(b)
+    return len(ga & gb) / max(1, min(len(ga), len(gb)))
+
+
+def _event_score(evt):
+    impact = abs(float(evt.get('impact', 0) or 0))
+    title = str(evt.get('title', '') or '')
+    score = impact * 100 + min(len(title), 60)
+    if re.search(r'(iran|伊朗).*(drone|无人机).*(tanker|油轮|vessel|ship)', title, re.I):
+        score += 120
+    return score
+
+
+def _token_jaccard(a, b):
+    """Token-level Jaccard similarity for Chinese/English mixed text"""
+    import re as _re
+    tok_a = set(_re.findall(r'[\u4e00-\u9fff]{2,}|[a-z0-9]+', str(a or '').lower()))
+    tok_b = set(_re.findall(r'[\u4e00-\u9fff]{2,}|[a-z0-9]+', str(b or '').lower()))
+    if not tok_a or not tok_b:
+        return 0.0
+    inter = len(tok_a & tok_b)
+    union = len(tok_a | tok_b)
+    return inter / union if union else 0.0
+
+
+def semantic_dedupe_events(events, limit=15):
+    deduped = []
+    for evt in events:
+        if not isinstance(evt, dict):
+            continue
+        t = _normalize_event_title(evt.get('title', ''))
+        raw_t = str(evt.get('title', ''))
+        if not t:
+            continue
+        cat = str(evt.get('category', ''))
+        hit_idx = None
+        for i, kept in enumerate(deduped):
+            kt = _normalize_event_title(kept.get('title', ''))
+            raw_kt = str(kept.get('title', ''))
+            bigram_sim = _title_similarity(t, kt)
+            token_sim = _token_jaccard(raw_t, raw_kt)
+            same_cat = cat and cat == str(kept.get('category', ''))
+            if bigram_sim >= 0.55 and same_cat:
+                hit_idx = i
+                break
+            if bigram_sim >= 0.50 and token_sim >= 0.40:
+                hit_idx = i
+                break
+            if token_sim >= 0.50 and same_cat:
+                hit_idx = i
+                break
+
+        if hit_idx is None:
+            deduped.append(evt)
+        elif _event_score(evt) > _event_score(deduped[hit_idx]):
+            deduped[hit_idx] = evt
+
+    deduped.sort(key=_event_score, reverse=True)
+    return deduped[:limit]
+
+
+def extract_priority_events(headlines):
+    """关键风险事件兜底：避免被LLM摘要泛化后漏掉"""
+    events = []
+    for h in headlines[:120]:
+        title = str(h.get('title', '') or '')
+        text = title.lower()
+        is_iran = ('iran' in text) or ('伊朗' in title)
+        is_drone = ('drone' in text) or ('无人机' in title)
+        is_tanker = any(k in text for k in ['tanker', 'oil tanker', 'vessel', 'ship']) or ('油轮' in title)
+        is_hit = any(k in text for k in ['hit', 'strike', 'attack']) or any(k in title for k in ['击中', '袭击'])
+
+        if is_iran and is_tanker and (is_drone or is_hit):
+            events.append({
+                'title': '伊朗无人机袭击油轮',
+                'reason': '伊朗相关袭船事件升级航运与能源中断风险，原油与避险资产波动或放大',
+                'source': h.get('source', 'Reuters') or 'Reuters',
+                'category': 'geopolitics',
+                'impact': 15,
+                'sectors_positive': ['能源', '军工', '黄金'],
+                'sectors_negative': ['航运', '航空', '高耗能'],
+                'advice': '提高防守仓位并跟踪油价波动',
+            })
+
+    return semantic_dedupe_events(events, limit=3)
 
 
 # ==================== 全球市场异动检测 ====================
@@ -592,7 +704,8 @@ BREAKING_KEYWORDS = {
         'keywords': ['war', 'conflict', 'sanctions', 'iran', 'russia', 'ukraine', 'china', 'tariff',
                       'missile', 'attack', 'military', 'nuclear', 'strait', '战争', '冲突', '制裁',
                       '伊朗', '俄罗斯', '乌克兰', '关税', '导弹', '袭击', '军事', '核', '海峡',
-                      '中东', '红海', '霍尔木兹', '地缘'],
+                      '中东', '红海', '霍尔木兹', '地缘', 'drone', 'tanker', 'vessel', 'shipping',
+                      'oil tanker', 'ship', '无人机', '油轮', '商船', '船只', '航运'],
         'impact': 10,
     },
     'monetary': {
@@ -700,31 +813,9 @@ def merge_with_existing(new_events, output_path):
     except Exception:
         pass
 
-    # 现有事件的标题关键字集合（用于去重）
-    existing_keys = set()
-    for evt in existing:
-        key = re.sub(r'\W', '', (evt.get('title') or ''))[:30].lower()
-        if key:
-            existing_keys.add(key)
-
-    # 新事件替换旧事件（保留新的LLM分析）
-    # 先用新事件，再补充不重复的旧事件
-    merged = list(new_events)
-    new_keys = set()
-    for evt in new_events:
-        key = re.sub(r'\W', '', (evt.get('title') or ''))[:30].lower()
-        if key:
-            new_keys.add(key)
-
-    for evt in existing:
-        key = re.sub(r'\W', '', (evt.get('title') or ''))[:30].lower()
-        if key and key not in new_keys:
-            # 只保留非过期的旧事件
-            merged.append(evt)
-
-    # 按影响力排序，最多15条
-    merged.sort(key=lambda x: abs(x.get('impact', 0)), reverse=True)
-    return merged[:15]
+    # 新事件优先，再补旧事件；统一走语义去重
+    merged = semantic_dedupe_events(list(new_events) + list(existing), limit=15)
+    return merged
 
 
 def build_output(events, anomalies, sources_ok, now):
@@ -846,6 +937,12 @@ def main():
     else:
         print('  ⚠️ 无API Key或无新闻，使用关键词兜底')
         events = generate_fallback_events(all_headlines, anomalies)
+
+    # 关键事件强制保留：避免“伊朗无人机袭船”被泛化摘要覆盖
+    priority_events = extract_priority_events(all_headlines)
+    if priority_events:
+        print(f'  ⚠️ 关键事件兜底补充 {len(priority_events)} 条')
+    events = semantic_dedupe_events(priority_events + list(events), limit=12)
 
     # 4. 组装输出
     print('\n📦 [4/4] 组装输出...')
