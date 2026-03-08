@@ -85,7 +85,7 @@
           <text class="deep-industry-item" wx:for="{{item.industries}}" wx:for-item="ind" wx:key="*this">• {{ind}}</text>
         </view>
       </view>
-      <!-- 📈 关联大宗商品近1月走势（内嵌） -->
+      <!-- 关联大宗商品近1月走势 -->
       <view class="deep-commodity-row" wx:if="{{item.linkedCommodities.length > 0}}">
         <text class="deep-label">📈 关联商品近1月走势</text>
         <view class="deep-commodity-pills">
@@ -186,87 +186,6 @@
     </view>
   </view>
 
-  <!-- ====== ⚖️ KOL vs 散户 ====== -->
-  <view class="card" wx:if="{{kolSections.length > 0}}">
-    <view class="card-header" bindtap="toggleSection" data-key="secKol">
-      <text class="title">⚖️ KOL vs 散户 博弈拆解</text>
-      <text class="toggle-icon">{{secKol ? '▼' : '▶'}}</text>
-    </view>
-    <view wx:if="{{secKol}}">
-      <view class="kol-card" wx:for="{{kolSections}}" wx:key="target">
-        <text class="kol-target">🎯 {{item.target}}</text>
-        <view class="kol-section">
-          <text class="kol-label">🎙️ KOL观点</text>
-          <text class="kol-body">{{item.kol}}</text>
-        </view>
-        <view class="kol-section">
-          <text class="kol-label">🐑 散户情绪</text>
-          <text class="kol-body">{{item.retail}}</text>
-        </view>
-        <view class="kol-section conclusion">
-          <text class="kol-label">⚡ 预期差结论</text>
-          <text class="kol-body">{{item.conclusion}}</text>
-        </view>
-      </view>
-    </view>
-  </view>
-
-  <!-- ====== 📊 社媒趋势热点 ====== -->
-  <view class="card" wx:if="{{socialTrends.length > 0}}">
-    <view class="card-header" bindtap="toggleSection" data-key="secTrends">
-      <text class="title">📊 社媒趋势热点</text>
-      <text class="sub">{{socialTrends.length}} 个主题</text>
-      <text class="toggle-icon">{{secTrends ? '▼' : '▶'}}</text>
-    </view>
-    <view wx:if="{{secTrends}}">
-      <view class="trend-list">
-        <view class="trend-item" wx:for="{{socialTrends}}" wx:key="id" bindtap="toggleTrendExpand" data-id="{{item.id}}">
-          <view class="trend-top">
-            <view class="trend-head">
-              <text class="trend-icon">{{item.icon}}</text>
-              <text class="trend-name">{{item.name}}</text>
-              <text class="sent-badge {{item.sentClass}}">{{item.sentiment}}</text>
-            </view>
-            <text class="trend-mentions">{{item.mentionCount}}条</text>
-          </view>
-          <view class="trend-heat-row">
-            <view class="trend-heat-bar-bg">
-              <view class="trend-heat-bar" style="width:{{item.heatBarWidth}}%;"></view>
-            </view>
-            <text class="trend-heat-val">🔥{{item.heatScore}}</text>
-          </view>
-          <view class="trend-detail" wx:if="{{expandedTrend === item.id}}">
-            <view class="trend-keywords" wx:if="{{item.keywordsHit}}">
-              <text class="trend-detail-label">🏷️ 命中关键词</text>
-              <text class="trend-detail-text">{{item.keywordsHit}}</text>
-            </view>
-            <view class="trend-samples" wx:if="{{item.sampleTitles.length > 0}}">
-              <text class="trend-detail-label">📝 热门话题</text>
-              <view wx:for="{{item.sampleTitles}}" wx:for-item="st" wx:key="*this" class="trend-sample-row">
-                <text class="trend-sample-text">· {{st}}</text>
-              </view>
-            </view>
-          </view>
-          <view class="trend-expand-hint">
-            <text class="trend-expand-icon">{{expandedTrend === item.id ? '△ 收起' : '▽ 详情'}}</text>
-          </view>
-        </view>
-      </view>
-    </view>
-  </view>
-
-  <!-- ====== 数据源统计 ====== -->
-  <scroll-view class="src-bar" scroll-x wx:if="{{sourcePills.length > 0}}">
-    <view class="src-pill" wx:for="{{sourcePills}}" wx:key="name">
-      <text class="src-name">{{item.short}}</text>
-      <text class="src-count">{{item.count}}</text>
-    </view>
-    <view class="src-pill total">
-      <text class="src-name">合计</text>
-      <text class="src-count">{{totalItems}}</text>
-    </view>
-  </scroll-view>
-
   <!-- ====== 🇺🇸 隔夜美股 ====== -->
   <view class="card" wx:if="{{usStocks.length > 0}}">
     <view class="card-header" bindtap="toggleSection" data-key="secUsMarket">
@@ -283,28 +202,6 @@
     </view>
   </view>
 
-  <!-- ====== 🌡️ 板块热力图 ====== -->
-  <view class="card" wx:if="{{heatmap.length > 0}}">
-    <view class="card-header" bindtap="toggleSection" data-key="secHeatmap">
-      <text class="title">🌡️ 板块热力图</text>
-      <text class="toggle-icon">{{secHeatmap ? '▼' : '▶'}}</text>
-    </view>
-    <view class="heat-list" wx:if="{{secHeatmap}}">
-      <view class="heat-row" wx:for="{{heatmap}}" wx:key="tag">
-        <view class="heat-info">
-          <text class="heat-tag">{{item.tag}}</text>
-          <text class="heat-trend {{item.trend === 'up' ? 'pct-up' : item.trend === 'down' ? 'pct-down' : 'pct-flat'}}">
-            {{item.trendIcon}}
-          </text>
-        </view>
-        <view class="heat-bar-wrap">
-          <view class="heat-bar {{item.tempClass}}" style="width: {{item.temperature}}%;"></view>
-        </view>
-        <text class="heat-temp">{{item.temperature}}°</text>
-      </view>
-    </view>
-  </view>
-
   <!-- ====== 📰 市场事件 ====== -->
   <view class="card" wx:if="{{events.length > 0}}">
     <view class="card-header" bindtap="toggleSection" data-key="secEvents">
@@ -313,15 +210,8 @@
       <text class="toggle-icon">{{secEvents ? '▼' : '▶'}}</text>
     </view>
     <view wx:if="{{secEvents}}">
-      <scroll-view class="filter-scroll" scroll-x>
-        <view class="filter-chip {{activeFilter === item.key ? 'active' : ''}}"
-              wx:for="{{filters}}" wx:key="key"
-              data-key="{{item.key}}" bindtap="onFilterTap">
-          {{item.label}}
-        </view>
-      </scroll-view>
       <block wx:for="{{events}}" wx:key="id">
-        <view class="evt-item" wx:if="{{activeFilter === 'all' || (activeFilter === 'positive' && item.impact > 0) || (activeFilter === 'negative' && item.impact < 0) || item.category === activeFilter}}">
+        <view class="evt-item">
           <view class="row">
             <text class="evt-title">{{item.title}}</text>
             <text class="chip {{item.impactClass}}">{{item.impactStr}}</text>
@@ -343,47 +233,15 @@
     </view>
   </view>
 
-  <!-- ====== 原始数据流 ====== -->
-  <view class="card" wx:if="{{videoItems.length > 0}}">
-    <view class="card-header" bindtap="toggleSection" data-key="secVideos">
-      <text class="title">📱 原始数据流</text>
-      <text class="sub">{{videoItems.length}} 条</text>
-      <text class="toggle-icon">{{secVideos ? '▼' : '▶'}}</text>
-    </view>
-    <view wx:if="{{secVideos}}">
-      <view class="video-row {{item.isNoise ? 'noise' : ''}}" wx:for="{{videoItems}}" wx:key="index">
-        <view class="video-main">
-          <text class="video-title">{{item.title}}</text>
-          <text class="video-likes">{{item.likes}}</text>
-        </view>
-        <view class="video-meta">
-          <text class="sent-badge {{item.sentClass}}">{{item.sentiment}}</text>
-          <text class="video-platform">{{item.platform}}</text>
-        </view>
-      </view>
-    </view>
-  </view>
-
-  <!-- ====== AI 完整报告 ====== -->
-  <view class="card" wx:if="{{aiReport}}">
-    <view class="card-header" bindtap="toggleSection" data-key="secReport">
-      <text class="title">🤖 AI 完整报告</text>
-      <text class="toggle-icon">{{secReport ? '▼' : '▶'}}</text>
-    </view>
-    <view class="ai-report" wx:if="{{secReport}}">
-      <text class="ai-report-text">{{aiReport}}</text>
-    </view>
-  </view>
-
   <!-- ====== 空状态 ====== -->
-  <view wx:if="{{!loading && !aiAnalyzing && deepAnalysis.length === 0 && events.length === 0 && kolSections.length === 0}}" class="empty-state">
+  <view wx:if="{{!loading && !aiAnalyzing && deepAnalysis.length === 0 && events.length === 0}}" class="empty-state">
     <text class="empty-icon">📭</text>
     <text class="sub">暂无舆情数据，正在等待AI分析...</text>
   </view>
 
   <!-- ====== Footer ====== -->
   <view class="footer" wx:if="{{!loading}}">
-    <text class="sub">数据来源：抖音/微博/东财/知乎/百度/B站/小红书 + AI趋势分析</text>
+    <text class="sub">数据来源：全球财经新闻 + 社媒舆情 + AI深度分析</text>
     <text class="sub" style="margin-top:6rpx;">⚠️ 本分析不构成投资建议</text>
   </view>
 

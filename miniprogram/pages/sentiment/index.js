@@ -1,5 +1,5 @@
 const { getSettings } = require('../../utils/storage');
-const { fetchHotEvents, fetchSentimentData, fetchAnalysisData, fetchUSMarketData, fetchSocialTrends, triggerRefresh, triggerReanalyze, getServerBase, fetchMultiFundHistory, fetchRealtimeBreaking } = require('../../utils/api');
+const { fetchHotEvents, fetchAnalysisData, fetchUSMarketData, triggerRefresh, triggerReanalyze, getServerBase, fetchMultiFundHistory, fetchRealtimeBreaking, fetchSentimentData } = require('../../utils/api');
 
 const COMMODITY_PROXY_FUNDS = [
   { key: 'gold',       name: '黄金',   code: '518880', color: '#f59e0b' },
@@ -9,42 +9,6 @@ const COMMODITY_PROXY_FUNDS = [
   { key: 'coal',       name: '煤炭',   code: '515220', color: '#78716c' },
   { key: 'soy',        name: '大豆',   code: '159985', color: '#84cc16' },
   { key: 'chemical',   name: '化工',   code: '159870', color: '#a855f7' },
-];
-
-/* ====== 金融关键词 (与 H5 sa-config 同步) ====== */
-const FINANCE_KW = [
-  'A股','股市','大盘','沪指','上证','深成','创业板','科创板','沪深300','恒生','港股','美股','纳斯达克',
-  'AI','人工智能','算力','芯片','半导体','光模块','CPO','大模型','DeepSeek',
-  '机器人','自动驾驶','新能源','光伏','锂电','碳酸锂','储能',
-  '军工','国防','航天','白酒','消费','医药','创新药','CXO',
-  '黄金','金价','原油','油价','有色金属','铜','铝','稀土',
-  '红利','高股息','银行','保险','券商','地产',
-  '央行','降息','降准','LPR','利率','通胀','CPI','GDP','PMI',
-  '美联储','加息','国债','债券','汇率','人民币',
-  '关税','贸易战','制裁','地缘','中东','俄乌',
-  '基金','ETF','牛市','熊市','涨停','跌停','抄底','追高',
-  '仓位','加仓','减仓','定投','主力','资金','北向',
-  '茅台','比亚迪','宁德','英伟达','NVIDIA','特斯拉',
-  'IPO','分红','回购','并购','重组','股','基','市场','经济','投资','收益','行情',
-  '板块','指数','概念','题材','龙头','主线','赛道',
-  '盘','散户','机构','债市',
-];
-const _kwRe = new RegExp(FINANCE_KW.join('|'), 'i');
-function isFinance(text) { return _kwRe.test(text || ''); }
-
-/* ====== 噪音检测 ====== */
-const NOISE_RE = /震惊|全仓梭哈|赶紧|速看|神秘主力|涨疯了|暴涨|必看|百倍|日赚|翻倍|内幕|绝密|私募推荐/;
-
-/* ====== 热度雷达关键词 (与 H5 sa-render 同步) ====== */
-const HEAT_KEYWORDS = [
-  'AI算力','人工智能','半导体','军工','黄金','碳酸锂','新能源','港股','机器人',
-  '消费','医药','原油','白酒','芯片','锂电','红利','ETF','基金','券商','银行',
-  '地产','光伏','储能','稀土','CXO','关税','自动驾驶',
-  '有色金属','铜','铝','创新药','保险','国债','债券',
-  '大模型','DeepSeek','比亚迪','宁德','英伟达','特斯拉','茅台',
-  '降息','降准','美联储','通胀','汇率','人民币',
-  '贸易战','制裁','中东','俄乌',
-  '科创板','创业板','北向','主力','龙头',
 ];
 
 /* ====== 事件语义去重 ====== */
@@ -139,10 +103,6 @@ Page({
     panicLevel: 0,
     divergenceIndex: 0,
 
-    // —— 数据源统计 ——
-    sourcePills: [],
-    totalItems: 0,
-
     // —— 隔夜美股 ——
     usStocks: [],
 
@@ -159,10 +119,6 @@ Page({
 
     // —— 国际热点深度分析 ——
     deepAnalysis: [],
-    secDeepAnalysis: true,
-
-    // —— KOL vs 散户 ——
-    kolSections: [],
 
     // —— 操作指南 ——
     holdingActions: [],
@@ -170,39 +126,12 @@ Page({
     bearish: '',
     tactical: '',
 
-    // —— 原始数据流 ——
-    videoItems: [],
-
-    // —— AI 完整报告 ——
-    aiReport: '',
-
-    // —— 社媒趋势热点 ——
-    socialTrends: [],
-    secTrends: false,
-    expandedTrend: '',
-
-    // —— 原有热力图 + 事件 ——
-    heatmap: [],
+    // —— 事件列表 ——
     events: [],
-    outlook: null,
-    activeFilter: 'all',
-    filters: [
-      { key: 'all', label: '全部' },
-      { key: 'positive', label: '利好' },
-      { key: 'negative', label: '利空' },
-      { key: 'policy', label: '政策' },
-      { key: 'technology', label: '科技' },
-      { key: 'geopolitics', label: '地缘' },
-      { key: 'commodity', label: '商品' },
-    ],
 
     // —— 折叠控制 ——
     secUsMarket: false,
-    secKol: false,
     secAction: true,
-    secVideos: false,
-    secReport: false,
-    secHeatmap: false,
     secEvents: false,
 
     // —— 手动刷新 ——
@@ -233,11 +162,6 @@ Page({
         this._drawCommodityTrendCanvas();
       }
     });
-  },
-
-  toggleTrendExpand(e) {
-    const id = e.currentTarget.dataset.id;
-    this.setData({ expandedTrend: this.data.expandedTrend === id ? '' : id });
   },
 
   /* ====== 自动触发 AI 分析（分析数据过期时） ====== */
@@ -365,28 +289,22 @@ Page({
   async loadAll() {
     this.setData({ loading: true });
     const settings = getSettings();
-    // 如果配置了服务器地址，优先从 Flask 服务器获取最新数据
-    // 否则从 GitHub Pages（apiBase）读取静态缓存
     const serverBase = getServerBase(settings);
     const dataSettings = serverBase ? { ...settings, apiBase: serverBase } : settings;
 
-    // 并行获取：舆情 + AI分析 + 美股 + 热点事件 + 实时突发 + 社媒趋势
-    const [sentimentRes, analysisRes, usRes, hotRes, commodityHistRes, trendsRes, realtimeRes] = await Promise.allSettled([
-      fetchSentimentData(dataSettings),
+    // 并行获取：AI分析 + 美股 + 热点事件 + 大宗商品 + 实时突发
+    const [analysisRes, usRes, hotRes, commodityHistRes, realtimeRes] = await Promise.allSettled([
       fetchAnalysisData(dataSettings),
       fetchUSMarketData(dataSettings),
       fetchHotEvents(dataSettings),
       fetchMultiFundHistory(COMMODITY_PROXY_FUNDS.map(i => i.code)),
-      fetchSocialTrends(dataSettings),
       fetchRealtimeBreaking(dataSettings),
     ]);
 
-    const sentimentData = sentimentRes.status === 'fulfilled' ? sentimentRes.value : null;
     const analysisData = analysisRes.status === 'fulfilled' ? analysisRes.value : null;
     const usData = usRes.status === 'fulfilled' ? usRes.value : null;
     const hotData = hotRes.status === 'fulfilled' ? hotRes.value : null;
     const commodityHist = commodityHistRes.status === 'fulfilled' ? commodityHistRes.value : null;
-    const trendsData = trendsRes.status === 'fulfilled' ? trendsRes.value : null;
 
     const batch = { loading: false };
 
@@ -426,7 +344,6 @@ Page({
 
       // —— 深度分析（关联大宗商品涨跌） ——
       batch.deepAnalysis = (analysisData.deep_analysis || []).map((d, i) => {
-        // 从事件文本中匹配相关大宗商品
         const fullText = [d.title, d.overview, d.chinaImpact, d.strategy,
           ...(d.chains || []), ...(d.industries || [])].join(' ');
         const linked = _matchCommodities(fullText, commodityHist);
@@ -443,15 +360,6 @@ Page({
         };
       });
 
-      // —— KOL sections ——
-      batch.kolSections = (analysisData.kol_sections || []).map(s => ({
-        target: s.target || '未知',
-        kol: s.kol || '--',
-        retail: s.retail || '--',
-        conclusion: s.conclusion || '--',
-        divClass: classifyDivergence(s.conclusion || ''),
-      }));
-
       // —— 操作指南 ——
       const acts = analysisData.actions || {};
       batch.holdingActions = (acts.holding_actions || []).map(a => ({
@@ -463,39 +371,11 @@ Page({
       batch.bearish = acts.bearish || '--';
       batch.tactical = acts.tactical || '--';
 
-      // —— AI 报告 ——
-      batch.aiReport = analysisData.raw_text || '';
       batch.updatedAt = (analysisData.analysis_time || '--').slice(0, 16);
       batch.sourceLabel = '远程分析';
     }
 
-    // ========== 2. 数据源统计 + 舆情数据 ==========
-    if (sentimentData) {
-      const sc = sentimentData.source_counts || {};
-      const platforms = ['抖音','微博','东方财富','财联社','新浪财经','知乎','百度','B站','小红书'];
-      batch.sourcePills = platforms.map(p => ({
-        name: p,
-        short: p.replace('东方财富','东财').replace('新浪财经','新浪'),
-        count: sc[p] || 0,
-      })).filter(p => p.count > 0);
-      batch.totalItems = sentimentData.total || sentimentData.items.length;
-
-      const deduped = dedup(sentimentData.items || []);
-      deduped.sort((a, b) => (b.likes || 0) - (a.likes || 0));
-      const top100 = deduped.slice(0, 100);
-      const finItems = top100.filter(v => isFinance(v.title || v.summary || ''));
-
-      batch.videoItems = finItems.slice(0, 50).map(v => ({
-        title: v.title || v.summary || '--',
-        likes: formatNum(v.likes || 0),
-        platform: v.platform || '未知',
-        sentiment: v.sentiment || '中性',
-        sentClass: sentClass(v.sentiment),
-        isNoise: NOISE_RE.test(v.title || ''),
-      }));
-    }
-
-    // ========== 3. 隔夜美股 ==========
+    // ========== 2. 隔夜美股 ==========
     if (usData && usData.stocks) {
       batch.usStocks = usData.stocks.map(s => ({
         name: s.name,
@@ -508,7 +388,7 @@ Page({
       }));
     }
 
-    // ========== 4. 大宗商品近1月走势 ==========
+    // ========== 3. 大宗商品近1月走势 ==========
     if (commodityHist) {
       batch.commodityTrends = COMMODITY_PROXY_FUNDS.map(item => {
         const hist = (commodityHist[item.code] || []).slice(-30);
@@ -528,66 +408,16 @@ Page({
           trendClass: pct >= 0 ? 'pct-up' : 'pct-down',
         };
       }).filter(Boolean);
-      // ensure selectedCommodityKey is valid
       const validKeys = batch.commodityTrends.map(t => t.key);
       if (validKeys.length > 0 && !validKeys.includes(this.data.selectedCommodityKey)) {
         batch.selectedCommodityKey = validKeys[0];
       }
     }
 
-    // ========== 4.5 社媒趋势热点 ==========
-    if (trendsData && trendsData.trends && trendsData.trends.length > 0) {
-      batch.socialTrends = trendsData.trends.map(t => ({
-        id: t.id,
-        name: t.name,
-        icon: t.icon,
-        mentionCount: t.mention_count || 0,
-        heatScore: t.heat_score || 0,
-        platforms: (t.platforms || []).join('/'),
-        sentiment: t.sentiment || '中性',
-        sentClass: /偏多|看多/.test(t.sentiment) ? 'pos' : /偏空|看空/.test(t.sentiment) ? 'neg' : 'neu',
-        sampleTitles: t.sample_titles || [],
-        keywordsHit: (t.keywords_hit || []).join('、'),
-        heatBarWidth: 0,
-      }));
-      // 计算热度条百分比 (相对最大值)
-      const maxHeat = Math.max(...batch.socialTrends.map(t => t.heatScore), 1);
-      batch.socialTrends.forEach(t => {
-        t.heatBarWidth = Math.round((t.heatScore / maxHeat) * 100);
-      });
-    } else {
-      // 兜底: 从 sentimentData.trends 提取
-      if (sentimentData && sentimentData.trends && sentimentData.trends.length > 0) {
-        batch.socialTrends = sentimentData.trends.map(t => ({
-          id: t.id,
-          name: t.name,
-          icon: t.icon,
-          mentionCount: t.mention_count || 0,
-          heatScore: t.heat_score || 0,
-          platforms: (t.platforms || []).join('/'),
-          sentiment: t.sentiment || '中性',
-          sentClass: /偏多|看多/.test(t.sentiment) ? 'pos' : /偏空|看空/.test(t.sentiment) ? 'neg' : 'neu',
-          sampleTitles: t.sample_titles || [],
-          keywordsHit: (t.keywords_hit || []).join('、'),
-          heatBarWidth: 0,
-        }));
-        const maxHeat = Math.max(...batch.socialTrends.map(t => t.heatScore), 1);
-        batch.socialTrends.forEach(t => {
-          t.heatBarWidth = Math.round((t.heatScore / maxHeat) * 100);
-        });
-      }
-    }
-
-    // ========== 5. 热点事件 + 实时突发合并 ==========
+    // ========== 4. 热点事件 + 实时突发合并 ==========
     if (hotData) {
       const hd = hotData.data || {};
-      batch.heatmap = (hd.heatmap || []).map(item => ({
-        ...item,
-        tempClass: item.temperature > 70 ? 'hot' : item.temperature > 50 ? 'warm' : 'cool',
-        trendIcon: item.trend === 'up' ? '↑' : item.trend === 'down' ? '↓' : '→',
-      }));
 
-      // 基础事件来自 hot_events.json
       var baseEvents = (hd.events || []).map(item => ({
         ...item,
         impactClass: Number(item.impact || 0) >= 0 ? 'up' : 'down',
@@ -598,7 +428,6 @@ Page({
         sectorsNeg: (item.sectors_negative || []).join('、') || '--',
       }));
 
-      // 融合 realtime_breaking.json 的实时事件
       var rtData = realtimeRes.status === 'fulfilled' ? realtimeRes.value : null;
       var rtEvents = [];
       if (rtData && Array.isArray(rtData.breaking)) {
@@ -624,35 +453,9 @@ Page({
         });
       }
 
-      // 语义去重：bigram + token Jaccard（与首页 dashboard 一致）
       var merged = _dedupeEventList([].concat(rtEvents, baseEvents));
       merged.sort(function(a, b) { return Math.abs(Number(b.impact || 0)) - Math.abs(Number(a.impact || 0)); });
       batch.events = merged;
-
-      batch.outlook = hd.outlook || null;
-
-      // ========== 6. 补充热力图板块到 KOL 博弈拆解 ==========
-      const existingTargets = new Set((batch.kolSections || []).map(s => s.target));
-      const topHeat = (hd.heatmap || []).slice(0, 10);
-      const heatKols = topHeat
-        .filter(h => !existingTargets.has(h.tag))
-        .map(h => {
-          const trendText = h.trend === 'up' ? '热度上升' : h.trend === 'down' ? '热度回落' : '热度持平';
-          const tempText = h.temperature >= 80 ? '极度拥挤' : h.temperature >= 60 ? '偏热' : '适中';
-          const advice = h.temperature >= 80
-            ? `${h.tag}板块热度${h.temperature}°，交易拥挤度高，追涨风险大，建议等回调再介入。`
-            : h.temperature >= 60
-            ? `${h.tag}关注度${trendText}，当前热度${h.temperature}°，可适度参与但注意仓位控制。`
-            : `${h.tag}热度${h.temperature}°，关注度一般，${h.trend === 'up' ? '但有升温趋势可关注' : '暂无明显机会'}。`;
-          return {
-            target: h.tag,
-            kol: `板块热度 ${h.temperature}°，${trendText}，市场关注度${tempText}。`,
-            retail: h.temperature >= 70 ? '散户讨论度较高，跟风情绪明显。' : '散户关注度一般，情绪中性。',
-            conclusion: advice,
-            divClass: '',
-          };
-        });
-      batch.kolSections = (batch.kolSections || []).concat(heatKols);
     }
 
     this.setData(batch, () => {
@@ -832,10 +635,6 @@ Page({
     if (s < -0.3) return '偏空';
     return '中性';
   },
-
-  onFilterTap(e) {
-    this.setData({ activeFilter: e.currentTarget.dataset.key });
-  },
 });
 
 /* ====== 辅助函数 ====== */
@@ -877,35 +676,6 @@ function _matchCommodities(text, commodityHist) {
 }
 
 function _sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
-
-function dedup(items) {
-  const seen = new Set();
-  return items.filter(v => {
-    const key = (v.title || '').replace(/[\s\W]/g, '').slice(0, 20);
-    if (seen.has(key)) return false;
-    seen.add(key);
-    return true;
-  });
-}
-
-function formatNum(n) {
-  if (n >= 10000) return (n / 10000).toFixed(1) + '万';
-  if (n >= 1000) return (n / 1000).toFixed(1) + 'k';
-  return String(n);
-}
-
-function sentClass(s) {
-  if (!s) return 'neu';
-  if (/看多|偏多|乐观|积极|追多|贪婪|狂热|极度看多/.test(s)) return 'pos';
-  if (/看空|偏空|悲观|恐慌|谨慎|极度悲观/.test(s)) return 'neg';
-  return 'neu';
-}
-
-function classifyDivergence(text) {
-  if (/逆向|抄底|做多|低估|反转|背离做多|散户恐慌.*KOL看多/.test(text)) return 'fomo';
-  if (/见顶|泡沫|过热|高估|回撤|背离做空|散户狂热.*KOL谨慎|亢奋|追高|警惕回调|FOMO/.test(text)) return 'panic';
-  return 'neutral';
-}
 
 function classifyAction(advice) {
   if (/加仓|买入/.test(advice)) return 'bullish';
