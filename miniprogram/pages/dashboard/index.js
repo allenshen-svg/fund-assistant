@@ -522,41 +522,8 @@ Page({
     });
 
     const sortedBreaking = allBreakingDeduped.sort(compareBreakingPriority);
-    const marketCandidates = sortedBreaking.filter(i => i.fromMarketEvent);
-    const sentimentCandidates = sortedBreaking.filter(i => i.fromSentiment);
-    const targetMarketCount = Math.min(3, marketCandidates.length);
-    const targetSentimentCount = Math.min(2, sentimentCandidates.length);
-    let hotBreaking = sortedBreaking.slice(0, 15);
-
-    // 确保至少包含一定数量的市场事件
-    const currentMarketCount = hotBreaking.filter(i => i.fromMarketEvent).length;
-    if (currentMarketCount < targetMarketCount) {
-      const need = targetMarketCount - currentMarketCount;
-      const extras = marketCandidates
-        .filter(m => !hotBreaking.some(h => h.id === m.id))
-        .slice(0, need);
-
-      if (extras.length > 0) {
-        let extraIdx = 0;
-        for (let i = hotBreaking.length - 1; i >= 0 && extraIdx < extras.length; i -= 1) {
-          if (!hotBreaking[i].fromMarketEvent && !hotBreaking[i].fromSentiment) {
-            hotBreaking[i] = extras[extraIdx];
-            extraIdx += 1;
-          }
-        }
-      }
-    }
-
-    // 确保至少包含一定数量的舆情趋势
-    const currentSentimentCount = hotBreaking.filter(i => i.fromSentiment).length;
-    if (currentSentimentCount < targetSentimentCount) {
-      const need = targetSentimentCount - currentSentimentCount;
-      const extras = sentimentCandidates
-        .filter(s => !hotBreaking.some(h => h.id === s.id))
-        .slice(0, need);
-      extras.forEach(e => hotBreaking.push(e));
-    }
-    hotBreaking = hotBreaking.sort(compareBreakingPriority);
+    // 不设硬上限，展示全部去重后的事件
+    let hotBreaking = sortedBreaking;
 
     const hotUpdatedRaw = hotData && hotData.data ? hotData.data.updated_at : '';
     const mergedRtUpdatedAt = parseEventTs(rtData && rtData.updated_at) >= parseEventTs(hotUpdatedRaw)
