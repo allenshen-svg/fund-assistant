@@ -126,9 +126,6 @@ Page({
     bearish: '',
     tactical: '',
 
-    // —— 板块投资策略 ——
-    sectorActions: [],
-
     // —— 折叠控制 ——
     secUsMarket: false,
     secAction: true,
@@ -350,15 +347,6 @@ Page({
           strategy: d.strategy || '',
           linkedCommodities: linked,
           expanded: i < 2,  // 前两个板块默认展开
-        };
-      });
-      // 提取板块投资策略到投资建议区域
-      batch.sectorActions = deepRaw.filter(d => d.strategy).map(d => {
-        const sectorName = (d.title || '').split('：')[0].split(':')[0].trim();
-        return {
-          sector: sectorName,
-          strategy: d.strategy,
-          actClass: classifyAction(d.strategy),
         };
       });
 

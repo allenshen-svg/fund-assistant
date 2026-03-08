@@ -118,23 +118,12 @@
   </view>
 
   <!-- ====== 💡 投资建议 ====== -->
-  <view class="card" wx:if="{{holdingActions.length > 0 || sectorActions.length > 0}}">
+  <view class="card" wx:if="{{holdingActions.length > 0}}">
     <view class="card-header" bindtap="toggleSection" data-key="secAction">
       <text class="title">💡 投资建议</text>
       <text class="toggle-icon">{{secAction ? '▼' : '▶'}}</text>
     </view>
     <view wx:if="{{secAction}}">
-      <!-- 板块投资策略（来自深度分析） -->
-      <view class="sector-actions" wx:if="{{sectorActions.length > 0}}">
-        <view class="sector-action-item {{item.actClass}}" wx:for="{{sectorActions}}" wx:key="sector">
-          <view class="sector-action-header">
-            <text class="sector-action-icon">🏭</text>
-            <text class="sector-action-name">{{item.sector}}</text>
-          </view>
-          <text class="sector-action-text">{{item.strategy}}</text>
-        </view>
-      </view>
-      <!-- 基金类型操作建议 -->
       <view class="action-grid">
         <view class="action-item {{item.actClass}}" wx:for="{{holdingActions}}" wx:key="label">
           <text class="action-label">{{item.label}}</text>
