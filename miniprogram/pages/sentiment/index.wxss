@@ -377,6 +377,68 @@
   color: var(--text-faint);
 }
 
+/* ====== 国际热点深度影响分析 ====== */
+.deep-card {
+  padding: 20rpx;
+  margin-bottom: 18rpx;
+  border-radius: 14rpx;
+  background: rgba(239,68,68,0.04);
+  border: 1rpx solid rgba(239,68,68,0.12);
+  border-left: 6rpx solid rgba(239,68,68,0.5);
+}
+.deep-title-row {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 14rpx;
+}
+.deep-pin {
+  font-size: 28rpx;
+  margin-right: 8rpx;
+  flex-shrink: 0;
+}
+.deep-title {
+  font-size: 28rpx;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.5;
+}
+.deep-field {
+  margin-bottom: 12rpx;
+}
+.deep-field.strategy {
+  padding: 12rpx;
+  border-radius: 10rpx;
+  background: rgba(59,130,246,0.06);
+  border: 1rpx solid rgba(59,130,246,0.12);
+}
+.deep-label {
+  font-size: 24rpx;
+  font-weight: 600;
+  color: var(--text-sub);
+  display: block;
+  margin-bottom: 6rpx;
+}
+.deep-body {
+  font-size: 24rpx;
+  color: var(--text-body);
+  line-height: 1.7;
+  display: block;
+}
+.deep-chain-list,
+.deep-industry-list {
+  padding-left: 8rpx;
+}
+.deep-chain-item,
+.deep-industry-item {
+  font-size: 24rpx;
+  color: var(--text-body);
+  line-height: 1.8;
+  display: block;
+}
+.deep-chain-item {
+  color: #d97706;
+}
+
 /* ====== KOL vs 散户 ====== */
 .kol-card {
   padding: 18rpx;

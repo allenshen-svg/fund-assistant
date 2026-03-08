@@ -12,6 +12,12 @@ import requests
 US_MARKET_CACHE = os.path.join(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'data', 'us_market_cache.json'
 )
+REALTIME_BREAKING_CACHE = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'data', 'realtime_breaking.json'
+)
+HOT_EVENTS_CACHE = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'data', 'hot_events.json'
+)
 
 DATA_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'data')
 ANALYSIS_CACHE = os.path.join(DATA_DIR, 'analysis_cache.json')
@@ -46,9 +52,13 @@ DEFAULT_MODEL = os.environ.get('AI_MODEL', 'GLM-4-Flash')
 
 # ==================== Prompt ====================
 SYSTEM_PROMPT = """# 角色定义 (Role)
-你是一位顶尖的"另类数据（Alternative Data）"宏观量化分析师及行为金融学专家。你最强的能力在于：从 KOL（聪明钱/意见领袖）与散户评论区的"情绪背离"中精准识别见顶/见底信号。
+你是一位顶尖的国际宏观局势分析师、地缘政治与产业链影响专家、"另类数据（Alternative Data）"量化分析师。
+你最强的能力在于：
+1. 对国际热点事件（战争/制裁/供应链中断/货币政策等）进行深层产业链冲击推演，给出量化数据和具体影响路径
+2. 从社媒舆情数据中提取有效的市场情绪信号
 
-你必须严格按照指定格式输出，特别是最后的 JSON 部分必须是合法的 JSON 代码块。"""
+你必须严格按照指定格式输出，特别是最后的 JSON 部分必须是合法的 JSON 代码块。
+你的分析必须有干货、有数据、有逻辑链条，绝不能输出"观点描述""情绪描述"等空洞占位符。"""
 
 def _load_us_market_summary():
     """读取美股缓存并生成摘要文本"""
@@ -68,22 +78,80 @@ def _load_us_market_summary():
     except Exception:
         return ''
 
+def _load_breaking_events_summary():
+    """读取实时突发事件和热点事件，生成事件摘要供AI深度分析"""
+    events = []
+    try:
+        if os.path.exists(REALTIME_BREAKING_CACHE):
+            with open(REALTIME_BREAKING_CACHE, 'r', encoding='utf-8') as f:
+                rt = json.load(f)
+            for b in (rt.get('breaking') or []):
+                events.append({
+                    'title': b.get('title', ''),
+                    'reason': b.get('reason', ''),
+                    'category': b.get('category', ''),
+                    'impact': b.get('impact', 0),
+                    'source': b.get('source', ''),
+                    'sectors_positive': b.get('sectors_positive', []),
+                    'sectors_negative': b.get('sectors_negative', []),
+                })
+    except Exception:
+        pass
+    try:
+        if os.path.exists(HOT_EVENTS_CACHE):
+            with open(HOT_EVENTS_CACHE, 'r', encoding='utf-8') as f:
+                he = json.load(f)
+            for e in (he.get('events') or []):
+                if not e.get('is_template'):
+                    events.append({
+                        'title': e.get('title', ''),
+                        'reason': e.get('reason', ''),
+                        'category': e.get('category', ''),
+                        'impact': e.get('impact', 0),
+                        'concepts': e.get('concepts', []),
+                        'sectors_positive': e.get('sectors_positive', []),
+                        'sectors_negative': e.get('sectors_negative', []),
+                    })
+    except Exception:
+        pass
+    if not events:
+        return ''
+    lines = ['[当前实时国际热点与市场事件]:']
+    for e in events:
+        lines.append(f"  [{e.get('category','')}] {e['title']} (影响:{e.get('impact',0):+d})")
+        if e.get('reason'):
+            lines.append(f"    原因: {e['reason']}")
+        sp = e.get('sectors_positive', [])
+        sn = e.get('sectors_negative', [])
+        if sp:
+            lines.append(f"    利好板块: {', '.join(sp)}")
+        if sn:
+            lines.append(f"    利空板块: {', '.join(sn)}")
+    return '\n'.join(lines)
+
+
 def build_user_prompt(video_data_str):
     us_summary = _load_us_market_summary()
     us_block = f"""\n\n# 隔夜美股行情 (Overnight US Market)
 以下是前一夜美股收盘行情，请将其纳入分析，特别关注半导体/科技股波动对A股相关板块（半导体、AI、科技ETF）的传导影响。
 {us_summary}\n""" if us_summary else ''
+
+    events_summary = _load_breaking_events_summary()
+    events_block = f"""\n\n# 实时国际热点事件 (Breaking Events)
+以下是最新的国际热点事件和市场异动。请对影响最大的 2-3 个事件进行深度产业链冲击分析。
+{events_summary}\n""" if events_summary else ''
+
     return f"""# 输入数据格式 (Input Context)
-以下是过去 1 小时内，通过 RPA 自动化从【核心财经博主白名单】中提取的最新动态及评论区抽样数据。数据结构包括：博主影响力级别、视频核心文案、点赞增速（动量）、以及高赞评论的情绪倾向。
+以下是过去 1 小时内，通过 RPA 自动化从【核心财经博主白名单】中提取的最新动态及评论区抽样数据。
 [当前小时度监控数据 JSON]:
-{video_data_str}{us_block}
+{video_data_str}{us_block}{events_block}
 
 # 分析逻辑与数学框架 (Analytical Framework)
 请在内心运行以下逻辑进行评估，无需在输出中展示推导过程：
-1. **情绪背离判定**：当 KOL 提示风险，但评论区散户极其亢奋（满仓/冲锋）时，通常是**见顶信号**；当 KOL 绝望或被骂，评论区一片哀嚎割肉时，通常是**见底信号**。
-2. **共识过热判定**：如果 KOL 与散户方向高度一致，且情绪极度激烈，说明该交易方向已极度拥挤（Crowded Trade），需警惕踩踏风险。
-3. **噪音过滤**：忽略无明确指向性的口水仗，只提取与具体资产（A股、美股、黄金、白银、贵金属、原油、特定板块）相关的标的信号。
-4. **贵金属专项**：黄金和白银是用户重点关注的品种。如数据中有黄金/白银/贵金属相关内容，必须作为独立板块在KOL vs 散户部分展开分析，不可遗漏。
+1. **事件影响推演**：对重大国际事件，从供应链、产业链、贸易路线、能源价格等维度分析直接和间接影响。
+2. **量化影响估算**：给出具体的价格变动幅度、成本变动百分比、受影响产业规模等数据。
+3. **情绪背离判定**：从社媒数据识别聪明钱和散户的预期差。
+4. **噪音过滤**：忽略无明确指向性的口水仗，只提取与具体资产相关的信号。
 
 # 输出格式要求 (Output Structure)
 请严格按照以下 Markdown 格式输出本小时的"市场情绪快报"，要求冷酷、客观、直指交易。
@@ -91,12 +159,29 @@ def build_user_prompt(video_data_str):
 ### 🚨 【当前小时】情绪与预期差雷达
 [用一句话（20字以内）总结当前小时内，市场最核心的资金共识或情绪背离点。]
 
+### 🔥 国际热点深度影响分析
+[从当前国际热点事件中，挑选影响最大的 2-3 个事件进行深度产业链冲击分析。每个事件按照以下格式输出，要求量化数据充分、逻辑链条清晰、有实际投资指导意义。]
+
+#### 📌 事件：[事件标题，一句话概括]
+- **冲击概述**：[用 2-3 句话概括该事件对全球市场的核心冲击，必须有具体数据]
+- **产业链传导**：
+  - [传导路径1：原料→中间品→终端产品 的价格传导链，给出具体百分比]
+  - [传导路径2：另一条影响链]
+  - [传导路径3：如有]
+- **受冲击产业**：
+  - [产业1]：[影响描述，含价格/成本变动幅度]
+  - [产业2]：[影响描述]
+  - [产业3]：[影响描述]
+- **中国市场影响**：[对A股和国内产业的具体影响，包括受益板块和受损板块]
+- **时间节奏**：[短期(1-3月)/中期(3-12月)/长期 的影响节奏预判]
+- **投资者策略**：[具体的仓位建议和止盈止损点位参考]
+
 ### ⚖️ KOL vs 散户：情绪博弈拆解
-[必须提炼 4-6 个本小时内最具代表性的资产或板块，每个按以下多行格式输出。特别注意：如果数据中有黄金、白银、贵金属相关讨论，必须单独列为一个板块分析。每个板块的 KOL 和散户部分分别至少列出 2 条数据。]
-- **🎯 标的/板块**：[例如：半导体 / 贵金属 / 房地产]
-- **🎙️ 聪明钱/KOL 观点**：[每个数据来源单独一行，用 "- " 开头，格式为："- 《标题》（平台，XX万点赞）：观点描述"。每条独立一行，不要合并在同一行。]
-- **🐑 羊群/散户 情绪**：[每个数据来源单独一行，用 "- " 开头，格式同上。描述散户的具体行为和情绪特征。]
-- **⚡ 预期差结论**：[(1)情绪背离方向 (2)操作建议 (3)关键观察指标，每点单独一行用 "- " 开头]
+[提炼 3-4 个最具代表性的资产或板块。注意：KOL观点和散户情绪必须引用具体数据源的真实内容，绝不可以输出"观点描述""情绪描述"等占位符。每条必须包含具体的分析判断。]
+- **🎯 标的/板块**：[例如：半导体 / 贵金属 / 原油]
+- **🎙️ 聪明钱/KOL 观点**：[每条用 "- " 开头，引用具体数据：来源标题、平台、热度，然后给出该KOL的核心观点和判断]
+- **🐑 羊群/散户 情绪**：[每条用 "- " 开头，描述散户的具体行为特征和情绪极端程度]
+- **⚡ 预期差结论**：[(1)情绪背离方向 (2)操作建议 (3)关键观察指标]
 
 ### 💡 极简操作指南 (Action Plan)
 请针对以下常见基金持仓类型，逐一给出明确的操作建议：
@@ -285,6 +370,53 @@ def parse_actions(text):
     }
 
 
+def parse_deep_analysis(text):
+    """解析国际热点深度影响分析"""
+    analyses = []
+    # 提取 ### 🔥 到下一个 ### 之间的内容
+    m = re.search(r'###\s*🔥[^\n]*\n(.*?)(?=###\s*⚖️|###\s*💡|\Z)', text, re.DOTALL)
+    if not m:
+        return analyses
+    deep_section = m.group(1)
+
+    # 按 #### 📌 事件 分割
+    parts = re.split(r'####\s*📌\s*事件[：:]\s*', deep_section)
+    for part in parts:
+        part = part.strip()
+        if not part:
+            continue
+
+        lines = part.split('\n', 1)
+        title = lines[0].strip().rstrip('*').strip()
+        body = lines[1] if len(lines) > 1 else ''
+
+        def _extract(field, txt=body):
+            pat = rf'\*\*{field}\*\*[：:]\s*(.*?)(?=\n-\s*\*\*|\n####|\Z)'
+            hit = re.search(pat, txt, re.DOTALL)
+            return hit.group(1).strip() if hit else ''
+
+        def _extract_list(field, txt=body):
+            pat = rf'\*\*{field}\*\*[：:]\s*\n(.*?)(?=\n-\s*\*\*|\n####|\Z)'
+            hit = re.search(pat, txt, re.DOTALL)
+            if not hit:
+                return []
+            return [re.sub(r'^[\s\-]+', '', l).strip()
+                    for l in hit.group(1).strip().split('\n')
+                    if l.strip().startswith('-') or l.strip().startswith('  -')]
+
+        if title:
+            analyses.append({
+                'title': title,
+                'overview': _extract('冲击概述'),
+                'chains': _extract_list('产业链传导'),
+                'industries': _extract_list('受冲击产业'),
+                'chinaImpact': _extract('中国市场影响'),
+                'timeline': _extract('时间节奏'),
+                'strategy': _extract('投资者策略'),
+            })
+    return analyses
+
+
 # ==================== 分析+缓存 ====================
 def analyze_and_save(items, provider_id=None, api_key=None, model=None):
     """调用 AI 分析舆情数据，解析结果，保存缓存"""
@@ -298,12 +430,14 @@ def analyze_and_save(items, provider_id=None, api_key=None, model=None):
         radar = parse_radar_summary(raw_text)
         kol_sections = parse_kol_sections(raw_text)
         actions = parse_actions(raw_text)
+        deep_analysis = parse_deep_analysis(raw_text)
 
         result = {
             'raw_text': raw_text,
             'dashboard': dashboard,
             'radar_summary': radar,
             'kol_sections': kol_sections,
+            'deep_analysis': deep_analysis,
             'actions': actions,
             'analysis_time': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
             'analysis_ts': int(time.time()),

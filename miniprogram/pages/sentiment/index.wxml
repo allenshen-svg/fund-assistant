@@ -166,6 +166,57 @@
     </view>
   </view>
 
+  <!-- ====== 🔥 国际热点深度影响分析 ====== -->
+  <view class="card" wx:if="{{deepAnalysis.length > 0}}">
+    <view class="card-header" bindtap="toggleSection" data-key="secDeepAnalysis">
+      <text class="title">🔥 国际热点深度影响分析</text>
+      <text class="sub">{{deepAnalysis.length}} 个事件</text>
+      <text class="toggle-icon">{{secDeepAnalysis ? '▼' : '▶'}}</text>
+    </view>
+    <view wx:if="{{secDeepAnalysis}}">
+      <view class="deep-card" wx:for="{{deepAnalysis}}" wx:key="id">
+        <view class="deep-title-row">
+          <text class="deep-pin">📌</text>
+          <text class="deep-title">{{item.title}}</text>
+        </view>
+        <!-- 冲击概述 -->
+        <view class="deep-field">
+          <text class="deep-label">💥 冲击概述</text>
+          <text class="deep-body">{{item.overview}}</text>
+        </view>
+        <!-- 产业链传导 -->
+        <view class="deep-field" wx:if="{{item.chains.length > 0}}">
+          <text class="deep-label">🔗 产业链传导</text>
+          <view class="deep-chain-list">
+            <text class="deep-chain-item" wx:for="{{item.chains}}" wx:for-item="chain" wx:key="*this">→ {{chain}}</text>
+          </view>
+        </view>
+        <!-- 受冲击产业 -->
+        <view class="deep-field" wx:if="{{item.industries.length > 0}}">
+          <text class="deep-label">🏭 受冲击产业</text>
+          <view class="deep-industry-list">
+            <text class="deep-industry-item" wx:for="{{item.industries}}" wx:for-item="ind" wx:key="*this">• {{ind}}</text>
+          </view>
+        </view>
+        <!-- 中国市场影响 -->
+        <view class="deep-field">
+          <text class="deep-label">🇨🇳 中国市场影响</text>
+          <text class="deep-body">{{item.chinaImpact}}</text>
+        </view>
+        <!-- 时间节奏 -->
+        <view class="deep-field">
+          <text class="deep-label">⏰ 时间节奏</text>
+          <text class="deep-body">{{item.timeline}}</text>
+        </view>
+        <!-- 投资者策略 -->
+        <view class="deep-field strategy">
+          <text class="deep-label">🎯 投资者策略</text>
+          <text class="deep-body">{{item.strategy}}</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
   <!-- ====== KOL vs 散户 博弈拆解 ====== -->
   <view class="card" wx:if="{{kolSections.length > 0}}">
     <view class="card-header" bindtap="toggleSection" data-key="secKol">

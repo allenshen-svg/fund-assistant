@@ -153,6 +153,10 @@ Page({
     commodityCanvasW: 320,
     commodityCanvasH: 190,
 
+    // —— 国际热点深度分析 ——
+    deepAnalysis: [],
+    secDeepAnalysis: true,
+
     // —— KOL vs 散户 ——
     kolSections: [],
 
@@ -377,6 +381,18 @@ Page({
       batch.divergenceIndex = db.divergence_index || 0;
       batch.radarSummary = analysisData.radar_summary || '--';
       batch.hotAssets = (db.hot_assets || []).map(a => ({ name: a }));
+
+      // —— 深度分析 ——
+      batch.deepAnalysis = (analysisData.deep_analysis || []).map((d, i) => ({
+        id: 'deep_' + i,
+        title: d.title || '未知事件',
+        overview: d.overview || '--',
+        chains: d.chains || [],
+        industries: d.industries || [],
+        chinaImpact: d.chinaImpact || '--',
+        timeline: d.timeline || '--',
+        strategy: d.strategy || '--',
+      }));
 
       // —— KOL sections ——
       batch.kolSections = (analysisData.kol_sections || []).map(s => ({
