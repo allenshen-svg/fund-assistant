@@ -13,6 +13,7 @@
 import json, os, re, ssl, sys, time, hashlib
 from datetime import datetime, timezone, timedelta
 from urllib.request import urlopen, Request
+from urllib.parse import quote
 import xml.etree.ElementTree as ET
 
 # ==================== .env 加载 ====================
@@ -83,9 +84,10 @@ def fetch_reuters_headlines():
     """Reuters via Google News RSS — 实时财经/地缘头条"""
     items = []
     queries = [
-        'site:reuters.com+when:4h',
-        'site:reuters.com+oil+OR+gold+OR+tariff+OR+sanctions+OR+Iran+OR+Fed+when:4h',
-        'site:reuters.com+markets+OR+stocks+OR+commodities+when:4h',
+        'site:reuters.com+when:6h',
+        'site:reuters.com+oil+OR+crude+OR+gold+OR+tariff+OR+sanctions+OR+Iran+OR+Fed+when:6h',
+        'site:reuters.com+markets+OR+stocks+OR+commodities+OR+energy+when:6h',
+        'site:reuters.com+OPEC+OR+price+cap+OR+embargo+OR+Korea+OR+Japan+OR+India+when:6h',
     ]
     for q in queries:
         url = f'https://news.google.com/rss/search?q={q}&hl=en&gl=US&ceid=US:en'
@@ -108,8 +110,9 @@ def fetch_bloomberg_headlines():
     """Bloomberg via Google News RSS"""
     items = []
     queries = [
-        'site:bloomberg.com+when:4h',
-        'site:bloomberg.com+markets+OR+economy+OR+stocks+OR+oil+OR+gold+when:4h',
+        'site:bloomberg.com+when:6h',
+        'site:bloomberg.com+markets+OR+economy+OR+oil+OR+gold+OR+energy+when:6h',
+        'site:bloomberg.com+OPEC+OR+crude+OR+sanctions+OR+price+cap+OR+tariff+when:6h',
     ]
     for q in queries:
         url = f'https://news.google.com/rss/search?q={q}&hl=en&gl=US&ceid=US:en'
@@ -194,15 +197,26 @@ def fetch_yahoo_finance_headlines():
 
 
 def fetch_google_news_finance():
-    """Google News Finance 聚合 — 全球金融/地缘热点"""
+    """Google News Finance 聚合 — 全球金融/地缘热点（中英双语）"""
     items = []
-    queries = [
-        'gold+price+OR+oil+price+OR+stock+market+OR+federal+reserve+OR+ECB+when:4h',
-        'geopolitics+OR+war+OR+sanctions+OR+tariff+OR+trade+war+when:4h',
-        'AI+stocks+OR+NVIDIA+OR+semiconductor+OR+tech+stocks+when:4h',
-        'commodity+OR+copper+OR+silver+OR+iron+ore+when:4h',
+    # 英文查询
+    en_queries = [
+        'gold+price+OR+oil+price+OR+stock+market+OR+federal+reserve+OR+ECB+when:6h',
+        'geopolitics+OR+war+OR+sanctions+OR+tariff+OR+trade+war+OR+embargo+when:6h',
+        'AI+stocks+OR+NVIDIA+OR+semiconductor+OR+tech+stocks+when:6h',
+        'commodity+OR+copper+OR+silver+OR+iron+ore+OR+natural+gas+when:6h',
+        'crude+oil+OR+OPEC+OR+price+cap+OR+oil+embargo+OR+energy+crisis+when:6h',
+        'Korea+OR+Japan+OR+India+OR+Middle+East+economy+OR+Asia+market+when:6h',
     ]
-    for q in queries:
+    # 中文查询 — 捕获中文媒体对国际事件的报道
+    zh_queries = [
+        '原油+OR+油价+OR+石油+OR+OPEC+when:6h',
+        '韩国+OR+日本+OR+印度+经济+OR+制裁+OR+限价+when:6h',
+        '黄金+OR+白银+OR+大宗商品+OR+能源危机+when:6h',
+        '美联储+OR+降息+OR+加息+OR+通胀+when:6h',
+        '地缘+OR+中东+OR+伊朗+OR+战争+OR+冲突+when:6h',
+    ]
+    for q in en_queries:
         url = f'https://news.google.com/rss/search?q={q}&hl=en&gl=US&ceid=US:en'
         raw = fetch_http(url)
         if not raw:
@@ -217,8 +231,24 @@ def fetch_google_news_finance():
                     source = source_match.group(1).strip() if source_match else 'Google News'
                     items.append({'title': title, 'source': source, 'time': pub})
         except Exception as e:
-            print(f'  [WARN] Google News: {e}')
-    return _dedup_items(items)[:20]
+            print(f'  [WARN] Google News EN: {e}')
+    for q in zh_queries:
+        url = f'https://news.google.com/rss/search?q={quote(q)}&hl=zh-CN&gl=CN&ceid=CN:zh-Hans'
+        raw = fetch_http(url)
+        if not raw:
+            continue
+        try:
+            root = ET.fromstring(raw)
+            for item in root.findall('.//item')[:8]:
+                title = (item.findtext('title') or '').strip()
+                pub = (item.findtext('pubDate') or '').strip()
+                if title:
+                    source_match = re.search(r'\s*-\s*([^-]+)$', title)
+                    source = source_match.group(1).strip() if source_match else 'Google News'
+                    items.append({'title': title, 'source': source, 'time': pub})
+        except Exception as e:
+            print(f'  [WARN] Google News ZH: {e}')
+    return _dedup_items(items)[:40]
 
 
 def fetch_cls_flash():
@@ -267,6 +297,101 @@ def fetch_sina_live():
     except Exception as e:
         print(f'  [WARN] Sina live: {e}')
     return items[:12]
+
+
+def fetch_bbc_headlines():
+    """BBC World 新闻 — 全球地缘/政经事件"""
+    items = []
+    urls = [
+        'https://feeds.bbci.co.uk/news/world/rss.xml',
+        'https://feeds.bbci.co.uk/news/business/rss.xml',
+    ]
+    for url in urls:
+        raw = fetch_http(url)
+        if not raw:
+            continue
+        try:
+            root = ET.fromstring(raw)
+            for item in root.findall('.//item')[:10]:
+                title = (item.findtext('title') or '').strip()
+                pub = (item.findtext('pubDate') or '').strip()
+                if title:
+                    items.append({'title': title, 'source': 'BBC', 'time': pub})
+        except Exception as e:
+            print(f'  [WARN] BBC RSS: {e}')
+    return _dedup_items(items)[:15]
+
+
+def fetch_aljazeera_headlines():
+    """半岛电视台 — 中东/地缘视角"""
+    items = []
+    url = 'https://www.aljazeera.com/xml/rss/all.xml'
+    raw = fetch_http(url)
+    if raw:
+        try:
+            root = ET.fromstring(raw)
+            for item in root.findall('.//item')[:12]:
+                title = (item.findtext('title') or '').strip()
+                pub = (item.findtext('pubDate') or '').strip()
+                if title:
+                    items.append({'title': title, 'source': 'Al Jazeera', 'time': pub})
+        except Exception as e:
+            print(f'  [WARN] Al Jazeera RSS: {e}')
+    return items[:12]
+
+
+def fetch_energy_headlines():
+    """能源/石油专项 — Google News 聚合多个权威能源媒体"""
+    items = []
+    queries = [
+        'site:oilprice.com+when:8h',
+        'crude+oil+OR+OPEC+OR+oil+embargo+OR+oil+price+cap+OR+energy+supply+when:6h',
+        'oil+sanctions+OR+oil+production+OR+refinery+OR+petroleum+when:6h',
+    ]
+    for q in queries:
+        url = f'https://news.google.com/rss/search?q={q}&hl=en&gl=US&ceid=US:en'
+        raw = fetch_http(url)
+        if not raw:
+            continue
+        try:
+            root = ET.fromstring(raw)
+            for item in root.findall('.//item')[:10]:
+                title = (item.findtext('title') or '').strip()
+                pub = (item.findtext('pubDate') or '').strip()
+                if title:
+                    source_match = re.search(r'\s*-\s*([^-]+)$', title)
+                    source = source_match.group(1).strip() if source_match else 'OilPrice'
+                    items.append({'title': title, 'source': source, 'time': pub})
+        except Exception as e:
+            print(f'  [WARN] Energy RSS: {e}')
+    return _dedup_items(items)[:15]
+
+
+def fetch_asia_headlines():
+    """亚太区域新闻 — 韩国/日本/东南亚经济政策"""
+    items = []
+    queries = [
+        'site:scmp.com+when:8h',
+        'site:nikkei.com+when:8h',
+        'Korea+economy+OR+Japan+economy+OR+Asia+trade+OR+Asia+energy+when:6h',
+    ]
+    for q in queries:
+        url = f'https://news.google.com/rss/search?q={q}&hl=en&gl=US&ceid=US:en'
+        raw = fetch_http(url)
+        if not raw:
+            continue
+        try:
+            root = ET.fromstring(raw)
+            for item in root.findall('.//item')[:8]:
+                title = (item.findtext('title') or '').strip()
+                pub = (item.findtext('pubDate') or '').strip()
+                if title:
+                    source_match = re.search(r'\s*-\s*([^-]+)$', title)
+                    source = source_match.group(1).strip() if source_match else 'Asia News'
+                    items.append({'title': title, 'source': source, 'time': pub})
+        except Exception as e:
+            print(f'  [WARN] Asia RSS: {e}')
+    return _dedup_items(items)[:15]
 
 
 def _dedup_items(items):
@@ -705,18 +830,28 @@ BREAKING_KEYWORDS = {
                       'missile', 'attack', 'military', 'nuclear', 'strait', '战争', '冲突', '制裁',
                       '伊朗', '俄罗斯', '乌克兰', '关税', '导弹', '袭击', '军事', '核', '海峡',
                       '中东', '红海', '霍尔木兹', '地缘', 'drone', 'tanker', 'vessel', 'shipping',
-                      'oil tanker', 'ship', '无人机', '油轮', '商船', '船只', '航运'],
+                      'oil tanker', 'ship', '无人机', '油轮', '商船', '船只', '航运',
+                      'embargo', '禁运', 'blockade', '封锁', 'invasion', '入侵'],
         'impact': 10,
     },
     'monetary': {
         'keywords': ['fed', 'rate cut', 'rate hike', 'interest rate', 'inflation', 'cpi', 'ecb',
                       'boj', 'pboc', 'stimulus', '降息', '加息', '利率', '通胀', 'CPI', '刺激',
-                      '央行', '美联储', '欧央行', '量化宽松', 'QE'],
+                      '央行', '美联储', '欧央行', '量化宽松', 'QE', '日央行', '韩央行'],
         'impact': 8,
     },
     'commodity': {
         'keywords': ['gold', 'oil', 'crude', 'silver', 'copper', 'opec', 'commodity',
-                      '黄金', '原油', '白银', '铜', 'OPEC', '大宗商品', '期货'],
+                      '黄金', '原油', '白银', '铜', 'OPEC', '大宗商品', '期货',
+                      'petroleum', '石油', 'energy', '能源', 'natural gas', '天然气',
+                      'refinery', '炼油', 'brent', 'WTI', '布伦特'],
+        'impact': 7,
+    },
+    'policy': {
+        'keywords': ['price cap', '限价', 'rationing', '配给', 'quota', '配额',
+                      'subsidy', '补贴', 'ban', '禁令', 'regulation', '监管',
+                      'Korea', '韩国', 'Japan', '日本', 'India', '印度', 'EU', '欧盟',
+                      'policy', '政策', 'legislation', '立法'],
         'impact': 7,
     },
     'technology': {
@@ -727,7 +862,8 @@ BREAKING_KEYWORDS = {
     },
     'market': {
         'keywords': ['crash', 'surge', 'plunge', 'rally', 'record high', 'bear market', 'bull',
-                      '暴跌', '暴涨', '大涨', '大跌', '跳水', '熔断', '创新高', '崩盘'],
+                      '暴跌', '暴涨', '大涨', '大跌', '跳水', '熔断', '创新高', '崩盘',
+                      'all-time high', '历史新高', 'limit up', '涨停', 'circuit breaker'],
         'impact': 9,
     },
 }
@@ -896,6 +1032,10 @@ def main():
         ('MarketWatch', fetch_marketwatch_headlines),
         ('Yahoo Finance', fetch_yahoo_finance_headlines),
         ('Google News', fetch_google_news_finance),
+        ('BBC', fetch_bbc_headlines),
+        ('Al Jazeera', fetch_aljazeera_headlines),
+        ('Energy/Oil', fetch_energy_headlines),
+        ('Asia', fetch_asia_headlines),
         ('财联社', fetch_cls_flash),
         ('新浪财经', fetch_sina_live),
     ]
