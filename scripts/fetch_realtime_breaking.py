@@ -446,14 +446,51 @@ def _event_score(evt):
 
 def _token_jaccard(a, b):
     """Token-level Jaccard similarity for Chinese/English mixed text"""
-    import re as _re
-    tok_a = set(_re.findall(r'[\u4e00-\u9fff]{2,}|[a-z0-9]+', str(a or '').lower()))
-    tok_b = set(_re.findall(r'[\u4e00-\u9fff]{2,}|[a-z0-9]+', str(b or '').lower()))
+    def _tokenize(s):
+        s = str(s or '').lower()
+        tokens = set(re.findall(r'[a-z0-9]+', s))
+        # Chinese: overlapping 2-char bigrams (Chinese "words" are typically 2 chars)
+        for seg in re.findall(r'[\u4e00-\u9fff]+', s):
+            for i in range(len(seg) - 1):
+                tokens.add(seg[i:i + 2])
+        return tokens
+    tok_a, tok_b = _tokenize(a), _tokenize(b)
     if not tok_a or not tok_b:
         return 0.0
     inter = len(tok_a & tok_b)
     union = len(tok_a | tok_b)
     return inter / union if union else 0.0
+
+
+# 概念同义词组 — 命中同一组的视为同一概念
+_CONCEPT_GROUPS = [
+    {'中东', '伊朗', '海湾', '霍尔木兹', 'iran', 'gulf', 'hormuz', 'mideast', 'middle east'},
+    {'冲突', '战争', '军事', '袭击', '空袭', '攻击', '入侵', 'war', 'conflict', 'attack', 'strike', 'military'},
+    {'油价', '原油', '石油', '能源', 'oil', 'crude', 'petroleum', 'energy', 'opec'},
+    {'暴涨', '飙升', '大涨', '暴跌', '大跌', '跳水', 'surge', 'soar', 'plunge', 'crash', 'jump', 'tumble'},
+    {'制裁', '禁运', '限价', '封锁', 'sanction', 'embargo', 'price cap', 'blockade'},
+    {'黄金', '金价', 'gold'},
+    {'美联储', '降息', '加息', '利率', 'fed', 'rate cut', 'rate hike', 'interest rate'},
+    {'芯片', '半导体', 'chip', 'semiconductor', 'nvidia'},
+    {'关税', '贸易战', 'tariff', 'trade war'},
+    {'股市', '股票', '指数', 'stock', 'index', 'market'},
+    {'韩国', '日本', '印度', 'korea', 'japan', 'india'},
+    {'俄罗斯', '乌克兰', 'russia', 'ukraine'},
+]
+
+
+def _concept_similarity(a, b):
+    """两个标题共享多少个概念组"""
+    a_lower, b_lower = str(a or '').lower(), str(b or '').lower()
+    a_groups, b_groups = set(), set()
+    for idx, group in enumerate(_CONCEPT_GROUPS):
+        if any(kw in a_lower for kw in group):
+            a_groups.add(idx)
+        if any(kw in b_lower for kw in group):
+            b_groups.add(idx)
+    shared = len(a_groups & b_groups)
+    total = max(len(a_groups | b_groups), 1)
+    return shared / total, shared
 
 
 def semantic_dedupe_events(events, limit=15):
@@ -472,14 +509,22 @@ def semantic_dedupe_events(events, limit=15):
             raw_kt = str(kept.get('title', ''))
             bigram_sim = _title_similarity(t, kt)
             token_sim = _token_jaccard(raw_t, raw_kt)
+            concept_ratio, concept_shared = _concept_similarity(raw_t, raw_kt)
             same_cat = cat and cat == str(kept.get('category', ''))
-            if bigram_sim >= 0.55 and same_cat:
+            # 同类别+字面相似
+            if bigram_sim >= 0.45 and same_cat:
                 hit_idx = i
                 break
-            if bigram_sim >= 0.50 and token_sim >= 0.40:
+            # 字面+token双重达标
+            if bigram_sim >= 0.40 and token_sim >= 0.30:
                 hit_idx = i
                 break
-            if token_sim >= 0.50 and same_cat:
+            # token相似+同类别
+            if token_sim >= 0.40 and same_cat:
+                hit_idx = i
+                break
+            # 概念组高度重叠（共享≥2个概念组且比例≥60%）
+            if concept_shared >= 2 and concept_ratio >= 0.60 and same_cat:
                 hit_idx = i
                 break
 
