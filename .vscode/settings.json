@@ -21,6 +21,12 @@
         "**/*.pyc": true
     },
     "chat.tools.terminal.autoApprove": {
-        "/usr/bin/python3": true
+        "/usr/bin/python3": true,
+        "timeout": true,
+        "/^python3 -c \"from scripts\\.fetch_realtime_breaking import main as fetch_realtime_breaking; print\\('Import OK'\\)\"$/": {
+            "approve": true,
+            "matchCommandLine": true
+        },
+        ".venv/bin/python3": true
     }
 }

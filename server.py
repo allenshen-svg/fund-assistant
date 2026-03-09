@@ -7,7 +7,7 @@ fund-assistant 后端服务器
 - 后台每30分钟自动采集一次
 """
 
-import os, sys, json, time, threading
+import os, sys, json, time, threading, fcntl
 from datetime import datetime, date
 
 # 将项目根目录加入 path
@@ -481,13 +481,24 @@ def fund_pick_scheduler_loop():
 # ==================== 启动后台采集线程 ====================
 _scheduler_started = False
 _scheduler_lock = threading.Lock()
+_scheduler_flock = None   # file lock to prevent duplicate threads across workers
 
 def _ensure_scheduler():
-    global _scheduler_started
+    global _scheduler_started, _scheduler_flock
     if _scheduler_started:
         return
     with _scheduler_lock:
         if _scheduler_started:          # double-check
+            return
+        # Inter-process file lock: only ONE gunicorn worker runs background threads
+        lock_path = os.path.join(ROOT_DIR, '.scheduler.lock')
+        try:
+            _scheduler_flock = open(lock_path, 'w')
+            fcntl.flock(_scheduler_flock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except (IOError, OSError):
+            # Another worker already holds the lock — skip background threads
+            print('[scheduler] 另一个worker已持有调度锁，跳过后台线程')
+            _scheduler_started = True
             return
         _scheduler_started = True
         t = threading.Thread(target=scheduler_loop, daemon=True)

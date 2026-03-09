@@ -48,7 +48,7 @@ AI_PROVIDERS = {
 
 DEFAULT_PROVIDER = os.environ.get('AI_PROVIDER', 'zhipu')
 DEFAULT_API_KEY = os.environ.get('AI_API_KEY', '4511f9dee1e64b7da49a539ddef85dfd.Z6HgN8s8cDhL2LeQ')
-DEFAULT_MODEL = os.environ.get('AI_MODEL', 'GLM-4-Air')
+DEFAULT_MODEL = os.environ.get('AI_MODEL', 'GLM-4-Flash')
 
 # ==================== Prompt ====================
 SYSTEM_PROMPT = """# 角色定义 (Role)

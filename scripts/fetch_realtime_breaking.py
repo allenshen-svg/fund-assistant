@@ -36,7 +36,8 @@ _load_dotenv()
 # ==================== 配置 ====================
 API_KEY = os.environ.get('AI_API_KEY', '')
 API_BASE = os.environ.get('AI_API_BASE', '').strip()
-MODEL = os.environ.get('AI_MODEL', 'deepseek-ai/DeepSeek-V3')
+# 实时突发用 glm-4-flash —— 每5分钟调用，需要高频率限额的轻量模型
+MODEL = os.environ.get('BREAKING_AI_MODEL', 'glm-4-flash')
 OUTPUT_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data', 'realtime_breaking.json')
 HOT_EVENTS_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data', 'hot_events.json')
 
@@ -438,9 +439,16 @@ def _title_similarity(a, b):
 def _event_score(evt):
     impact = abs(float(evt.get('impact', 0) or 0))
     title = str(evt.get('title', '') or '')
+    reason = str(evt.get('reason', '') or '')
+    combined = f'{title} {reason}'
     score = impact * 100 + min(len(title), 60)
     if re.search(r'(iran|伊朗).*(drone|无人机).*(tanker|油轮|vessel|ship)', title, re.I):
         score += 120
+    # 包含具体数字/价格的事件更有信息量，优先保留
+    numbers = re.findall(r'(\d+)(?:美元|%|\$)', combined)
+    if numbers:
+        max_num = max(int(n) for n in numbers)
+        score += min(max_num, 200)  # 110美元 → +110, 20% → +20
     return score
 
 
@@ -474,8 +482,10 @@ _CONCEPT_GROUPS = [
     {'芯片', '半导体', 'chip', 'semiconductor', 'nvidia'},
     {'关税', '贸易战', 'tariff', 'trade war'},
     {'股市', '股票', '指数', 'stock', 'index', 'market'},
-    {'韩国', '日本', '印度', 'korea', 'japan', 'india'},
+    {'韩国', '日本', '印度', 'korea', 'japan', 'india', '日经', 'nikkei'},
     {'俄罗斯', '乌克兰', 'russia', 'ukraine'},
+    {'领导人', '领袖', '任命', '继任', '当选', 'leader', 'appointed', 'successor', '哈梅内伊'},
+    {'日本股', '日经', '日股', 'nikkei', 'japan stock', '日本市场'},
 ]
 
 
@@ -493,6 +503,13 @@ def _concept_similarity(a, b):
     return shared / total, shared
 
 
+def _combined_text(evt):
+    """标题+reason合并用于去重比较"""
+    title = str(evt.get('title', '') or '')
+    reason = str(evt.get('reason', '') or '')
+    return f'{title} {reason}'
+
+
 def semantic_dedupe_events(events, limit=15):
     deduped = []
     for evt in events:
@@ -500,6 +517,7 @@ def semantic_dedupe_events(events, limit=15):
             continue
         t = _normalize_event_title(evt.get('title', ''))
         raw_t = str(evt.get('title', ''))
+        combined_t = _combined_text(evt)
         if not t:
             continue
         cat = str(evt.get('category', ''))
@@ -507,9 +525,11 @@ def semantic_dedupe_events(events, limit=15):
         for i, kept in enumerate(deduped):
             kt = _normalize_event_title(kept.get('title', ''))
             raw_kt = str(kept.get('title', ''))
+            combined_kt = _combined_text(kept)
             bigram_sim = _title_similarity(t, kt)
             token_sim = _token_jaccard(raw_t, raw_kt)
-            concept_ratio, concept_shared = _concept_similarity(raw_t, raw_kt)
+            combined_token_sim = _token_jaccard(combined_t, combined_kt)
+            concept_ratio, concept_shared = _concept_similarity(combined_t, combined_kt)
             same_cat = cat and cat == str(kept.get('category', ''))
             # 同类别+字面相似
             if bigram_sim >= 0.45 and same_cat:
@@ -523,8 +543,12 @@ def semantic_dedupe_events(events, limit=15):
             if token_sim >= 0.40 and same_cat:
                 hit_idx = i
                 break
-            # 概念组高度重叠（共享≥2个概念组且比例≥60%）
-            if concept_shared >= 2 and concept_ratio >= 0.60 and same_cat:
+            # 标题+reason合并后token相似度高（跨类别也生效）
+            if combined_token_sim >= 0.35:
+                hit_idx = i
+                break
+            # 概念组重叠≥2个（跨类别也生效，解决中英文同一事件无法去重）
+            if concept_shared >= 2:
                 hit_idx = i
                 break
 
@@ -806,8 +830,11 @@ def _build_breaking_prompt(headlines, anomalies, market_snapshot):
 3. 如果某个商品/指数出现异动，结合新闻分析原因
 4. 将英文新闻翻译为简洁中文标题
 5. impact 范围 -15 到 +15（绝对值越大影响越大）
-6. 最多提取 10 条最重要的事件
+6. 最多提取 10 条最重要的事件，**严禁重复**：同一事件只保留信息量最大的一条（例如油价已破110就不要再说破100）
 7. category 只能是: geopolitics, commodity, monetary, technology, market, policy
+8. 标题必须包含最新数据（如最新价格），不要用过时数字
+9. **每条事件必须能在上方头条中找到对应来源**，严禁凭空捏造事实或混淆主语（例如不要把"油价110"写成"美元110"）
+10. 10条事件之间**标题不能有语义重复**，同一主题只允许出现一次
 
 ### 输出格式（严格JSON）
 ```json
@@ -830,7 +857,7 @@ def _build_breaking_prompt(headlines, anomalies, market_snapshot):
 
 
 def call_llm_breaking(headlines, anomalies, market_snapshot):
-    """调用LLM生成突发事件摘要"""
+    """调用LLM生成突发事件摘要（带429重试）"""
     if not API_KEY:
         print('  ⚠️ 未配置 AI_API_KEY，跳过LLM分析')
         return []
@@ -850,21 +877,29 @@ def call_llm_breaking(headlines, anomalies, market_snapshot):
         'Content-Type': 'application/json',
         'Authorization': f'Bearer {API_KEY}',
     }
-    try:
-        req = Request(url, data=json.dumps(body).encode('utf-8'), headers=headers, method='POST')
-        with urlopen(req, timeout=60, context=_ssl_ctx()) as resp:
-            result = json.loads(resp.read().decode())
-        content = result['choices'][0]['message']['content'].strip()
-        # 提取JSON
-        content = re.sub(r'^```json\s*', '', content)
-        content = re.sub(r'\s*```$', '', content)
-        events = json.loads(content)
-        if isinstance(events, list):
-            return events
-        return []
-    except Exception as e:
-        print(f'  ❌ LLM调用失败: {e}')
-        return []
+    max_retries = 3
+    for attempt in range(max_retries):
+        try:
+            req = Request(url, data=json.dumps(body).encode('utf-8'), headers=headers, method='POST')
+            with urlopen(req, timeout=90, context=_ssl_ctx()) as resp:
+                result = json.loads(resp.read().decode())
+            content = result['choices'][0]['message']['content'].strip()
+            # 提取JSON
+            content = re.sub(r'^```json\s*', '', content)
+            content = re.sub(r'\s*```$', '', content)
+            events = json.loads(content)
+            if isinstance(events, list):
+                return events
+            return []
+        except Exception as e:
+            err_str = str(e)
+            if '429' in err_str and attempt < max_retries - 1:
+                wait = (attempt + 1) * 15
+                print(f'  ⚠️ LLM 429限流，{wait}秒后重试({attempt+1}/{max_retries})...')
+                time.sleep(wait)
+                continue
+            print(f'  ❌ LLM调用失败: {e}')
+            return []
 
 
 # ==================== 关键词匹配兜底（无LLM时使用） ====================
@@ -994,6 +1029,10 @@ def merge_with_existing(new_events, output_path):
     except Exception:
         pass
 
+    # 过滤掉旧的关键词兜底事件（英文截断标题，reason="来源: X"）
+    # 当有新LLM事件时，不保留旧的低质量关键词匹配结果
+    if new_events:
+        existing = [e for e in existing if not str(e.get('reason', '')).startswith('来源:')]
     # 新事件优先，再补旧事件；统一走语义去重
     merged = semantic_dedupe_events(list(new_events) + list(existing), limit=15)
     return merged
