@@ -63,7 +63,9 @@ SYSTEM_PROMPT = """# 角色定义 (Role)
 ## 硬性质量要求
 - 每个板块分析必须包含：关键影响概览(至少5个要点)、产业链传导路径(多级箭头链)、量化影响预测表格(至少4行)、投资策略
 - 表格必须有具体数字（百分比、金额、产量变动等），不能用"上涨趋势"等模糊词
-- 产业链传导必须是多级链条（至少3级），不能是简单的 A→B→C
+- ⚠️【最重要】产业链传导路径：每个板块必须写3条以上独立传导链，每条至少4级(A→B→C→D)，链与链之间用↓分隔。仅写1条链=不合格！
+- 不合格示例："原油价格↑ → 黄金价格↑"（只有2级、只有1条链，严重不合格）
+- 合格示例："原油↑→石脑油↑→乙烯↑→塑料↑ ↓ 原油↑→柴油↑→运输成本↑→消费品↑ ↓ 原油↑→天然气↑→发电成本↑→工业品↑"（3条链、每条4级）
 - 关键影响概览中每个要点必须包含具体数据（百分比、价格、成本占比等）
 - 你的输出总长度必须超过3000字，如果不到说明你的分析不够深入
 
@@ -220,7 +222,12 @@ def build_user_prompt(video_data_str):
 - [中国影响：该板块对中国市场/A股的具体影响]
 
 **产业链传导路径**
-[用箭头链描述价格/成本传导，例如：原油价格↑ → 石脑油/燃料油价格↑ → 基础化学品(乙烯/丙烯)价格↑ → 塑料/纤维/涂料终端产品价格↑]
+[必须输出至少3条独立传导链，每条至少4级。用↓分隔不同链条。示例：
+原油价格↑ → 石脑油/燃料油价格↑ → 基础化学品(乙烯/丙烯)价格↑ → 塑料/纤维/涂料终端产品价格↑
+↓
+原油价格↑ → 汽油/柴油价格↑ → 运输成本↑ → 物流/消费品价格↑
+↓
+原油价格↑ → 天然气价格↑ → 发电成本↑ → 工业生产成本↑ → 工业品价格↑]
 
 **量化影响预测**
 | 指标 | 短期(1-3月) | 中期(3-12月) | 长期趋势 |
@@ -234,7 +241,7 @@ def build_user_prompt(video_data_str):
 
 ---
 
-[重复以上格式，输出下一个板块分析]
+[重复以上格式，输出下一个板块分析。注意：每个板块的产业链传导路径都必须有3条以上独立链（用↓分隔），否则不合格！]
 
 ### 💡 投资建议
 #### 📌 各类持仓操作建议
@@ -267,11 +274,17 @@ def build_user_prompt(video_data_str):
     "action_signal": "<Aggressive Buy|Cautious Hold|Defensive|Strong Sell|Wait>"
   }}
 }}
-```"""
+```
+
+⚠️ 输出前自检：
+1. 板块深度影响分析是否有3-5个板块？
+2. 每个板块的产业链传导路径是否有3条以上独立链（用↓分隔）？如果只有1条链，必须补充！
+3. 每条传导链是否有4级以上（至少4个→）？
+4. 总输出是否超过3000字？"""
 
 
 # ==================== AI 调用 ====================
-def call_ai(items, provider_id=None, api_key=None, model=None, temperature=0.6):
+def call_ai(items, provider_id=None, api_key=None, model=None, temperature=0.75):
     """调用 AI 大模型分析舆情数据"""
     provider_id = provider_id or DEFAULT_PROVIDER
     api_key = api_key or DEFAULT_API_KEY
@@ -435,8 +448,8 @@ def parse_deep_analysis(text):
         return analyses
     deep_section = m.group(1)
 
-    # 按 #### 🏭 板块标题 分割
-    parts = re.split(r'####\s*🏭\s*', deep_section)
+    # 按 #### + 任意emoji + 板块标题 分割（LLM 会给不同板块用不同 emoji）
+    parts = re.split(r'####\s*(?:🏭|🧪|🥇|⚔️|🔋|🛢️|💎|⛽|🏗️|📦|🌾|🚗|🤖|💊|🔬)\s*', deep_section)
     for idx, part in enumerate(parts):
         if idx == 0:
             continue  # skip intro text before first sector
