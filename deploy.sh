@@ -113,7 +113,7 @@ Type=simple
 User=$RUN_USER
 WorkingDirectory=$APP_DIR
 EnvironmentFile=$APP_DIR/.env
-ExecStart=$VENV_DIR/bin/gunicorn --bind 127.0.0.1:8000 --workers 1 --threads 4 --timeout 120 server:app
+ExecStart=$VENV_DIR/bin/gunicorn --bind 127.0.0.1:8000 --workers 1 --threads 4 --timeout 300 server:app
 Restart=always
 RestartSec=10
 
@@ -148,7 +148,7 @@ server {
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_read_timeout 120s;
+        proxy_read_timeout 300s;
         proxy_connect_timeout 10s;
 
         add_header Access-Control-Allow-Origin '*' always;

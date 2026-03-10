@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-03-08T11:15:04.989888+08:00",
+  "updated_at": "2026-03-10T12:14:54.658242+08:00",
   "breaking": [
     {
       "id": "rtb_8a9eef24",
@@ -26,66 +26,6 @@
       "isRealtime": true
     },
     {
-      "id": "rtb_90044cd9",
-      "title": "美对伊战争引发能源供应中断",
-      "reason": "伊朗战争导致全球能源供应紧张，美国汽油价格飙升",
-      "source": "Reuters",
-      "category": "geopolitics",
-      "catIcon": "🌍",
-      "impact": 15,
-      "impactClass": "up",
-      "impactAbs": 15,
-      "sectors_positive": [
-        "能源"
-      ],
-      "sectors_negative": [
-        "消费者"
-      ],
-      "advice": "关注能源股",
-      "timestamp": "2026-03-07T11:24:08.670881+08:00",
-      "isRealtime": true
-    },
-    {
-      "id": "rtb_2ab2d0ad",
-      "title": "伊朗暂停对邻国军事行动",
-      "reason": "除非遭受攻击，伊朗宣布暂停对邻国的军事行动，地缘政治紧张局势缓解。",
-      "source": "Reuters",
-      "category": "geopolitics",
-      "catIcon": "🌍",
-      "impact": 15,
-      "impactClass": "up",
-      "impactAbs": 15,
-      "sectors_positive": [
-        "能源"
-      ],
-      "sectors_negative": [
-        "军工"
-      ],
-      "advice": "关注能源板块机会",
-      "timestamp": "2026-03-07T17:58:27.423242+08:00",
-      "isRealtime": true
-    },
-    {
-      "id": "rtb_9e54c612",
-      "title": "普京呼吁立即停止伊朗冲突",
-      "reason": "俄罗斯总统普京呼吁立即停止伊朗冲突，国际社会对和平解决的关注增加。",
-      "source": "Reuters",
-      "category": "geopolitics",
-      "catIcon": "🌍",
-      "impact": 14,
-      "impactClass": "up",
-      "impactAbs": 14,
-      "sectors_positive": [
-        "能源"
-      ],
-      "sectors_negative": [
-        "军工"
-      ],
-      "advice": "关注地缘政治风险",
-      "timestamp": "2026-03-07T17:58:27.423242+08:00",
-      "isRealtime": true
-    },
-    {
       "id": "rtb_b4ba67c3",
       "title": "俄罗斯对乌克兰发动无人机和导弹袭击",
       "reason": "俄罗斯对乌克兰的袭击导致至少7人死亡，乌克兰局势进一步恶化。",
@@ -106,23 +46,23 @@
       "isRealtime": true
     },
     {
-      "id": "rtb_6fd78612",
-      "title": "美国对以色列军火销售未经过国会审查",
-      "reason": "美国直接批准对以色列的军火销售，可能加剧中东紧张局势",
-      "source": "Reuters",
-      "category": "geopolitics",
-      "catIcon": "🌍",
-      "impact": 12,
+      "id": "rtb_a6d844b1",
+      "title": "COMEX白银价格上涨4.7%，至88.465美元/盎司",
+      "reason": "地缘政治紧张，投资者寻求避险。",
+      "source": "global_commodity",
+      "category": "commodity",
+      "catIcon": "📦",
+      "impact": 10,
       "impactClass": "up",
-      "impactAbs": 12,
+      "impactAbs": 10,
       "sectors_positive": [
-        "军工"
+        "金ETF"
       ],
       "sectors_negative": [
-        "和平相关"
+        "红利"
       ],
-      "advice": "关注军工股",
-      "timestamp": "2026-03-07T11:24:08.670881+08:00",
+      "advice": "关注贵金属投资",
+      "timestamp": "2026-03-10T12:09:21.719197+08:00",
       "isRealtime": true
     },
     {
@@ -146,22 +86,60 @@
       "isRealtime": true
     },
     {
-      "id": "rtb_13b2059c",
-      "title": "印度提高液化石油气价格",
-      "reason": "由于伊朗战争影响供应，印度提高液化石油气价格，全球能源价格可能进一步上涨。",
-      "source": "Reuters",
-      "category": "commodity",
-      "catIcon": "📦",
-      "impact": 11,
+      "id": "rtb_5474764a",
+      "title": "中国2月出口超预期，贸易顺差创新高",
+      "reason": "中国出口强劲增长，推动贸易顺差达到历史最高水平。",
+      "source": "CNBC",
+      "category": "market",
+      "catIcon": "📊",
+      "impact": 12,
       "impactClass": "up",
-      "impactAbs": 11,
+      "impactAbs": 12,
       "sectors_positive": [
-        "能源"
+        "港股科技",
+        "军工"
+      ],
+      "sectors_negative": [],
+      "advice": "关注出口相关行业",
+      "timestamp": "2026-03-10T12:09:21.719197+08:00",
+      "isRealtime": true
+    },
+    {
+      "id": "rtb_6fd78612",
+      "title": "美国对以色列军火销售未经过国会审查",
+      "reason": "美国直接批准对以色列的军火销售，可能加剧中东紧张局势",
+      "source": "Reuters",
+      "category": "geopolitics",
+      "catIcon": "🌍",
+      "impact": 12,
+      "impactClass": "up",
+      "impactAbs": 12,
+      "sectors_positive": [
+        "军工"
       ],
       "sectors_negative": [
-        "消费者"
+        "和平相关"
       ],
-      "advice": "关注能源板块机会",
+      "advice": "关注军工股",
+      "timestamp": "2026-03-07T11:24:08.670881+08:00",
+      "isRealtime": true
+    },
+    {
+      "id": "rtb_4de5e688",
+      "title": "恒生指数上涨1.7%",
+      "reason": "恒生指数上涨，受益于军工ETF和恒生科技板块的上涨。",
+      "source": "市场快照",
+      "category": "market",
+      "catIcon": "📊",
+      "impact": 10,
+      "impactClass": "up",
+      "impactAbs": 10,
+      "sectors_positive": [
+        "军工",
+        "科技"
+      ],
+      "sectors_negative": [],
+      "advice": "关注军工和科技板块",
       "timestamp": "2026-03-07T17:58:27.423242+08:00",
       "isRealtime": true
     },
@@ -238,25 +216,6 @@
       "isRealtime": true
     },
     {
-      "id": "rtb_4de5e688",
-      "title": "恒生指数上涨1.7%",
-      "reason": "恒生指数上涨，受益于军工ETF和恒生科技板块的上涨。",
-      "source": "市场快照",
-      "category": "market",
-      "catIcon": "📊",
-      "impact": 10,
-      "impactClass": "up",
-      "impactAbs": 10,
-      "sectors_positive": [
-        "军工",
-        "科技"
-      ],
-      "sectors_negative": [],
-      "advice": "关注军工和科技板块",
-      "timestamp": "2026-03-07T17:58:27.423242+08:00",
-      "isRealtime": true
-    },
-    {
       "id": "rtb_748ed063",
       "title": "黄金价格大幅上涨",
       "reason": "地缘政治紧张和通胀预期推高黄金价格",
@@ -293,108 +252,183 @@
       "advice": "关注科技板块风险",
       "timestamp": "2026-03-07T17:58:27.423242+08:00",
       "isRealtime": true
+    },
+    {
+      "id": "rtb_7a1a95ce",
+      "title": "创业板指半日涨超2%，算力硬件股走强",
+      "reason": "AI和算力需求增长，推动相关板块上涨。",
+      "source": "财联社",
+      "category": "technology",
+      "catIcon": "🤖",
+      "impact": 9,
+      "impactClass": "up",
+      "impactAbs": 9,
+      "sectors_positive": [
+        "算力"
+      ],
+      "sectors_negative": [],
+      "advice": "关注科技成长股",
+      "timestamp": "2026-03-10T12:09:21.719197+08:00",
+      "isRealtime": true
+    },
+    {
+      "id": "rtb_606fb47d",
+      "title": "中国2月铁矿砂进口同比增10.0%，铜材进口增",
+      "reason": "原材料需求旺盛，推动相关板块上涨。",
+      "source": "新浪财经",
+      "category": "commodity",
+      "catIcon": "📦",
+      "impact": 8,
+      "impactClass": "up",
+      "impactAbs": 8,
+      "sectors_positive": [
+        "钢铁",
+        "有色金属"
+      ],
+      "sectors_negative": [],
+      "advice": "关注原材料板块",
+      "timestamp": "2026-03-10T12:09:21.719197+08:00",
+      "isRealtime": true
     }
   ],
   "anomalies": [
     {
-      "id": "anom_国际银_1115",
+      "id": "anom_国际银_1214",
       "name": "国际银",
       "fullName": "COMEX白银",
       "icon": "🥈",
-      "price": 84.695,
-      "pct": 3.06,
+      "price": 88.395,
+      "pct": 4.58,
       "type": "global_commodity",
       "tag": "白银",
       "level": "🔴 剧烈",
-      "alert": "🥈 国际银大涨3.1%"
+      "alert": "🥈 国际银大涨4.6%"
     },
     {
-      "id": "anom_军工_1115",
-      "name": "军工",
-      "fullName": "军工ETF",
-      "icon": "🛡️",
-      "price": 0.737,
-      "pct": 2.79,
+      "id": "anom_新能源_1214",
+      "name": "新能源",
+      "fullName": "能源ETF",
+      "icon": "🔋",
+      "price": 1.798,
+      "pct": -3.59,
       "type": "sector",
-      "tag": "军工",
+      "tag": "新能源",
       "level": "🟡 显著",
-      "alert": "🛡️ 军工大涨2.8%"
+      "alert": "🔋 新能源大跌3.6%"
     },
     {
-      "id": "anom_港股科技_1115",
-      "name": "港股科技",
-      "fullName": "恒生科技",
-      "icon": "📱",
-      "price": 0.643,
-      "pct": 2.72,
+      "id": "anom_创业板_1214",
+      "name": "创业板",
+      "fullName": "创业板指",
+      "icon": "🇨🇳",
+      "price": 3287.98,
+      "pct": 2.47,
+      "type": "index",
+      "tag": "",
+      "level": "🟡 显著",
+      "alert": "🇨🇳 创业板大涨2.5%"
+    },
+    {
+      "id": "anom_芯片_1214",
+      "name": "芯片",
+      "fullName": "半导体ETF",
+      "icon": "🔲",
+      "price": 1.006,
+      "pct": 2.44,
       "type": "sector",
-      "tag": "港股科技",
+      "tag": "半导体",
       "level": "🟡 显著",
-      "alert": "📱 港股科技大涨2.7%"
+      "alert": "🔲 芯片大涨2.4%"
     },
     {
-      "id": "anom_国际金_1115",
-      "name": "国际金",
-      "fullName": "COMEX黄金",
-      "icon": "🥇",
-      "price": 5181.3,
-      "pct": 2.02,
-      "type": "global_commodity",
-      "tag": "黄金",
-      "level": "🔴 剧烈",
-      "alert": "🥇 国际金大涨2.0%"
+      "id": "anom_日经_1214",
+      "name": "日经",
+      "fullName": "日经225",
+      "icon": "🇯🇵",
+      "price": 53895.63,
+      "pct": 2.21,
+      "type": "index",
+      "tag": "",
+      "level": "🟡 显著",
+      "alert": "🇯🇵 日经大涨2.2%"
     },
     {
-      "id": "anom_恒指_1115",
+      "id": "anom_深指_1214",
+      "name": "深指",
+      "fullName": "深证成指",
+      "icon": "🇨🇳",
+      "price": 14288.32,
+      "pct": 1.57,
+      "type": "index",
+      "tag": "",
+      "level": "🟡 显著",
+      "alert": "🇨🇳 深指大涨1.6%"
+    },
+    {
+      "id": "anom_恒指_1214",
       "name": "恒指",
       "fullName": "恒生指数",
       "icon": "🇭🇰",
-      "price": 25757.29,
-      "pct": 1.72,
+      "price": 25804.7,
+      "pct": 1.56,
       "type": "index",
       "tag": "",
       "level": "🟡 显著",
-      "alert": "🇭🇰 恒指大涨1.7%"
+      "alert": "🇭🇰 恒指大涨1.6%"
     },
     {
-      "id": "anom_纳指_1115",
+      "id": "anom_纳指_1214",
       "name": "纳指",
       "fullName": "纳斯达克100",
       "icon": "🇺🇸",
-      "price": 22387.68,
-      "pct": -1.59,
+      "price": 22695.95,
+      "pct": 1.38,
       "type": "index",
       "tag": "",
       "level": "🟡 显著",
-      "alert": "🇺🇸 纳指大跌1.6%"
+      "alert": "🇺🇸 纳指大涨1.4%"
     },
     {
-      "id": "anom_标普_1115",
-      "name": "标普",
-      "fullName": "标普500",
-      "icon": "🇺🇸",
-      "price": 6740.02,
-      "pct": -1.33,
-      "type": "index",
-      "tag": "",
+      "id": "anom_国际金_1214",
+      "name": "国际金",
+      "fullName": "COMEX黄金",
+      "icon": "🥇",
+      "price": 5163.9,
+      "pct": 1.18,
+      "type": "global_commodity",
+      "tag": "黄金",
       "level": "🟡 显著",
-      "alert": "🇺🇸 标普大跌1.3%"
+      "alert": "🥇 国际金大涨1.2%"
     }
   ],
   "meta": {
     "sources_ok": [
-      "Reuters",
-      "Bloomberg",
-      "CNBC",
-      "MarketWatch",
       "Yahoo Finance",
-      "Google News",
+      "BBC",
+      "MarketWatch",
+      "CNBC",
+      "Al Jazeera",
       "财联社",
-      "新浪财经"
+      "新浪财经",
+      "Bloomberg",
+      "Reuters",
+      "Energy/Oil",
+      "Asia",
+      "Google News"
     ],
     "news_count": 15,
-    "anomaly_count": 7,
-    "model": "GLM-4-Flash",
-    "refresh_interval_seconds": 300
+    "anomaly_count": 9,
+    "model": "glm-4-flash",
+    "refresh_interval_seconds": 300,
+    "algorithm": "v2",
+    "dedup_stats": {
+      "md5": 184,
+      "simhash": 0,
+      "semantic": 1,
+      "empty": 0
+    },
+    "fetch_time_sec": 15.9,
+    "total_raw_headlines": 196,
+    "deduped_headlines": 11
   }
 }

@@ -217,6 +217,47 @@ def api_reanalyze():
     t.start()
     return jsonify({'status': 'started', 'message': 'AI 分析已启动'})
 
+
+@app.route('/api/ai-proxy', methods=['POST'])
+def api_ai_proxy():
+    """AI API 代理 — 前端通过此接口调用 AI，避免浏览器直接访问 AI API 被公司防火墙拦截"""
+    import requests as req
+    data = request.get_json(force=True)
+    provider_id = data.get('provider', 'zhipu')
+    api_key = data.get('api_key', '')
+    if not api_key:
+        return jsonify({'error': '缺少 api_key'}), 400
+
+    providers = {
+        'zhipu': 'https://open.bigmodel.cn/api/paas/v4/chat/completions',
+        'siliconflow': 'https://api.siliconflow.cn/v1/chat/completions',
+        'deepseek': 'https://api.deepseek.com/chat/completions',
+        '302ai': 'https://api.302.ai/v1/chat/completions',
+    }
+    base_url = providers.get(provider_id)
+    if not base_url:
+        return jsonify({'error': f'未知 provider: {provider_id}'}), 400
+
+    payload = {
+        'model': data.get('model', 'GLM-4-Flash'),
+        'messages': data.get('messages', []),
+        'temperature': data.get('temperature', 0.7),
+        'max_tokens': min(data.get('max_tokens', 4096), 16384),
+    }
+
+    try:
+        resp = req.post(
+            base_url,
+            headers={'Content-Type': 'application/json', 'Authorization': f'Bearer {api_key}'},
+            json=payload,
+            timeout=180,
+        )
+        return (resp.text, resp.status_code, {'Content-Type': 'application/json'})
+    except req.exceptions.Timeout:
+        return jsonify({'error': 'AI API 超时，请稍后重试'}), 504
+    except req.exceptions.ConnectionError:
+        return jsonify({'error': 'AI API 连接失败，请检查网络'}), 502
+
 # ==================== 选基金/股票 ====================
 
 _fund_pick_lock = threading.Lock()

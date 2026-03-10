@@ -486,24 +486,32 @@ def call_ai(items, provider_id=None, api_key=None, model=None, temperature=0.75)
     print(f'  🧠 调用 AI: {provider["name"]} / {model}')
 
     max_retries = 3
+    last_err = None
     for attempt in range(max_retries):
-        resp = requests.post(
-            base_url,
-            headers={
-                'Content-Type': 'application/json',
-                'Authorization': f'Bearer {api_key}',
-            },
-            json={
-                'model': model,
-                'messages': [
-                    {'role': 'system', 'content': SYSTEM_PROMPT},
-                    {'role': 'user', 'content': user_prompt},
-                ],
-                'temperature': temperature,
-                'max_tokens': 16384,
-            },
-            timeout=120,
-        )
+        try:
+            resp = requests.post(
+                base_url,
+                headers={
+                    'Content-Type': 'application/json',
+                    'Authorization': f'Bearer {api_key}',
+                },
+                json={
+                    'model': model,
+                    'messages': [
+                        {'role': 'system', 'content': SYSTEM_PROMPT},
+                        {'role': 'user', 'content': user_prompt},
+                    ],
+                    'temperature': temperature,
+                    'max_tokens': 16384,
+                },
+                timeout=180,
+            )
+        except (requests.exceptions.ConnectionError, requests.exceptions.Timeout) as e:
+            last_err = e
+            wait = (attempt + 1) * 15
+            print(f'  ⚠️ 网络错误: {e.__class__.__name__}, {wait}s 后重试 ({attempt+1}/{max_retries})...')
+            time.sleep(wait)
+            continue
         if resp.status_code == 429:
             wait = (attempt + 1) * 30
             print(f'  ⏳ 限频，等待 {wait}s 后重试 ({attempt+1}/{max_retries})...')
@@ -512,6 +520,8 @@ def call_ai(items, provider_id=None, api_key=None, model=None, temperature=0.75)
         resp.raise_for_status()
         break
     else:
+        if last_err:
+            raise last_err
         resp.raise_for_status()  # raise the last 429
     data = resp.json()
     content = data.get('choices', [{}])[0].get('message', {}).get('content', '')

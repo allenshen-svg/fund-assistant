@@ -71,17 +71,45 @@ ${videoDataStr}
 // ==================== AI CALL ====================
 async function callAI(model, systemPrompt, userPrompt, temperature=0.7) {
   if(!_apiKey) throw new Error('请先配置 API Key');
-  const resp = await fetch(_provider.base, {
-    method:'POST',
-    headers:{'Content-Type':'application/json','Authorization':'Bearer '+_apiKey},
-    body:JSON.stringify({ model, messages:[{role:'system',content:systemPrompt},{role:'user',content:userPrompt}], temperature, max_tokens:4096 })
-  });
-  if(!resp.ok) {
-    const err = await resp.text().catch(()=>'');
-    throw new Error(`API ${resp.status}: ${err.slice(0,200)}`);
+  const maxRetries = 3;
+  let lastErr = null;
+  // 优先走后端代理（避免公司防火墙拦截浏览器直连 AI API）
+  const useProxy = (location.hostname !== 'localhost' && location.hostname !== '127.0.0.1');
+  const url = useProxy ? '/api/ai-proxy' : _provider.base;
+  for(let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      const bodyObj = useProxy
+        ? { provider: _providerId, api_key: _apiKey, model, messages:[{role:'system',content:systemPrompt},{role:'user',content:userPrompt}], temperature, max_tokens:16384 }
+        : { model, messages:[{role:'system',content:systemPrompt},{role:'user',content:userPrompt}], temperature, max_tokens:16384 };
+      const headers = useProxy
+        ? {'Content-Type':'application/json'}
+        : {'Content-Type':'application/json','Authorization':'Bearer '+_apiKey};
+      const resp = await fetch(url, {
+        method:'POST',
+        headers,
+        body:JSON.stringify(bodyObj)
+      });
+      if(resp.status === 429) {
+        const wait = (attempt+1) * 10;
+        console.warn(`API 限频, ${wait}s 后重试 (${attempt+1}/${maxRetries})`);
+        await new Promise(r=>setTimeout(r, wait*1000));
+        continue;
+      }
+      if(!resp.ok) {
+        const err = await resp.text().catch(()=>'');
+        throw new Error(`API ${resp.status}: ${err.slice(0,200)}`);
+      }
+      const json = await resp.json();
+      return json.choices?.[0]?.message?.content || '';
+    } catch(e) {
+      lastErr = e;
+      if(e.message && e.message.startsWith('API ')) throw e;
+      const wait = (attempt+1) * 5;
+      console.warn(`网络错误: ${e.message}, ${wait}s 后重试 (${attempt+1}/${maxRetries})`);
+      await new Promise(r=>setTimeout(r, wait*1000));
+    }
   }
-  const json = await resp.json();
-  return json.choices?.[0]?.message?.content || '';
+  throw lastErr || new Error('AI 调用失败，请检查网络连接');
 }
 
 // ==================== PARSING ====================
