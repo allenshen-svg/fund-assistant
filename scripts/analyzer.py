@@ -6,6 +6,8 @@ AI 舆情分析模块 — 调用大模型进行 KOL vs 散户情绪博弈分析
 
 import json, re, os, time
 from datetime import datetime
+from urllib.request import Request, urlopen
+import ssl
 import requests
 
 # 用于构建美股摘要
@@ -74,16 +76,29 @@ SYSTEM_PROMPT = """# 角色定义 (Role)
 - 你的输出总长度必须超过3000字，如果不到说明你的分析不够深入
 
 ## ⚠️ 重要：必须分析实时价格走势
-- 输入数据中包含【实时行情异动】，你必须关注其中大宗商品/指数的涨跌幅
-- 如果原油/能源出现大跌（跌幅>3%），你必须深入分析：
-  1. 大跌的核心原因（是经济衰退预期、供应中断概率重估、美元升值、库存增加？）
-  2. 中外油价背离现象：如果国际油价前期因地缘冲突暴涨而中国油企/油基金反而下跌，必须解释原因（政府成品油定价管制→油企利润增长空间有限→市场不看好→基金赎回抛售形成踩踏）
-  3. 从"供应危机恐慌"到"经济衰退担忧"的市场心态转变时间线
-  4. 中国特殊逻辑：进口成本上升(中国年进口5亿吨原油)→贸易逆差扩大→经济增长放缓→A股整体承压
-  5. 基金赎回踩踏效应：投资者恐慌赎回油气基金→基金经理被迫卖出油气股→股价下跌→更多投资者赎回→恶性循环
-  6. 汇率传导：地缘冲突→人民币贬值→进口原油成本上升→进一步压低中国油企利润预期
-- 如果原油/能源出现大涨（涨幅>3%），你也必须分析供应危机(霍尔木兹海峡封锁风险、产量削减)、需求预期、地缘政治溢价
-- 对于任何大幅波动的品种（涨跌幅>2%），必须在对应板块分析中引用实际涨跌幅数据，不能凭空编造
+- 输入数据中包含【实时大宗商品价格快照】和【市场异动】，你必须引用其中的真实涨跌幅数据
+- 原油/能源板块是你分析的重中之重，必须是所有板块中分析最深入、篇幅最长的（至少800字）
+- 你必须根据实时价格方向（涨/跌）分析，不能假设方向！如果数据显示原油下跌，就分析大跌原因；如果上涨，就分析上涨原因
+- 原油/能源板块必须包含以下深度分析维度（如适用）：
+
+  **维度1: 价格走势核心驱动力**
+  - 是经济衰退预期压倒供应危机恐慌？还是供应中断恐慌主导？
+  - 美元升值/贬值对油价的影响（美元计价商品的汇率传导）
+  - 库存数据信号（美国原油库存增减对油需求的判断）
+  - 期货市场空头/多头力量博弈
+
+  **维度2: 中外油价背离分析（必写！）**
+  - 如果国际油价上涨但中国油企/油基金反而下跌：分析政府成品油定价管制→油企利润增长空间被封杀→市场不看好→基金赎回→踩踏效应
+  - 如果国际国内同跌：分析经济衰退预期→油需求下降→全球同步抛售
+  - 中国年进口5亿吨原油，油价每涨10%→进口成本增加约50-100亿美元/月→贸易逆差扩大→人民币贬值压力→反过来推升进口成本
+
+  **维度3: 市场心态转变时间线**
+  - 从地缘冲突爆发→供应恐慌→冷静重估→经济衰退担忧→全面抛售，梳理市场心理变化的完整时间线
+
+  **维度4: 基金赎回踩踏效应**
+  - 投资者恐慌赎回油气基金→基金经理被迫卖出油气股→油气股价格下跌→更多投资者赎回→恶性循环
+  - A股油气股跌幅往往远超国际油价涨幅，因为「赎回压力 + 政策管制 + 经济衰退预期」三重打击
+
 - 如果黄金/白银出现大涨或大跌，需分析避险逻辑与地缘政治的关联
 - 如果指数异动（纳指/标普大跌），需分析对A股科技板块的传导
 
@@ -167,25 +182,70 @@ def _load_breaking_events_summary():
 
 
 def _load_market_anomalies_summary():
-    """读取实时行情异动数据，生成商品/指数价格摘要供AI分析"""
+    """读取实时行情异动数据 + 实时获取关键商品价格，生成市场快照供AI分析"""
+    lines = []
+
+    # 1. 实时获取关键大宗商品/指数价格
+    _KEY_TICKERS = {
+        '113.SC0':   {'name': '国内原油主力', 'short': '原油(INE)'},
+        '113.FU0':   {'name': '国内燃油主力', 'short': '燃油'},
+        '113.AU0':   {'name': '沪金主力', 'short': '沪金'},
+        '113.AG0':   {'name': '沪银主力', 'short': '沪银'},
+        '101.CL00Y': {'name': 'WTI原油', 'short': 'WTI'},
+        '101.GC00Y': {'name': 'COMEX黄金', 'short': 'COMEX金'},
+        '101.SI00Y': {'name': 'COMEX白银', 'short': 'COMEX银'},
+    }
     try:
-        if not os.path.exists(REALTIME_BREAKING_CACHE):
-            return ''
-        with open(REALTIME_BREAKING_CACHE, 'r', encoding='utf-8') as f:
-            rt = json.load(f)
-        anomalies = rt.get('anomalies', [])
-        if not anomalies:
-            return ''
-        lines = ['[实时行情异动（大宗商品/指数/ETF 今日涨跌幅）]:']
-        for a in anomalies:
-            direction = '大涨' if a.get('pct', 0) > 0 else '大跌'
-            lines.append(
-                f"  {a.get('icon','')} {a.get('fullName', a.get('name',''))} "
-                f"{direction}{abs(a.get('pct',0)):.1f}% "
-                f"(价格:{a.get('price','')}, 级别:{a.get('level','')})")
-        return '\n'.join(lines)
+        secids = ','.join(_KEY_TICKERS.keys())
+        url = f'https://push2.eastmoney.com/api/qt/ulist.np/get?fltt=2&fields=f2,f3,f4,f12,f14&secids={secids}'
+        ctx = ssl.create_default_context()
+        ctx.check_hostname = False
+        ctx.verify_mode = ssl.CERT_NONE
+        req = Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+        with urlopen(req, timeout=8, context=ctx) as resp:
+            data = json.loads(resp.read().decode())
+        items = (data.get('data') or {}).get('diff') or []
+        if items:
+            lines.append('[实时大宗商品/贵金属价格快照]:')
+            for item in items:
+                code = str(item.get('f12', ''))
+                price = item.get('f2')
+                pct = item.get('f3')
+                if pct is None:
+                    continue
+                # 匹配
+                for secid, meta in _KEY_TICKERS.items():
+                    if secid.split('.')[-1] == code or secid.endswith('.' + code):
+                        direction = '↑' if pct > 0 else '↓' if pct < 0 else '→'
+                        tag = ''
+                        if abs(pct) >= 3:
+                            tag = ' ⚠️大幅波动！'
+                        elif abs(pct) >= 2:
+                            tag = ' ⚡显著波动'
+                        lines.append(f"  {meta['short']}: {price} ({pct:+.2f}%{direction}){tag}")
+                        break
+            lines.append('')
+    except Exception as e:
+        print(f'  [WARN] 实时行情获取失败: {e}')
+
+    # 2. 从 anomalies 中补充更多异动数据
+    try:
+        if os.path.exists(REALTIME_BREAKING_CACHE):
+            with open(REALTIME_BREAKING_CACHE, 'r', encoding='utf-8') as f:
+                rt = json.load(f)
+            anomalies = rt.get('anomalies', [])
+            if anomalies:
+                lines.append('[今日市场异动（超出阈值的品种）]:')
+                for a in anomalies:
+                    direction = '大涨' if a.get('pct', 0) > 0 else '大跌'
+                    lines.append(
+                        f"  {a.get('icon','')} {a.get('fullName', a.get('name',''))} "
+                        f"{direction}{abs(a.get('pct',0)):.1f}% "
+                        f"(价格:{a.get('price','')}, 级别:{a.get('level','')})")
     except Exception:
-        return ''
+        pass
+
+    return '\n'.join(lines) if lines else ''
 
 
 # ==================== 社媒数据筛选 ====================
@@ -248,6 +308,13 @@ def build_user_prompt(video_data_str):
 2. **板块拆解**：确定这些事件深度影响的 3-5 个行业板块，其中【原油/能源】板块必须分析
 3. **逐板块深度分析**：对每个板块给出详尽的产业链冲击分析，包含具体数据、价格变动、成本传导
 4. **中国映射**：明确事件对A股哪些板块/标的有利好或利空影响
+5. **⚠️ 原油/能源板块必须是最深入的分析**：
+   - 必须引用实时价格数据中的原油涨跌幅
+   - 必须分析中外油价背离（国际油价vs中国油企股价/油气基金表现的差异及原因）
+   - 必须分析市场心态转变时间线（供应恐慌→冷静重估→经济衰退担忧）
+   - 必须分析基金赎回踩踏效应（赎回→被迫卖出→股价下跌→更多赎回）
+   - 必须分析中国成品油价格管制对油企利润空间的限制
+   - 原油/能源板块分析篇幅必须至少800字，其他板块至少500字
 
 # 输出格式要求 (Output Structure)
 请严格按照以下 Markdown 格式输出。🔥部分是最核心的输出，每个板块都必须深入、详尽、有具体数据。
@@ -286,6 +353,24 @@ def build_user_prompt(video_data_str):
 
 **投资策略**
 [具体的投资建议：买入/卖出/持有什么标的或ETF，仓位建议，止盈止损位]
+
+⚠️ **以下两个小节仅在分析原油/能源板块时必须输出（其他板块不需要）：**
+
+**中外市场背离分析**
+[分析国际油价与中国油企股价/油气基金之间的背离现象。必须覆盖：
+- 国际油价走势 vs A股油企股价/油基金净值表现的差异（引用实时数据）
+- 中国成品油价格管制机制（发改委调价窗口、±130元/吨"天花板""地板"价机制）如何封杀油企利润空间
+- 当国际油价上涨时，中国三桶油（中石油/中石化/中海油）的炼化板块反而亏损的逻辑
+- 政策管制下的"逆向传导"：油价越涨→进口成本越高→但终端售价受限→毛利被压缩→股价反跌
+- 中国年进口约5亿吨原油，油价每涨10%对贸易逆差和人民币汇率的量化影响]
+
+**市场心态转变时间线**
+[梳理市场参与者心理变化的完整时间线，必须覆盖：
+- 阶段一：地缘冲突爆发 → 供应中断恐慌 → 油价脉冲上涨
+- 阶段二：市场冷静重估 → 发现实际供应影响有限 / OPEC+增产预期 → 恐慌溢价消退
+- 阶段三：经济衰退担忧主导 → 需求下行预期 → 多头平仓 + 空头加码 → 油价转跌
+- 阶段四：基金赎回踩踏 → 投资者恐慌赎回油气基金 → 基金经理被迫卖出持仓 → 股价加速下跌 → 更多赎回 → 恶性循环
+- 当前处于哪个阶段？基于实时价格数据判断]
 
 ---
 
