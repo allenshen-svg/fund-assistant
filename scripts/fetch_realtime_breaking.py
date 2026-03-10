@@ -1,10 +1,19 @@
 #!/usr/bin/env python3
 """
-基金助手 - 实时突发新闻 & 全球市场异动监控
-全天候24/7高频运行（每5分钟），提供近实时的国际媒体头条 + 市场异动自动告警
+基金助手 - 实时突发新闻 & 全球市场异动监控 (v2 算法重构)
+全天候24/7高频运行，提供近实时的国际媒体头条 + 市场异动自动告警
+
+核心算法:
+  1. 并行抓取12+数据源 (ThreadPoolExecutor)
+  2. 三级去重: MD5精确 → SimHash近似 → 语义聚类(概念组+token Jaccard)
+  3. 热度评分: Wilson-Hotness变体 (来源权重×时效衰减×事件加成)
+  4. 持久化去重缓存: 跨周期指纹库防旧闻重复上浮
+  5. 金融实体提取: 正则NER识别价格/涨跌幅/机构/品种
+  6. LLM结构化 + 关键词兜底双保险
 
 数据源:
-  新闻: Reuters(Google News代理), Bloomberg(Google News代理), CNBC, MarketWatch, Yahoo Finance, BBC
+  新闻: Reuters, Bloomberg, CNBC, MarketWatch, Yahoo Finance, BBC,
+        Al Jazeera, Google News, OilPrice, Asia, 财联社, 新浪财经
   行情: 东方财富推送API — 全球指数/大宗期货/行业ETF
 
 输出: data/realtime_breaking.json → 前端"实时热点·异动"消费
@@ -14,6 +23,8 @@ import json, os, re, ssl, sys, time, hashlib
 from datetime import datetime, timezone, timedelta
 from urllib.request import urlopen, Request
 from urllib.parse import quote
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from email.utils import parsedate_to_datetime
 import xml.etree.ElementTree as ET
 
 # ==================== .env 加载 ====================
@@ -52,6 +63,313 @@ if not API_BASE:
         API_BASE = 'https://api.siliconflow.cn/v1'
 
 CST = timezone(timedelta(hours=8))
+
+# 去重指纹持久化缓存路径
+DEDUP_CACHE_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data', 'breaking_dedup_cache.json')
+# 缓存保留时长（小时）
+DEDUP_CACHE_TTL_HOURS = 12
+
+# ==================== 来源权重 (热度评分用) ====================
+SOURCE_WEIGHTS = {
+    'Reuters': 1.5,
+    'Bloomberg': 1.5,
+    'CNBC': 1.2,
+    'Financial Times': 1.4,
+    'MarketWatch': 1.0,
+    'Yahoo Finance': 0.8,
+    'BBC': 1.1,
+    'Al Jazeera': 1.0,
+    'Google News': 0.7,
+    'OilPrice': 1.0,
+    '财联社': 1.3,
+    '新浪财经': 0.9,
+}
+
+# ==================== SimHash 实现 ====================
+
+def _simhash_tokenize(text):
+    """中英文混合分词: 英文word + 中文2-gram"""
+    text = str(text or '').lower()
+    tokens = re.findall(r'[a-z0-9]+', text)
+    for seg in re.findall(r'[\u4e00-\u9fff]+', text):
+        for i in range(len(seg) - 1):
+            tokens.append(seg[i:i + 2])
+    return tokens
+
+
+def simhash(text, bits=64):
+    """计算文本的SimHash指纹 (64-bit)"""
+    tokens = _simhash_tokenize(text)
+    if not tokens:
+        return 0
+    v = [0] * bits
+    for token in tokens:
+        h = int(hashlib.md5(token.encode()).hexdigest(), 16)
+        for i in range(bits):
+            if h & (1 << i):
+                v[i] += 1
+            else:
+                v[i] -= 1
+    fingerprint = 0
+    for i in range(bits):
+        if v[i] > 0:
+            fingerprint |= (1 << i)
+    return fingerprint
+
+
+def simhash_distance(h1, h2):
+    """两个SimHash之间的海明距离"""
+    x = h1 ^ h2
+    return bin(x).count('1')
+
+
+# ==================== 时间解析 ====================
+
+def _parse_time(time_str):
+    """解析各种格式的时间字符串为 datetime (CST)"""
+    if not time_str:
+        return None
+    # ISO格式 (财联社)
+    try:
+        dt = datetime.fromisoformat(time_str)
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=CST)
+        return dt
+    except (ValueError, TypeError):
+        pass
+    # RFC822 (RSS pubDate)
+    try:
+        dt = parsedate_to_datetime(time_str)
+        return dt
+    except Exception:
+        pass
+    return None
+
+
+def _time_decay_score(pub_time_str, now=None):
+    """基于发布时间的衰减分数: 越新越高, 6小时半衰期"""
+    if now is None:
+        now = datetime.now(CST)
+    dt = _parse_time(pub_time_str)
+    if not dt:
+        return 0.5  # 无法解析时给中等分数
+    age_hours = max(0, (now - dt).total_seconds() / 3600)
+    # 指数衰减: 6小时半衰期
+    return 2.0 ** (-age_hours / 6.0)
+
+
+# ==================== 热度评分引擎 ====================
+
+# 类别基础分
+CATEGORY_BASE_SCORE = {
+    'geopolitics': 12,
+    'commodity': 10,
+    'monetary': 11,
+    'market': 9,
+    'technology': 8,
+    'policy': 8,
+}
+
+# 紧急关键词加成
+URGENCY_PATTERNS = [
+    (r'break|breaking|突发|快讯|紧急', 3),
+    (r'war|战争|invasion|入侵|attack|袭击', 5),
+    (r'crash|崩盘|暴跌|plunge|熔断', 4),
+    (r'surge|暴涨|soar|飙升|创新高|record', 3),
+    (r'embargo|禁运|sanctions|制裁|blockade|封锁', 4),
+    (r'nuclear|核|missile|导弹', 5),
+    (r'fed|美联储|rate\s*cut|降息|rate\s*hike|加息', 3),
+    (r'opec|欧佩克', 2),
+]
+
+# 含具体数字/价格加成
+NUMBER_PATTERNS = [
+    (r'\d+(\.\d+)?%', 2),      # 百分比
+    (r'\$\d+', 2),              # 美元价格
+    (r'\d+美元|\d+亿|\d+万亿', 2),  # 中文数字
+]
+
+
+def compute_hotness(headline, category=None):
+    """计算单条新闻的热度分数"""
+    title = str(headline.get('title', ''))
+    source = str(headline.get('source', ''))
+    pub_time = str(headline.get('time', ''))
+
+    # 1. 来源权重
+    source_w = SOURCE_WEIGHTS.get(source, 0.7)
+    # 模糊匹配来源
+    if source_w == 0.7:
+        for s, w in SOURCE_WEIGHTS.items():
+            if s.lower() in source.lower() or source.lower() in s.lower():
+                source_w = w
+                break
+
+    # 2. 时效衰减
+    freshness = _time_decay_score(pub_time)
+
+    # 3. 类别基础分
+    cat_score = CATEGORY_BASE_SCORE.get(category, 7)
+
+    # 4. 紧急关键词加成
+    urgency = 0
+    title_lower = title.lower()
+    for pattern, bonus in URGENCY_PATTERNS:
+        if re.search(pattern, title_lower):
+            urgency += bonus
+
+    # 5. 数字/价格加成 (含具体数据的新闻更有价值)
+    data_bonus = 0
+    for pattern, bonus in NUMBER_PATTERNS:
+        if re.search(pattern, title):
+            data_bonus += bonus
+
+    # Wilson-Hotness 变体公式
+    # score = source_weight * freshness * (category_base + urgency + data_bonus)
+    score = source_w * freshness * (cat_score + urgency + data_bonus)
+
+    return round(score, 2)
+
+
+# ==================== 三级去重引擎 ====================
+
+class DedupEngine:
+    """三级去重: MD5精确 → SimHash近似 → 语义聚类"""
+
+    def __init__(self):
+        self.md5_set = set()           # Level 1: 精确MD5
+        self.simhash_index = {}        # Level 2: SimHash指纹 → headline
+        self.clusters = []             # Level 3: 语义聚类
+        self._load_cache()
+
+    def _load_cache(self):
+        """加载持久化指纹缓存"""
+        try:
+            if os.path.exists(DEDUP_CACHE_PATH):
+                with open(DEDUP_CACHE_PATH, 'r', encoding='utf-8') as f:
+                    cache = json.load(f)
+                now = datetime.now(CST)
+                cutoff = now - timedelta(hours=DEDUP_CACHE_TTL_HOURS)
+                for entry in cache.get('fingerprints', []):
+                    ts = _parse_time(entry.get('ts', ''))
+                    if ts and ts < cutoff:
+                        continue  # 过期条目跳过
+                    self.md5_set.add(entry.get('md5', ''))
+                    sh = entry.get('simhash', 0)
+                    if sh:
+                        self.simhash_index[sh] = entry.get('title', '')
+        except Exception:
+            pass
+
+    def save_cache(self):
+        """保存指纹缓存到磁盘"""
+        now = datetime.now(CST)
+        entries = []
+        for md5_val in self.md5_set:
+            entries.append({'md5': md5_val, 'ts': now.isoformat()})
+        for sh, title in self.simhash_index.items():
+            entries.append({'simhash': sh, 'title': title, 'ts': now.isoformat()})
+        try:
+            os.makedirs(os.path.dirname(DEDUP_CACHE_PATH), exist_ok=True)
+            with open(DEDUP_CACHE_PATH, 'w', encoding='utf-8') as f:
+                json.dump({'fingerprints': entries, 'updated': now.isoformat()}, f, ensure_ascii=False)
+        except Exception as e:
+            print(f'  [WARN] 保存去重缓存失败: {e}')
+
+    def _normalize(self, text):
+        """标准化文本用于去重"""
+        t = str(text or '').lower().strip()
+        t = re.sub(r'\s+', '', t)
+        t = re.sub(r'[^\w\u4e00-\u9fff]', '', t)
+        return t
+
+    def is_duplicate(self, headline):
+        """三级去重检测, 返回 (is_dup, dup_level)"""
+        title = str(headline.get('title', ''))
+        norm = self._normalize(title)
+        if not norm:
+            return True, 'empty'
+
+        # Level 1: MD5精确匹配
+        md5 = hashlib.md5(norm[:60].encode()).hexdigest()
+        if md5 in self.md5_set:
+            return True, 'md5'
+        self.md5_set.add(md5)
+
+        # Level 2: SimHash近似匹配 (海明距离 ≤ 5)
+        sh = simhash(title)
+        for existing_sh in self.simhash_index:
+            if simhash_distance(sh, existing_sh) <= 5:
+                return True, 'simhash'
+        self.simhash_index[sh] = title
+
+        # Level 3: 语义聚类 (概念组 + token Jaccard)
+        for cluster in self.clusters:
+            for member in cluster:
+                if self._semantic_similar(title, member):
+                    cluster.append(title)
+                    return True, 'semantic'
+        # 新聚类
+        self.clusters.append([title])
+        return False, None
+
+    def _semantic_similar(self, a, b):
+        """语义相似度判断"""
+        token_sim = _token_jaccard(a, b)
+        concept_ratio, concept_shared = _concept_similarity(a, b)
+        bigram_sim = _title_similarity(self._normalize(a), self._normalize(b))
+
+        # 任一条件满足即判定为相似
+        if token_sim >= 0.40:
+            return True
+        if concept_shared >= 2 and bigram_sim >= 0.25:
+            return True
+        if bigram_sim >= 0.50:
+            return True
+        return False
+
+
+# ==================== 金融实体提取 (正则NER) ====================
+
+def extract_entities(title):
+    """从标题中提取金融实体: 价格、涨跌幅、机构、品种"""
+    entities = {}
+    text = str(title or '')
+
+    # 价格: $65.3, 65美元
+    prices = re.findall(r'\$(\d+(?:\.\d+)?)', text)
+    prices += re.findall(r'(\d+(?:\.\d+)?)美元', text)
+    if prices:
+        entities['prices'] = [float(p) for p in prices[:3]]
+
+    # 涨跌幅: +3.5%, 大涨5%, 暴跌8.2%
+    pcts = re.findall(r'[+-]?\d+(?:\.\d+)?%', text)
+    if pcts:
+        entities['pct_changes'] = pcts[:3]
+
+    # 品种关键词
+    commodity_map = {
+        '原油': 'crude_oil', 'oil': 'crude_oil', 'crude': 'crude_oil',
+        '黄金': 'gold', 'gold': 'gold',
+        '白银': 'silver', 'silver': 'silver',
+        '铜': 'copper', 'copper': 'copper',
+        '天然气': 'nat_gas', 'natural gas': 'nat_gas',
+    }
+    text_lower = text.lower()
+    for kw, tag in commodity_map.items():
+        if kw in text_lower:
+            entities.setdefault('commodities', []).append(tag)
+
+    # 机构
+    org_map = {
+        'opec': 'OPEC', '美联储': 'Fed', 'fed': 'Fed', '欧央行': 'ECB', 'ecb': 'ECB',
+        '日央行': 'BOJ', 'boj': 'BOJ', '发改委': 'NDRC',
+    }
+    for kw, tag in org_map.items():
+        if kw in text_lower:
+            entities.setdefault('orgs', []).append(tag)
+
+    return entities
 
 # ==================== SSL / HTTP ====================
 _SSL_CTX = None
@@ -396,13 +714,15 @@ def fetch_asia_headlines():
 
 
 def _dedup_items(items):
-    """标题去重"""
+    """标题去重 (Level 1: MD5精确去重, 用于单源内快速去重)"""
     seen = set()
     result = []
     for it in items:
-        key = re.sub(r'\W', '', it['title'])[:40].lower()
-        if key and key not in seen:
-            seen.add(key)
+        # 标准化: 去掉各种标点/空格, 取前50字符
+        key = re.sub(r'[\W\s]', '', str(it.get('title', '')))[:50].lower()
+        md5 = hashlib.md5(key.encode()).hexdigest()
+        if key and md5 not in seen:
+            seen.add(md5)
             result.append(it)
     return result
 
@@ -1098,14 +1418,15 @@ def build_output(events, anomalies, sources_ok, now):
 
 def main():
     now = datetime.now(CST)
-    print(f"\n{'='*55}")
-    print(f"⚡ 实时突发新闻 & 市场异动监控")
+    print(f"\n{'='*60}")
+    print(f"⚡ 实时突发新闻 & 市场异动监控 (v2 算法)")
     print(f"   时间: {now.strftime('%Y-%m-%d %H:%M:%S')} CST")
     print(f"   模型: {MODEL}")
-    print(f"{'='*55}")
+    print(f"   去重: MD5→SimHash→语义聚类 三级引擎")
+    print(f"{'='*60}")
 
-    # 1. 并行抓取国际媒体头条
-    print('\n📡 [1/4] 抓取国际媒体实时头条...')
+    # 1. 并行抓取国际媒体头条 (ThreadPoolExecutor)
+    print('\n📡 [1/5] 并行抓取国际媒体实时头条...')
     all_headlines = []
     sources_ok = []
 
@@ -1124,64 +1445,110 @@ def main():
         ('新浪财经', fetch_sina_live),
     ]
 
-    for name, fetcher in fetchers:
-        try:
-            items = fetcher()
-            if items:
-                all_headlines.extend(items)
-                sources_ok.append(name)
-                print(f'  ✅ {name}: {len(items)} 条')
-            else:
-                print(f'  ⚠️ {name}: 0 条')
-        except Exception as e:
-            print(f'  ❌ {name}: {e}')
+    t0 = time.time()
+    with ThreadPoolExecutor(max_workers=6) as executor:
+        future_map = {}
+        for name, fetcher in fetchers:
+            future = executor.submit(fetcher)
+            future_map[future] = name
 
-    # 全量去重
-    all_headlines = _dedup_items(all_headlines)
-    print(f'\n  📰 总计头条: {len(all_headlines)} 条 (来自 {len(sources_ok)} 个源)')
+        for future in as_completed(future_map):
+            name = future_map[future]
+            try:
+                items = future.result()
+                if items:
+                    all_headlines.extend(items)
+                    sources_ok.append(name)
+                    print(f'  ✅ {name}: {len(items)} 条')
+                else:
+                    print(f'  ⚠️ {name}: 0 条')
+            except Exception as e:
+                print(f'  ❌ {name}: {e}')
 
-    # 2. 检测市场异动
-    print('\n📊 [2/4] 检测全球市场异动...')
+    fetch_time = time.time() - t0
+    print(f'  ⏱️ 并行抓取耗时: {fetch_time:.1f}s')
+
+    # 2. 三级去重引擎
+    print('\n🔍 [2/5] 三级去重 (MD5→SimHash→语义聚类)...')
+    dedup = DedupEngine()
+    deduped_headlines = []
+    dup_stats = {'md5': 0, 'simhash': 0, 'semantic': 0, 'empty': 0}
+
+    # 先按来源权重和时效性粗排, 优先保留高权重源的新闻
+    for h in all_headlines:
+        h['_hotness'] = compute_hotness(h)
+    all_headlines.sort(key=lambda x: x.get('_hotness', 0), reverse=True)
+
+    for h in all_headlines:
+        is_dup, level = dedup.is_duplicate(h)
+        if is_dup:
+            dup_stats[level] = dup_stats.get(level, 0) + 1
+        else:
+            # 提取金融实体
+            h['entities'] = extract_entities(h.get('title', ''))
+            deduped_headlines.append(h)
+
+    # 保存指纹缓存供下次使用
+    dedup.save_cache()
+
+    print(f'  📰 原始: {len(all_headlines)} → 去重后: {len(deduped_headlines)} 条')
+    print(f'     MD5精确去重: {dup_stats["md5"]}, SimHash近似: {dup_stats["simhash"]}, '
+          f'语义聚类: {dup_stats["semantic"]}, 空标题: {dup_stats["empty"]}')
+    print(f'  📰 来源: {len(sources_ok)} 个 ({", ".join(sources_ok)})')
+
+    # 3. 检测市场异动
+    print('\n📊 [3/5] 检测全球市场异动...')
     anomalies = detect_market_anomalies()
     print(f'  ⚡ 检测到 {len(anomalies)} 个异动')
     for a in anomalies[:5]:
         print(f'    {a["alert"]}')
 
-    # 3. LLM 分析
-    print('\n🧠 [3/4] AI分析实时头条...')
+    # 4. LLM 分析 + 热度排序
+    print('\n🧠 [4/5] AI分析实时头条...')
     market_snapshot = get_all_market_snapshot()
 
-    if API_KEY and all_headlines:
-        events = call_llm_breaking(all_headlines, anomalies, market_snapshot)
+    if API_KEY and deduped_headlines:
+        events = call_llm_breaking(deduped_headlines, anomalies, market_snapshot)
         if events:
             print(f'  ✅ LLM生成 {len(events)} 条突发事件')
+            # 为LLM事件计算热度分
+            for evt in events:
+                evt['hotness'] = compute_hotness(evt, category=evt.get('category'))
         else:
             print('  ⚠️ LLM返回空，使用关键词兜底')
-            events = generate_fallback_events(all_headlines, anomalies)
+            events = generate_fallback_events(deduped_headlines, anomalies)
     else:
         print('  ⚠️ 无API Key或无新闻，使用关键词兜底')
-        events = generate_fallback_events(all_headlines, anomalies)
+        events = generate_fallback_events(deduped_headlines, anomalies)
 
-    # 关键事件强制保留：避免“伊朗无人机袭船”被泛化摘要覆盖
-    priority_events = extract_priority_events(all_headlines)
+    # 关键事件强制保留
+    priority_events = extract_priority_events(deduped_headlines)
     if priority_events:
         print(f'  ⚠️ 关键事件兜底补充 {len(priority_events)} 条')
     events = semantic_dedupe_events(priority_events + list(events), limit=12)
 
-    # 4. 组装输出
-    print('\n📦 [4/4] 组装输出...')
+    # 5. 组装输出
+    print('\n📦 [5/5] 组装输出...')
     output = build_output(events, anomalies, sources_ok, now)
+
+    # 添加算法元数据
+    output['meta']['algorithm'] = 'v2'
+    output['meta']['dedup_stats'] = dup_stats
+    output['meta']['fetch_time_sec'] = round(fetch_time, 1)
+    output['meta']['total_raw_headlines'] = len(all_headlines)
+    output['meta']['deduped_headlines'] = len(deduped_headlines)
 
     os.makedirs(os.path.dirname(OUTPUT_PATH), exist_ok=True)
     with open(OUTPUT_PATH, 'w', encoding='utf-8') as f:
         json.dump(output, f, ensure_ascii=False, indent=2)
 
-    print(f"\n{'='*55}")
+    print(f"\n{'='*60}")
     print(f'✅ 输出: {OUTPUT_PATH}')
     print(f'   突发事件: {len(output["breaking"])} 条')
     print(f'   市场异动: {len(output["anomalies"])} 个')
-    print(f'   数据源: {", ".join(sources_ok)}')
-    print(f"{'='*55}\n")
+    print(f'   去重效率: {len(all_headlines)}→{len(deduped_headlines)} ({len(all_headlines)-len(deduped_headlines)} 重复)')
+    print(f'   抓取耗时: {fetch_time:.1f}s (并行6线程)')
+    print(f"{'='*60}\n")
 
     return output
 
