@@ -73,6 +73,20 @@ SYSTEM_PROMPT = """# 角色定义 (Role)
 - 关键影响概览中每个要点必须包含具体数据（百分比、价格、成本占比等）
 - 你的输出总长度必须超过3000字，如果不到说明你的分析不够深入
 
+## ⚠️ 重要：必须分析实时价格走势
+- 输入数据中包含【实时行情异动】，你必须关注其中大宗商品/指数的涨跌幅
+- 如果原油/能源出现大跌（跌幅>3%），你必须深入分析：
+  1. 大跌的核心原因（是经济衰退预期、供应中断概率重估、美元升值、库存增加？）
+  2. 中外油价背离现象：如果国际油价前期因地缘冲突暴涨而中国油企/油基金反而下跌，必须解释原因（政府成品油定价管制→油企利润增长空间有限→市场不看好→基金赎回抛售形成踩踏）
+  3. 从"供应危机恐慌"到"经济衰退担忧"的市场心态转变时间线
+  4. 中国特殊逻辑：进口成本上升(中国年进口5亿吨原油)→贸易逆差扩大→经济增长放缓→A股整体承压
+  5. 基金赎回踩踏效应：投资者恐慌赎回油气基金→基金经理被迫卖出油气股→股价下跌→更多投资者赎回→恶性循环
+  6. 汇率传导：地缘冲突→人民币贬值→进口原油成本上升→进一步压低中国油企利润预期
+- 如果原油/能源出现大涨（涨幅>3%），你也必须分析供应危机(霍尔木兹海峡封锁风险、产量削减)、需求预期、地缘政治溢价
+- 对于任何大幅波动的品种（涨跌幅>2%），必须在对应板块分析中引用实际涨跌幅数据，不能凭空编造
+- 如果黄金/白银出现大涨或大跌，需分析避险逻辑与地缘政治的关联
+- 如果指数异动（纳指/标普大跌），需分析对A股科技板块的传导
+
 你必须严格按照指定格式输出。最后的 JSON 部分必须是合法的 JSON 代码块。
 你的分析必须有干货、有数据、有逻辑链条，绝不能输出空洞占位符。
 🔥 板块深度影响分析 是你最核心的输出，必须按板块逐一深入分析，这是你存在的全部价值。"""
@@ -152,6 +166,28 @@ def _load_breaking_events_summary():
     return '\n'.join(lines)
 
 
+def _load_market_anomalies_summary():
+    """读取实时行情异动数据，生成商品/指数价格摘要供AI分析"""
+    try:
+        if not os.path.exists(REALTIME_BREAKING_CACHE):
+            return ''
+        with open(REALTIME_BREAKING_CACHE, 'r', encoding='utf-8') as f:
+            rt = json.load(f)
+        anomalies = rt.get('anomalies', [])
+        if not anomalies:
+            return ''
+        lines = ['[实时行情异动（大宗商品/指数/ETF 今日涨跌幅）]:']
+        for a in anomalies:
+            direction = '大涨' if a.get('pct', 0) > 0 else '大跌'
+            lines.append(
+                f"  {a.get('icon','')} {a.get('fullName', a.get('name',''))} "
+                f"{direction}{abs(a.get('pct',0)):.1f}% "
+                f"(价格:{a.get('price','')}, 级别:{a.get('level','')})")
+        return '\n'.join(lines)
+    except Exception:
+        return ''
+
+
 # ==================== 社媒数据筛选 ====================
 # 热点关键词 — 用于从社媒数据中优先筛选与热点事件相关的内容
 _HOT_KEYWORDS = [
@@ -194,10 +230,17 @@ def build_user_prompt(video_data_str):
 请逐板块分析这些事件对原油/能源、化工/化肥、黄金/避险、军工等板块的产业链冲击。
 {events_summary}\n""" if events_summary else ''
 
+    anomalies_summary = _load_market_anomalies_summary()
+    anomalies_block = f"""\n\n# 实时行情异动 (Market Anomalies) — 你必须结合这些实时价格数据进行分析
+⚠️ 以下是今日大宗商品/指数/ETF的实时异动数据，请在板块分析中引用这些真实涨跌幅。
+如果原油出现大跌或大涨，你的原油/能源板块分析必须解释这个价格走势的深层原因（经济衰退预期vs供应危机恐慌、中外油价背离、美元汇率传导、基金赎回踩踏等）。
+不要只分析事件本身，更要分析价格走势背后的市场心理变化。
+{anomalies_summary}\n""" if anomalies_summary else ''
+
     return f"""# 输入数据格式 (Input Context)
 以下是最新的市场舆情数据和国际事件摘要。
 [社媒监控数据]:
-{video_data_str}{us_block}{events_block}
+{video_data_str}{us_block}{events_block}{anomalies_block}
 
 # 分析逻辑 (Analytical Framework)
 请在内心运行以下逻辑，无需在输出中展示推导过程：
