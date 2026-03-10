@@ -145,10 +145,63 @@
 }
 
 /* ====== 实时热点异动 ====== */
+.breaking-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+}
+
+.breaking-group-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14rpx 16rpx;
+  border-radius: 12rpx;
+  background: var(--surface);
+  border-left: 5rpx solid var(--text-sub);
+}
+.breaking-group-header.geopolitics { border-left-color: #f87171; background: rgba(248,113,113,0.06); }
+.breaking-group-header.monetary { border-left-color: #60a5fa; background: rgba(96,165,250,0.06); }
+.breaking-group-header.policy { border-left-color: #f59e0b; background: rgba(245,158,11,0.06); }
+.breaking-group-header.market { border-left-color: #34d399; background: rgba(52,211,153,0.06); }
+.breaking-group-header.technology { border-left-color: #a78bfa; background: rgba(167,139,250,0.06); }
+.breaking-group-header.commodity,
+.breaking-group-header.commodity_anomaly { border-left-color: #fb923c; background: rgba(251,146,60,0.06); }
+
+.breaking-group-left {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+}
+.breaking-group-icon {
+  font-size: 28rpx;
+}
+.breaking-group-label {
+  font-size: 26rpx;
+  font-weight: 700;
+  color: var(--text);
+}
+.breaking-group-count {
+  font-size: 20rpx;
+  color: var(--text-sub);
+  background: var(--elevated);
+  border-radius: 8rpx;
+  padding: 2rpx 10rpx;
+}
+.breaking-group-arrow {
+  font-size: 20rpx;
+  color: var(--text-sub);
+  transition: transform 0.2s ease;
+}
+.breaking-group-arrow.expanded {
+  transform: rotate(90deg);
+}
+
 .breaking-list {
   display: flex;
   flex-direction: column;
   gap: 12rpx;
+  margin-top: 8rpx;
 }
 
 .breaking-item {

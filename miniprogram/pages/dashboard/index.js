@@ -181,6 +181,8 @@ Page({
 
     // 热点异动事件 (置顶地缘/商品)
     hotBreaking: [],
+    breakingGroups: [],
+    expandedCats: {},
     rtUpdatedAt: '',
     rtCountdown: '',
 
@@ -571,6 +573,7 @@ Page({
       rtUpdatedAt: mergedRtUpdatedAt,
       loading: false,
     });
+    this._buildBreakingGroups(hotBreaking);
 
     // 合并缓存的 AI 信号到每只基金卡片
     this._mergeAIIntoPlans();
@@ -657,6 +660,7 @@ Page({
     var hotBreaking = allBreakingDeduped.sort(compareBreakingPriority).slice(0, 12);
     var rtUpdatedAt = String(rtData.updated_at || '').replace('T', ' ').slice(0, 16);
     this.setData({ hotBreaking: hotBreaking, rtUpdatedAt: rtUpdatedAt });
+    this._buildBreakingGroups(hotBreaking);
   },
 
   async refreshQuotes() {
@@ -697,6 +701,62 @@ Page({
     const idx = e.currentTarget.dataset.idx;
     const key = `plans[${idx}].expanded`;
     this.setData({ [key]: !this.data.plans[idx].expanded });
+  },
+
+  toggleBreakingGroup(e) {
+    const cat = e.currentTarget.dataset.cat;
+    const key = 'expandedCats.' + cat;
+    this.setData({ [key]: !this.data.expandedCats[cat] });
+  },
+
+  _buildBreakingGroups(items) {
+    var CAT_ORDER = ['geopolitics', 'monetary', 'policy', 'market', 'technology', 'commodity', 'commodity_anomaly'];
+    var CAT_LABELS = {
+      geopolitics: '地缘', monetary: '央行', policy: '政策',
+      market: '市场', technology: '科技', commodity: '商品', commodity_anomaly: '商品异动',
+    };
+    var CAT_ICONS = {
+      geopolitics: '🌍', monetary: '🏦', policy: '📜',
+      market: '📊', technology: '🤖', commodity: '📦', commodity_anomaly: '📦',
+    };
+    var grouped = {};
+    (items || []).forEach(function(item) {
+      var cat = item.category || 'market';
+      if (!grouped[cat]) grouped[cat] = [];
+      grouped[cat].push(item);
+    });
+    var groups = [];
+    CAT_ORDER.forEach(function(cat) {
+      if (grouped[cat] && grouped[cat].length > 0) {
+        groups.push({
+          cat: cat,
+          label: CAT_LABELS[cat] || cat,
+          icon: CAT_ICONS[cat] || '📰',
+          count: grouped[cat].length,
+          items: grouped[cat],
+        });
+      }
+    });
+    // 不在预设列表中的类别追加到最后
+    Object.keys(grouped).forEach(function(cat) {
+      if (CAT_ORDER.indexOf(cat) === -1 && grouped[cat].length > 0) {
+        groups.push({
+          cat: cat,
+          label: CAT_LABELS[cat] || cat,
+          icon: CAT_ICONS[cat] || '📰',
+          count: grouped[cat].length,
+          items: grouped[cat],
+        });
+      }
+    });
+    // 默认展开第一个分组
+    var expandedCats = this.data.expandedCats || {};
+    var hasAnyExpanded = false;
+    groups.forEach(function(g) { if (expandedCats[g.cat]) hasAnyExpanded = true; });
+    if (!hasAnyExpanded && groups.length > 0) {
+      expandedCats[groups[0].cat] = true;
+    }
+    this.setData({ breakingGroups: groups, expandedCats: expandedCats });
   },
 
   // 展开/收起白话研判
