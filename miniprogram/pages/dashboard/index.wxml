@@ -78,6 +78,7 @@
               <text class="breaking-source" wx:if="{{sub.source}}">{{sub.source}}</text>
               <text class="rt-badge" wx:if="{{sub.isRealtime}}">LIVE</text>
               <text class="rt-badge sentiment" wx:if="{{sub.fromSentiment}}">舆情</text>
+              <text class="breaking-time" wx:if="{{sub.timeLabel}}">{{sub.timeLabel}}</text>
             </view>
             <text class="breaking-title">{{sub.title}}</text>
             <view class="breaking-impact-row">

@@ -254,6 +254,13 @@
   animation: none;
 }
 
+.breaking-time {
+  font-size: 18rpx;
+  color: #9ca3af;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
 @keyframes rtPulse {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.5; }

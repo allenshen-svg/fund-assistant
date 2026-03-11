@@ -1,7 +1,7 @@
 const { getHoldings, getSettings } = require('../../utils/storage');
 const { fetchHotEvents, fetchIndices, fetchMultiFundEstimates, fetchSectorFlows, fetchMultiFundHistory, fetchCommodities, fetchSectorTopFunds, fetchSectorTopStocks, fetchServerFundPick, fetchRealtimeBreaking, getServerBase, fetchSentimentData } = require('../../utils/api');
 const { buildPlans, buildOverview, MODEL_PORTFOLIO, matchSectorFlow } = require('../../utils/advisor');
-const { getMarketStatus, isMarketOpen, formatPct, pctClass, formatTime, isTradingDay, formatMoney } = require('../../utils/market');
+const { getMarketStatus, isMarketOpen, formatPct, pctClass, formatTime, isTradingDay, formatMoney, timeAgo } = require('../../utils/market');
 const { runAIAnalysis, runSingleFundAI, getCachedAIResult, getAIConfig, runFundPickAI, getCachedFundPick, saveServerFundPick } = require('../../utils/ai');
 
 function buildAnalystFallback(item) {
@@ -126,10 +126,12 @@ function isBreakingEventDuplicate(item, seenMetas) {
     const in24h = timeGap <= 24 * 3600 * 1000;
     const in48h = timeGap <= 48 * 3600 * 1000;
 
-    if (sameCategory && titleSim >= 0.55 && (in24h || !prev.eventTs || !current.eventTs)) return true;
-    if (sameCategory && tokenSim >= 0.45 && (in48h || !prev.eventTs || !current.eventTs)) return true;
-    if (titleSim >= 0.50 && themeSim >= 0.45 && (in48h || !prev.eventTs || !current.eventTs)) return true;
-    if (tokenSim >= 0.55 && themeSim >= 0.40 && (in48h || !prev.eventTs || !current.eventTs)) return true;
+    if (sameCategory && titleSim >= 0.40 && (in24h || !prev.eventTs || !current.eventTs)) return true;
+    if (sameCategory && tokenSim >= 0.30 && (in48h || !prev.eventTs || !current.eventTs)) return true;
+    if (titleSim >= 0.35 && themeSim >= 0.35 && (in48h || !prev.eventTs || !current.eventTs)) return true;
+    if (tokenSim >= 0.40 && themeSim >= 0.30 && (in48h || !prev.eventTs || !current.eventTs)) return true;
+    // 同类别+主题高度重合 → 同一事件不同表述
+    if (sameCategory && themeSim >= 0.55 && (in48h || !prev.eventTs || !current.eventTs)) return true;
   }
   return false;
 }
@@ -515,10 +517,17 @@ Page({
     // 语义去重，避免同一事件不同表述重复出现
     const seenMetas = [];
     const allBreakingRaw = [...realtimeBreakingItems, ...marketEvents, ...commodityAnomalies, ...realtimeAnomalyItems, ...sentimentTrendItems];
+    const TWO_HOURS = 2 * 60 * 60 * 1000;
+    const nowMs = Date.now();
     const allBreakingDeduped = [];
     allBreakingRaw.forEach(item => {
+      // 过滤超过2小时的事件
+      var evtTs = parseEventTs(item.eventTime);
+      if (evtTs > 0 && (nowMs - evtTs) > TWO_HOURS) return;
       if (!isBreakingEventDuplicate(item, seenMetas)) {
         seenMetas.push(buildBreakingDedupMeta(item));
+        // 添加相对时间标注
+        item.timeLabel = evtTs > 0 ? timeAgo(evtTs) : '';
         allBreakingDeduped.push(item);
       }
     });
@@ -648,11 +657,17 @@ Page({
     // 保留现有 marketEvent 项（来自 hot_events），与新实时数据合并去重
     var existingMarket = (this.data.hotBreaking || []).filter(function(i) { return i.fromMarketEvent; });
     var allBreakingRaw = [].concat(realtimeBreakingItems, existingMarket, realtimeAnomalyItems);
+    var TWO_HOURS = 2 * 60 * 60 * 1000;
+    var nowMs = Date.now();
     var seenMetas = [];
     var allBreakingDeduped = [];
     allBreakingRaw.forEach(function(item) {
+      // 过滤超过2小时的事件
+      var evtTs = parseEventTs(item.eventTime);
+      if (evtTs > 0 && (nowMs - evtTs) > TWO_HOURS) return;
       if (!isBreakingEventDuplicate(item, seenMetas)) {
         seenMetas.push(buildBreakingDedupMeta(item));
+        item.timeLabel = evtTs > 0 ? timeAgo(evtTs) : '';
         allBreakingDeduped.push(item);
       }
     });

@@ -103,6 +103,25 @@ function getNextTradingDay(dateStr) {
   return null;
 }
 
+/**
+ * 相对时间描述（如 "3分钟前"、"2小时前"）
+ */
+function timeAgo(ts) {
+  if (!ts) return '';
+  var parsed = typeof ts === 'number' ? ts : Date.parse(String(ts));
+  if (isNaN(parsed)) return '';
+  var diff = Date.now() - parsed;
+  if (diff < 0) return '刚刚';
+  var sec = Math.floor(diff / 1000);
+  if (sec < 60) return '刚刚';
+  var min = Math.floor(sec / 60);
+  if (min < 60) return min + '分钟前';
+  var hr = Math.floor(min / 60);
+  if (hr < 24) return hr + '小时前';
+  var day = Math.floor(hr / 24);
+  return day + '天前';
+}
+
 module.exports = {
   todayStr,
   isTradingDay,
@@ -112,6 +131,7 @@ module.exports = {
   pctClass,
   formatMoney,
   formatTime,
+  timeAgo,
   getPrevTradingDay,
   getNextTradingDay,
 };
