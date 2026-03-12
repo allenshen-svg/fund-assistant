@@ -525,6 +525,8 @@ def fetch_google_news_finance():
         'AI+stocks+OR+NVIDIA+OR+semiconductor+OR+tech+stocks+when:6h',
         'commodity+OR+copper+OR+silver+OR+iron+ore+OR+natural+gas+when:6h',
         'crude+oil+OR+OPEC+OR+price+cap+OR+oil+embargo+OR+energy+crisis+when:6h',
+        'iron+ore+OR+Australia+mining+OR+steel+OR+coal+OR+mineral+export+policy+when:6h',
+        'soybean+OR+wheat+OR+corn+OR+palm+oil+OR+cotton+OR+rubber+OR+sugar+futures+when:6h',
         'Korea+OR+Japan+OR+India+OR+Middle+East+economy+OR+Asia+market+when:6h',
     ]
     # 中文查询 — 捕获中文媒体对国际事件的报道
@@ -532,6 +534,8 @@ def fetch_google_news_finance():
         '原油+OR+油价+OR+石油+OR+OPEC+when:6h',
         '韩国+OR+日本+OR+印度+经济+OR+制裁+OR+限价+when:6h',
         '黄金+OR+白银+OR+大宗商品+OR+能源危机+when:6h',
+        '铁矿石+OR+澳大利亚+OR+钢铁+OR+焦煤+OR+矿产出口+when:6h',
+        '天然气+OR+煤炭+OR+大豆+OR+生猪+OR+农产品+OR+期货价格+when:6h',
         '美联储+OR+降息+OR+加息+OR+通胀+when:6h',
         '地缘+OR+中东+OR+伊朗+OR+战争+OR+冲突+when:6h',
     ]
@@ -794,13 +798,15 @@ def _token_jaccard(a, b):
 _CONCEPT_GROUPS = [
     {'中东', '伊朗', '海湾', '霍尔木兹', 'iran', 'gulf', 'hormuz', 'mideast', 'middle east'},
     {'冲突', '战争', '军事', '袭击', '空袭', '攻击', '入侵', 'war', 'conflict', 'attack', 'strike', 'military'},
-    {'油价', '原油', '石油', '能源', 'oil', 'crude', 'petroleum', 'energy', 'opec'},
+    {'油价', '原油', '石油', '能源', '天然气', '煤炭', 'oil', 'crude', 'petroleum', 'energy', 'opec', 'natural gas', 'coal'},
     {'暴涨', '飙升', '大涨', '暴跌', '大跌', '跳水', 'surge', 'soar', 'plunge', 'crash', 'jump', 'tumble'},
     {'制裁', '禁运', '限价', '封锁', 'sanction', 'embargo', 'price cap', 'blockade'},
     {'黄金', '金价', 'gold'},
     {'美联储', '降息', '加息', '利率', 'fed', 'rate cut', 'rate hike', 'interest rate'},
     {'芯片', '半导体', 'chip', 'semiconductor', 'nvidia'},
     {'关税', '贸易战', 'tariff', 'trade war'},
+    {'铁矿', '铁矿石', '矿石', '矿产', '钢铁', '澳矿', '焦煤', '焦炭', 'iron ore', 'iron', 'mining', 'steel', 'australia'},
+    {'大豆', '豆粕', '玉米', '小麦', '棉花', '白糖', '棕榈油', '橡胶', '生猪', '农产品', 'soybean', 'wheat', 'corn', 'cotton', 'sugar', 'palm oil', 'rubber'},
     {'股市', '股票', '指数', 'stock', 'index', 'market'},
     {'韩国', '日本', '印度', 'korea', 'japan', 'india', '日经', 'nikkei'},
     {'俄罗斯', '乌克兰', 'russia', 'ukraine'},
@@ -927,16 +933,54 @@ GLOBAL_INDICES = {
 }
 
 COMMODITY_FUTURES = {
-    '113.AU0':  {'name': '沪金主力', 'short': '黄金', 'icon': '🥇', 'threshold': 1.0, 'tag': '黄金'},
-    '113.AG0':  {'name': '沪银主力', 'short': '白银', 'icon': '🥈', 'threshold': 1.5, 'tag': '白银'},
-    '113.CU0':  {'name': '沪铜主力', 'short': '铜', 'icon': '🔩', 'threshold': 1.5, 'tag': '有色金属'},
-    '113.AL0':  {'name': '沪铝主力', 'short': '铝', 'icon': '⚙️', 'threshold': 1.5, 'tag': '有色金属'},
-    '113.SC0':  {'name': '原油主力', 'short': '原油', 'icon': '🛢️', 'threshold': 2.0, 'tag': '原油'},
-    '113.FU0':  {'name': '燃油主力', 'short': '燃油', 'icon': '⛽', 'threshold': 2.0, 'tag': '原油'},
-    '113.ZN0':  {'name': '沪锌主力', 'short': '锌', 'icon': '🔧', 'threshold': 1.5, 'tag': '有色金属'},
-    '113.NI0':  {'name': '沪镍主力', 'short': '镍', 'icon': '🧲', 'threshold': 2.0, 'tag': '有色金属'},
-    '113.RB0':  {'name': '螺纹钢', 'short': '钢', 'icon': '🏗️', 'threshold': 2.0, 'tag': '工业'},
-    '113.I0':   {'name': '铁矿石', 'short': '铁矿', 'icon': '⛏️', 'threshold': 2.0, 'tag': '工业'},
+    # === 上期所 SHFE (m:113) ===
+    '113.aum':  {'name': '沪金主连', 'short': '黄金', 'icon': '🥇', 'threshold': 1.0, 'tag': '黄金'},
+    '113.agm':  {'name': '沪银主连', 'short': '白银', 'icon': '🥈', 'threshold': 1.5, 'tag': '白银'},
+    '113.cum':  {'name': '沪铜主连', 'short': '铜', 'icon': '🔩', 'threshold': 1.5, 'tag': '有色金属'},
+    '113.alm':  {'name': '沪铝主连', 'short': '铝', 'icon': '⚙️', 'threshold': 1.5, 'tag': '有色金属'},
+    '113.znm':  {'name': '沪锌主连', 'short': '锌', 'icon': '🔧', 'threshold': 1.5, 'tag': '有色金属'},
+    '113.nim':  {'name': '沪镍主连', 'short': '镍', 'icon': '🧲', 'threshold': 2.0, 'tag': '有色金属'},
+    '113.pbm':  {'name': '沪铅主连', 'short': '铅', 'icon': '🔗', 'threshold': 2.0, 'tag': '有色金属'},
+    '113.snm':  {'name': '沪锡主连', 'short': '锡', 'icon': '🔘', 'threshold': 2.0, 'tag': '有色金属'},
+    '113.ssm':  {'name': '不锈钢主连', 'short': '不锈钢', 'icon': '🔩', 'threshold': 2.0, 'tag': '有色金属'},
+    '113.aom':  {'name': '氧化铝主连', 'short': '氧化铝', 'icon': '⚙️', 'threshold': 2.0, 'tag': '有色金属'},
+    '113.fum':  {'name': '燃油主连', 'short': '燃油', 'icon': '⛽', 'threshold': 2.0, 'tag': '能源'},
+    '113.bum':  {'name': '沥青主连', 'short': '沥青', 'icon': '🛣️', 'threshold': 2.0, 'tag': '能源'},
+    '113.rbm':  {'name': '螺纹钢主连', 'short': '螺纹钢', 'icon': '🏗️', 'threshold': 2.0, 'tag': '钢铁'},
+    '113.hcm':  {'name': '热卷主连', 'short': '热卷', 'icon': '🏗️', 'threshold': 2.0, 'tag': '钢铁'},
+    '114.im':   {'name': '铁矿石主连', 'short': '铁矿', 'icon': '⛏️', 'threshold': 1.5, 'tag': '钢铁'},
+    '113.rum':  {'name': '橡胶主连', 'short': '橡胶', 'icon': '🔴', 'threshold': 2.0, 'tag': '化工'},
+    '113.spm':  {'name': '纸浆主连', 'short': '纸浆', 'icon': '📄', 'threshold': 2.5, 'tag': '化工'},
+    # === 大商所 DCE (m:114) ===
+    '114.jmm':  {'name': '焦煤主连', 'short': '焦煤', 'icon': '⚫', 'threshold': 2.0, 'tag': '煤炭'},
+    '114.jm':   {'name': '焦炭主连', 'short': '焦炭', 'icon': '🔥', 'threshold': 2.0, 'tag': '煤炭'},
+    '114.am':   {'name': '豆一主连', 'short': '大豆', 'icon': '🫘', 'threshold': 2.0, 'tag': '农产品'},
+    '114.mm':   {'name': '豆粕主连', 'short': '豆粕', 'icon': '🌱', 'threshold': 2.0, 'tag': '农产品'},
+    '114.ym':   {'name': '豆油主连', 'short': '豆油', 'icon': '🫗', 'threshold': 2.0, 'tag': '农产品'},
+    '114.pm':   {'name': '棕榈油主连', 'short': '棕榈油', 'icon': '🌴', 'threshold': 2.0, 'tag': '农产品'},
+    '114.cm':   {'name': '玉米主连', 'short': '玉米', 'icon': '🌽', 'threshold': 2.0, 'tag': '农产品'},
+    '114.lhm':  {'name': '生猪主连', 'short': '生猪', 'icon': '🐷', 'threshold': 2.0, 'tag': '农产品'},
+    '114.jdm':  {'name': '鸡蛋主连', 'short': '鸡蛋', 'icon': '🥚', 'threshold': 2.0, 'tag': '农产品'},
+    '114.egm':  {'name': '乙二醇主连', 'short': '乙二醇', 'icon': '🧪', 'threshold': 2.5, 'tag': '化工'},
+    '114.ebm':  {'name': '苯乙烯主连', 'short': '苯乙烯', 'icon': '🧪', 'threshold': 2.5, 'tag': '化工'},
+    '114.pgm':  {'name': 'LPG主连', 'short': 'LPG', 'icon': '🔥', 'threshold': 2.5, 'tag': '能源'},
+    '114.ppm':  {'name': '聚丙烯主连', 'short': 'PP', 'icon': '📦', 'threshold': 2.5, 'tag': '化工'},
+    '114.lm':   {'name': '塑料主连', 'short': 'LLDPE', 'icon': '📦', 'threshold': 2.5, 'tag': '化工'},
+    '114.vm':   {'name': 'PVC主连', 'short': 'PVC', 'icon': '📦', 'threshold': 2.5, 'tag': '化工'},
+    '114.bzm':  {'name': '纯苯主连', 'short': '纯苯', 'icon': '🧪', 'threshold': 2.5, 'tag': '化工'},
+    # === 郑商所 ZCE (m:115) ===
+    '115.CFM':  {'name': '棉花主连', 'short': '棉花', 'icon': '🧶', 'threshold': 2.0, 'tag': '农产品'},
+    '115.SRM':  {'name': '白糖主连', 'short': '白糖', 'icon': '🍬', 'threshold': 2.0, 'tag': '农产品'},
+    '115.OIM':  {'name': '菜油主连', 'short': '菜油', 'icon': '🫗', 'threshold': 2.0, 'tag': '农产品'},
+    '115.RMM':  {'name': '菜粕主连', 'short': '菜粕', 'icon': '🌱', 'threshold': 2.0, 'tag': '农产品'},
+    '115.APM':  {'name': '苹果主连', 'short': '苹果', 'icon': '🍎', 'threshold': 2.5, 'tag': '农产品'},
+    '115.TAM':  {'name': 'PTA主连', 'short': 'PTA', 'icon': '🧪', 'threshold': 2.5, 'tag': '化工'},
+    '115.MAM':  {'name': '甲醇主连', 'short': '甲醇', 'icon': '🧪', 'threshold': 2.5, 'tag': '化工'},
+    '115.FGM':  {'name': '玻璃主连', 'short': '玻璃', 'icon': '🪟', 'threshold': 2.0, 'tag': '建材'},
+    '115.SAM':  {'name': '纯碱主连', 'short': '纯碱', 'icon': '⚗️', 'threshold': 2.0, 'tag': '化工'},
+    '115.URM':  {'name': '尿素主连', 'short': '尿素', 'icon': '🧪', 'threshold': 2.5, 'tag': '化工'},
+    '115.SFM':  {'name': '硅铁主连', 'short': '硅铁', 'icon': '⚙️', 'threshold': 2.5, 'tag': '钢铁'},
+    '115.SMM':  {'name': '锰硅主连', 'short': '锰硅', 'icon': '⚙️', 'threshold': 2.5, 'tag': '钢铁'},
 }
 
 SECTOR_ETFS = {
@@ -954,12 +998,39 @@ SECTOR_ETFS = {
     '1.515080': {'name': '红利ETF', 'short': '红利', 'icon': '💰', 'threshold': 1.5, 'tag': '红利'},
 }
 
-# COMEX/NYMEX国际商品 (via 东方财富全球期货)
+# 国际商品期货 (COMEX/NYMEX/ICE/CBOT/LME/BMD)
 GLOBAL_COMMODITIES = {
+    # COMEX (m:101)
     '101.GC00Y':  {'name': 'COMEX黄金', 'short': '国际金', 'icon': '🥇', 'threshold': 1.0, 'tag': '黄金'},
     '101.SI00Y':  {'name': 'COMEX白银', 'short': '国际银', 'icon': '🥈', 'threshold': 1.5, 'tag': '白银'},
-    '101.CL00Y':  {'name': 'WTI原油', 'short': 'WTI油', 'icon': '🛢️', 'threshold': 2.0, 'tag': '原油'},
     '101.HG00Y':  {'name': 'COMEX铜', 'short': '国际铜', 'icon': '🔩', 'threshold': 1.5, 'tag': '有色金属'},
+    # NYMEX (m:102)
+    '102.CL00Y':  {'name': 'NYMEX原油', 'short': 'WTI油', 'icon': '🛢️', 'threshold': 2.0, 'tag': '原油'},
+    '102.NG00Y':  {'name': 'NYMEX天然气', 'short': '天然气', 'icon': '🔥', 'threshold': 3.0, 'tag': '天然气'},
+    '102.PA00Y':  {'name': 'NYMEX钯金', 'short': '钯金', 'icon': '💎', 'threshold': 2.0, 'tag': '贵金属'},
+    # ICE EU (m:112) - 布伦特原油、天然气
+    '112.B00Y':   {'name': '布伦特原油', 'short': 'Brent油', 'icon': '🛢️', 'threshold': 2.0, 'tag': '原油'},
+    '112.M00Y':   {'name': 'ICE天然气', 'short': 'ICE气', 'icon': '🔥', 'threshold': 3.0, 'tag': '天然气'},
+    # CBOT (m:103) - 农产品
+    '103.ZS00Y':  {'name': 'CBOT大豆', 'short': '美豆', 'icon': '🫘', 'threshold': 2.0, 'tag': '农产品'},
+    '103.ZC00Y':  {'name': 'CBOT玉米', 'short': '美玉米', 'icon': '🌽', 'threshold': 2.0, 'tag': '农产品'},
+    '103.ZW00Y':  {'name': 'CBOT小麦', 'short': '美小麦', 'icon': '🌾', 'threshold': 2.0, 'tag': '农产品'},
+    '103.ZM00Y':  {'name': 'CBOT豆粕', 'short': '美豆粕', 'icon': '🌱', 'threshold': 2.0, 'tag': '农产品'},
+    '103.ZL00Y':  {'name': 'CBOT豆油', 'short': '美豆油', 'icon': '🫗', 'threshold': 2.0, 'tag': '农产品'},
+    # ICE US (m:108) - 软商品
+    '108.CT00Y':  {'name': 'ICE棉花', 'short': '美棉花', 'icon': '🧶', 'threshold': 2.0, 'tag': '农产品'},
+    '108.SB00Y':  {'name': 'ICE糖', 'short': '美糖', 'icon': '🍬', 'threshold': 2.0, 'tag': '农产品'},
+    # LME (m:109) - 工业金属
+    '109.LCPT':   {'name': 'LME铜', 'short': 'LME铜', 'icon': '🔩', 'threshold': 1.5, 'tag': '有色金属'},
+    '109.LALT':   {'name': 'LME铝', 'short': 'LME铝', 'icon': '⚙️', 'threshold': 1.5, 'tag': '有色金属'},
+    '109.LZNT':   {'name': 'LME锌', 'short': 'LME锌', 'icon': '🔧', 'threshold': 2.0, 'tag': '有色金属'},
+    '109.LNKT':   {'name': 'LME镍', 'short': 'LME镍', 'icon': '🧲', 'threshold': 2.0, 'tag': '有色金属'},
+    '109.LLDT':   {'name': 'LME铅', 'short': 'LME铅', 'icon': '🔗', 'threshold': 2.0, 'tag': '有色金属'},
+    '109.LTNT':   {'name': 'LME锡', 'short': 'LME锡', 'icon': '🔘', 'threshold': 2.0, 'tag': '有色金属'},
+    # BMD (m:110) - 棕榈油
+    '110.MPM00Y': {'name': 'BMD棕榈油', 'short': '马棕油', 'icon': '🌴', 'threshold': 2.0, 'tag': '农产品'},
+    # SGX (m:104) - 橡胶
+    '104.RT00Y':  {'name': 'SGX橡胶', 'short': '新橡胶', 'icon': '🔴', 'threshold': 2.0, 'tag': '化工'},
 }
 
 
