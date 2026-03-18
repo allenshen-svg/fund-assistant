@@ -1,10 +1,113 @@
 {
-  "updated_at": "2026-03-10T12:14:54.658242+08:00",
+  "updated_at": "2026-03-18T22:59:20+08:00",
   "breaking": [
     {
-      "id": "rtb_8a9eef24",
-      "title": "伊朗无人机袭击油轮",
-      "reason": "伊朗相关袭船事件升级航运与能源中断风险，原油与避险资产波动或放大",
+      "id": "rtb_5114cd61",
+      "title": "布伦特原油涨至100.227美元/桶",
+      "reason": "伊朗南帕尔斯气田遭袭，国际原油价格短线拉升",
+      "source": "财联社",
+      "category": "commodity",
+      "catIcon": "📦",
+      "impact": 15,
+      "impactClass": "up",
+      "impactAbs": 15,
+      "sectors_positive": [
+        "石油开采"
+      ],
+      "sectors_negative": [
+        "能源消耗"
+      ],
+      "advice": "关注能源板块动态",
+      "timestamp": "2026-03-18T19:32:47+08:00",
+      "source_time": null,
+      "isRealtime": true
+    },
+    {
+      "id": "rtb_ca8d46cd",
+      "title": "英伟达目标股价上调至325美元",
+      "reason": "罗森布拉特证券上调英伟达目标股价，市值达8万亿美元",
+      "source": "财联社",
+      "category": "technology",
+      "catIcon": "🤖",
+      "impact": 15,
+      "impactClass": "up",
+      "impactAbs": 15,
+      "sectors_positive": [
+        "科技股"
+      ],
+      "sectors_negative": [],
+      "advice": "关注科技股动态",
+      "timestamp": "2026-03-18T19:26:47+08:00",
+      "source_time": null,
+      "isRealtime": true
+    },
+    {
+      "id": "rtb_122a00ee",
+      "title": "能源化工期货夜盘暴涨，原油涨近7.6%",
+      "reason": "受地缘政治紧张及供需影响，能源化工产品价格大幅上涨。",
+      "source": "财联社",
+      "category": "commodity",
+      "catIcon": "📦",
+      "impact": 15,
+      "impactClass": "up",
+      "impactAbs": 15,
+      "sectors_positive": [
+        "能源化工"
+      ],
+      "sectors_negative": [
+        "能源消费"
+      ],
+      "advice": "关注能源板块投资机会",
+      "timestamp": "2026-03-18T22:23:50+08:00",
+      "source_time": null,
+      "isRealtime": true
+    },
+    {
+      "id": "rtb_789157f3",
+      "title": "特朗普称伊朗陷入瘫痪，地缘政治紧张",
+      "reason": "特朗普称美国正迅速让伊朗陷入瘫痪，地缘政治紧张加剧",
+      "source": "新浪财经",
+      "category": "geopolitics",
+      "catIcon": "🌍",
+      "impact": 15,
+      "impactClass": "up",
+      "impactAbs": 15,
+      "sectors_positive": [
+        "国防"
+      ],
+      "sectors_negative": [
+        "能源"
+      ],
+      "advice": "关注国防股",
+      "timestamp": "2026-03-18T20:02:03+08:00",
+      "source_time": null,
+      "isRealtime": true
+    },
+    {
+      "id": "rtb_1075eda6",
+      "title": "甲醇主连价格涨10.2%",
+      "reason": "甲醇主连价格大幅上涨至3228.0元",
+      "source": "市场异动检测",
+      "category": "commodity",
+      "catIcon": "📦",
+      "impact": 15,
+      "impactClass": "up",
+      "impactAbs": 15,
+      "sectors_positive": [
+        "化工"
+      ],
+      "sectors_negative": [
+        "无"
+      ],
+      "advice": "关注化工板块投资机会",
+      "timestamp": "2026-03-18T22:47:31+08:00",
+      "source_time": null,
+      "isRealtime": true
+    },
+    {
+      "id": "rtb_15623135",
+      "title": "印军护航油轮，中东局势紧张",
+      "reason": "印度派遣战舰护航油轮，地缘政治风险上升",
       "source": "Bloomberg",
       "category": "geopolitics",
       "catIcon": "🌍",
@@ -12,423 +115,427 @@
       "impactClass": "up",
       "impactAbs": 15,
       "sectors_positive": [
-        "能源",
-        "军工",
-        "黄金"
-      ],
-      "sectors_negative": [
-        "航运",
-        "航空",
-        "高耗能"
-      ],
-      "advice": "提高防守仓位并跟踪油价波动",
-      "timestamp": "2026-03-07T17:58:27.423242+08:00",
-      "isRealtime": true
-    },
-    {
-      "id": "rtb_b4ba67c3",
-      "title": "俄罗斯对乌克兰发动无人机和导弹袭击",
-      "reason": "俄罗斯对乌克兰的袭击导致至少7人死亡，乌克兰局势进一步恶化。",
-      "source": "Reuters",
-      "category": "geopolitics",
-      "catIcon": "🌍",
-      "impact": 13,
-      "impactClass": "up",
-      "impactAbs": 13,
-      "sectors_positive": [
-        "军工"
-      ],
-      "sectors_negative": [
-        "能源"
-      ],
-      "advice": "关注军工板块机会",
-      "timestamp": "2026-03-07T17:58:27.423242+08:00",
-      "isRealtime": true
-    },
-    {
-      "id": "rtb_a6d844b1",
-      "title": "COMEX白银价格上涨4.7%，至88.465美元/盎司",
-      "reason": "地缘政治紧张，投资者寻求避险。",
-      "source": "global_commodity",
-      "category": "commodity",
-      "catIcon": "📦",
-      "impact": 10,
-      "impactClass": "up",
-      "impactAbs": 10,
-      "sectors_positive": [
-        "金ETF"
-      ],
-      "sectors_negative": [
-        "红利"
-      ],
-      "advice": "关注贵金属投资",
-      "timestamp": "2026-03-10T12:09:21.719197+08:00",
-      "isRealtime": true
-    },
-    {
-      "id": "rtb_ac084864",
-      "title": "美国股市收盘下跌，油价飙升12%",
-      "reason": "美国股市因油价飙升和就业市场疲软而收盘下跌，市场担忧全球经济。",
-      "source": "Reuters",
-      "category": "market",
-      "catIcon": "📊",
-      "impact": 12,
-      "impactClass": "up",
-      "impactAbs": 12,
-      "sectors_positive": [
         "能源"
       ],
       "sectors_negative": [
         "金融"
       ],
-      "advice": "谨慎投资金融板块",
-      "timestamp": "2026-03-07T17:58:27.423242+08:00",
+      "advice": "关注能源板块",
+      "timestamp": "2026-03-18T22:12:17+08:00",
+      "source_time": null,
       "isRealtime": true
     },
     {
-      "id": "rtb_5474764a",
-      "title": "中国2月出口超预期，贸易顺差创新高",
-      "reason": "中国出口强劲增长，推动贸易顺差达到历史最高水平。",
-      "source": "CNBC",
-      "category": "market",
-      "catIcon": "📊",
-      "impact": 12,
-      "impactClass": "up",
-      "impactAbs": 12,
-      "sectors_positive": [
-        "港股科技",
-        "军工"
-      ],
-      "sectors_negative": [],
-      "advice": "关注出口相关行业",
-      "timestamp": "2026-03-10T12:09:21.719197+08:00",
-      "isRealtime": true
-    },
-    {
-      "id": "rtb_6fd78612",
-      "title": "美国对以色列军火销售未经过国会审查",
-      "reason": "美国直接批准对以色列的军火销售，可能加剧中东紧张局势",
+      "id": "rtb_1e19deb4",
+      "title": "黎巴嫩冲突致每日课堂伤亡",
+      "reason": "联合国报告显示冲突严重，影响教育系统",
       "source": "Reuters",
       "category": "geopolitics",
       "catIcon": "🌍",
-      "impact": 12,
+      "impact": 15,
       "impactClass": "up",
-      "impactAbs": 12,
-      "sectors_positive": [
-        "军工"
-      ],
+      "impactAbs": 15,
+      "sectors_positive": [],
       "sectors_negative": [
-        "和平相关"
+        "教育"
       ],
-      "advice": "关注军工股",
-      "timestamp": "2026-03-07T11:24:08.670881+08:00",
+      "advice": "关注地区安全局势",
+      "timestamp": "2026-03-18T19:38:39+08:00",
+      "source_time": null,
       "isRealtime": true
     },
     {
-      "id": "rtb_4de5e688",
-      "title": "恒生指数上涨1.7%",
-      "reason": "恒生指数上涨，受益于军工ETF和恒生科技板块的上涨。",
-      "source": "市场快照",
-      "category": "market",
-      "catIcon": "📊",
-      "impact": 10,
-      "impactClass": "up",
-      "impactAbs": 10,
-      "sectors_positive": [
-        "军工",
-        "科技"
-      ],
-      "sectors_negative": [],
-      "advice": "关注军工和科技板块",
-      "timestamp": "2026-03-07T17:58:27.423242+08:00",
-      "isRealtime": true
-    },
-    {
-      "id": "rtb_f0e6d7dc",
-      "title": "美国石油价格创历史最大周涨幅",
-      "reason": "地缘政治紧张导致石油价格上涨，可能推高通胀",
-      "source": "CNBC",
+      "id": "rtb_6327f3ba",
+      "title": "WTI原油突破98美元/桶",
+      "reason": "地缘政治紧张局势推动WTI原油价格大幅上涨。",
+      "source": "新浪财经",
       "category": "commodity",
       "catIcon": "📦",
-      "impact": 10,
+      "impact": 14,
       "impactClass": "up",
-      "impactAbs": 10,
+      "impactAbs": 14,
       "sectors_positive": [
         "能源"
       ],
       "sectors_negative": [
-        "消费者"
+        "非能源"
       ],
-      "advice": "关注能源股",
-      "timestamp": "2026-03-07T11:24:08.670881+08:00",
+      "advice": "关注能源相关投资",
+      "timestamp": "2026-03-18T21:48:08+08:00",
+      "source_time": null,
       "isRealtime": true
     },
     {
-      "id": "rtb_eb140b70",
-      "title": "黎巴嫩酒店遭以色列空袭",
-      "reason": "黎巴嫩表示，以色列对贝鲁特一家酒店发动空袭，造成四人死亡",
-      "source": "Reuters",
-      "category": "geopolitics",
-      "catIcon": "🌍",
-      "impact": 10,
-      "impactClass": "up",
-      "impactAbs": 10,
-      "sectors_positive": [],
-      "sectors_negative": [],
-      "advice": "关注中东地区地缘政治风险",
-      "timestamp": "2026-03-08T11:15:04.989888+08:00",
-      "isRealtime": true
-    },
-    {
-      "id": "rtb_c128e807",
-      "title": "美联储官员呼吁降低通胀",
-      "reason": "美联储官员表示中央银行必须降低通胀，暗示可能降息",
-      "source": "Reuters",
-      "category": "monetary",
-      "catIcon": "🏦",
-      "impact": 10,
-      "impactClass": "up",
-      "impactAbs": 10,
-      "sectors_positive": [
-        "债券"
-      ],
-      "sectors_negative": [
-        "利率敏感型股票"
-      ],
-      "advice": "关注利率变动",
-      "timestamp": "2026-03-07T11:24:08.670881+08:00",
-      "isRealtime": true
-    },
-    {
-      "id": "rtb_9c79c495",
-      "title": "奥斯陆美国大使馆爆炸",
-      "reason": "挪威警方称美国大使馆发生爆炸，造成轻微损害",
-      "source": "Reuters",
-      "category": "geopolitics",
-      "catIcon": "🌍",
-      "impact": 10,
-      "impactClass": "up",
-      "impactAbs": 10,
-      "sectors_positive": [],
-      "sectors_negative": [],
-      "advice": "关注地缘政治风险",
-      "timestamp": "2026-03-08T11:15:04.989888+08:00",
-      "isRealtime": true
-    },
-    {
-      "id": "rtb_748ed063",
-      "title": "黄金价格大幅上涨",
-      "reason": "地缘政治紧张和通胀预期推高黄金价格",
-      "source": "Reuters",
+      "id": "rtb_7433dbd9",
+      "title": "甲醇价格飙升",
+      "reason": "中国进口甲醇总量超1000万吨，甲醇产能满负荷，甲醇价格升至3230.0元/吨",
+      "source": "财联社",
       "category": "commodity",
       "catIcon": "📦",
-      "impact": 10,
+      "impact": 15,
       "impactClass": "up",
-      "impactAbs": 10,
+      "impactAbs": 15,
       "sectors_positive": [
-        "黄金ETF"
+        "化工"
       ],
       "sectors_negative": [
         "无"
       ],
-      "advice": "考虑配置黄金",
-      "timestamp": "2026-03-07T11:24:08.670881+08:00",
+      "advice": "关注化工股",
+      "timestamp": "2026-03-18T22:53:26+08:00",
+      "source_time": null,
       "isRealtime": true
     },
     {
-      "id": "rtb_0e0e7040",
-      "title": "纳斯达克100指数下跌1.6%",
-      "reason": "纳斯达克100指数下跌，主要受科技股影响。",
-      "source": "市场快照",
-      "category": "market",
-      "catIcon": "📊",
-      "impact": 9,
-      "impactClass": "up",
-      "impactAbs": 9,
-      "sectors_positive": [],
-      "sectors_negative": [
-        "科技"
-      ],
-      "advice": "关注科技板块风险",
-      "timestamp": "2026-03-07T17:58:27.423242+08:00",
-      "isRealtime": true
-    },
-    {
-      "id": "rtb_7a1a95ce",
-      "title": "创业板指半日涨超2%，算力硬件股走强",
-      "reason": "AI和算力需求增长，推动相关板块上涨。",
+      "id": "rtb_680f7bc7",
+      "title": "WTI原油涨3%，布伦特原油涨5.36%",
+      "reason": "地缘政治紧张导致原油市场供应担忧加剧。",
       "source": "财联社",
-      "category": "technology",
-      "catIcon": "🤖",
-      "impact": 9,
-      "impactClass": "up",
-      "impactAbs": 9,
-      "sectors_positive": [
-        "算力"
-      ],
-      "sectors_negative": [],
-      "advice": "关注科技成长股",
-      "timestamp": "2026-03-10T12:09:21.719197+08:00",
-      "isRealtime": true
-    },
-    {
-      "id": "rtb_606fb47d",
-      "title": "中国2月铁矿砂进口同比增10.0%，铜材进口增",
-      "reason": "原材料需求旺盛，推动相关板块上涨。",
-      "source": "新浪财经",
       "category": "commodity",
       "catIcon": "📦",
+      "impact": 14,
+      "impactClass": "up",
+      "impactAbs": 14,
+      "sectors_positive": [
+        "能源"
+      ],
+      "sectors_negative": [
+        "能源消费"
+      ],
+      "advice": "关注能源板块投资机会",
+      "timestamp": "2026-03-18T22:23:50+08:00",
+      "source_time": null,
+      "isRealtime": true
+    },
+    {
+      "id": "rtb_09d9b657",
+      "title": "低硫燃料油期货主力合约暴涨8%",
+      "reason": "市场对伊朗警告的担忧推动低硫燃料油期货价格大幅上涨。",
+      "source": "财联社",
+      "category": "commodity",
+      "catIcon": "📦",
+      "impact": 13,
+      "impactClass": "up",
+      "impactAbs": 13,
+      "sectors_positive": [
+        "能源"
+      ],
+      "sectors_negative": [
+        "非能源"
+      ],
+      "advice": "关注能源板块，谨慎操作",
+      "timestamp": "2026-03-18T21:48:08+08:00",
+      "source_time": null,
+      "isRealtime": true
+    },
+    {
+      "id": "rtb_43c2afe2",
+      "title": "Micron股价飙升62%，引领内存价格上涨",
+      "reason": "内存价格飙升推动Micron财报表现强劲",
+      "source": "CNBC",
+      "category": "technology",
+      "catIcon": "🤖",
+      "impact": 12,
+      "impactClass": "up",
+      "impactAbs": 12,
+      "sectors_positive": [
+        "半导体"
+      ],
+      "sectors_negative": [],
+      "advice": "关注半导体行业投资机会",
+      "timestamp": "2026-03-18T19:38:39+08:00",
+      "source_time": null,
+      "isRealtime": true
+    },
+    {
+      "id": "rtb_24d2d44e",
+      "title": "荷兰天然气价格涨超6%，欧洲能源压力加剧",
+      "reason": "欧洲能源需求增加，供应紧张",
+      "source": "财联社",
+      "category": "commodity",
+      "catIcon": "📦",
+      "impact": 12,
+      "impactClass": "up",
+      "impactAbs": 12,
+      "sectors_positive": [
+        "天然气开采"
+      ],
+      "sectors_negative": [
+        "能源密集型行业"
+      ],
+      "advice": "关注能源价格波动",
+      "timestamp": "2026-03-18T22:18:01+08:00",
+      "source_time": null,
+      "isRealtime": true
+    },
+    {
+      "id": "rtb_e932789f",
+      "title": "以太坊跌破2200美元",
+      "reason": "加密货币市场持续下行，以太坊价格受影响",
+      "source": "财联社",
+      "category": "commodity",
+      "catIcon": "📦",
+      "impact": 10,
+      "impactClass": "up",
+      "impactAbs": 10,
+      "sectors_positive": [],
+      "sectors_negative": [
+        "加密货币相关行业"
+      ],
+      "advice": "谨慎投资加密货币",
+      "timestamp": "2026-03-18T22:59:20+08:00",
+      "source_time": null,
+      "isRealtime": true
+    },
+    {
+      "id": "rtb_bc05fd17",
+      "title": "加拿大央行行长：能源价格可能导致持续通胀",
+      "reason": "加拿大央行行长麦克勒姆表示，能源价格可能引发通胀，考虑加息",
+      "source": "新浪财经",
+      "category": "monetary",
+      "catIcon": "🏦",
       "impact": 8,
       "impactClass": "up",
       "impactAbs": 8,
       "sectors_positive": [
-        "钢铁",
-        "有色金属"
+        "利率敏感型行业"
       ],
-      "sectors_negative": [],
-      "advice": "关注原材料板块",
-      "timestamp": "2026-03-10T12:09:21.719197+08:00",
+      "sectors_negative": [
+        "利率敏感型行业"
+      ],
+      "advice": "关注央行政策变化",
+      "timestamp": "2026-03-18T22:59:20+08:00",
+      "source_time": null,
       "isRealtime": true
     }
   ],
   "anomalies": [
     {
-      "id": "anom_国际银_1214",
+      "id": "anom_甲醇_2259",
+      "name": "甲醇",
+      "fullName": "甲醇主连",
+      "icon": "🧪",
+      "price": 3212.0,
+      "pct": 9.66,
+      "type": "commodity",
+      "tag": "化工",
+      "level": "🔴 剧烈",
+      "alert": "🧪 甲醇大涨9.7%"
+    },
+    {
+      "id": "anom_乙二醇_2259",
+      "name": "乙二醇",
+      "fullName": "乙二醇主连",
+      "icon": "🧪",
+      "price": 5305.0,
+      "pct": 8.71,
+      "type": "commodity",
+      "tag": "化工",
+      "level": "🔴 剧烈",
+      "alert": "🧪 乙二醇大涨8.7%"
+    },
+    {
+      "id": "anom_ICE气_2259",
+      "name": "ICE气",
+      "fullName": "ICE天然气",
+      "icon": "🔥",
+      "price": 142.58,
+      "pct": 8.67,
+      "type": "global_commodity",
+      "tag": "天然气",
+      "level": "🔴 剧烈",
+      "alert": "🔥 ICE气大涨8.7%"
+    },
+    {
+      "id": "anom_LPG_2259",
+      "name": "LPG",
+      "fullName": "LPG主连",
+      "icon": "🔥",
+      "price": 6257.0,
+      "pct": 8.65,
+      "type": "commodity",
+      "tag": "能源",
+      "level": "🔴 剧烈",
+      "alert": "🔥 LPG大涨8.7%"
+    },
+    {
+      "id": "anom_燃油_2259",
+      "name": "燃油",
+      "fullName": "燃油主连",
+      "icon": "⛽",
+      "price": 4976.0,
+      "pct": 6.17,
+      "type": "commodity",
+      "tag": "能源",
+      "level": "🔴 剧烈",
+      "alert": "⛽ 燃油大涨6.2%"
+    },
+    {
+      "id": "anom_LLDPE_2259",
+      "name": "LLDPE",
+      "fullName": "塑料主连",
+      "icon": "📦",
+      "price": 9031.0,
+      "pct": 5.84,
+      "type": "commodity",
+      "tag": "化工",
+      "level": "🔴 剧烈",
+      "alert": "📦 LLDPE大涨5.8%"
+    },
+    {
+      "id": "anom_Brent油_2259",
+      "name": "Brent油",
+      "fullName": "布伦特原油",
+      "icon": "🛢️",
+      "price": 104.97,
+      "pct": 5.61,
+      "type": "global_commodity",
+      "tag": "原油",
+      "level": "🔴 剧烈",
+      "alert": "🛢️ Brent油大涨5.6%"
+    },
+    {
+      "id": "anom_PP_2259",
+      "name": "PP",
+      "fullName": "聚丙烯主连",
+      "icon": "📦",
+      "price": 9209.0,
+      "pct": 5.49,
+      "type": "commodity",
+      "tag": "化工",
+      "level": "🔴 剧烈",
+      "alert": "📦 PP大涨5.5%"
+    },
+    {
+      "id": "anom_沥青_2259",
+      "name": "沥青",
+      "fullName": "沥青主连",
+      "icon": "🛣️",
+      "price": 4652.0,
+      "pct": 5.13,
+      "type": "commodity",
+      "tag": "能源",
+      "level": "🔴 剧烈",
+      "alert": "🛣️ 沥青大涨5.1%"
+    },
+    {
+      "id": "anom_钯金_2259",
+      "name": "钯金",
+      "fullName": "NYMEX钯金",
+      "icon": "💎",
+      "price": 1549.5,
+      "pct": -5.11,
+      "type": "global_commodity",
+      "tag": "贵金属",
+      "level": "🔴 剧烈",
+      "alert": "💎 钯金大跌5.1%"
+    },
+    {
+      "id": "anom_白银_2259",
+      "name": "白银",
+      "fullName": "沪银主连",
+      "icon": "🥈",
+      "price": 19141.0,
+      "pct": -4.58,
+      "type": "commodity",
+      "tag": "白银",
+      "level": "🔴 剧烈",
+      "alert": "🥈 白银大跌4.6%"
+    },
+    {
+      "id": "anom_国际银_2259",
       "name": "国际银",
       "fullName": "COMEX白银",
       "icon": "🥈",
-      "price": 88.395,
-      "pct": 4.58,
+      "price": 76.65,
+      "pct": -4.09,
       "type": "global_commodity",
       "tag": "白银",
       "level": "🔴 剧烈",
-      "alert": "🥈 国际银大涨4.6%"
+      "alert": "🥈 国际银大跌4.1%"
+    }
+  ],
+  "cls_flash": [
+    {
+      "title": "美财政部授权开展部分与委内瑞拉国家石油公司有关交易",
+      "time": "2026-03-18T22:56:48+08:00",
+      "source": "财联社"
     },
     {
-      "id": "anom_新能源_1214",
-      "name": "新能源",
-      "fullName": "能源ETF",
-      "icon": "🔋",
-      "price": 1.798,
-      "pct": -3.59,
-      "type": "sector",
-      "tag": "新能源",
-      "level": "🟡 显著",
-      "alert": "🔋 新能源大跌3.6%"
+      "title": "加密货币价格持续下行 以太坊跌破2200美元",
+      "time": "2026-03-18T22:55:18+08:00",
+      "source": "财联社"
     },
     {
-      "id": "anom_创业板_1214",
-      "name": "创业板",
-      "fullName": "创业板指",
-      "icon": "🇨🇳",
-      "price": 3287.98,
-      "pct": 2.47,
-      "type": "index",
-      "tag": "",
-      "level": "🟡 显著",
-      "alert": "🇨🇳 创业板大涨2.5%"
+      "title": "港股IPO：白鸽在线递表港交所",
+      "time": "2026-03-18T22:52:14+08:00",
+      "source": "财联社"
     },
     {
-      "id": "anom_芯片_1214",
-      "name": "芯片",
-      "fullName": "半导体ETF",
-      "icon": "🔲",
-      "price": 1.006,
-      "pct": 2.44,
-      "type": "sector",
-      "tag": "半导体",
-      "level": "🟡 显著",
-      "alert": "🔲 芯片大涨2.4%"
+      "title": "【电报解读】美伊冲突或推高甲醇价格，数据显示中国从中东国家进口甲醇总量超1000万吨，占2025年总进口量约70%，这家公司甲醇产能目前处于满负荷生产状态",
+      "time": "2026-03-18T22:48:53+08:00",
+      "source": "财联社"
     },
     {
-      "id": "anom_日经_1214",
-      "name": "日经",
-      "fullName": "日经225",
-      "icon": "🇯🇵",
-      "price": 53895.63,
-      "pct": 2.21,
-      "type": "index",
-      "tag": "",
-      "level": "🟡 显著",
-      "alert": "🇯🇵 日经大涨2.2%"
+      "title": "国际原子能机构：目前不是考虑恢复美伊核谈判的时机",
+      "time": "2026-03-18T22:44:42+08:00",
+      "source": "财联社"
     },
     {
-      "id": "anom_深指_1214",
-      "name": "深指",
-      "fullName": "深证成指",
-      "icon": "🇨🇳",
-      "price": 14288.32,
-      "pct": 1.57,
-      "type": "index",
-      "tag": "",
-      "level": "🟡 显著",
-      "alert": "🇨🇳 深指大涨1.6%"
+      "title": "七部门联合印发意见 加快推动小水电绿色转型高质量发展",
+      "time": "2026-03-18T22:43:52+08:00",
+      "source": "财联社"
     },
     {
-      "id": "anom_恒指_1214",
-      "name": "恒指",
-      "fullName": "恒生指数",
-      "icon": "🇭🇰",
-      "price": 25804.7,
-      "pct": 1.56,
-      "type": "index",
-      "tag": "",
-      "level": "🟡 显著",
-      "alert": "🇭🇰 恒指大涨1.6%"
+      "title": "财联社3月18日电，STOXX欧洲600指数延续此前跌势，跌至1%水平，触及日内低点。",
+      "time": "2026-03-18T22:42:54+08:00",
+      "source": "财联社"
     },
     {
-      "id": "anom_纳指_1214",
-      "name": "纳指",
-      "fullName": "纳斯达克100",
-      "icon": "🇺🇸",
-      "price": 22695.95,
-      "pct": 1.38,
-      "type": "index",
-      "tag": "",
-      "level": "🟡 显著",
-      "alert": "🇺🇸 纳指大涨1.4%"
+      "title": "腾讯总裁刘炽平：2026年腾讯预计还会增加资本开支",
+      "time": "2026-03-18T22:36:27+08:00",
+      "source": "财联社"
     },
     {
-      "id": "anom_国际金_1214",
-      "name": "国际金",
-      "fullName": "COMEX黄金",
-      "icon": "🥇",
-      "price": 5163.9,
-      "pct": 1.18,
-      "type": "global_commodity",
-      "tag": "黄金",
-      "level": "🟡 显著",
-      "alert": "🥇 国际金大涨1.2%"
+      "title": "财联社3月18日电，交易员们已充分预期欧洲央行将在2026年两次上调利率各0.25个百分点。",
+      "time": "2026-03-18T22:34:23+08:00",
+      "source": "财联社"
+    },
+    {
+      "title": "特朗普授权解除船禁60天 以降低美境内能源运输成本",
+      "time": "2026-03-18T22:32:44+08:00",
+      "source": "财联社"
     }
   ],
   "meta": {
     "sources_ok": [
       "Yahoo Finance",
       "BBC",
-      "MarketWatch",
-      "CNBC",
       "Al Jazeera",
+      "CNBC",
+      "MarketWatch",
       "财联社",
       "新浪财经",
       "Bloomberg",
-      "Reuters",
       "Energy/Oil",
       "Asia",
+      "Reuters",
       "Google News"
     ],
     "news_count": 15,
-    "anomaly_count": 9,
+    "anomaly_count": 32,
+    "cls_flash_count": 15,
     "model": "glm-4-flash",
     "refresh_interval_seconds": 300,
     "algorithm": "v2",
     "dedup_stats": {
       "md5": 184,
       "simhash": 0,
-      "semantic": 1,
+      "semantic": 3,
       "empty": 0
     },
-    "fetch_time_sec": 15.9,
-    "total_raw_headlines": 196,
+    "fetch_time_sec": 21.0,
+    "total_raw_headlines": 198,
     "deduped_headlines": 11
   }
 }

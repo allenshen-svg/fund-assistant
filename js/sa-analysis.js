@@ -73,17 +73,12 @@ async function callAI(model, systemPrompt, userPrompt, temperature=0.7) {
   if(!_apiKey) throw new Error('请先配置 API Key');
   const maxRetries = 3;
   let lastErr = null;
-  // 优先走后端代理（避免公司防火墙拦截浏览器直连 AI API）
-  const useProxy = (location.hostname !== 'localhost' && location.hostname !== '127.0.0.1');
-  const url = useProxy ? '/api/ai-proxy' : _provider.base;
+  // 始终走后端代理（绕开公司防火墙 / 地区限制）
+  const url = '/api/ai-proxy';
   for(let attempt = 0; attempt < maxRetries; attempt++) {
     try {
-      const bodyObj = useProxy
-        ? { provider: _providerId, api_key: _apiKey, model, messages:[{role:'system',content:systemPrompt},{role:'user',content:userPrompt}], temperature, max_tokens:16384 }
-        : { model, messages:[{role:'system',content:systemPrompt},{role:'user',content:userPrompt}], temperature, max_tokens:16384 };
-      const headers = useProxy
-        ? {'Content-Type':'application/json'}
-        : {'Content-Type':'application/json','Authorization':'Bearer '+_apiKey};
+      const bodyObj = { provider: _providerId, api_key: _apiKey, model, messages:[{role:'system',content:systemPrompt},{role:'user',content:userPrompt}], temperature, max_tokens:16384 };
+      const headers = {'Content-Type':'application/json'};
       const resp = await fetch(url, {
         method:'POST',
         headers,

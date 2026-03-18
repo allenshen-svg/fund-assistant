@@ -270,12 +270,21 @@ function renderMarkdown(md) {
   return md
     .replace(/### (.*)/g, '<h3>$1</h3>')
     .replace(/## (.*)/g, '<h2>$1</h2>')
+    // 代码块（机制链图等）— 箭头高亮
+    .replace(/```json\s*([\s\S]*?)```/g, '<pre><code>$1</code></pre>')
+    .replace(/```[\w]*\n?([\s\S]*?)```/g, function(_, code) {
+      return '<pre class="chain-diagram"><code>' + code
+        .replace(/→/g, '<span class="chain-arrow">→</span>')
+        .replace(/↘/g, '<span class="chain-arrow">↘</span>')
+        .replace(/↗/g, '<span class="chain-arrow">↗</span>')
+        .replace(/\[([^\]]+)\]/g, '<span class="chain-node">[$1]</span>')
+        + '</code></pre>';
+    })
     .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
     .replace(/`([^`]+)`/g, '<code>$1</code>')
-    .replace(/```json\s*([\s\S]*?)```/g, '<pre><code>$1</code></pre>')
-    .replace(/```([\s\S]*?)```/g, '<pre><code>$1</code></pre>')
     .replace(/^- (.*)/gm, '<li>$1</li>')
     .replace(/(<li>.*<\/li>)/gs, '<ul>$1</ul>')
+    .replace(/^\d+\.\s+(.*)/gm, '<li class="ol-item">$1</li>')
     .replace(/\n\n/g, '<br><br>')
     .replace(/\n/g, '<br>');
 }

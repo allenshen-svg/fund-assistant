@@ -175,6 +175,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro","PingFang SC","Helvet
 .md-render code{background:var(--bg);padding:1px 4px;border-radius:3px;font-size:10px;font-family:'SF Mono','Menlo',monospace}
 .md-render pre{background:#1e293b;color:#e2e8f0;padding:10px;border-radius:8px;overflow-x:auto;margin:8px 0}
 .md-render pre code{background:none;padding:0;color:inherit}
+.md-render .chain-diagram{background:#0f172a;color:#e2e8f0;padding:12px 14px;border-radius:10px;margin:10px 0;font-family:'SF Mono','Menlo',monospace;font-size:11px;line-height:1.8;white-space:pre-wrap;border-left:3px solid #6366f1}
+.md-render .chain-arrow{color:#f97316;font-weight:700}
+.md-render .chain-node{background:rgba(251,191,36,.15);color:#fbbf24;padding:1px 4px;border-radius:3px}
 
 /* ===== FAB ===== */
 .fab{position:fixed;bottom:20px;right:20px;z-index:200;width:42px;height:42px;border-radius:50%;border:none;background:linear-gradient(135deg,#4338ca,#6366f1);color:white;font-size:17px;cursor:pointer;box-shadow:0 4px 12px rgba(99,102,241,.4);display:flex;align-items:center;justify-content:center}

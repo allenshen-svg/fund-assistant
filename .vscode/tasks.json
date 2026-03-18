@@ -2,20 +2,30 @@
 	"version": "2.0.0",
 	"tasks": [
 		{
-			"label": "Run fund-assistant",
+			"label": "Run Server (Flask 8000)",
 			"type": "shell",
-			"command": "python3",
-			"args": [
-				"-m",
-				"http.server",
-				"8000"
-			],
-			"isBackground": true
+			"command": "${workspaceFolder}/.venv/bin/python",
+			"args": ["server.py"],
+			"options": { "cwd": "${workspaceFolder}" },
+			"isBackground": true,
+			"problemMatcher": [],
+			"group": "build",
+			"presentation": { "reveal": "always", "panel": "dedicated", "clear": true }
+		},
+		{
+			"label": "Health Probe (once)",
+			"type": "shell",
+			"command": "${workspaceFolder}/.venv/bin/python",
+			"args": ["scripts/health_probe.py"],
+			"options": { "cwd": "${workspaceFolder}" },
+			"problemMatcher": [],
+			"presentation": { "reveal": "always", "panel": "shared" }
 		},
 		{
 			"label": "Check Syntax",
 			"type": "shell",
-			"command": "python3 /Users/allen.shen/fund-assistant/check_syntax.py"
+			"command": "python3 ${workspaceFolder}/check_syntax.py",
+			"problemMatcher": []
 		}
 	]
 }

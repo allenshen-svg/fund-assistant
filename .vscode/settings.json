@@ -27,6 +27,15 @@
             "approve": true,
             "matchCommandLine": true
         },
-        ".venv/bin/python3": true
+        ".venv/bin/python3": true,
+        "/Users/allen.shen/fund-assistant/.venv/bin/python": true,
+        "/^source \\.venv/bin/activate && python validate_douyin_crawler\\.py migrate data/crawler\\.db$/": {
+            "approve": true,
+            "matchCommandLine": true
+        },
+        "/^source \\.venv/bin/activate && python validate_douyin_crawler\\.py report data/crawler\\.db$/": {
+            "approve": true,
+            "matchCommandLine": true
+        }
     }
 }

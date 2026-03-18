@@ -1303,6 +1303,22 @@ def run_screener():
     else:
         print(f"[stock_screen] 全市场扫描，共 {len(stock_list)} 只A股股票")
 
+    # ---- 预检: 用 3 只蓝筹股探测数据源可达性 ----
+    _preflight_codes = ['600519', '000001', '601318']
+    _preflight_ok = 0
+    for _pc in _preflight_codes:
+        _pf = fetch_kline(_pc, 20)
+        if not _pf.empty and len(_pf) >= 10:
+            _preflight_ok += 1
+    if _preflight_ok == 0:
+        print('[stock_screen] ❌ 预检失败: 3只蓝筹股K线全部获取失败，数据源不可达，本次选股中止')
+        print('[stock_screen] ❌ 请检查网络/代理设置或稍后重试')
+        return pd.DataFrame(), 0, len(stock_list)
+    elif _preflight_ok < len(_preflight_codes):
+        print(f'[stock_screen] ⚠️ 预检部分通过 ({_preflight_ok}/{len(_preflight_codes)})，继续执行但数据源可能不稳定')
+    else:
+        print(f'[stock_screen] ✅ 预检通过 ({_preflight_ok}/{len(_preflight_codes)})，数据源可达')
+
     market_bonus = get_market_bonus()
     sector_strength_df = pd.DataFrame()
     stock_sector_map_df = pd.DataFrame()
@@ -1326,7 +1342,10 @@ def run_screener():
 
     results = []
     _consecutive_timeouts = 0
-    for _, row in tqdm(stock_list.iterrows(), total=len(stock_list), desc='扫描个股K线'):
+    _fetch_ok = 0     # K线获取成功计数
+    _fetch_fail = 0   # K线获取失败计数
+    _scan_total = len(stock_list)
+    for _idx, row in tqdm(stock_list.iterrows(), total=_scan_total, desc='扫描个股K线'):
         code = str(row['code']).zfill(6)
         name = str(row['name'])
         t0 = time.time()
@@ -1336,6 +1355,7 @@ def run_screener():
         # Rate-limit detection: if fetch took >18s, it likely timed out
         if df.empty and elapsed > 18:
             _consecutive_timeouts += 1
+            _fetch_fail += 1
             if _consecutive_timeouts >= 5:
                 print(f'[stock_screen] 连续{_consecutive_timeouts}次超时，暂停60秒后继续...')
                 time.sleep(60)
@@ -1345,7 +1365,16 @@ def run_screener():
             _consecutive_timeouts = 0
 
         if df.empty or len(df) < CONFIG['min_history_days']:
+            _fetch_fail += 1
             continue
+
+        _fetch_ok += 1
+
+        # ---- 早停: 前 100 只失败率 > 90% 则中止 ----
+        _scanned_so_far = _fetch_ok + _fetch_fail
+        if _scanned_so_far == 100 and _fetch_ok < 10:
+            print(f'[stock_screen] ❌ 早停: 前100只中仅{_fetch_ok}只获取成功(失败率{_fetch_fail}%)，数据源严重异常，中止扫描')
+            break
 
         df = compute_indicators(df)
         if df.empty:
@@ -1386,11 +1415,17 @@ def run_screener():
         time.sleep(CONFIG['sleep_seconds'])
 
     if not results:
-        print(f'[stock_screen] 📊 诊断: 无任何打分结果（所有股票K线为空或历史不足）')
+        _success_rate = round(_fetch_ok / max(_fetch_ok + _fetch_fail, 1) * 100, 1)
+        print(f'[stock_screen] 📊 诊断: 无任何打分结果（K线成功{_fetch_ok}只/失败{_fetch_fail}只，成功率{_success_rate}%）')
+        if _success_rate < 50:
+            print(f'[stock_screen] ❌ 数据源健康异常！成功率仅{_success_rate}%，请检查网络/代理/API限流')
         return pd.DataFrame(), market_bonus, len(stock_list)
 
+    _success_rate = round(_fetch_ok / max(_fetch_ok + _fetch_fail, 1) * 100, 1)
     result_df = pd.DataFrame(results)
-    print(f'[stock_screen] 📊 诊断: 打分完成 {len(result_df)} 只, market_bonus={market_bonus}')
+    print(f'[stock_screen] 📊 诊断: 打分完成 {len(result_df)} 只, market_bonus={market_bonus} (K线成功{_fetch_ok}/失败{_fetch_fail}, 成功率{_success_rate}%)')
+    if _success_rate < 80:
+        print(f'[stock_screen] ⚠️ 数据源成功率偏低({_success_rate}%)，选股结果可能不完整')
     if not result_df.empty:
         top_scores = result_df.nlargest(10, 'score')[['code', 'name', 'score', 'sector_name', 'sector_strong']].to_string(index=False)
         print(f'[stock_screen] 📊 得分 TOP10:\n{top_scores}')

@@ -12,9 +12,9 @@ const AI_PROVIDERS = [
 ];
 
 // ==================== STATE ====================
-let _providerId = localStorage.getItem('sa_provider') || 'siliconflow';
+let _providerId = localStorage.getItem('sa_provider') || 'deepseek';
 let _provider = AI_PROVIDERS.find(p=>p.id===_providerId) || AI_PROVIDERS[0];
-let _apiKey = localStorage.getItem('sa_apikey') || localStorage.getItem('fa_302ai_key') || 'sk-njqerftsrrnojbsdagigsrzbwwxgtuhrsyihphcxvsdpbaxl';
+let _apiKey = localStorage.getItem('sa_apikey') || localStorage.getItem('fa_302ai_key') || 'sk-1986e1cd1169405f96649311dcfc76aa';
 let _modelId = localStorage.getItem('sa_model') || _provider.models[0].model;
 let _allVideoData = [];
 let _analysisResult = null;
