@@ -13,8 +13,10 @@ A股全市场短线强势股扫描器 V3
 7. 将结果保存为 data/stock_screen.json，供小程序模拟仓展示
 """
 
+import hashlib
 import json
 import os
+import random
 import time
 import urllib.parse
 import urllib.request
@@ -56,12 +58,57 @@ ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATA_DIR = os.path.join(ROOT_DIR, 'data')
 SCREEN_FILE = os.path.join(DATA_DIR, 'stock_screen.json')
 
-_HEADERS = {
-    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)',
-    'Referer': 'https://quote.eastmoney.com/',
-}
+_UA_LIST = [
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36',
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+    'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36',
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Safari/605.1.15',
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:126.0) Gecko/20100101 Firefox/126.0',
+]
+
+def _random_headers():
+    return {
+        'User-Agent': random.choice(_UA_LIST),
+        'Referer': 'https://quote.eastmoney.com/',
+    }
+
+_HEADERS = _random_headers()   # compat: keep a module-level _HEADERS
 
 _INDUSTRY_FALLBACK_CACHE = {}
+
+# ---- K线本地缓存 (当日不重复请求同一只股票) ----
+_KLINE_CACHE_DIR = os.path.join(DATA_DIR, 'kline_cache')
+os.makedirs(_KLINE_CACHE_DIR, exist_ok=True)
+
+def _kline_cache_path(code, start_date, end_date):
+    tag = datetime.now().strftime('%Y%m%d')
+    return os.path.join(_KLINE_CACHE_DIR, f'{code}_{tag}.pkl')
+
+def _kline_cache_get(code, start_date, end_date):
+    p = _kline_cache_path(code, start_date, end_date)
+    if os.path.exists(p):
+        try:
+            return pd.read_pickle(p)
+        except Exception:
+            pass
+    return None
+
+def _kline_cache_put(code, start_date, end_date, df):
+    try:
+        p = _kline_cache_path(code, start_date, end_date)
+        df.to_pickle(p)
+    except Exception:
+        pass
+
+def _kline_cache_cleanup():
+    """清理非当日缓存文件"""
+    today = datetime.now().strftime('%Y%m%d')
+    try:
+        for f in os.listdir(_KLINE_CACHE_DIR):
+            if f.endswith('.pkl') and today not in f:
+                os.remove(os.path.join(_KLINE_CACHE_DIR, f))
+    except Exception:
+        pass
 
 
 CONFIG = {
@@ -78,14 +125,14 @@ CONFIG = {
     'double_bottom_tol': 0.02,
     'score_threshold': 64,
     'top_n': 5,
-    'sleep_seconds': 0.05,
+    'sleep_seconds': 0.15,
     'test_mode': False,
     'test_stock_limit': 300,
     'enable_sector_filter': True,
     'sector_hist_days': 20,
     'sector_score_min': 58,
     'sector_top_n': 30,
-    'sector_sleep_seconds': 0.03,
+    'sector_sleep_seconds': 0.06,
     'output_file': os.path.join(DATA_DIR, 'top5_candidates_v3.csv'),
     'sector_cache_file': os.path.join(DATA_DIR, 'sector_strength.csv'),
     'sector_map_cache_file': os.path.join(DATA_DIR, 'stock_sector_map.csv'),
@@ -337,9 +384,10 @@ def get_stock_list():
 
 _KLINE_EXECUTOR = ThreadPoolExecutor(max_workers=1)
 
-# Track consecutive eastmoney failures to fast-switch to sina
+# 默认使用 sina 作为主数据源 (eastmoney 容易被限流)
 _eastmoney_fail_count = 0
-_USE_SINA_ONLY = False
+_USE_SINA_ONLY = True   # 默认 sina，东方财富作为备用
+_adaptive_sleep = 0.0   # 指数退避额外等待秒数
 
 
 def _code_to_sina_symbol(code):
@@ -385,39 +433,80 @@ def _fetch_kline_sina(code, days, start_date, end_date):
 
 
 def _fetch_kline_inner(code, days, start_date, end_date):
-    global _eastmoney_fail_count, _USE_SINA_ONLY
+    global _eastmoney_fail_count, _USE_SINA_ONLY, _adaptive_sleep
 
-    # If eastmoney is down, go straight to sina
+    # 优先查本地缓存
+    cached = _kline_cache_get(code, start_date, end_date)
+    if cached is not None and not cached.empty:
+        return cached
+
+    # 指数退避: 连续失败时额外等待
+    if _adaptive_sleep > 0:
+        time.sleep(_adaptive_sleep)
+
+    # 默认走 sina (不容易被封), eastmoney 作为备用
     if _USE_SINA_ONLY:
-        return _fetch_kline_sina(code, days, start_date, end_date)
+        try:
+            df = _fetch_kline_sina(code, days, start_date, end_date)
+            if df is not None and not df.empty:
+                _adaptive_sleep = max(_adaptive_sleep - 0.05, 0.0)
+                _kline_cache_put(code, start_date, end_date, df)
+                return df
+        except Exception:
+            pass
+        # sina 也失败了，尝试 eastmoney
+        try:
+            df = ak.stock_zh_a_hist(
+                symbol=code, period='daily',
+                start_date=start_date, end_date=end_date, adjust='qfq',
+            )
+            if df is not None and not df.empty:
+                df = df[['日期', '开盘', '最高', '最低', '收盘', '成交量']].copy()
+                df.columns = ['date', 'open', 'high', 'low', 'close', 'volume']
+                df['date'] = pd.to_datetime(df['date'])
+                for col in ['open', 'high', 'low', 'close', 'volume']:
+                    df[col] = pd.to_numeric(df[col], errors='coerce')
+                df = df.dropna().sort_values('date').reset_index(drop=True).tail(days).copy()
+                _kline_cache_put(code, start_date, end_date, df)
+                return df
+        except Exception:
+            pass
+        _adaptive_sleep = min(_adaptive_sleep + 0.1, 2.0)
+        return pd.DataFrame()
 
+    # 非 sina-only 模式 (eastmoney 为主)
     try:
         df = ak.stock_zh_a_hist(
-            symbol=code,
-            period='daily',
-            start_date=start_date,
-            end_date=end_date,
-            adjust='qfq',
+            symbol=code, period='daily',
+            start_date=start_date, end_date=end_date, adjust='qfq',
         )
         if df is not None and not df.empty:
             _eastmoney_fail_count = 0
+            _adaptive_sleep = max(_adaptive_sleep - 0.05, 0.0)
             df = df[['日期', '开盘', '最高', '最低', '收盘', '成交量']].copy()
             df.columns = ['date', 'open', 'high', 'low', 'close', 'volume']
             df['date'] = pd.to_datetime(df['date'])
             for col in ['open', 'high', 'low', 'close', 'volume']:
                 df[col] = pd.to_numeric(df[col], errors='coerce')
-            return df.dropna().sort_values('date').reset_index(drop=True).tail(days).copy()
+            df = df.dropna().sort_values('date').reset_index(drop=True).tail(days).copy()
+            _kline_cache_put(code, start_date, end_date, df)
+            return df
     except Exception:
         _eastmoney_fail_count += 1
+        _adaptive_sleep = min(_adaptive_sleep + 0.1, 2.0)
         if _eastmoney_fail_count >= 5 and not _USE_SINA_ONLY:
             _USE_SINA_ONLY = True
             print(f'[stock_screen] ⚠️ 东方财富API连续{_eastmoney_fail_count}次失败，切换至新浪数据源')
 
     # Fallback to sina
     try:
-        return _fetch_kline_sina(code, days, start_date, end_date)
+        df = _fetch_kline_sina(code, days, start_date, end_date)
+        if df is not None and not df.empty:
+            _kline_cache_put(code, start_date, end_date, df)
+            return df
     except Exception:
-        return pd.DataFrame()
+        pass
+    return pd.DataFrame()
 
 
 def fetch_kline(code, days=100, timeout=20):
@@ -1340,11 +1429,17 @@ def run_screener():
         sector_strong_dict = dict(zip(sector_strength_df['sector_name'], sector_strength_df['sector_strong']))
     sector_names = list(sector_score_dict.keys())
 
+    # 清理旧缓存 + 重置自适应退避
+    _kline_cache_cleanup()
+    global _adaptive_sleep
+    _adaptive_sleep = 0.0
+
     results = []
     _consecutive_timeouts = 0
     _fetch_ok = 0     # K线获取成功计数
     _fetch_fail = 0   # K线获取失败计数
     _scan_total = len(stock_list)
+    _batch_count = 0  # 批次请求计数，用于批次暂停
     for _idx, row in tqdm(stock_list.iterrows(), total=_scan_total, desc='扫描个股K线'):
         code = str(row['code']).zfill(6)
         name = str(row['name'])
@@ -1369,6 +1464,13 @@ def run_screener():
             continue
 
         _fetch_ok += 1
+        _batch_count += 1
+
+        # ---- 批次暂停: 每200只股票暂停3-5秒，模拟人类行为 ----
+        if _batch_count % 200 == 0:
+            _pause = random.uniform(3.0, 5.0)
+            print(f'[stock_screen] 🔄 已扫描{_batch_count}只，暂停{_pause:.1f}秒避免限流...')
+            time.sleep(_pause)
 
         # ---- 早停: 前 100 只失败率 > 90% 则中止 ----
         _scanned_so_far = _fetch_ok + _fetch_fail
@@ -1412,7 +1514,9 @@ def run_screener():
             **trade_plan,
         }
         results.append(item)
-        time.sleep(CONFIG['sleep_seconds'])
+        # 带随机抖动的请求间隔，避免固定频率触发限流
+        _jitter = CONFIG['sleep_seconds'] + random.uniform(0.0, 0.1)
+        time.sleep(_jitter)
 
     if not results:
         _success_rate = round(_fetch_ok / max(_fetch_ok + _fetch_fail, 1) * 100, 1)
