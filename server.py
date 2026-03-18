@@ -1019,28 +1019,50 @@ def realtime_breaking_loop():
 
 
 def fund_pick_scheduler_loop():
-    """每日 14:50 生成推荐，14:55 执行自动模拟仓调仓
+    """每日定时任务调度
 
     工作逻辑：
     - 每分钟检查一次时间
-    - 如果是交易日 14:50 且今天还没有生成过推荐，自动执行推荐生成
-    - 如果是交易日 14:55 且今天还没有执行过模拟仓调仓，自动执行
-    - 结果缓存在 data/fund_pick.json 和 data/portfolio_advice.json
+    - 交易日 14:00：自动触发A股形态选股（每日仅一次）
+    - 交易日 14:50：自动执行选基推荐 + 行动指南（每日仅一次）
+    - 交易日 14:55：自动执行模拟仓调仓（每日仅一次）
+    - 交易日 周五 15:10+：自动执行模拟仓周复盘（每周仅一次）
+    - 非交易日（周末/节假日）不执行任何任务
     """
     global _fund_pick_running, _portfolio_running, _stock_screen_running
     global _sim_auto_running, _sim_review_running
     _last_pick_date = None
+    _last_screen_date = None
     _last_sim_trade_date = None
     _last_sim_review_week = None
     time.sleep(15)  # 启动后等待15秒
-    print('[fund_pick_scheduler] 推荐生成/模拟仓定时任务已启动 (推荐 14:50 / 调仓 14:55)')
+    print('[fund_pick_scheduler] 定时任务已启动 (选股 14:00 / 推荐 14:50 / 调仓 14:55)')
 
     while True:
         try:
             now = datetime.now()
             today = now.strftime('%Y-%m-%d')
 
-            # 检查条件：交易日 + 14:50 + 今日未执行推荐生成
+            # ---- 交易日 14:00 触发A股形态选股（每日仅一次）----
+            if (is_trading_day() and
+                now.hour == 14 and now.minute >= 0 and
+                _last_screen_date != today and
+                not _stock_screen_running):
+
+                print(f'\n[fund_pick_scheduler] ⏰ {now.strftime("%H:%M")} 触发A股形态选股...')
+                with _stock_screen_lock:
+                    _stock_screen_running = True
+                    try:
+                        _run_stock_screen_with_notify('daily')
+                    except Exception as e:
+                        print(f'[fund_pick_scheduler] ❌ 形态选股失败: {e}')
+                        import traceback
+                        traceback.print_exc()
+                    finally:
+                        _stock_screen_running = False
+                _last_screen_date = today
+
+            # ---- 交易日 14:50 触发选基推荐 + 行动指南（每日仅一次）----
             if (is_trading_day() and
                 now.hour == 14 and now.minute >= 50 and
                 _last_pick_date != today and
@@ -1069,18 +1091,6 @@ def fund_pick_scheduler_loop():
                         traceback.print_exc()
                     finally:
                         _portfolio_running = False
-
-                print(f'[fund_pick_scheduler] ⏰ {now.strftime("%H:%M")} 触发A股形态选股...')
-                with _stock_screen_lock:
-                    _stock_screen_running = True
-                    try:
-                        _run_stock_screen_with_notify('daily')
-                    except Exception as e:
-                        print(f'[fund_pick_scheduler] ❌ 形态选股失败: {e}')
-                        import traceback
-                        traceback.print_exc()
-                    finally:
-                        _stock_screen_running = False
 
                 _last_pick_date = today
 
@@ -1185,8 +1195,9 @@ if __name__ == '__main__':
 ║  端口: {PORT:<6}                                  ║
 ║  采集间隔: {COLLECT_INTERVAL}秒 ({COLLECT_INTERVAL//60}分钟)                       ║
 ║  实时突发: 交易{REALTIME_INTERVAL_TRADING}秒/非交易{REALTIME_INTERVAL_OFF}秒       ║
-║  推荐生成: 每日 14:50 自动执行                   ║
-║  模拟仓调仓: 每日 14:55 自动执行                 ║
+║  形态选股: 交易日 14:00 自动执行                 ║
+║  推荐生成: 交易日 14:50 自动执行                 ║
+║  模拟仓调仓: 交易日 14:55 自动执行               ║
 ║  API:                                            ║
 ║    GET  /api/sentiment        → 舆情数据         ║
 ║    GET  /api/analysis         → AI分析结果       ║
