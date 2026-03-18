@@ -592,7 +592,7 @@ def fetch_cls_flash():
                 items.append({
                     'title': title,
                     'source': '财联社',
-                    'time': datetime.fromtimestamp(ctime, tz=CST).isoformat() if ctime else '',
+                    'time': datetime.fromtimestamp(ctime, tz=CST).strftime('%Y-%m-%dT%H:%M:%S+08:00') if ctime else '',
                 })
     except Exception as e:
         print(f'  [WARN] CLS flash: {e}')
@@ -1370,6 +1370,7 @@ def generate_fallback_events(headlines, anomalies):
                 'sectors_positive': [],
                 'sectors_negative': [],
                 'advice': '密切关注后续发展',
+                'time': h.get('time', ''),
             })
 
     # 从异动中生成
@@ -1420,6 +1421,17 @@ def merge_with_existing(new_events, output_path):
     except Exception:
         pass
 
+    # 过滤超过4小时的旧事件（防止无限堆积）
+    four_hours_ago = (datetime.now(CST) - timedelta(hours=4)).strftime('%Y-%m-%dT%H:%M:%S+08:00')
+    # 清理旧事件中的微秒时间戳
+    for e in existing:
+        for k in ('source_time', 'timestamp'):
+            v = e.get(k)
+            if v and '.' in v:
+                e[k] = re.sub(r'\.\d+', '', v)
+    existing = [e for e in existing
+                if (e.get('source_time') or e.get('timestamp', '') or '') > four_hours_ago]
+
     # 过滤掉旧的关键词兜底事件（英文截断标题，reason="来源: X"）
     # 当有新LLM事件时，不保留旧的低质量关键词匹配结果
     if new_events:
@@ -1429,7 +1441,7 @@ def merge_with_existing(new_events, output_path):
     return merged
 
 
-def build_output(events, anomalies, sources_ok, now):
+def build_output(events, anomalies, sources_ok, now, cls_flash=None):
     """组装最终输出"""
     breaking = []
     for i, evt in enumerate(events[:12]):
@@ -1452,7 +1464,8 @@ def build_output(events, anomalies, sources_ok, now):
             'sectors_positive': evt.get('sectors_positive', []),
             'sectors_negative': evt.get('sectors_negative', []),
             'advice': str(evt.get('advice', '保持观察')).strip()[:50],
-            'timestamp': now.isoformat(),
+            'timestamp': now.strftime('%Y-%m-%dT%H:%M:%S+08:00'),
+            'source_time': re.sub(r'\.\d+', '', str(evt.get('time', '')).strip()) or None,
             'isRealtime': True,
         }
         breaking.append(item)
@@ -1461,7 +1474,7 @@ def build_output(events, anomalies, sources_ok, now):
     breaking = merge_with_existing(breaking, OUTPUT_PATH)
 
     return {
-        'updated_at': now.isoformat(),
+        'updated_at': now.strftime('%Y-%m-%dT%H:%M:%S+08:00'),
         'breaking': breaking,
         'anomalies': [{
             'id': f"anom_{a.get('name', '')}_{now.strftime('%H%M')}",
@@ -1475,10 +1488,16 @@ def build_output(events, anomalies, sources_ok, now):
             'level': a['level'],
             'alert': a['alert'],
         } for a in anomalies[:12]],
+        'cls_flash': [{
+            'title': item.get('title', ''),
+            'time': item.get('time', ''),
+            'source': '财联社',
+        } for item in (cls_flash or [])[:10]],
         'meta': {
             'sources_ok': sources_ok,
             'news_count': sum(1 for _ in breaking),
             'anomaly_count': len(anomalies),
+            'cls_flash_count': len(cls_flash or []),
             'model': MODEL if API_KEY else 'keyword-fallback',
             'refresh_interval_seconds': 300,
         },
@@ -1516,6 +1535,8 @@ def main():
         ('新浪财经', fetch_sina_live),
     ]
 
+    cls_flash_items = []  # 单独保留财联社原始快讯
+
     t0 = time.time()
     with ThreadPoolExecutor(max_workers=6) as executor:
         future_map = {}
@@ -1531,6 +1552,8 @@ def main():
                     all_headlines.extend(items)
                     sources_ok.append(name)
                     print(f'  ✅ {name}: {len(items)} 条')
+                    if name == '财联社':
+                        cls_flash_items = list(items)
                 else:
                     print(f'  ⚠️ {name}: 0 条')
             except Exception as e:
@@ -1600,7 +1623,7 @@ def main():
 
     # 5. 组装输出
     print('\n📦 [5/5] 组装输出...')
-    output = build_output(events, anomalies, sources_ok, now)
+    output = build_output(events, anomalies, sources_ok, now, cls_flash=cls_flash_items)
 
     # 添加算法元数据
     output['meta']['algorithm'] = 'v2'

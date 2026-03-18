@@ -1,0 +1,111 @@
+<view class="container stock-page">
+  <view class="card stock-hero">
+    <view class="stock-hero-top">
+      <view>
+        <text class="stock-hero-title">🎯 自动选股</text>
+        <text class="stock-hero-sub">进入页面即在云端后台运行，可先看最近结果；关闭小程序后下次进入仍可查看</text>
+      </view>
+      <text class="chip blue" wx:if="{{running}}">后台运行中</text>
+      <text class="chip green" wx:elif="{{showResult}}">结果已更新</text>
+      <text class="chip gray" wx:else>等待开始</text>
+    </view>
+
+    <view class="stock-hero-status">
+      <text class="stock-status-main">{{statusText}}</text>
+      <text class="stock-status-sub" wx:if="{{pollText}}">{{pollText}}</text>
+      <text class="stock-status-sub" wx:if="{{screenTime}}">最近结果：{{screenTime}}</text>
+    </view>
+
+    <view class="stock-notify-box">
+      <view class="stock-notify-main">
+        <text class="stock-notify-title">结果通知</text>
+        <text class="stock-notify-sub">{{notifyStatusText || '可在任务完成后接收微信提醒'}}</text>
+      </view>
+      <button
+        class="btn sm {{notifyAvailable ? 'stock-notify-btn' : 'ghost'}}"
+        bindtap="subscribeResultNotice"
+        loading="{{notifyLoading}}"
+        disabled="{{notifyLoading || !notifyAvailable}}"
+      >{{notifySubscribed ? '重新登记通知' : notifyAvailable ? '订阅结果通知' : '暂未开启'}}</button>
+    </view>
+
+    <view class="stock-hero-tip" wx:if="{{!serverConfigured}}">
+      <text class="stock-tip-text">需要先在设置页填写后端服务器地址，页面才能自动触发选股。</text>
+      <button class="btn sm ghost" bindtap="goSettings">去设置</button>
+    </view>
+  </view>
+
+  <view class="card stock-loading" wx:if="{{loading && serverConfigured}}">
+    <view class="stock-loading-orbit"></view>
+    <text class="stock-loading-title">后台正在扫描 A 股形态</text>
+    <text class="stock-loading-sub">任务在云端持续执行，本页会轮询更新；中途退出后下次进入仍可查看结果</text>
+  </view>
+
+  <view class="card" wx:if="{{showResult}}">
+    <view class="card-header">
+      <text class="title">今日筛选结果</text>
+      <text class="sub" wx:if="{{screenTime}}">{{screenTime}}</text>
+    </view>
+
+    <view class="sim-screen-summary" wx:if="{{screenSummary}}">
+      <text class="sim-screen-summary-text">{{screenSummary}}</text>
+      <text class="sim-screen-strategy" wx:if="{{screenStrategy}}">{{screenStrategy}}</text>
+      <text class="sub sim-screen-meta" wx:if="{{screenScanned}}">扫描 {{screenScanned}} 只 · 命中 {{screenQualified}} 只</text>
+    </view>
+
+    <view wx:if="{{screenPicks.length > 0}}">
+      <view class="sim-screen-item" wx:for="{{screenPicks}}" wx:key="code">
+        <view class="sim-screen-top">
+          <view class="sim-screen-left">
+            <text class="sim-screen-name">{{index + 1}}. {{item.name}}</text>
+            <text class="sub">{{item.code}} · {{item.sector}}</text>
+          </view>
+          <view class="sim-screen-right">
+            <text class="sim-screen-score">{{item.score}}分</text>
+            <text class="sim-screen-confidence">命中 {{item.confidence}}</text>
+          </view>
+        </view>
+
+        <view class="sim-screen-tags">
+          <text class="sim-screen-tag sim-screen-tag-signal">{{item.signalText}}</text>
+          <text class="sim-screen-tag sim-screen-tag-risk sim-risk-{{item.riskLevel === '高' ? 'high' : item.riskLevel === '低' ? 'low' : 'mid'}}">风险{{item.riskLevel}}</text>
+        </view>
+
+        <view class="sim-screen-stats">
+          <text class="sub">现价 ¥{{item.latestPrice}}</text>
+          <text class="sub pct-{{item.latestPctClass}}">{{item.latestPctStr}}</text>
+          <text class="sub">支撑 {{item.support}}</text>
+          <text class="sub">阻力 {{item.resistance}}</text>
+        </view>
+
+        <text class="sim-screen-reason">{{item.reason}}</text>
+        <text class="sim-screen-advice">人话建议：{{item.advice}}</text>
+        <view class="sim-screen-plan">
+          <text class="sim-screen-plan-item">类型：{{item.planType}}</text>
+          <text class="sim-screen-plan-item">买点：{{item.buyZone}}</text>
+          <text class="sim-screen-plan-item">止损：{{item.stopLossText}}</text>
+          <text class="sim-screen-plan-item">目标：{{item.targetPriceText}}</text>
+          <text class="sim-screen-plan-item">盈亏比：{{item.rrRatioText}}</text>
+        </view>
+        <text class="sim-screen-entry">操作观察：{{item.planNote || item.entryHint}}</text>
+        <text class="sub sim-screen-risk">风险提示：{{item.riskText}}</text>
+        <view class="stock-pick-actions">
+          <button
+            class="btn sm stock-pick-btn"
+            bindtap="addToSimPortfolio"
+            data-code="{{item.code}}"
+            data-name="{{item.name}}"
+            data-sector="{{item.sector}}"
+            data-price="{{item.latestPrice}}"
+            data-reason="{{item.reason}}"
+          >加入模拟仓</button>
+        </view>
+      </view>
+    </view>
+
+    <view class="empty-state" wx:else>
+      <text class="empty-icon">📭</text>
+      <text class="sub">本轮严格条件下暂无达标标的</text>
+    </view>
+  </view>
+</view>

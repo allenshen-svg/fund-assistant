@@ -3,12 +3,245 @@
   position: relative;
 }
 
-.sim-reset {
-  font-size: 24rpx;
-  color: var(--text-muted);
-  padding: 4rpx 16rpx;
-  border: 1rpx solid var(--border-subtle);
+/* ====== 加载骨架屏 ====== */
+.sim-skeleton {
+  padding: 24rpx 0;
+}
+.skeleton-line {
+  height: 32rpx;
   border-radius: 8rpx;
+  background: linear-gradient(90deg, rgba(0,0,0,0.06) 25%, rgba(0,0,0,0.10) 50%, rgba(0,0,0,0.06) 75%);
+  background-size: 400% 100%;
+  animation: shimmer 1.5s ease infinite;
+  margin-bottom: 20rpx;
+}
+.skeleton-w60 { width: 60%; }
+.skeleton-w40 { width: 40%; }
+.skeleton-w80 { width: 80%; }
+@keyframes shimmer {
+  0% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.sim-auto-ai-tag {
+  color: #d97706;
+}
+
+.sim-auto-banner {
+  margin: 8rpx 0 16rpx;
+  padding: 16rpx 18rpx;
+  border-radius: 14rpx;
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.10), rgba(59, 130, 246, 0.08));
+  border: 1rpx solid rgba(16, 185, 129, 0.25);
+}
+
+.sim-auto-title {
+  display: block;
+  font-size: 26rpx;
+  font-weight: 700;
+  color: var(--text-strong);
+}
+
+.sim-auto-desc {
+  display: block;
+  margin-top: 6rpx;
+  font-size: 22rpx;
+  line-height: 1.6;
+  color: var(--text-muted);
+}
+
+.sim-auto-config {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10rpx;
+  margin-top: 12rpx;
+}
+
+.sim-auto-config-chip {
+  font-size: 21rpx;
+  line-height: 1.4;
+  padding: 6rpx 14rpx;
+  border-radius: 999rpx;
+  color: #0f766e;
+  background: rgba(16, 185, 129, 0.12);
+}
+
+.sim-attrib-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12rpx;
+  margin-bottom: 14rpx;
+}
+
+.sim-attrib-item {
+  width: calc((100% - 12rpx) / 2);
+  box-sizing: border-box;
+  padding: 14rpx 16rpx;
+  border-radius: 14rpx;
+  background: rgba(15, 23, 42, 0.04);
+}
+
+.sim-attrib-label {
+  display: block;
+  font-size: 22rpx;
+  color: var(--text-muted);
+}
+
+.sim-attrib-value {
+  display: block;
+  margin-top: 6rpx;
+  font-size: 30rpx;
+  font-weight: 700;
+  color: var(--text-strong);
+}
+
+.sim-attrib-section {
+  margin-top: 12rpx;
+}
+
+.sim-attrib-title {
+  display: block;
+  font-size: 24rpx;
+  font-weight: 700;
+  color: var(--text-strong);
+  margin-bottom: 6rpx;
+}
+
+.sim-attrib-text {
+  display: block;
+  font-size: 23rpx;
+  line-height: 1.8;
+  color: var(--text);
+}
+
+.sim-attrib-pair {
+  margin-top: 12rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+}
+
+.sim-attrib-pair-item {
+  font-size: 23rpx;
+  line-height: 1.7;
+  color: var(--text-muted);
+}
+
+.sim-factor-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 12rpx;
+  margin-top: 12rpx;
+}
+
+.sim-factor-item {
+  padding: 14rpx 16rpx;
+  border-radius: 14rpx;
+  background: rgba(15, 23, 42, 0.04);
+}
+
+.sim-factor-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.sim-factor-label {
+  font-size: 24rpx;
+  font-weight: 700;
+  color: var(--text-strong);
+}
+
+.sim-factor-score {
+  font-size: 22rpx;
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.sim-factor-bar {
+  margin-top: 8rpx;
+  height: 10rpx;
+  border-radius: 999rpx;
+  background: rgba(108, 138, 255, 0.10);
+  overflow: hidden;
+}
+
+.sim-factor-fill {
+  height: 100%;
+  border-radius: 999rpx;
+  background: linear-gradient(90deg, #34d399, #60a5fa);
+}
+
+.sim-factor-summary {
+  display: block;
+  margin-top: 8rpx;
+  font-size: 22rpx;
+  line-height: 1.6;
+  color: var(--text-muted);
+}
+
+.sim-week-trade-item {
+  padding: 16rpx 0;
+  border-top: 1rpx solid var(--border-subtle);
+}
+
+.sim-week-trade-item:first-child {
+  border-top: none;
+}
+
+.sim-week-trade-top {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+}
+
+.sim-week-trade-name {
+  flex: 1;
+  font-size: 27rpx;
+  font-weight: 700;
+  color: var(--text-strong);
+}
+
+.sim-week-trade-amount {
+  font-size: 25rpx;
+  font-weight: 700;
+}
+
+.sim-week-trade-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8rpx 16rpx;
+  margin-top: 8rpx;
+}
+
+.sim-week-trade-tags,
+.sim-log-row-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8rpx;
+  margin-top: 8rpx;
+}
+
+.sim-trade-chip {
+  display: inline-flex;
+  align-items: center;
+  font-size: 21rpx;
+  line-height: 1.4;
+  padding: 6rpx 12rpx;
+  border-radius: 999rpx;
+}
+
+.sim-trade-chip-accent {
+  color: #3557c8;
+  background: rgba(108, 138, 255, 0.12);
+}
+
+.sim-week-trade-reason {
+  display: block;
+  margin-top: 8rpx;
+  font-size: 23rpx;
+  line-height: 1.7;
+  color: var(--text);
 }
 
 .sim-summary {
@@ -310,49 +543,6 @@
   text-align: right;
 }
 
-/* ====== 操作按钮 ====== */
-.sim-actions {
-  display: flex;
-  gap: 16rpx;
-  margin-top: 16rpx;
-}
-
-.sim-btn {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 16rpx 0;
-  border-radius: 16rpx;
-  border: 1rpx solid var(--border-subtle);
-}
-
-.sim-btn-buy {
-  background: rgba(239,68,68,0.08);
-  border-color: rgba(239,68,68,0.2);
-}
-
-.sim-btn-sell {
-  background: rgba(34,197,94,0.08);
-  border-color: rgba(34,197,94,0.2);
-}
-
-.sim-btn-review {
-  background: rgba(108,138,255,0.08);
-  border-color: rgba(108,138,255,0.2);
-}
-
-.sim-btn-icon {
-  font-size: 36rpx;
-  margin-bottom: 4rpx;
-}
-
-.sim-btn-text {
-  font-size: 24rpx;
-  color: var(--text);
-  font-weight: 500;
-}
-
 /* ====== 持仓列表 ====== */
 .sim-pos-item {
   border-top: 1rpx solid var(--border-subtle);
@@ -392,36 +582,9 @@
   margin-top: 8rpx;
 }
 
-.sim-pos-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 16rpx;
-  margin-top: 8rpx;
-}
-
-.sim-pos-btn {
-  font-size: 24rpx;
-  padding: 6rpx 20rpx;
-  border-radius: 8rpx;
-  font-weight: 500;
-}
-
-.sim-pos-btn-add {
-  color: #ef4444;
-  background: rgba(239,68,68,0.1);
-}
-
-.sim-pos-btn-sell {
-  color: #22c55e;
-  background: rgba(34,197,94,0.1);
-}
-
 /* ====== 交易记录 ====== */
 .sim-log-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  padding: 12rpx 0;
+  padding: 16rpx 0;
   border-top: 1rpx solid var(--border-subtle);
 }
 
@@ -429,10 +592,10 @@
   border-top: none;
 }
 
-.sim-log-left {
+.sim-log-row1 {
   display: flex;
-  align-items: flex-start;
-  gap: 12rpx;
+  align-items: center;
+  gap: 10rpx;
 }
 
 .sim-log-action {
@@ -441,7 +604,7 @@
   border-radius: 6rpx;
   font-weight: 600;
   flex-shrink: 0;
-  margin-top: 2rpx;
+  line-height: 1.4;
 }
 
 .sim-log-buy {
@@ -455,27 +618,57 @@
 }
 
 .sim-log-name {
-  font-size: 26rpx;
+  font-size: 28rpx;
   font-weight: 600;
   color: var(--text);
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
-.sim-log-right {
-  text-align: right;
+.sim-log-code {
+  font-size: 22rpx;
   flex-shrink: 0;
 }
 
 .sim-log-amount {
   font-size: 26rpx;
   font-weight: 600;
+  margin-left: auto;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.sim-log-row2 {
+  display: flex;
+  align-items: center;
+  gap: 6rpx;
+  margin-top: 8rpx;
+  padding-left: 4rpx;
+}
+
+.sim-log-dot {
+  flex-shrink: 0;
+}
+
+.sim-log-sector {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sim-log-row3 {
+  margin-top: 8rpx;
+  padding-left: 4rpx;
 }
 
 .sim-log-reason {
   font-size: 22rpx;
-  max-width: 200rpx;
+  color: var(--text-muted);
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 /* ====== 折叠 ====== */
@@ -554,300 +747,37 @@
   margin-bottom: 4rpx;
 }
 
-/* ====== 弹出面板 ====== */
-.sim-modal-mask {
-  position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(0,0,0,0.5);
-  z-index: 998;
-}
-
-.sim-modal {
-  position: fixed;
-  left: 0; right: 0;
-  bottom: 0;
-  background: var(--surface);
-  border-radius: 24rpx 24rpx 0 0;
-  z-index: 999;
-  transform: translateY(100%);
-  transition: transform 0.3s ease;
-  max-height: 85vh;
-  display: flex;
-  flex-direction: column;
-}
-
-.sim-modal-show {
-  transform: translateY(0);
-}
-
-.sim-modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 24rpx 32rpx;
-  border-bottom: 1rpx solid var(--border-subtle);
-  flex-shrink: 0;
-}
-
-.sim-modal-title {
-  font-size: 32rpx;
-  font-weight: 700;
-  color: var(--text-strong);
-}
-
-.sim-modal-close {
-  font-size: 36rpx;
-  color: var(--text-muted);
-  padding: 8rpx;
-}
-
-.sim-modal-footer {
-  padding: 16rpx 32rpx 48rpx;
-  flex-shrink: 0;
-}
-
-/* ====== 买入面板 ====== */
-.sim-buy-tabs {
-  display: flex;
-  padding: 16rpx 32rpx;
-  gap: 16rpx;
-  flex-shrink: 0;
-}
-
-.sim-buy-tab {
-  flex: 1;
-  text-align: center;
-  padding: 12rpx 0;
-  font-size: 26rpx;
-  color: var(--text-muted);
+.sim-review-trade-item {
+  margin-top: 12rpx;
+  padding: 14rpx 16rpx;
   border-radius: 12rpx;
-  background: var(--elevated);
-  font-weight: 500;
+  background: rgba(15, 23, 42, 0.04);
 }
 
-.sim-buy-tab.active {
-  color: var(--text-strong);
-  background: var(--accent-bg);
-  font-weight: 700;
-}
-
-.sim-pick-time {
-  padding: 0 32rpx 8rpx;
-}
-
-.sim-pick-list {
-  max-height: 40vh;
-  padding: 0 32rpx;
-  flex: 1;
-  overflow: hidden;
-}
-
-.sim-pick-item {
-  padding: 16rpx;
-  border-radius: 12rpx;
-  border: 2rpx solid var(--border-subtle);
-  margin-bottom: 12rpx;
-  transition: all 0.2s;
-}
-
-.sim-pick-item.sim-pick-selected {
-  border-color: var(--accent);
-  background: var(--accent-bg);
-}
-
-.sim-pick-info {
-  margin-bottom: 6rpx;
-}
-
-.sim-pick-name {
-  font-size: 28rpx;
-  font-weight: 700;
-  color: var(--text);
-}
-
-.sim-pick-reason {
-  margin-top: 4rpx;
-}
-
-/* ====== 买入金额输入 ====== */
-.sim-buy-input-row {
-  padding: 16rpx 32rpx;
-  border-top: 1rpx solid var(--border-subtle);
-  flex-shrink: 0;
-}
-
-.sim-buy-target {
-  font-size: 26rpx;
-  font-weight: 600;
-  color: var(--accent);
-  display: block;
-  margin-bottom: 12rpx;
-}
-
-.sim-buy-input-wrap {
+.sim-review-trade-top {
   display: flex;
   align-items: center;
-  gap: 8rpx;
-  background: var(--input-bg);
-  border-radius: 12rpx;
-  padding: 12rpx 16rpx;
-  margin-bottom: 12rpx;
+  gap: 10rpx;
 }
 
-.sim-buy-yen {
-  font-size: 32rpx;
-  font-weight: 700;
-  color: var(--text);
-}
-
-.sim-buy-input {
+.sim-review-trade-name {
   flex: 1;
-  font-size: 32rpx;
+  font-size: 25rpx;
   font-weight: 700;
   color: var(--text-strong);
 }
 
-.sim-buy-quick-btns {
+.sim-review-trade-amount {
+  font-size: 24rpx;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.sim-review-trade-meta {
   display: flex;
-  gap: 12rpx;
-}
-
-.sim-quick-btn {
-  flex: 1;
-  text-align: center;
-  font-size: 24rpx;
-  color: var(--text);
-  padding: 8rpx 0;
-  background: var(--elevated);
-  border-radius: 8rpx;
-  border: 1rpx solid var(--border-subtle);
-}
-
-.sim-confirm-btn {
-  width: 100%;
-  text-align: center;
-  padding: 20rpx 0;
-  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-  color: #fff;
-  font-size: 30rpx;
-  font-weight: 700;
-  border-radius: 16rpx;
-}
-
-.sim-confirm-btn.disabled {
-  opacity: 0.4;
-}
-
-/* ====== 卖出面板 ====== */
-.sim-sell-loading {
-  padding: 60rpx 0;
-  text-align: center;
-}
-
-.sim-sell-content {
-  max-height: 65vh;
-  padding: 0 32rpx 32rpx;
-  flex: 1;
-  overflow: hidden;
-}
-
-.sim-sell-overview {
-  padding: 16rpx 20rpx;
-  background: var(--elevated);
-  border-radius: 12rpx;
-  margin-bottom: 16rpx;
-}
-
-.sim-sell-overview-text {
-  font-size: 26rpx;
-  color: var(--text-body);
-  line-height: 1.6;
-}
-
-.sim-sell-risk {
-  padding: 12rpx 20rpx;
-  background: rgba(251,191,36,0.1);
-  border-radius: 12rpx;
-  border-left: 6rpx solid #fbbf24;
-  margin-bottom: 16rpx;
-}
-
-.sim-sell-risk-text {
-  font-size: 24rpx;
-  color: #fbbf24;
-  line-height: 1.5;
-}
-
-.sim-sell-section-title {
-  font-size: 28rpx;
-  font-weight: 700;
-  color: var(--text);
-  display: block;
-  margin: 16rpx 0 12rpx;
-}
-
-.sim-sell-item {
-  background: var(--elevated);
-  border-radius: 12rpx;
-  padding: 16rpx;
-  margin-bottom: 12rpx;
-  border-left: 6rpx solid #f87171;
-}
-
-.sim-sell-item-top {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 8rpx;
-}
-
-.sim-sell-item-name {
-  font-size: 28rpx;
-  font-weight: 700;
-  color: var(--text);
-}
-
-.sim-sell-item-action {
-  text-align: right;
-}
-
-.sim-sell-urgency {
-  font-size: 22rpx;
-  display: block;
-  margin-bottom: 4rpx;
-}
-
-.sim-sell-pct {
-  font-size: 24rpx;
-  font-weight: 600;
-  color: #f87171;
-}
-
-.sim-sell-item-reason {
-  margin-bottom: 12rpx;
-}
-
-.sim-sell-item-btn {
-  text-align: center;
-  padding: 12rpx 0;
-  background: rgba(239,68,68,0.12);
-  color: #ef4444;
-  font-size: 26rpx;
-  font-weight: 600;
-  border-radius: 10rpx;
-}
-
-.sim-sell-hold {
-  margin-top: 16rpx;
-}
-
-.sim-sell-hold-text {
-  font-size: 24rpx;
-  color: var(--text-body);
-  line-height: 1.6;
-  padding: 12rpx 16rpx;
-  background: var(--elevated);
-  border-radius: 12rpx;
+  flex-wrap: wrap;
+  gap: 8rpx 16rpx;
+  margin-top: 8rpx;
 }
 
 /* ====== 涨跌色 ====== */

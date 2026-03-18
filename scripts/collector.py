@@ -5,7 +5,7 @@
 """
 
 import json, re, os, time, hashlib, traceback
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import requests
 
@@ -23,6 +23,9 @@ FINANCE_KW = [
     '机器人','自动驾驶','新能源','光伏','锂电','碳酸锂','储能',
     '军工','国防','航天','白酒','消费','医药','创新药','CXO',
     '黄金','金价','白银','银价','贵金属','铂金','钯金','原油','油价','有色金属','铜','铝','稀土','锌','镍','锡',
+    '铁矿','铁矿石','矿石','澳大利亚','澳洲','矿产','采矿','钢铁','螺纹钢','焦煤','焦炭',
+    '天然气','煤炭','动力煤','大豆','豆粕','棉花','棕榈油','橡胶','玉米','小麦','生猪','猪肉','白糖','农产品','粮食',
+    '钴','锰','钨','期货','大宗商品','商品价格',
     '红利','高股息','银行','保险','券商','地产','房价','楼市','房地产',
     '央行','降息','降准','LPR','利率','通胀','CPI','GDP','PMI',
     '美联储','加息','国债','债券','汇率','人民币',
@@ -49,6 +52,9 @@ ACTIVE_SEARCH_KW = [
     '军工板块', '白酒基金',
     'AI对经济的影响', '石油危机', '中东局势',
     '伊朗制裁', '地缘政治经济', '科技革命投资',
+    '铁矿石行情', '澳大利亚矿产', '钢铁期货',
+    '天然气价格', '煤炭期货', '大豆期货',
+    '农产品价格', '生猪期货', '大宗商品行情',
 ]
 
 # ==================== 娱乐/体育/无关内容排除 ====================
@@ -95,7 +101,8 @@ def is_noise_category(text):
 TREND_THEMES = [
     {'id': 'ai_tech',       'name': 'AI/科技革命',     'icon': '🤖', 'keywords': ['AI', '人工智能', '算力', '芯片', '半导体', '大模型', 'DeepSeek', '光模块', 'CPO', '机器人', '自动驾驶', '英伟达', 'NVIDIA', 'AMD', '科技']},
     {'id': 'gold_metal',    'name': '黄金/贵金属',     'icon': '🥇', 'keywords': ['黄金', '金价', '白银', '银价', '贵金属', '铂金', '钯金']},
-    {'id': 'oil_energy',    'name': '石油/能源',       'icon': '🛢️', 'keywords': ['原油', '油价', '石油', '天然气', 'OPEC', '能源']},
+    {'id': 'oil_energy',    'name': '石油/能源',       'icon': '🛢️', 'keywords': ['原油', '油价', '石油', '天然气', 'OPEC', '能源', '煤炭', '动力煤']},
+    {'id': 'agri_commodity', 'name': '农产品/商品',     'icon': '🌾', 'keywords': ['大豆', '豆粕', '玉米', '小麦', '棉花', '棕榈油', '白糖', '橡胶', '生猪', '猪肉', '农产品', '粮食']},
     {'id': 'geopolitics',   'name': '地缘政治',       'icon': '🌍', 'keywords': ['伊朗', '中东', '俄乌', '制裁', '战争', '冲突', '地缘', '关税', '贸易战', '军事']},
     {'id': 'macro_policy',  'name': '宏观政策',       'icon': '🏛️', 'keywords': ['央行', '降息', '降准', 'LPR', '美联储', '加息', '通胀', 'CPI', 'GDP', 'PMI', '汇率', '人民币', '美元', '利率']},
     {'id': 'new_energy',    'name': '新能源/碳中和',   'icon': '☀️', 'keywords': ['新能源', '光伏', '锂电', '碳酸锂', '储能', '风电', '氢能', '充电桩', '比亚迪', '特斯拉']},
@@ -105,7 +112,7 @@ TREND_THEMES = [
     {'id': 'hk_us_stock',   'name': '港股/美股',       'icon': '🌐', 'keywords': ['港股', '恒生', '美股', '纳斯达克', '道琼斯', '标普']},
     {'id': 'a_share',       'name': 'A股/大盘',       'icon': '📈', 'keywords': ['A股', '股市', '大盘', '沪指', '上证', '深成', '创业板', '科创板']},
     {'id': 'fund_etf',      'name': '基金/ETF',       'icon': '💰', 'keywords': ['基金', 'ETF', '定投', '净值', '基民', '公募', '私募']},
-    {'id': 'nonferrous',    'name': '有色金属/商品',   'icon': '⛏️', 'keywords': ['有色金属', '铜', '铝', '稀土', '锌', '镍', '锡', '铁矿']},
+    {'id': 'nonferrous',    'name': '有色金属/商品',   'icon': '⛏️', 'keywords': ['有色金属', '铜', '铝', '稀土', '锌', '镍', '锡', '铁矿', '钢铁', '焦煤', '钴', '锰']},
     {'id': 'bond_forex',    'name': '债券/外汇',       'icon': '💱', 'keywords': ['国债', '债券', '外汇', '汇率', '利率债', '信用债']},
     {'id': 'dividend',      'name': '高股息/红利',     'icon': '🎁', 'keywords': ['红利', '高股息', '银行', '保险', '券商', '分红']},
 ]
@@ -209,6 +216,69 @@ def estimate_sentiment(text):
 def now_iso():
     return datetime.now(timezone.utc).isoformat()
 
+def _pubdate_to_iso(pubdate_val):
+    """将B站API的pubdate(UNIX时间戳)转为ISO格式，失败则返回now_iso()"""
+    if not pubdate_val:
+        return now_iso()
+    try:
+        return datetime.fromtimestamp(int(pubdate_val), tz=timezone.utc).isoformat()
+    except (TypeError, ValueError, OSError):
+        return now_iso()
+
+def _is_stale_title(title):
+    """检测标题中是否包含明显过时的日期(超过3天前),用于过滤B站等平台的旧视频"""
+    today = datetime.now()
+    year = today.year
+    month = today.month
+    day = today.day
+
+    # 匹配 "1.19日" "1.19号" "1·19" 等格式
+    m = re.search(r'(\d{1,2})[\./·](\d{1,2})[日号]?', title)
+    if m:
+        try:
+            t_month, t_day = int(m.group(1)), int(m.group(2))
+            if 1 <= t_month <= 12 and 1 <= t_day <= 31:
+                t_date = datetime(year, t_month, t_day)
+                # 如果算出来的日期在未来，说明是去年的
+                if t_date > today:
+                    t_date = datetime(year - 1, t_month, t_day)
+                if (today - t_date).days > 3:
+                    return True
+        except ValueError:
+            pass
+
+    # 匹配 "1月19日" "2月2号" 等格式
+    m = re.search(r'(\d{1,2})月(\d{1,2})[日号]', title)
+    if m:
+        try:
+            t_month, t_day = int(m.group(1)), int(m.group(2))
+            if 1 <= t_month <= 12 and 1 <= t_day <= 31:
+                t_date = datetime(year, t_month, t_day)
+                if t_date > today:
+                    t_date = datetime(year - 1, t_month, t_day)
+                if (today - t_date).days > 3:
+                    return True
+        except ValueError:
+            pass
+
+    return False
+
+def _is_stale_by_time(publish_time_str, max_hours=48):
+    """检测 publish_time 是否超过 max_hours 小时前(根据实际时间戳过滤过旧内容)"""
+    if not publish_time_str:
+        return False
+    try:
+        pt = publish_time_str.replace('Z', '+00:00')
+        pub_dt = datetime.fromisoformat(pt)
+        now_utc = datetime.now(timezone.utc)
+        # 无时区信息则假定为中国时间(UTC+8)
+        if pub_dt.tzinfo is None:
+            pub_dt = pub_dt.replace(tzinfo=timezone(timedelta(hours=8)))
+        diff = (now_utc - pub_dt).total_seconds()
+        return diff > max_hours * 3600
+    except (ValueError, TypeError):
+        return False
+
 def safe_int(v, default=0):
     try:
         return int(v)
@@ -294,7 +364,7 @@ def fetch_douyin():
                     'source_type': '头条财经',
                     'sentiment': estimate_sentiment(title + ' ' + abstract),
                     'creator_type': '财经资讯平台',
-                    'publish_time': now_iso(),
+                    'publish_time': _pubdate_to_iso(item.get('publish_time') or item.get('behot_time')),
                 })
                 bt = item.get('behot_time', 0)
                 if bt:
@@ -418,7 +488,7 @@ def fetch_eastmoney():
         print(f'[东方财富-tophub] {e}')
 
     # Source 3: 东方财富关键词搜索 (主动搜索贵金属/热门板块)
-    search_kw_em = ['黄金', '白银', '贵金属', '原油']
+    search_kw_em = ['黄金', '白银', '贵金属', '原油', '铁矿石', '钢铁', '天然气', '煤炭', '大豆', '生猪']
     for kw in search_kw_em:
         try:
             r = requests.get(
@@ -585,7 +655,7 @@ def fetch_bilibili():
             title = (item.get('title') or '').strip()
             desc = (item.get('desc') or '').strip()
             views = (item.get('stat') or {}).get('view') or 0
-            if title and is_finance(title + ' ' + desc) and title not in seen:
+            if title and is_finance(title + ' ' + desc) and title not in seen and not _is_stale_title(title):
                 seen.add(title)
                 items.append({
                     'title': title[:80],
@@ -595,7 +665,7 @@ def fetch_bilibili():
                     'source_type': '财经频道',
                     'sentiment': estimate_sentiment(title + ' ' + desc),
                     'creator_type': '视频社区',
-                    'publish_time': now_iso(),
+                    'publish_time': _pubdate_to_iso(item.get('pubdate')),
                 })
     except Exception as e:
         print(f'[B站-财经频道] {e}')
@@ -631,7 +701,7 @@ def fetch_bilibili():
             title = item.get('title') or ''
             desc = item.get('desc') or ''
             views = (item.get('stat') or {}).get('view') or 0
-            if title and is_finance(title + ' ' + desc) and title not in seen:
+            if title and is_finance(title + ' ' + desc) and title not in seen and not _is_stale_title(title):
                 seen.add(title)
                 items.append({
                     'title': title[:80],
@@ -641,7 +711,7 @@ def fetch_bilibili():
                     'source_type': '排行',
                     'sentiment': estimate_sentiment(title + ' ' + desc),
                     'creator_type': '聚合热榜',
-                    'publish_time': now_iso(),
+                    'publish_time': _pubdate_to_iso(item.get('pubdate')),
                 })
     except Exception as e:
         print(f'[B站-排行] {e}')
@@ -672,7 +742,7 @@ def fetch_bilibili():
                 desc = re.sub(r'<[^>]+>', '', item.get('description') or '').strip()
                 author = item.get('author') or ''
                 views = safe_int(item.get('play'))
-                if title and is_finance(title + ' ' + desc) and title not in seen:
+                if title and is_finance(title + ' ' + desc) and title not in seen and not _is_stale_title(title):
                     seen.add(title)
                     items.append({
                         'title': title[:80],
@@ -683,7 +753,7 @@ def fetch_bilibili():
                         'sentiment': estimate_sentiment(title + ' ' + desc),
                         'creator_type': '视频博主',
                         'creator_name': author,
-                        'publish_time': now_iso(),
+                        'publish_time': _pubdate_to_iso(item.get('pubdate') or item.get('senddate')),
                     })
             time.sleep(0.3)  # 避免限流
         except Exception as e:
@@ -937,6 +1007,20 @@ def collect_all():
     noise_filtered = before_filter - len(all_items)
     if noise_filtered > 0:
         print(f'  🗑️ 过滤娱乐/体育噪音: {noise_filtered} 条')
+
+    # 过滤标题中包含过时日期的内容（跨平台兜底）
+    before_stale = len(all_items)
+    all_items = [item for item in all_items if not _is_stale_title(item.get('title', ''))]
+    stale_filtered = before_stale - len(all_items)
+    if stale_filtered > 0:
+        print(f'  📅 过滤过时标题: {stale_filtered} 条')
+
+    # 过滤实际时间戳过旧的内容(>12小时，仅影响有真实时间戳的源)
+    before_time = len(all_items)
+    all_items = [item for item in all_items if not _is_stale_by_time(item.get('publish_time'), max_hours=12)]
+    time_filtered = before_time - len(all_items)
+    if time_filtered > 0:
+        print(f'  ⏰ 过滤超过48h旧内容: {time_filtered} 条')
 
     all_items.sort(key=lambda x: x.get('likes', 0), reverse=True)
 

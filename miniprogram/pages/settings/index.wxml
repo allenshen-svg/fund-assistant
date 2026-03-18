@@ -59,6 +59,53 @@
     </view>
   </view>
 
+  <view class="card">
+    <view class="card-header">
+      <text class="title">⚙️ 自动模拟仓参数</text>
+    </view>
+
+    <view class="form-item">
+      <text class="label">目标单次加仓比例</text>
+      <input class="input" value="{{simAutoConfig.targetBuyPct}}" bindinput="onSimAutoInput" data-key="targetBuyPct" placeholder="如 0.10" />
+      <text class="sub sim-hint">这是基准比例，实际会按候选评分、AI 置信度和风险提示动态上下浮动</text>
+    </view>
+
+    <view class="form-item">
+      <text class="label">单标的仓位上限</text>
+      <input class="input" value="{{simAutoConfig.maxPositionWeight}}" bindinput="onSimAutoInput" data-key="maxPositionWeight" placeholder="如 0.25" />
+    </view>
+
+    <view class="form-item">
+      <text class="label">回撤减仓阈值 (%)</text>
+      <input class="input" value="{{simAutoConfig.drawdownTriggerPct}}" bindinput="onSimAutoInput" data-key="drawdownTriggerPct" placeholder="如 -6" />
+    </view>
+
+    <view class="form-item">
+      <text class="label">止盈阈值 (%)</text>
+      <input class="input" value="{{simAutoConfig.takeProfitTriggerPct}}" bindinput="onSimAutoInput" data-key="takeProfitTriggerPct" placeholder="如 12" />
+    </view>
+
+    <view class="form-item">
+      <text class="label">每日最多加仓标的数</text>
+      <input class="input" value="{{simAutoConfig.maxBuyCandidates}}" bindinput="onSimAutoInput" data-key="maxBuyCandidates" placeholder="如 2" />
+    </view>
+
+    <view class="form-item">
+      <text class="label">最低单次买入金额</text>
+      <input class="input" value="{{simAutoConfig.minBuyAmount}}" bindinput="onSimAutoInput" data-key="minBuyAmount" placeholder="如 600" />
+      <text class="sub sim-hint">自动模拟仓当前默认初始资金为 10000 元，低于该金额时不再强制凑单</text>
+    </view>
+
+    <view class="btn-row">
+      <button class="btn" size="mini" bindtap="saveSimAutoConfig">💾 保存自动仓参数</button>
+      <button class="btn ghost" size="mini" bindtap="loadSimAutoConfig">🔄 重新读取</button>
+    </view>
+
+    <view wx:if="{{simAutoStatus}}" class="status-bar {{simAutoStatus.indexOf('✅') >= 0 ? 'green' : 'orange'}}">
+      <text>{{simAutoStatus}}</text>
+    </view>
+  </view>
+
   <!-- ====== AI 分析设置 ====== -->
   <view class="card">
     <view class="card-header">

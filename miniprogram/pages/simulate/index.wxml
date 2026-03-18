@@ -1,62 +1,174 @@
 <wxs src="../../utils/fmt.wxs" module="fmt" />
 <view class="container">
 
-  <!-- ====== 组合概览 ====== -->
-  <view class="card sim-overview-card">
+  <!-- ====== 加载骨架屏 ====== -->
+  <view class="card sim-overview-card" wx:if="{{loading}}">
     <view class="card-header">
       <text class="title">🏦 模拟仓</text>
-      <text class="sim-reset" bindtap="resetPortfolio">重置</text>
+      <text class="sub">加载中...</text>
+    </view>
+    <view class="sim-skeleton">
+      <view class="skeleton-line skeleton-w60"></view>
+      <view class="skeleton-line skeleton-w40"></view>
+      <view class="skeleton-line skeleton-w80"></view>
+    </view>
+  </view>
+
+  <!-- ====== 组合概览 ====== -->
+  <view class="card sim-overview-card" wx:if="{{!loading}}">
+    <view class="card-header">
+      <text class="title">🏦 模拟仓</text>
+      <text class="sub">自动执行</text>
+    </view>
+
+    <view class="sim-auto-banner" wx:if="{{remoteMode}}">
+      <text class="sim-auto-title">服务端自动模拟仓</text>
+      <text class="sim-auto-desc" wx:if="{{hasRemoteData && autoMeta}}">{{autoMeta.tradeSchedule}}；{{autoMeta.reviewSchedule}}</text>
+      <text class="sim-auto-desc sim-auto-ai-tag" wx:if="{{autoMeta && autoMeta.aiStatus && autoMeta.aiStatus.last !== 'ok'}}">⚠️ AI分析状态: {{autoMeta.aiStatus.last === 'unknown' ? '待验证' : '当前使用规则引擎'}}</text>
+      <text class="sim-auto-desc" wx:if="{{!hasRemoteData && syncError}}">{{syncError}}</text>
+      <text class="sim-auto-desc" wx:if="{{portfolio.lastTradeSummary && portfolio.lastTradeSummary.date}}">
+        最近执行：{{portfolio.lastTradeSummary.date}}，买入 {{portfolio.lastTradeSummary.buyCount || 0}} 笔，减仓 {{portfolio.lastTradeSummary.sellCount || 0}} 笔
+      </text>
+      <view class="sim-auto-config" wx:if="{{latestSizingLabel}}">
+        <text class="sim-auto-config-chip">{{latestSizingLabel}}</text>
+      </view>
+      <text class="sim-auto-desc" wx:if="{{latestSizingNotes}}">最近买入仓位依据：{{latestSizingNotes}}</text>
+      <text class="sim-auto-desc">页面仅展示程序自动交易结果，不提供手动加仓、减仓或手动触发入口。</text>
+      <view class="sim-auto-config" wx:if="{{autoConfigSummary.length > 0}}">
+        <text class="sim-auto-config-chip" wx:for="{{autoConfigSummary}}" wx:key="*this">{{item}}</text>
+      </view>
     </view>
 
     <view class="sim-summary">
       <view class="sim-summary-main">
         <text class="sim-total-label">总资产</text>
-        <text class="sim-total-value">¥{{fmt.fmtNum(totalValue)}}</text>
-        <text class="sim-return pct-{{totalReturnClass}}">{{totalReturn}}</text>
+        <text class="sim-total-value" wx:if="{{hasRemoteData}}">¥{{fmt.fmtNum(totalValue)}}</text>
+        <text class="sim-total-value" wx:else>--</text>
+        <text class="sim-return pct-{{totalReturnClass}}" wx:if="{{hasRemoteData}}">{{totalReturn}}</text>
+        <text class="sim-return" wx:else>等待服务端连接</text>
       </view>
       <view class="sim-summary-row">
         <view class="sim-summary-item">
           <text class="sim-summary-label">可用现金</text>
-          <text class="sim-summary-val">¥{{fmt.fmtNum(cash)}}</text>
+          <text class="sim-summary-val" wx:if="{{hasRemoteData}}">¥{{fmt.fmtNum(cash)}}</text>
+          <text class="sim-summary-val" wx:else>--</text>
         </view>
         <view class="sim-summary-item">
           <text class="sim-summary-label">初始资金</text>
-          <text class="sim-summary-val">¥{{fmt.fmtNum(totalCash)}}</text>
+          <text class="sim-summary-val" wx:if="{{hasRemoteData}}">¥{{fmt.fmtNum(totalCash)}}</text>
+          <text class="sim-summary-val" wx:else>--</text>
         </view>
         <view class="sim-summary-item">
           <text class="sim-summary-label">持仓数</text>
-          <text class="sim-summary-val">{{positionList.length}}</text>
+          <text class="sim-summary-val" wx:if="{{hasRemoteData}}">{{positionList.length}}</text>
+          <text class="sim-summary-val" wx:else>--</text>
         </view>
       </view>
 
       <!-- 结算状态 -->
       <view class="sim-settle-row" wx:if="{{positionList.length > 0}}">
         <view class="sim-settle-info">
-          <text class="sim-settle-label">今日盈亏</text>
+          <text class="sim-settle-label">{{remoteMode ? '最近结算' : '今日盈亏'}}</text>
           <text class="sim-settle-pnl pct-{{dailyPnlClass}}" wx:if="{{dailyPnl}}">{{fmt.fmtNum(dailyPnl)}} ({{dailyPct}})</text>
           <text class="sim-settle-pnl" wx:else>待结算</text>
         </view>
         <view class="sim-settle-right">
           <text class="sim-settle-date sub" wx:if="{{settleDate}}">{{settleDate}} 已结算</text>
-          <text class="sim-settle-btn" bindtap="manualSettle">{{settling ? '结算中...' : '💰 结算'}}</text>
+          <text class="sim-settle-btn" bindtap="manualSettle">{{settling ? '刷新中...' : '🔄 刷新'}}</text>
         </view>
       </view>
     </view>
+  </view>
 
-    <!-- 操作按钮 -->
-    <view class="sim-actions">
-      <view class="sim-btn sim-btn-buy" bindtap="openBuyPanel">
-        <text class="sim-btn-icon">📈</text>
-        <text class="sim-btn-text">买入</text>
+  <view class="card" wx:if="{{remoteMode}}">
+    <view class="card-header">
+      <text class="title">🧭 本周收益归因</text>
+      <text class="sub" wx:if="{{weeklyAttribution && weeklyAttribution.returnPct}}">{{weeklyAttribution.returnPct}}</text>
+    </view>
+    <view wx:if="{{weeklyAttribution}}">
+      <view class="sim-attrib-grid">
+        <view class="sim-attrib-item">
+          <text class="sim-attrib-label">买入次数</text>
+          <text class="sim-attrib-value">{{weeklyAttribution.buyCount || 0}}</text>
+        </view>
+        <view class="sim-attrib-item">
+          <text class="sim-attrib-label">减仓次数</text>
+          <text class="sim-attrib-value">{{weeklyAttribution.sellCount || 0}}</text>
+        </view>
+        <view class="sim-attrib-item">
+          <text class="sim-attrib-label">买入金额</text>
+          <text class="sim-attrib-value">¥{{fmt.fmtNum(weeklyAttribution.buyAmount || 0)}}</text>
+        </view>
+        <view class="sim-attrib-item">
+          <text class="sim-attrib-label">卖出金额</text>
+          <text class="sim-attrib-value">¥{{fmt.fmtNum(weeklyAttribution.sellAmount || 0)}}</text>
+        </view>
       </view>
-      <view class="sim-btn sim-btn-sell" bindtap="openSellPanel">
-        <text class="sim-btn-icon">📉</text>
-        <text class="sim-btn-text">AI减仓</text>
+      <view class="sim-attrib-section" wx:if="{{weeklyAttribution.summary}}">
+        <text class="sim-attrib-title">归因总结</text>
+        <text class="sim-attrib-text">{{weeklyAttribution.summary}}</text>
       </view>
-      <view class="sim-btn sim-btn-review" bindtap="triggerWeeklyReview">
-        <text class="sim-btn-icon">📊</text>
-        <text class="sim-btn-text">{{reviewLoading ? '分析中...' : '周复盘'}}</text>
+      <view class="sim-attrib-section" wx:if="{{weeklyAttribution.analysis}}">
+        <text class="sim-attrib-title">盈亏原因</text>
+        <text class="sim-attrib-text">{{weeklyAttribution.analysis}}</text>
       </view>
+      <view class="sim-factor-grid" wx:if="{{weeklyAttribution.factorBreakdown && weeklyAttribution.factorBreakdown.length > 0}}">
+        <view class="sim-factor-item" wx:for="{{weeklyAttribution.factorBreakdown}}" wx:key="key">
+          <view class="sim-factor-top">
+            <text class="sim-factor-label">{{item.label}}</text>
+            <text class="sim-factor-score">{{item.score}}分</text>
+          </view>
+          <view class="sim-factor-bar">
+            <view class="sim-factor-fill" style="width: {{item.score}}%;"></view>
+          </view>
+          <text class="sim-factor-summary">{{item.summary}}</text>
+        </view>
+      </view>
+      <view class="sim-attrib-pair" wx:if="{{weeklyAttribution.bestTrade || weeklyAttribution.worstTrade}}">
+        <text class="sim-attrib-pair-item" wx:if="{{weeklyAttribution.bestTrade}}">最佳: {{weeklyAttribution.bestTrade}}</text>
+        <text class="sim-attrib-pair-item" wx:if="{{weeklyAttribution.worstTrade}}">最差: {{weeklyAttribution.worstTrade}}</text>
+      </view>
+      <view class="sim-attrib-section" wx:if="{{weeklyAttribution.lessons && weeklyAttribution.lessons.length > 0}}">
+        <text class="sim-attrib-title">后续改进</text>
+        <text class="sim-attrib-text" wx:for="{{weeklyAttribution.lessons}}" wx:key="*this">• {{item}}</text>
+      </view>
+      <view class="sim-attrib-section" wx:if="{{weeklyAttribution.nextWeekStrategy}}">
+        <text class="sim-attrib-title">下周策略</text>
+        <text class="sim-attrib-text">{{weeklyAttribution.nextWeekStrategy}}</text>
+      </view>
+    </view>
+    <view wx:else class="empty-state">
+      <text class="sub">暂无周度收益归因，等本周五 15:10 自动生成</text>
+    </view>
+  </view>
+
+  <view class="card" wx:if="{{remoteMode}}">
+    <view class="card-header">
+      <text class="title">🗂️ 本周自动交易明细</text>
+      <text class="sub">{{weeklyTradeDetails.length}} 笔</text>
+    </view>
+    <view wx:if="{{weeklyTradeDetails.length > 0}}">
+      <view class="sim-week-trade-item" wx:for="{{weeklyTradeDetails}}" wx:key="id">
+        <view class="sim-week-trade-top">
+          <text class="sim-log-action sim-log-{{item.action}}">{{item.action === 'buy' ? '买入' : '卖出'}}</text>
+          <text class="sim-week-trade-name">{{item.name}}</text>
+          <text class="sim-week-trade-amount {{item.action === 'buy' ? 'pct-down' : 'pct-up'}}">{{item.action === 'buy' ? '-' : '+'}}¥{{fmt.fmtNum(item.amount)}}</text>
+        </view>
+        <view class="sim-week-trade-meta">
+          <text class="sub">{{item.date}}</text>
+          <text class="sub">{{item.code}}</text>
+          <text class="sub">{{item.sector}}</text>
+          <text class="sub">{{item.aiSource}}</text>
+        </view>
+        <view class="sim-week-trade-tags" wx:if="{{item.sizingLabel}}">
+          <text class="sim-trade-chip sim-trade-chip-accent">{{item.sizingLabel}}</text>
+        </view>
+        <text class="sim-week-trade-reason" wx:if="{{item.reason}}">{{item.reason}}</text>
+        <text class="sim-week-trade-reason sub" wx:if="{{item.sizingNotesText}}">仓位信号: {{item.sizingNotesText}}</text>
+      </view>
+    </view>
+    <view wx:else class="empty-state">
+      <text class="sub">本周暂无自动交易记录</text>
     </view>
   </view>
 
@@ -85,17 +197,14 @@
       <view class="sim-pos-detail">
         <text class="sub">市值: ¥{{fmt.fmtNum(item.currentValue)}} | 盈亏: ¥{{fmt.fmtNum(item.profit)}}</text>
       </view>
-      <view class="sim-pos-actions">
-        <text class="sim-pos-btn sim-pos-btn-add" data-code="{{item.code}}" bindtap="addPosition">加仓</text>
-        <text class="sim-pos-btn sim-pos-btn-sell" data-code="{{item.code}}" bindtap="manualSell">卖出</text>
-      </view>
     </view>
   </view>
 
   <view class="card" wx:elif="{{!loading}}">
     <view class="empty-state">
       <text class="empty-icon">📦</text>
-      <text class="sub">暂无持仓，点击"买入"开始模拟投资</text>
+      <text class="sub" wx:if="{{syncError}}">{{syncError}}</text>
+      <text class="sub" wx:else>当前暂无自动持仓，后续会由程序按既定逻辑自动交易并展示</text>
     </view>
   </view>
 
@@ -112,18 +221,24 @@
       </view>
       <view wx:else>
         <view class="sim-log-item" wx:for="{{tradeLog}}" wx:key="id">
-          <view class="sim-log-left">
+          <view class="sim-log-row1">
             <text class="sim-log-action sim-log-{{item.action}}">{{item.action === 'buy' ? '买入' : '卖出'}}</text>
-            <view class="sim-log-info">
-              <text class="sim-log-name">{{item.name}}</text>
-              <text class="sub">{{item.date}} · {{item.sector}}</text>
-            </view>
-          </view>
-          <view class="sim-log-right">
+            <text class="sim-log-name">{{item.name}}</text>
+            <text class="sim-log-code sub">{{item.code}}</text>
             <text class="sim-log-amount {{item.action === 'buy' ? 'pct-down' : 'pct-up'}}">
               {{item.action === 'buy' ? '-' : '+'}}¥{{fmt.fmtNum(item.amount)}}
             </text>
-            <text class="sub sim-log-reason">{{item.reason}}</text>
+          </view>
+          <view class="sim-log-row2">
+            <text class="sub">{{item.date}}</text>
+            <text class="sub sim-log-dot">·</text>
+            <text class="sub sim-log-sector">{{item.sector}}</text>
+          </view>
+          <view class="sim-log-row-tags" wx:if="{{item.sizingLabel}}">
+            <text class="sim-trade-chip sim-trade-chip-accent">{{item.sizingLabel}}</text>
+          </view>
+          <view class="sim-log-row3" wx:if="{{item.reason}}">
+            <text class="sim-log-reason">{{item.reason}}</text>
           </view>
         </view>
       </view>
@@ -139,14 +254,14 @@
 
     <view wx:if="{{secReview}}">
       <view wx:if="{{weeklyReviews.length === 0}}" class="empty-state">
-        <text class="sub">暂无复盘记录，点击上方"周复盘"按钮生成</text>
+        <text class="sub">暂无复盘记录，系统会在每周五 15:10 自动生成</text>
       </view>
       <view wx:else>
         <view class="sim-review-item" wx:for="{{weeklyReviews}}" wx:key="id">
           <view class="sim-review-header" data-idx="{{index}}" bindtap="toggleReviewDetail">
             <view class="sim-review-left">
               <text class="sim-review-week">{{item.weekStart}} ~ {{item.weekEnd}}</text>
-              <text class="sim-review-return pct-{{item.returnPct >= '0' ? 'up' : 'down'}}">{{item.returnPct}}</text>
+              <text class="sim-review-return pct-{{item.returnClass}}">{{item.returnPct}}</text>
             </view>
             <text class="toggle-arrow">{{item.showDetail ? '▲' : '▼'}}</text>
           </view>
@@ -182,6 +297,26 @@
             <view wx:if="{{item.aiReview.optimizationHints}}" class="sim-review-section">
               <text class="sim-review-section-title">⚡ 优化建议</text>
               <text class="sim-review-text">{{item.aiReview.optimizationHints}}</text>
+            </view>
+
+            <view wx:if="{{item.trades && item.trades.length > 0}}" class="sim-review-section">
+              <text class="sim-review-section-title">🗂️ 交易快照</text>
+              <view class="sim-review-trade-item" wx:for="{{item.trades}}" wx:key="id">
+                <view class="sim-review-trade-top">
+                  <text class="sim-log-action sim-log-{{item.action}}">{{item.action === 'buy' ? '买入' : '卖出'}}</text>
+                  <text class="sim-review-trade-name">{{item.name}}</text>
+                  <text class="sim-review-trade-amount">{{item.action === 'buy' ? '-' : '+'}}¥{{fmt.fmtNum(item.amount)}}</text>
+                </view>
+                <view class="sim-review-trade-meta">
+                  <text class="sub">{{item.date}}</text>
+                  <text class="sub">{{item.code}}</text>
+                  <text class="sub">{{item.aiSource}}</text>
+                </view>
+                <view class="sim-week-trade-tags" wx:if="{{item.sizingLabel}}">
+                  <text class="sim-trade-chip sim-trade-chip-accent">{{item.sizingLabel}}</text>
+                </view>
+                <text class="sim-review-text" wx:if="{{item.reason}}">{{item.reason}}</text>
+              </view>
             </view>
           </view>
         </view>
@@ -268,138 +403,6 @@
     <view class="cal-detail cal-empty" wx:elif="{{calSelectedDate && !calSelectedDetail}}">
       <text class="sub">{{calSelectedDate}} 无结算数据</text>
     </view>
-  </view>
-
-  <!-- ====== 买入面板 (弹出层) ====== -->
-  <view class="sim-modal-mask" wx:if="{{showBuyPanel}}" bindtap="closeBuyPanel"></view>
-  <view class="sim-modal sim-buy-modal {{showBuyPanel ? 'sim-modal-show' : ''}}">
-    <view class="sim-modal-header">
-      <text class="sim-modal-title">选择买入标的</text>
-      <text class="sim-modal-close" bindtap="closeBuyPanel">✕</text>
-    </view>
-
-    <!-- 基金/股票切换 -->
-    <view class="sim-buy-tabs">
-      <view class="sim-buy-tab {{buyTab === 'fund' ? 'active' : ''}}" data-tab="fund" bindtap="switchBuyTab">
-        💰 基金 ({{fundPicks.length}})
-      </view>
-      <view class="sim-buy-tab {{buyTab === 'stock' ? 'active' : ''}}" data-tab="stock" bindtap="switchBuyTab">
-        📈 股票 ({{stockPicks.length}})
-      </view>
-    </view>
-
-    <view class="sim-pick-time" wx:if="{{pickTime}}">
-      <text class="sub">推荐时间: {{pickTime}}</text>
-    </view>
-
-    <!-- 推荐列表 -->
-    <scroll-view scroll-y class="sim-pick-list">
-      <view wx:if="{{buyTab === 'fund'}}">
-        <view class="sim-pick-item {{buyPickIdx === index ? 'sim-pick-selected' : ''}}"
-              wx:for="{{fundPicks}}" wx:key="code"
-              data-idx="{{index}}" bindtap="selectBuyPick">
-          <view class="sim-pick-info">
-            <text class="sim-pick-name">{{item.name}}</text>
-            <text class="sub">{{item.code}} · {{item.sector}}</text>
-          </view>
-          <view class="sim-pick-reason">
-            <text class="sub">{{item.reason}}</text>
-          </view>
-        </view>
-      </view>
-      <view wx:else>
-        <view class="sim-pick-item {{buyPickIdx === index ? 'sim-pick-selected' : ''}}"
-              wx:for="{{stockPicks}}" wx:key="code"
-              data-idx="{{index}}" bindtap="selectBuyPick">
-          <view class="sim-pick-info">
-            <text class="sim-pick-name">{{item.name}}</text>
-            <text class="sub">{{item.code}} · {{item.sector}}</text>
-          </view>
-          <view class="sim-pick-reason">
-            <text class="sub">{{item.reason}}</text>
-          </view>
-        </view>
-      </view>
-    </scroll-view>
-
-    <!-- 买入金额 -->
-    <view class="sim-buy-input-row" wx:if="{{buyTarget}}">
-      <text class="sim-buy-target">买入: {{buyTarget.name}}</text>
-      <view class="sim-buy-input-wrap">
-        <text class="sim-buy-yen">¥</text>
-        <input class="sim-buy-input" type="digit" placeholder="输入金额"
-               value="{{buyAmount}}" bindinput="onBuyAmountInput" />
-        <text class="sub">可用: ¥{{fmt.fmtNum(cash)}}</text>
-      </view>
-      <view class="sim-buy-quick-btns">
-        <text class="sim-quick-btn" data-amount="1000" bindtap="quickBuyAmount">1000</text>
-        <text class="sim-quick-btn" data-amount="5000" bindtap="quickBuyAmount">5000</text>
-        <text class="sim-quick-btn" data-amount="10000" bindtap="quickBuyAmount">1万</text>
-        <text class="sim-quick-btn" data-amount="20000" bindtap="quickBuyAmount">2万</text>
-      </view>
-    </view>
-
-    <view class="sim-modal-footer">
-      <view class="sim-confirm-btn {{!buyTarget || !buyAmount ? 'disabled' : ''}}" bindtap="confirmBuy">
-        确认买入
-      </view>
-    </view>
-  </view>
-
-  <!-- ====== 卖出面板 (弹出层) ====== -->
-  <view class="sim-modal-mask" wx:if="{{showSellPanel}}" bindtap="closeSellPanel"></view>
-  <view class="sim-modal sim-sell-modal {{showSellPanel ? 'sim-modal-show' : ''}}">
-    <view class="sim-modal-header">
-      <text class="sim-modal-title">AI 减仓建议</text>
-      <text class="sim-modal-close" bindtap="closeSellPanel">✕</text>
-    </view>
-
-    <view wx:if="{{sellLoading}}" class="sim-sell-loading">
-      <text class="loading-tip">{{sellProgress}}</text>
-    </view>
-
-    <scroll-view scroll-y class="sim-sell-content" wx:elif="{{sellAdvice}}">
-      <!-- 总览 -->
-      <view class="sim-sell-overview" wx:if="{{sellAdvice.overview}}">
-        <text class="sim-sell-overview-text">{{sellAdvice.overview}}</text>
-      </view>
-
-      <!-- 风险提示 -->
-      <view class="sim-sell-risk" wx:if="{{sellAdvice.riskAlert}}">
-        <text class="sim-sell-risk-text">⚠️ {{sellAdvice.riskAlert}}</text>
-      </view>
-
-      <!-- 减仓建议列表 -->
-      <view wx:if="{{sellAdvice.sellAdvice && sellAdvice.sellAdvice.length > 0}}">
-        <view class="sim-sell-section-title">📉 建议减仓</view>
-        <view class="sim-sell-item" wx:for="{{sellAdvice.sellAdvice}}" wx:key="code">
-          <view class="sim-sell-item-top">
-            <view class="sim-sell-item-info">
-              <text class="sim-sell-item-name">{{item.name}}</text>
-              <text class="sub">{{item.code}}</text>
-            </view>
-            <view class="sim-sell-item-action">
-              <text class="sim-sell-urgency sim-urgency-{{item.urgency || 'medium'}}">
-                {{item.urgency === 'high' ? '🔴 紧急' : item.urgency === 'low' ? '🟢 观望' : '🟡 建议'}}
-              </text>
-              <text class="sim-sell-pct">减仓 {{item.sellPct || 50}}%</text>
-            </view>
-          </view>
-          <view class="sim-sell-item-reason">
-            <text class="sub">{{item.reason}}</text>
-          </view>
-          <view class="sim-sell-item-btn" data-code="{{item.code}}" data-pct="{{item.sellPct || 50}}" data-reason="{{item.reason}}" bindtap="executeSell">
-            执行卖出 {{item.sellPct || 50}}%
-          </view>
-        </view>
-      </view>
-
-      <!-- 持有建议 -->
-      <view wx:if="{{sellAdvice.holdAdvice}}" class="sim-sell-hold">
-        <text class="sim-sell-section-title">✅ 持有建议</text>
-        <text class="sim-sell-hold-text">{{sellAdvice.holdAdvice}}</text>
-      </view>
-    </scroll-view>
   </view>
 
 </view>

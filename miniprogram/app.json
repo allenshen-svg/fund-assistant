@@ -4,6 +4,7 @@
     "pages/sentiment/index",
     "pages/holdings/index",
     "pages/simulate/index",
+    "pages/stock-screen/index",
     "pages/settings/index"
   ],
   "darkmode": true,

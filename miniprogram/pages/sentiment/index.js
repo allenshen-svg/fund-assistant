@@ -654,6 +654,18 @@ function _mdToHtml(md) {
   };
   var html = md;
 
+  // 代码块 ```...``` → 机制链样式盒子（含箭头高亮）
+  html = html.replace(/```[\w]*\n([\s\S]*?)```/g, function(_, code) {
+    var inner = code.trim()
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/→/g, '<span style="color:' + C.chainArrow + ';font-weight:700;">→</span>')
+      .replace(/↘/g, '<span style="color:' + C.chainArrow + ';">↘</span>')
+      .replace(/↗/g, '<span style="color:' + C.chainArrow + ';">↗</span>')
+      .replace(/\[([^\]]+)\]/g, '<span style="background:rgba(251,191,36,0.18);padding:1px 4px;border-radius:3px;">$1</span>')
+      .replace(/\n/g, '<br/>');
+    return '<div style="background:' + C.chainBg + ';padding:8px 10px;border-radius:6px;font-size:11px;color:' + C.chainText + ';margin:8px 0;line-height:1.8;font-family:monospace;overflow-x:auto;white-space:pre-wrap;word-break:break-all;">' + inner + '</div>';
+  });
+
   // 表格转换: | xxx | yyy | → <table>
   html = html.replace(/((?:\|[^\n]+\|\n)+)/g, function(tableBlock) {
     var rows = tableBlock.trim().split('\n');
@@ -688,6 +700,12 @@ function _mdToHtml(md) {
 
   // 无序列表 - xxx
   html = html.replace(/^- (.+)$/gm, '<div style="padding-left:12px;text-indent:-12px;margin:3px 0;line-height:1.6;">• $1</div>');
+
+  // 有序列表 1. xxx
+  html = html.replace(/^\d+\.\s+(.+)$/gm, function(match, content) {
+    var num = match.match(/^(\d+)\./)[1];
+    return '<div style="padding-left:16px;text-indent:-16px;margin:3px 0;line-height:1.6;">' + num + '. ' + content + '</div>';
+  });
 
   // 换行
   html = html.replace(/\n/g, '<br/>');

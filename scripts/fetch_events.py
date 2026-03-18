@@ -37,6 +37,7 @@ MODEL = os.environ.get('AI_MODEL', 'deepseek-ai/DeepSeek-V3')
 OUTPUT_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data', 'hot_events.json')
 SENTIMENT_CACHE_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data', 'sentiment_cache.json')
 ANALYSIS_CACHE_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data', 'analysis_cache.json')
+FIRST_SEEN_CACHE_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data', 'event_first_seen.json')
 XUEQIU_COOKIE = os.environ.get('XUEQIU_COOKIE', '').strip()
 
 # 20个核心市场标签 (前端fund标签体系对齐)
@@ -65,6 +66,10 @@ TAG_TO_SECTORS = {
     '港股科技': ['港股科技', '港股互联网', '恒生科技', 'QDII科技'],
     '黄金': ['黄金', '贵金属'],
     '有色金属': ['有色金属', '铜铝', '大宗商品'],
+    '铁矿石': ['铁矿石', '钢铁', '有色金属', '大宗商品'],
+    '煤炭': ['煤炭', '能源', '大宗商品'],
+    '天然气': ['天然气', '能源', '油气'],
+    '农产品': ['农产品', '大宗商品', '消费'],
     '原油': ['原油', '能源', '油气'],
     '军工': ['军工', '国防', '航天'],
     '红利': ['红利', '高股息', '低波动'],
@@ -655,12 +660,14 @@ def call_llm(news_items):
 
 **重要：确保事件覆盖尽可能多的行业板块。** 除了AI/科技、债券等热门板块以外，必须特别关注以下板块的相关新闻并提取事件：
 - **地缘政治(最高优先级!)**: 美伊关系、俄乌冲突、中美博弈、中东局势、红海航运、非洲资源国政策(锂矿/钴矿出口禁令)、OPEC减产、关税战、制裁措施等。地缘事件对油气、有色金属、黄金、军工板块影响极大，必须提取！
-- **大宗商品**: 原油/油气价格变动、OPEC决策、铜铝等有色金属涨跌、黄金白银走势、锂矿/稀土供应链
-- **能源与资源**: 能源政策、矿产资源供需、碳排放政策、非洲/南美资源国出口限制
+- **大宗商品**: 原油/油气价格变动、OPEC决策、铜铝等有色金属涨跌、黄金白银走势、锂矿/稀土供应链、铁矿石价格/政策变化、天然气/煤炭/焦煤价格波动
+- **农产品**: 大豆/豆粕、玉米、小麦、棉花、棕榈油、橡胶、白糖、生猪等期货品种的价格异动和相关政策(进出口关税/配额/补贴/天气灾害)
+- **能源与资源**: 能源政策、矿产资源供需、碳排放政策、非洲/南美/澳大利亚等资源国出口限制、铁矿石/煤炭/钢铁产业链
 - **消费与内需**: 社零数据、消费政策、白酒/食品行业动态
 - **医药健康**: 医药政策、集采、创新药审批
 - **军工国防**: 军费预算、装备采购、地缘冲突驱动的军工需求
-如果新闻中有涉及有色金属(铜、铝、锌、稀土、锂等)、原油/油气、黄金白银等大宗商品的内容，务必单独提取为事件。
+如果新闻中有涉及有色金属(铜、铝、锌、稀土、锂等)、铁矿石/钢铁、原油/油气、天然气/煤炭、黄金白银、农产品(大豆/玉米/小麦/棉花/生猪等)等大宗商品的内容，务必单独提取为事件。
+如果新闻中有涉及澳大利亚/巴西等矿产出口国的铁矿石、煤炭、矿产资源政策的内容，务必单独提取为事件并标注影响板块(如钢铁、有色金属、大宗商品等)。
 如果新闻中有涉及国际地缘冲突(美伊、俄乌、中美、红海等)的内容，务必单独提取为事件并标注影响的板块(如油气、军工、黄金等)。
 
 **极其重要的板块影响判定规则（必须遵守！违反将产生严重错误！）：**
@@ -674,11 +681,11 @@ def call_llm(news_items):
 
 sectors_positive 和 sectors_negative 字段应使用以下标准板块名：
 AI/科技、半导体、算力、AIGC、新能源、光伏、锂电、新能源车、消费、食品饮料、白酒、医药、创新药、
-黄金、贵金属、有色金属、铜铝、大宗商品、能源、原油、油气、
+黄金、贵金属、有色金属、铜铝、铁矿石、钢铁、煤炭、天然气、农产品、大宗商品、能源、原油、油气、
 军工、国防、红利、高股息、债券、固收、金融、银行、券商、
 港股科技、港股互联网、恒生科技、地产、基建、宽基
 
-fund_keywords 字段应包含能匹配到基金名称/类型的关键词，如: 人工智能、AI、算力、黄金、有色金属、油气、原油、新能源、半导体、军工、消费、医药、红利等。
+fund_keywords 字段应包含能匹配到基金名称/类型的关键词，如: 人工智能、AI、算力、黄金、有色金属、油气、原油、天然气、煤炭、铁矿石、钢铁、农产品、大豆、新能源、半导体、军工、消费、医药、红利等。
 
 ## 任务二：生成市场标签热度
 基于所有新闻的综合语义分析，为以下21个市场标签评估热度和情绪：
@@ -797,10 +804,13 @@ def _fetch_realtime_market_pct():
     }
     # 期货主力 → tag映射
     futures_map = {
-        '113.AU0': '黄金',
-        '113.AG0': '白银',
-        '113.SC0': '原油',
-        '113.CU0': '有色金属',
+        '113.aum': '黄金',
+        '113.agm': '白银',
+        '113.fum': '能源',
+        '113.cum': '有色金属',
+        '113.im':  '钢铁',
+        '114.jmm': '煤炭',
+        '114.mm':  '农产品',
     }
     all_codes = list(etf_map.keys()) + list(futures_map.keys())
     secids = ','.join(all_codes)
@@ -911,7 +921,7 @@ def enrich_event(evt, idx, now):
         "reason": evt.get('reason', ''),
         "advice": evt.get('advice', ''),
         "source": "AI综合分析",
-        "time": now.isoformat(),
+        "time": now.strftime('%Y-%m-%dT%H:%M:%S+08:00'),
     }
 
 
@@ -983,7 +993,7 @@ def _ensure_commodity_events(events, now):
             evt['source'] = "常驻基础事件"
             evt['is_template'] = True
             evt['impact'] = 1
-            evt['time'] = now.isoformat()
+            evt['time'] = now.strftime('%Y-%m-%dT%H:%M:%S+08:00')
             events.append(evt)
             added += 1
             print(f"  📌 补充常驻事件: {evt['title']} (动态事件未覆盖 {fb['key_sectors']})")
@@ -1107,7 +1117,7 @@ def _ensure_geopolitical_events(events, all_news, now):
             evt['source'] = "地缘事件追踪"
             evt['is_template'] = True
             evt['impact'] = 1
-            evt['time'] = now.isoformat()
+            evt['time'] = now.strftime('%Y-%m-%dT%H:%M:%S+08:00')
             events.append(evt)
             added += 1
             print(f"  🌍 补充地缘事件: {evt['title']} (新闻中检测到关键词)")
@@ -1185,7 +1195,7 @@ def _inject_key_events_with_analyst_views(events, all_news, analyst_views, now):
             'reason': tpl['reason'],
             'advice': tpl['advice'],
             'source': '重点事件追踪',
-            'time': now.isoformat(),
+            'time': now.strftime('%Y-%m-%dT%H:%M:%S+08:00'),
         }
         if analyst_note:
             evt['reason'] = f"{evt['reason']}；分析师观点：{analyst_note}"
@@ -1237,6 +1247,121 @@ def _attach_analyst_views_to_events(events, analyst_views):
 
 def _normalize_event_text(text):
     return re.sub(r'\W+', '', str(text or '').lower())
+
+
+def _carry_forward_event_times(events, prev_data, all_news):
+    """使用持久化 first_seen 缓存跟踪事件首次出现时间。
+    同一主题事件即使 LLM 生成不同标题，也能通过模糊匹配命中缓存。
+    超过 90 分钟的非模板事件直接从输出中移除（后端侧过滤）。
+    """
+    if not events:
+        return events
+
+    now_dt = datetime.now(timezone(timedelta(hours=8)))
+    now_iso = now_dt.strftime('%Y-%m-%dT%H:%M:%S+08:00')
+    ninety_min_ago = (now_dt - timedelta(minutes=90)).strftime('%Y-%m-%dT%H:%M:%S')
+
+    # ---------- 加载持久化 first_seen 缓存 ----------
+    first_seen = {}
+    try:
+        if os.path.exists(FIRST_SEEN_CACHE_PATH):
+            with open(FIRST_SEEN_CACHE_PATH, 'r', encoding='utf-8') as f:
+                first_seen = json.load(f)
+    except Exception:
+        first_seen = {}
+
+    # 清理超过 48 小时的老条目
+    cutoff_48h = (now_dt - timedelta(hours=48)).strftime('%Y-%m-%dT%H:%M:%S')
+    first_seen = {k: v for k, v in first_seen.items() if v[:19] > cutoff_48h}
+
+    # ---------- overlap coefficient (比 Dice 宽容长度差异) ----------
+    def _bigram_sim(a, b):
+        if len(a) < 2 or len(b) < 2:
+            return 0.0
+        ga = {a[i:i+2] for i in range(len(a)-1)}
+        gb = {b[i:i+2] for i in range(len(b)-1)}
+        inter = len(ga & gb)
+        return inter / max(1, min(len(ga), len(gb)))
+
+    def _strip_microseconds(t):
+        """去掉微秒（防止前端 Date.parse 解析失败）"""
+        if '.' in t:
+            base, rest = t.split('.', 1)
+            tz_part = ''
+            for sep in ['+', '-', 'Z']:
+                if sep in rest:
+                    tz_part = sep + rest.split(sep, 1)[1]
+                    break
+            return base + tz_part
+        return t
+
+    # ---------- 为每个事件查找/写入 first_seen ----------
+    result = []
+    for evt in events:
+        title_key = _normalize_event_text(evt.get('title'))
+        if not title_key or len(title_key) < 3:
+            result.append(evt)
+            continue
+
+        is_template = evt.get('is_template', False)
+
+        # 1) 精确匹配缓存
+        matched_time = first_seen.get(title_key)
+
+        # 2) 模糊匹配缓存 (overlap >= 0.4 或 子串包含)
+        if not matched_time:
+            for ck, ct in first_seen.items():
+                if len(ck) < 4:
+                    continue
+                if ck in title_key or title_key in ck:
+                    matched_time = ct
+                    break
+                if _bigram_sim(title_key, ck) >= 0.4:
+                    matched_time = ct
+                    break
+
+        if matched_time:
+            matched_time = _strip_microseconds(matched_time)
+            evt['time'] = matched_time
+            first_seen[title_key] = matched_time
+            # 超过 90 分钟的事件（含模板） → 不输出
+            if matched_time[:19] < ninety_min_ago:
+                continue
+            result.append(evt)
+        else:
+            # 3) 全新事件：尝试用原始新闻发布时间
+            best_news_time = None
+            evt_title = evt.get('title', '')
+            if evt_title and all_news:
+                best_overlap = 0
+                evt_chars = set(evt_title)
+                for n in all_news:
+                    nt = n.get('title', '')
+                    ntime = n.get('time', '')
+                    if not nt or not ntime:
+                        continue
+                    overlap = len(evt_chars & set(nt))
+                    if overlap > best_overlap and overlap >= 3:
+                        best_overlap = overlap
+                        best_news_time = ntime
+
+            final_time = _strip_microseconds(best_news_time or evt.get('time', now_iso))
+            evt['time'] = final_time
+            first_seen[title_key] = final_time
+            result.append(evt)
+
+    # ---------- 持久化缓存 ----------
+    try:
+        with open(FIRST_SEEN_CACHE_PATH, 'w', encoding='utf-8') as f:
+            json.dump(first_seen, f, ensure_ascii=False, indent=2)
+    except Exception as e:
+        print(f"  [WARN] 保存 first_seen 缓存失败: {e}", file=sys.stderr)
+
+    removed = len(events) - len(result)
+    if removed:
+        print(f"  🕐 过滤掉 {removed} 个超过90分钟的老事件")
+
+    return result
 
 
 def _dedupe_events(events):
@@ -1295,6 +1420,9 @@ def build_output(llm_result, prev_data, now, all_news=None, xueqiu_data=None, an
     # === 事件去重（防止LLM/模板注入后出现同题材重复卡片） ===
     events = _dedupe_events(events)
 
+    # === 保留已有事件的首次出现时间（防止同一事件每次刷新都变成"刚刚"） ===
+    events = _carry_forward_event_times(events, prev_data, all_news)
+
     # 热度图: 补充趋势（去重：同tag取最高温度）
     heatmap_dict = {}
     for h in llm_result.get('heatmap', []):
@@ -1344,7 +1472,7 @@ def build_output(llm_result, prev_data, now, all_news=None, xueqiu_data=None, an
     outlook_score = max(10, min(90, outlook_score))
 
     return {
-        "updated_at": now.isoformat(),
+        "updated_at": now.strftime('%Y-%m-%dT%H:%M:%S+08:00'),
         "heatmap": heatmap,
         "events": events,
         "outlook": {

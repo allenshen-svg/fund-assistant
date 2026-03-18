@@ -1,5 +1,5 @@
 const { getHoldings, setHoldings, getSettings } = require('../../utils/storage');
-const { fetchMultiFundEstimates, fetchMultiFundHistory, searchFundByCode, fetchIndices, fetchCommodities, fetchHotEvents, fetchSectorFlows } = require('../../utils/api');
+const { fetchMultiFundEstimates, fetchMultiFundHistory, searchFundByCode, fetchIndices, fetchCommodities, fetchHotEvents, fetchSectorFlows, fetchServerPortfolioAdvice } = require('../../utils/api');
 const { formatPct, pctClass, isTradingDay, todayStr, getPrevTradingDay } = require('../../utils/market');
 const { analyzeTrend, computeVote } = require('../../utils/analyzer');
 const { pickHeatForType } = require('../../utils/advisor');
@@ -484,6 +484,21 @@ Page({
         dailyTime: cached.timestamp ? cached.timestamp.replace('T', ' ').slice(0, 16) : '',
       });
     }
+    // 也尝试从服务器加载最新结果
+    const settings = getSettings();
+    fetchServerPortfolioAdvice(settings).then(data => {
+      if (data && data.result) {
+        const serverDate = (data.date || '').slice(0, 10);
+        const today = new Date().toISOString().slice(0, 10);
+        if (serverDate === today) {
+          this.setData({
+            dailyResult: this._formatDailyResult(data.result),
+            dailyTime: data.timestamp ? data.timestamp.replace('T', ' ').slice(0, 16) : '',
+            secDaily: true,
+          });
+        }
+      }
+    });
   },
 
   async loadDailyAdvice() {
@@ -491,6 +506,27 @@ Page({
     this.setData({ dailyLoading: true });
 
     try {
+      // 优先从服务器获取今日已生成的结果
+      const settings = getSettings();
+      const serverData = await fetchServerPortfolioAdvice(settings);
+      if (serverData && serverData.result) {
+        const serverDate = (serverData.date || '').slice(0, 10);
+        const today = new Date().toISOString().slice(0, 10);
+        if (serverDate === today) {
+          const formatted = this._formatDailyResult(serverData.result);
+          const timeStr = serverData.timestamp ? serverData.timestamp.replace('T', ' ').slice(0, 16) : '';
+          this.setData({
+            dailyResult: formatted,
+            dailyTime: timeStr,
+            dailyLoading: false,
+            secDaily: true,
+          });
+          wx.showToast({ title: '已获取今日分析', icon: 'success' });
+          return;
+        }
+      }
+
+      // 服务器无今日数据，走客户端AI分析
       const holdings = getHoldings();
       if (holdings.length === 0) {
         wx.showToast({ title: '请先添加持仓基金', icon: 'none' });
@@ -502,7 +538,6 @@ Page({
       const app = getApp();
       const INDICES = app.globalData.INDICES || [];
       const COMMODITIES = app.globalData.COMMODITIES || [];
-      const settings = getSettings();
 
       // 并行获取数据
       const [estimates, historyMap, indices, commodities, hotEventsData] = await Promise.all([

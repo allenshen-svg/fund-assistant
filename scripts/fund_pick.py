@@ -54,12 +54,12 @@ def fetch_indices():
 def fetch_commodities():
     """获取大宗商品行情"""
     codes = [
-        {'code': '113.AU0', 'name': '沪金主力', 'icon': '🥇'},
-        {'code': '113.AG0', 'name': '沪银主力', 'icon': '🥈'},
-        {'code': '113.CU0', 'name': '沪铜主力', 'icon': '🔩'},
-        {'code': '113.SC0', 'name': '原油主力', 'icon': '🛢️'},
-        {'code': '113.RB0', 'name': '螺纹钢主力', 'icon': '🏗️'},
-        {'code': '113.I0',  'name': '铁矿石主力', 'icon': '⛏️'},
+        {'code': '113.aum', 'name': '沪金主连', 'icon': '🥇'},
+        {'code': '113.agm', 'name': '沪银主连', 'icon': '🥈'},
+        {'code': '113.cum', 'name': '沪铜主连', 'icon': '🔩'},
+        {'code': '113.fum', 'name': '燃油主连', 'icon': '🛢️'},
+        {'code': '113.rbm', 'name': '螺纹钢主连', 'icon': '🏗️'},
+        {'code': '113.im',  'name': '铁矿石主连', 'icon': '⛏️'},
     ]
     secids = ','.join(c['code'] for c in codes)
     url = f'https://push2.eastmoney.com/api/qt/ulist.np/get?fltt=2&fields=f2,f3,f4,f12,f14&secids={secids}'
@@ -222,11 +222,15 @@ FUND_PICK_SYSTEM_PROMPT = """你是一位管理百亿规模基金的资深基金
 
 
 def _call_ai(system_prompt, user_prompt, temperature=0.7):
-    """直接调用 AI API（智谱GLM-4-Flash / DeepSeek）"""
-    # 优先使用环境变量配置的 key
-    api_key = os.environ.get('AI_API_KEY', '4511f9dee1e64b7da49a539ddef85dfd.Z6HgN8s8cDhL2LeQ')
-    api_base = os.environ.get('AI_API_BASE', 'https://open.bigmodel.cn/api/paas/v4/chat/completions')
-    model = os.environ.get('AI_MODEL', 'glm-4-flash')
+    """直接调用 AI API（DeepSeek）"""
+    api_key = os.environ.get('DEEPSEEK_API_KEY',
+                             os.environ.get('AI_API_KEY', 'sk-1986e1cd1169405f96649311dcfc76aa'))
+    api_base = os.environ.get('AI_API_BASE', 'https://api.deepseek.com/v1')
+    model = os.environ.get('AI_MODEL', 'deepseek-chat')
+
+    # 确保 URL 以 /chat/completions 结尾
+    if not api_base.endswith('/chat/completions'):
+        api_base = api_base.rstrip('/') + '/chat/completions'
 
     body = {
         'model': model,

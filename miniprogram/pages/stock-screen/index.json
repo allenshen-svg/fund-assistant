@@ -1,0 +1,7 @@
+{
+  "navigationBarTitleText": "自动选股",
+  "enablePullDownRefresh": true,
+  "navigationBarBackgroundColor": "@navBgColor",
+  "navigationBarTextStyle": "@navTextStyle",
+  "backgroundColor": "@pageBgColor"
+}

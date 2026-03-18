@@ -155,6 +155,78 @@ async function fetchMultiFundEstimates(codes) {
 }
 
 /**
+ * 获取单只股票实时行情（东方财富）
+ */
+function fetchStockQuote(stockCode) {
+  const first = stockCode.charAt(0);
+  const secid = (first === '6' || first === '5') ? `1.${stockCode}` : `0.${stockCode}`;
+  const url = `https://push2.eastmoney.com/api/qt/ulist.np/get?fltt=2&fields=f2,f3,f4,f12,f14&secids=${secid}`;
+  return new Promise((resolve) => {
+    wx.request({
+      url,
+      timeout: 6000,
+      success(res) {
+        try {
+          const d = res.data && res.data.data && res.data.data.diff && res.data.data.diff[0];
+          if (d && d.f2 !== '-') {
+            resolve({
+              code: String(d.f12),
+              name: d.f14,
+              nav: parseFloat(d.f2),
+              estimate: parseFloat(d.f2),
+              pct: parseFloat(d.f3),
+            });
+            return;
+          }
+        } catch (e) {}
+        resolve(null);
+      },
+      fail() { resolve(null); }
+    });
+  });
+}
+
+/**
+ * 批量获取多只股票实时行情
+ */
+async function fetchMultiStockQuotes(codes) {
+  const results = {};
+  if (!codes || codes.length === 0) return results;
+  const secids = codes.map(c => {
+    const first = c.charAt(0);
+    return (first === '6' || first === '5') ? `1.${c}` : `0.${c}`;
+  }).join(',');
+  const url = `https://push2.eastmoney.com/api/qt/ulist.np/get?fltt=2&fields=f2,f3,f4,f12,f14&secids=${secids}`;
+  return new Promise((resolve) => {
+    wx.request({
+      url,
+      timeout: 6000,
+      success(res) {
+        try {
+          const list = res.data && res.data.data && res.data.data.diff;
+          if (list) {
+            list.forEach(d => {
+              if (d && d.f2 !== '-') {
+                const code = String(d.f12);
+                results[code] = {
+                  code,
+                  name: d.f14,
+                  nav: parseFloat(d.f2),
+                  estimate: parseFloat(d.f2),
+                  pct: parseFloat(d.f3),
+                };
+              }
+            });
+          }
+        } catch (e) {}
+        resolve(results);
+      },
+      fail() { resolve(results); }
+    });
+  });
+}
+
+/**
  * 获取板块资金流向
  */
 function fetchSectorFlows() {
@@ -273,7 +345,7 @@ async function fetchMultiFundHistory(codes) {
  */
 function fetchCommodities(codes) {
   const secids = codes.map(c => c.code).join(',');
-  const url = `https://push2.eastmoney.com/api/qt/ulist.np/get?fltt=2&fields=f2,f3,f4,f12,f14&secids=${secids}`;
+  const url = `https://push2.eastmoney.com/api/qt/ulist.np/get?fltt=2&fields=f2,f3,f4,f12,f14,f18&secids=${secids}`;
   return new Promise((resolve) => {
     wx.request({
       url,
@@ -288,14 +360,68 @@ function fetchCommodities(codes) {
             group: codes[i] ? codes[i].group : '',
             price: d.f2,
             pct: d.f3,
-            change: d.f4
+            change: d.f4,
+            prevSettle: d.f18
           }));
-          resolve(list);
+          // 如果实时价全为0(非交易时段)，用K线收盘数据补充
+          var allZero = list.every(function(c) { return !c.price || c.price === 0; });
+          if (allZero) {
+            _fillFromKline(codes, list).then(resolve);
+          } else {
+            resolve(list);
+          }
         } else {
-          resolve([]);
+          // ulist完全无数据，走K线兜底
+          var fallback = codes.map(function(c) {
+            return { code: c.code, name: c.name, short: c.short || '', icon: c.icon || '', group: c.group || '', price: 0, pct: 0, change: 0, prevSettle: 0 };
+          });
+          _fillFromKline(codes, fallback).then(resolve);
         }
       },
-      fail() { resolve([]); }
+      fail() {
+        var fallback = codes.map(function(c) {
+          return { code: c.code, name: c.name, short: c.short || '', icon: c.icon || '', group: c.group || '', price: 0, pct: 0, change: 0, prevSettle: 0 };
+        });
+        _fillFromKline(codes, fallback).then(resolve);
+      }
+    });
+  });
+}
+
+/**
+ * 非交易时段用K线历史补充收盘价和涨跌幅
+ */
+function _fillFromKline(codes, list) {
+  var pending = codes.length;
+  var results = list.slice();
+  return new Promise(function(resolve) {
+    if (!codes.length) { resolve(results); return; }
+    codes.forEach(function(c, i) {
+      var kurl = 'https://push2his.eastmoney.com/api/qt/stock/kline/get?secid=' + c.code + '&fields1=f1,f2,f3&fields2=f51,f52&klt=101&fqt=0&end=20991231&lmt=2';
+      wx.request({
+        url: kurl,
+        timeout: 5000,
+        success: function(res) {
+          var d = res.data && res.data.data;
+          if (d && d.klines && d.klines.length >= 1) {
+            var klines = d.klines;
+            var last = klines[klines.length - 1].split(',');
+            var closePrice = parseFloat(last[1]) || 0;
+            if (klines.length >= 2) {
+              var prev = klines[klines.length - 2].split(',');
+              var prevClose = parseFloat(prev[1]) || 0;
+              var pct = prevClose > 0 ? (closePrice - prevClose) / prevClose * 100 : 0;
+              results[i] = Object.assign({}, results[i], { price: closePrice, pct: parseFloat(pct.toFixed(2)), change: parseFloat((closePrice - prevClose).toFixed(2)), closed: true });
+            } else {
+              results[i] = Object.assign({}, results[i], { price: closePrice, pct: 0, change: 0, closed: true });
+            }
+          }
+        },
+        complete: function() {
+          pending--;
+          if (pending <= 0) resolve(results);
+        }
+      });
     });
   });
 }
@@ -306,7 +432,9 @@ function fetchCommodities(codes) {
  * 如果未配置则返回空串（此时手动刷新不可用）
  */
 function _getServerBase(settings) {
-  if (settings && settings.serverUrl) return settings.serverUrl.replace(/\/$/, '');
+  if (settings && settings.serverUrl) {
+    return settings.serverUrl.replace(/\/$/, '');
+  }
   // apiBase 指向 GitHub Pages 的不作为服务器地址
   const base = String((settings && settings.apiBase) || '').replace(/\/$/, '');
   if (!base || /github\.io/i.test(base)) return '';
@@ -547,6 +675,169 @@ function fetchServerFundPick(settings) {
 }
 
 /**
+ * 从服务器获取实盘行动指南（每日 14:50 自动生成）
+ * GET /api/portfolio-advice
+ */
+function fetchServerPortfolioAdvice(settings) {
+  const base = _getServerBase(settings);
+  if (!base) return Promise.resolve(null);
+  const url = `${base}/api/portfolio-advice?_t=${Date.now()}`;
+  return new Promise((resolve) => {
+    wx.request({
+      url,
+      timeout: 8000,
+      success(res) {
+        if (res.statusCode >= 200 && res.statusCode < 300 && res.data && res.data.result) {
+          resolve(res.data);
+        } else {
+          resolve(null);
+        }
+      },
+      fail() { resolve(null); }
+    });
+  });
+}
+
+/**
+ * 从服务器获取每日A股形态选股结果
+ * GET /api/stock-screen
+ */
+function fetchServerStockScreen(settings) {
+  const base = _getServerBase(settings);
+  if (!base) return Promise.resolve(null);
+  const url = `${base}/api/stock-screen?_t=${Date.now()}`;
+  return new Promise((resolve) => {
+    wx.request({
+      url,
+      timeout: 10000,
+      success(res) {
+        if (res.statusCode >= 200 && res.statusCode < 300 && res.data) {
+          resolve(res.data);
+        } else {
+          resolve(null);
+        }
+      },
+      fail() { resolve(null); }
+    });
+  });
+}
+
+/**
+ * 从服务器获取自动模拟仓状态
+ * GET /api/sim-auto
+ */
+function fetchServerSimAutoStatus(settings) {
+  const base = _getServerBase(settings);
+  if (!base) return Promise.resolve(null);
+  const url = `${base}/api/sim-auto?_t=${Date.now()}`;
+  return new Promise((resolve) => {
+    wx.request({
+      url,
+      timeout: 20000,
+      success(res) {
+        if (res.statusCode >= 200 && res.statusCode < 300 && res.data && res.data.portfolio) {
+          resolve(res.data);
+        } else {
+          resolve(null);
+        }
+      },
+      fail() { resolve(null); }
+    });
+  });
+}
+
+function fetchServerSimAutoConfig(settings) {
+  const base = _getServerBase(settings);
+  if (!base) return Promise.resolve(null);
+  const url = `${base}/api/sim-auto/config?_t=${Date.now()}`;
+  return new Promise((resolve) => {
+    wx.request({
+      url,
+      timeout: 10000,
+      success(res) {
+        if (res.statusCode >= 200 && res.statusCode < 300 && res.data && res.data.config) {
+          resolve(res.data);
+        } else {
+          resolve(null);
+        }
+      },
+      fail() { resolve(null); }
+    });
+  });
+}
+
+function updateServerSimAutoConfig(settings, payload) {
+  const base = _getServerBase(settings);
+  if (!base) return Promise.resolve({ status: 'error', message: '未配置服务器地址' });
+  const url = `${base}/api/sim-auto/config`;
+  return new Promise((resolve) => {
+    wx.request({
+      url,
+      method: 'POST',
+      data: payload || {},
+      timeout: 10000,
+      success(res) {
+        resolve((res && res.data) || { status: 'error', message: '请求失败' });
+      },
+      fail() { resolve({ status: 'error', message: '网络错误' }); }
+    });
+  });
+}
+
+/**
+ * 触发后端执行A股形态选股
+ * POST /api/stock-screen/trigger
+ */
+function triggerServerStockScreen(settings) {
+  const base = _getServerBase(settings);
+  if (!base) return Promise.resolve({ status: 'error', message: '未配置服务器地址' });
+  const url = `${base}/api/stock-screen/trigger`;
+  return new Promise((resolve) => {
+    wx.request({
+      url,
+      method: 'POST',
+      timeout: 10000,
+      success(res) {
+        if (res.statusCode >= 200 && res.statusCode < 300 && res.data) {
+          resolve(res.data);
+        } else {
+          resolve({ status: 'error', message: '请求失败' });
+        }
+      },
+      fail() { resolve({ status: 'error', message: '网络错误' }); }
+    });
+  });
+}
+
+/**
+ * 订阅选股结果通知
+ * POST /api/stock-screen/subscribe
+ */
+function subscribeStockScreenNotice(settings, payload) {
+  const base = _getServerBase(settings);
+  if (!base) return Promise.resolve({ status: 'error', message: '未配置服务器地址' });
+  const url = `${base}/api/stock-screen/subscribe`;
+  return new Promise((resolve) => {
+    wx.request({
+      url,
+      method: 'POST',
+      timeout: 10000,
+      data: payload || {},
+      success(res) {
+        if (res.statusCode >= 200 && res.statusCode < 300 && res.data) {
+          resolve(res.data);
+        } else if (res.data) {
+          resolve(res.data);
+        } else {
+          resolve({ status: 'error', message: '请求失败' });
+        }
+      },
+      fail() { resolve({ status: 'error', message: '网络错误' }); }
+    });
+  });
+}
+
+/**
  * 获取实时突发新闻 + 全球市场异动
  * 返回 { breaking[], anomalies[], updated_at, meta }
  */
@@ -587,6 +878,8 @@ module.exports = {
   fetchIndices,
   fetchFundEstimate,
   fetchMultiFundEstimates,
+  fetchStockQuote,
+  fetchMultiStockQuotes,
   fetchSectorFlows,
   fetchFundHistory,
   fetchMultiFundHistory,
@@ -603,6 +896,13 @@ module.exports = {
   fetchSectorTopFunds,
   fetchSectorTopStocks,
   fetchServerFundPick,
+  fetchServerPortfolioAdvice,
+  fetchServerSimAutoConfig,
+  fetchServerSimAutoStatus,
+  fetchServerStockScreen,
+  triggerServerStockScreen,
+  updateServerSimAutoConfig,
+  subscribeStockScreenNotice,
 };
 
 /**

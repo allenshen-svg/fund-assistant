@@ -5,6 +5,14 @@
     <text>ERROR: {{debugError}}</text>
   </view>
 
+  <!-- 数据新鲜度告警 -->
+  <view wx:if="{{dataStaleLevel === 'warn'}}" class="stale-bar stale-warn">
+    <text>⚠️ {{dataStaleMsg}}</text>
+  </view>
+  <view wx:if="{{dataStaleLevel === 'error'}}" class="stale-bar stale-error">
+    <text>🔴 {{dataStaleMsg}}</text>
+  </view>
+
   <!-- ====== Header ====== -->
   <view class="card header-card">
     <view class="row">
@@ -32,11 +40,34 @@
     </view>
   </view>
 
+  <view class="feature-grid">
+    <view class="feature-card" bindtap="goSentiment">
+      <text class="feature-icon">🧭</text>
+      <text class="feature-title">舆情分析</text>
+      <text class="feature-desc">事件、热点和实时异动</text>
+    </view>
+    <view class="feature-card" bindtap="goHoldings">
+      <text class="feature-icon">💼</text>
+      <text class="feature-title">持仓管理</text>
+      <text class="feature-desc">查看持仓与 AI 行动建议</text>
+    </view>
+    <view class="feature-card" bindtap="goSimulate">
+      <text class="feature-icon">🧪</text>
+      <text class="feature-title">模拟仓</text>
+      <text class="feature-desc">模拟买卖与收益复盘</text>
+    </view>
+    <view class="feature-card feature-card-stock" bindtap="goStockScreen">
+      <text class="feature-icon">🎯</text>
+      <text class="feature-title">自动选股</text>
+      <text class="feature-desc">进入即后台运行，完成后展示结果</text>
+    </view>
+  </view>
+
   <!-- ====== 大宗商品实时行情 ====== -->
   <view class="card" wx:if="{{commodities.length > 0}}">
     <view class="card-header">
       <text class="title">📦 大宗商品</text>
-      <text class="sub">期货主力合约</text>
+      <text class="sub">{{commodities[0].closed ? '上次收盘' : '期货主力合约'}}</text>
     </view>
     <view class="comm-grid">
       <view class="comm-item {{item.anomaly ? 'comm-anomaly' : ''}}" wx:for="{{commodities}}" wx:key="code">
@@ -73,15 +104,15 @@
           <text class="breaking-group-arrow {{expandedCats[item.cat] ? 'expanded' : ''}}">▶</text>
         </view>
         <view class="breaking-list" wx:if="{{expandedCats[item.cat]}}">
-          <view class="breaking-item {{sub.isGeo ? 'geo' : sub.category === 'monetary' ? 'monetary' : sub.category === 'technology' ? 'tech' : sub.category === 'market' ? 'market' : 'comm'}}" wx:for="{{item.items}}" wx:for-item="sub" wx:key="id">
+          <view class="breaking-item {{sub.isGeo ? 'geo' : sub.category === 'monetary' ? 'monetary' : sub.category === 'technology' ? 'tech' : sub.category === 'cls_flash' ? 'cls-flash' : sub.category === 'market' ? 'market' : 'comm'}}" wx:for="{{item.items}}" wx:for-item="sub" wx:key="id">
             <view class="breaking-top">
               <text class="breaking-source" wx:if="{{sub.source}}">{{sub.source}}</text>
-              <text class="rt-badge" wx:if="{{sub.isRealtime}}">LIVE</text>
+              <text class="rt-badge" wx:if="{{sub.isRealtime && sub.category !== 'cls_flash'}}">LIVE</text>
               <text class="rt-badge sentiment" wx:if="{{sub.fromSentiment}}">舆情</text>
               <text class="breaking-time" wx:if="{{sub.timeLabel}}">{{sub.timeLabel}}</text>
             </view>
             <text class="breaking-title">{{sub.title}}</text>
-            <view class="breaking-impact-row">
+            <view class="breaking-impact-row" wx:if="{{sub.category !== 'cls_flash'}}">
               <text class="chip sm {{sub.impactClass}}">影响 {{sub.impact >= 0 ? '+' : ''}}{{sub.impact}}</text>
             </view>
             <text class="breaking-reason" wx:if="{{sub.reason}}">{{sub.reason}}</text>
@@ -90,7 +121,7 @@
               <text class="breaking-pos" wx:if="{{sub.sectorsPos}}">▲ {{sub.sectorsPos}}</text>
               <text class="breaking-neg" wx:if="{{sub.sectorsNeg}}">▼ {{sub.sectorsNeg}}</text>
             </view>
-            <text class="breaking-advice">💡 {{sub.advice}}</text>
+            <text class="breaking-advice" wx:if="{{sub.advice}}">💡 {{sub.advice}}</text>
           </view>
         </view>
       </view>

@@ -3,6 +3,43 @@ function getAppConfig() {
   return app.globalData;
 }
 
+function trimTrailingSlash(url) {
+  return String(url || '').trim().replace(/\/+$/, '');
+}
+
+function isLocalDebugUrl(url) {
+  const value = trimTrailingSlash(url).toLowerCase();
+  return /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(value);
+}
+
+function isHttpsRemoteUrl(url) {
+  const value = trimTrailingSlash(url);
+  return /^https:\/\//i.test(value);
+}
+
+function isGithubPagesUrl(url) {
+  return /github\.io/i.test(String(url || ''));
+}
+
+function sanitizeSettings(settings, defaults) {
+  const next = { ...settings };
+  const defaultApiBase = trimTrailingSlash(defaults.apiBase);
+  const defaultServerUrl = trimTrailingSlash(defaults.serverUrl);
+
+  next.apiBase = trimTrailingSlash(next.apiBase || defaultApiBase);
+  next.serverUrl = trimTrailingSlash(next.serverUrl || defaultServerUrl);
+
+  if (!isHttpsRemoteUrl(next.serverUrl) || isLocalDebugUrl(next.serverUrl) || isGithubPagesUrl(next.serverUrl)) {
+    next.serverUrl = defaultServerUrl;
+  }
+
+  if (!isHttpsRemoteUrl(next.apiBase) || isLocalDebugUrl(next.apiBase) || isGithubPagesUrl(next.apiBase)) {
+    next.apiBase = defaultApiBase;
+  }
+
+  return next;
+}
+
 function getSettings() {
   const cfg = getAppConfig();
   const raw = wx.getStorageSync(cfg.storageKeys.settings);
@@ -16,12 +53,16 @@ function getSettings() {
       }
     });
   }
-  return merged;
+  const sanitized = sanitizeSettings(merged, cfg.defaultSettings);
+  if (JSON.stringify(sanitized) !== JSON.stringify(raw)) {
+    wx.setStorageSync(cfg.storageKeys.settings, sanitized);
+  }
+  return sanitized;
 }
 
 function setSettings(nextSettings) {
   const cfg = getAppConfig();
-  const merged = { ...cfg.defaultSettings, ...nextSettings };
+  const merged = sanitizeSettings({ ...cfg.defaultSettings, ...nextSettings }, cfg.defaultSettings);
   wx.setStorageSync(cfg.storageKeys.settings, merged);
   return merged;
 }
@@ -68,7 +109,7 @@ function setWatchlist(list) {
   return normalized;
 }
 
-/* ====== 模拟仓 ====== */
+/* ====== 模拟仓（已迁移至服务端自动仓，以下函数仅供 stock-screen 页面兼容使用） ====== */
 const SIM_KEY = 'fa_sim_portfolio_v1';
 const SIM_LOG_KEY = 'fa_sim_trade_log_v1';
 const SIM_REVIEW_KEY = 'fa_sim_weekly_review_v1';

@@ -1,5 +1,5 @@
 const { getSettings, setSettings, getHoldings, getWatchlist } = require('../../utils/storage');
-const { fetchHotEvents } = require('../../utils/api');
+const { fetchHotEvents, fetchServerSimAutoConfig, updateServerSimAutoConfig } = require('../../utils/api');
 const { getMarketStatus, isTradingDay } = require('../../utils/market');
 const { AI_PROVIDERS, getAIConfig, setAIConfig } = require('../../utils/ai');
 
@@ -22,6 +22,15 @@ Page({
     aiModels: [],
     aiModelIndex: 0,
     aiStatus: '',
+    simAutoConfig: {
+      targetBuyPct: 0.10,
+      maxPositionWeight: 0.25,
+      drawdownTriggerPct: -6,
+      takeProfitTriggerPct: 12,
+      maxBuyCandidates: 2,
+      minBuyAmount: 600,
+    },
+    simAutoStatus: '',
     // 关于
     version: '2.0.0',
     updateDate: '2026-02',
@@ -48,6 +57,22 @@ Page({
       aiModels: provider.models,
       aiModelIndex: modelIdx >= 0 ? modelIdx : 0,
     });
+    this.loadSimAutoConfig();
+  },
+
+  _serverConnSettings() {
+    return {
+      useRemote: this.data.useRemote,
+      apiBase: this.data.apiBase,
+      serverUrl: this.data.serverUrl,
+    };
+  },
+
+  async loadSimAutoConfig() {
+    const result = await fetchServerSimAutoConfig(this._serverConnSettings());
+    if (result && result.config) {
+      this.setData({ simAutoConfig: { ...this.data.simAutoConfig, ...result.config }, simAutoStatus: '' });
+    }
   },
 
   onSwitchRemote(e) {
@@ -62,6 +87,12 @@ Page({
     this.setData({ serverUrl: (e.detail.value || '').trim() });
   },
 
+  onSimAutoInput(e) {
+    const key = e.currentTarget.dataset.key;
+    const value = e.detail.value;
+    this.setData({ [`simAutoConfig.${key}`]: value });
+  },
+
   save() {
     setSettings({
       useRemote: this.data.useRemote,
@@ -69,6 +100,25 @@ Page({
       serverUrl: this.data.serverUrl
     });
     wx.showToast({ title: '设置已保存', icon: 'success' });
+  },
+
+  async saveSimAutoConfig() {
+    const payload = {
+      targetBuyPct: parseFloat(this.data.simAutoConfig.targetBuyPct),
+      maxPositionWeight: parseFloat(this.data.simAutoConfig.maxPositionWeight),
+      drawdownTriggerPct: parseFloat(this.data.simAutoConfig.drawdownTriggerPct),
+      takeProfitTriggerPct: parseFloat(this.data.simAutoConfig.takeProfitTriggerPct),
+      maxBuyCandidates: parseInt(this.data.simAutoConfig.maxBuyCandidates, 10),
+      minBuyAmount: parseFloat(this.data.simAutoConfig.minBuyAmount),
+    };
+    const result = await updateServerSimAutoConfig(this._serverConnSettings(), payload);
+    if (result && result.status === 'ok' && result.config) {
+      this.setData({ simAutoConfig: { ...this.data.simAutoConfig, ...result.config }, simAutoStatus: '✅ 自动模拟仓参数已保存' });
+      wx.showToast({ title: '参数已保存', icon: 'success' });
+    } else {
+      this.setData({ simAutoStatus: `❌ ${(result && result.message) || '保存失败'}` });
+      wx.showToast({ title: '保存失败', icon: 'none' });
+    }
   },
 
   async testConnection() {

@@ -138,8 +138,105 @@ function isBreakingEventDuplicate(item, seenMetas) {
 
 function parseEventTs(value) {
   if (!value) return 0;
-  const ts = Date.parse(String(value));
+  var s = String(value);
+  // 去掉微秒部分（JS Date.parse 只支持毫秒），如 ".827643+08:00" → "+08:00"
+  s = s.replace(/\.\d{4,}/, '');
+  var ts = Date.parse(s);
   return Number.isNaN(ts) ? 0 : ts;
+}
+
+// ====== 持久化 first-seen 缓存 ======
+// 对每个事件记录用户首次看到的时间，用于防止同一事件每次刷新都"重新变新"
+var _FIRST_SEEN_KEY = '_hotEventFirstSeen';
+var _FIRST_SEEN_TTL = 24 * 3600 * 1000; // 24小时后清除记录
+
+function _loadFirstSeen() {
+  try { return wx.getStorageSync(_FIRST_SEEN_KEY) || {}; } catch(e) { return {}; }
+}
+
+function _saveFirstSeen(cache) {
+  try { wx.setStorageSync(_FIRST_SEEN_KEY, cache); } catch(e) {}
+}
+
+function _firstSeenKey(item) {
+  // 用归一化标题作为key
+  return normalizeBreakingTitle(item.title || '').replace(/\s+/g, '');
+}
+
+/**
+ * 在 first-seen 缓存中查找匹配的key（精确 + bigram模糊匹配）
+ * 返回 [matched_key, firstTs] 或 null
+ */
+function _findFirstSeen(cache, searchKey) {
+  if (!searchKey || searchKey.length < 3) return null;
+  // 精确匹配
+  if (cache[searchKey] !== undefined) return [searchKey, cache[searchKey]];
+  // 模糊匹配: bigram相似度 >= 0.45 或子串包含
+  var searchBigrams = toBigrams(searchKey);
+  var bestKey = null, bestSim = 0;
+  var keys = Object.keys(cache);
+  for (var i = 0; i < keys.length; i++) {
+    var ck = keys[i];
+    if (ck.length < 3) continue;
+    // 子串包含
+    if (ck.length >= 4 && searchKey.length >= 4 && (ck.indexOf(searchKey) >= 0 || searchKey.indexOf(ck) >= 0)) {
+      return [ck, cache[ck]];
+    }
+    // bigram相似度
+    var ckBigrams = toBigrams(ck);
+    var sim = setOverlapRatio(searchBigrams, ckBigrams);
+    if (sim > bestSim) { bestSim = sim; bestKey = ck; }
+  }
+  if (bestSim >= 0.45 && bestKey) return [bestKey, cache[bestKey]];
+  return null;
+}
+
+/**
+ * 对事件列表应用 first-seen 过滤：
+ * - 如果同一事件（按标题模糊匹配）已被看过超过 2 小时，过滤掉
+ * - 用事件自身的 eventTime 作为基准时间（而非客户端时间），确保时间不被重置
+ */
+function applyFirstSeenFilter(items, nowMs) {
+  var cache = _loadFirstSeen();
+  var NINETY_MIN = 90 * 60 * 1000;
+  var result = [];
+
+  // 清理超过 TTL 的老条目
+  Object.keys(cache).forEach(function(k) {
+    if (nowMs - cache[k] > _FIRST_SEEN_TTL) delete cache[k];
+  });
+
+  items.forEach(function(item) {
+    var key = _firstSeenKey(item);
+    if (!key) { result.push(item); return; }
+
+    // 商品异动和行情异动不做 first-seen 过滤（它们的价格实时变化）
+    if (item.category === 'commodity_anomaly') { result.push(item); return; }
+
+    // 用事件自身的时间作为 first-seen 基准（不是客户端当前时间）
+    var evtTs = parseEventTs(item.eventTime);
+    var baseTs = evtTs > 0 ? evtTs : nowMs;
+
+    var match = _findFirstSeen(cache, key);
+    var firstTs;
+    if (match) {
+      firstTs = match[1];
+    } else {
+      // 首次看到：记录事件自身的时间
+      cache[key] = baseTs;
+      firstTs = baseTs;
+    }
+
+    if (nowMs - firstTs <= NINETY_MIN) {
+      // 90分钟内：继续展示，用 first-seen 时间计算 timeLabel
+      item.timeLabel = timeAgo(firstTs);
+      result.push(item);
+    }
+    // else: 超过90分钟 → 过滤掉
+  });
+
+  _saveFirstSeen(cache);
+  return result;
 }
 
 function compareBreakingPriority(a, b) {
@@ -232,6 +329,10 @@ Page({
 
     // 调试
     debugError: '',
+
+    // 数据新鲜度
+    dataStaleLevel: '',  // '' | 'warn' | 'error'
+    dataStaleMsg: '',
   },
 
   onLoad() {
@@ -327,11 +428,12 @@ Page({
       ...idx, pctStr: formatPct(idx.pct), pctClass: pctClass(idx.pct),
     }));
 
-    // 大宗商品
+    // 大宗商品 (非交易时段自动用K线收盘价兑底)
     const rawCommodities = commodityData.status === 'fulfilled' ? commodityData.value : [];
     const commodities = rawCommodities.map(c => ({
       ...c, pctStr: formatPct(c.pct), pctClass: pctClass(c.pct),
       anomaly: Math.abs(c.pct) >= 2,
+      closed: !!c.closed,
     }));
 
     // 热点事件
@@ -439,7 +541,7 @@ Page({
           sectorsPos: (item.sectors_positive || []).join('、'),
           sectorsNeg: (item.sectors_negative || []).join('、'),
           advice: item.advice || '保持观察',
-          eventTime: item.timestamp || rtData.updated_at || '',
+          eventTime: item.source_time || item.timestamp || rtData.updated_at || '',
           fromMarketEvent: false,
         });
       });
@@ -469,7 +571,7 @@ Page({
       });
     }
 
-    // ====== 舆情社媒趋势 → 事件化 ======
+    // ====== 舆情社媒趋势 → 事件化 (含跨刷新持久去重) ======
     const sentimentTrendItems = [];
     const rawSentiment = sentimentResult.status === 'fulfilled' ? sentimentResult.value : null;
     if (rawSentiment && Array.isArray(rawSentiment.trends)) {
@@ -481,10 +583,32 @@ Page({
         stock: 'market', real_estate: 'market', consumer: 'market', fund: 'market',
         energy: 'commodity', hk_us: 'market', dividend: 'market',
       };
+
+      // 持久化去重：同一趋势标题 6 小时内只展示一次
+      const TREND_DEDUP_KEY = '_sentimentTrendSeen';
+      const TREND_TTL = 6 * 3600 * 1000;
+      var seenTrends = {};
+      try { seenTrends = wx.getStorageSync(TREND_DEDUP_KEY) || {}; } catch(e) {}
+      // 清除过期条目
+      var nowForDedup = Date.now();
+      Object.keys(seenTrends).forEach(function(k) {
+        if (nowForDedup - (seenTrends[k] || 0) > TREND_TTL) delete seenTrends[k];
+      });
+      var newSeenTrends = {};
+
       rawSentiment.trends
         .filter(t => (t.heat_score || 0) >= 100 && (t.sample_titles || []).length > 0)
         .forEach(t => {
           const bestTitle = t.sample_titles[0] || t.name;
+          // 去重键 = 趋势ID + 标题归一化前8字
+          const dedupKey = (t.id || '') + ':' + normalizeBreakingTitle(bestTitle).slice(0, 12);
+          if (seenTrends[dedupKey]) {
+            // 已经展示过且未过期，跳过
+            newSeenTrends[dedupKey] = seenTrends[dedupKey];
+            return;
+          }
+          newSeenTrends[dedupKey] = nowForDedup;
+
           const cat = trendCatMap[t.id] || 'market';
           const catIconMap = { geopolitics: '🌍', commodity: '📦', monetary: '🏦', technology: '🤖', market: '📊', policy: '📜' };
           const sentimentImpact = /偏多|看多/.test(t.sentiment) ? 3 : /偏空|看空/.test(t.sentiment) ? -3 : 0;
@@ -511,19 +635,49 @@ Page({
             eventTime: (rawSentiment.fetch_time || '').replace('T', ' ').slice(0, 16),
           });
         });
+
+      // 持久化已展示的趋势
+      try { wx.setStorageSync(TREND_DEDUP_KEY, Object.assign({}, seenTrends, newSeenTrends)); } catch(e) {}
     }
 
-    // 合并所有来源：实时突发 > 市场事件 > 商品异动 > 实时异动 > 舆情趋势
+    // ====== 财联社实时快讯（直接展示原始头条） ======
+    const clsFlashItems = [];
+    if (rtData && Array.isArray(rtData.cls_flash)) {
+      rtData.cls_flash.forEach(item => {
+        if (!item.title) return;
+        clsFlashItems.push({
+          id: 'cls_' + (item.time || '').replace(/\D/g, '').slice(-8) + '_' + Math.random().toString(36).slice(2, 6),
+          title: item.title,
+          reason: '',
+          source: '财联社',
+          category: 'cls_flash',
+          catIcon: '⚡',
+          impact: 0,
+          impactClass: 'up',
+          impactAbs: 0,
+          isGeo: false,
+          isCommodity: false,
+          isRealtime: true,
+          sectorsPos: '',
+          sectorsNeg: '',
+          advice: '',
+          eventTime: item.time || rtData.updated_at || '',
+          fromMarketEvent: false,
+        });
+      });
+    }
+
+    // 合并所有来源：实时突发 > 财联社快讯 > 市场事件 > 商品异动 > 实时异动 > 舆情趋势
     // 语义去重，避免同一事件不同表述重复出现
     const seenMetas = [];
-    const allBreakingRaw = [...realtimeBreakingItems, ...marketEvents, ...commodityAnomalies, ...realtimeAnomalyItems, ...sentimentTrendItems];
-    const TWO_HOURS = 2 * 60 * 60 * 1000;
+    const allBreakingRaw = [...realtimeBreakingItems, ...clsFlashItems, ...marketEvents, ...commodityAnomalies, ...realtimeAnomalyItems, ...sentimentTrendItems];
+    const NINETY_MIN = 90 * 60 * 1000;
     const nowMs = Date.now();
     const allBreakingDeduped = [];
     allBreakingRaw.forEach(item => {
-      // 过滤超过2小时的事件
+      // 过滤超过90分钟的事件
       var evtTs = parseEventTs(item.eventTime);
-      if (evtTs > 0 && (nowMs - evtTs) > TWO_HOURS) return;
+      if (evtTs > 0 && (nowMs - evtTs) > NINETY_MIN) return;
       if (!isBreakingEventDuplicate(item, seenMetas)) {
         seenMetas.push(buildBreakingDedupMeta(item));
         // 添加相对时间标注
@@ -533,8 +687,8 @@ Page({
     });
 
     const sortedBreaking = allBreakingDeduped.sort(compareBreakingPriority);
-    // 不设硬上限，展示全部去重后的事件
-    let hotBreaking = sortedBreaking;
+    // 持久化 first-seen 过滤：同一事件超过2小时不再展示
+    let hotBreaking = applyFirstSeenFilter(sortedBreaking, nowMs);
 
     const hotUpdatedRaw = hotData && hotData.data ? hotData.data.updated_at : '';
     const mergedRtUpdatedAt = parseEventTs(rtData && rtData.updated_at) >= parseEventTs(hotUpdatedRaw)
@@ -624,7 +778,7 @@ Page({
         sectorsPos: (item.sectors_positive || []).join('、'),
         sectorsNeg: (item.sectors_negative || []).join('、'),
         advice: item.advice || '保持观察',
-        eventTime: item.timestamp || rtData.updated_at || '',
+        eventTime: item.source_time || item.timestamp || rtData.updated_at || '',
         fromMarketEvent: false,
       });
     });
@@ -654,17 +808,44 @@ Page({
       });
     }
 
+    // 财联社实时快讯
+    var clsFlashItems = [];
+    if (Array.isArray(rtData.cls_flash)) {
+      rtData.cls_flash.forEach(function(item) {
+        if (!item.title) return;
+        clsFlashItems.push({
+          id: 'cls_' + (item.time || '').replace(/\D/g, '').slice(-8) + '_' + Math.random().toString(36).slice(2, 6),
+          title: item.title,
+          reason: '',
+          source: '财联社',
+          category: 'cls_flash',
+          catIcon: '⚡',
+          impact: 0,
+          impactClass: 'up',
+          impactAbs: 0,
+          isGeo: false,
+          isCommodity: false,
+          isRealtime: true,
+          sectorsPos: '',
+          sectorsNeg: '',
+          advice: '',
+          eventTime: item.time || rtData.updated_at || '',
+          fromMarketEvent: false,
+        });
+      });
+    }
+
     // 保留现有 marketEvent 项（来自 hot_events），与新实时数据合并去重
     var existingMarket = (this.data.hotBreaking || []).filter(function(i) { return i.fromMarketEvent; });
-    var allBreakingRaw = [].concat(realtimeBreakingItems, existingMarket, realtimeAnomalyItems);
-    var TWO_HOURS = 2 * 60 * 60 * 1000;
+    var allBreakingRaw = [].concat(realtimeBreakingItems, clsFlashItems, existingMarket, realtimeAnomalyItems);
+    var NINETY_MIN = 90 * 60 * 1000;
     var nowMs = Date.now();
     var seenMetas = [];
     var allBreakingDeduped = [];
     allBreakingRaw.forEach(function(item) {
-      // 过滤超过2小时的事件
+      // 过滤超过90分钟的事件
       var evtTs = parseEventTs(item.eventTime);
-      if (evtTs > 0 && (nowMs - evtTs) > TWO_HOURS) return;
+      if (evtTs > 0 && (nowMs - evtTs) > NINETY_MIN) return;
       if (!isBreakingEventDuplicate(item, seenMetas)) {
         seenMetas.push(buildBreakingDedupMeta(item));
         item.timeLabel = evtTs > 0 ? timeAgo(evtTs) : '';
@@ -672,9 +853,23 @@ Page({
       }
     });
 
-    var hotBreaking = allBreakingDeduped.sort(compareBreakingPriority).slice(0, 12);
+    var hotBreaking = applyFirstSeenFilter(allBreakingDeduped.sort(compareBreakingPriority), nowMs);
     var rtUpdatedAt = String(rtData.updated_at || '').replace('T', ' ').slice(0, 16);
-    this.setData({ hotBreaking: hotBreaking, rtUpdatedAt: rtUpdatedAt });
+
+    // 数据新鲜度检测
+    var cacheAge = Number(rtData.cache_age_seconds || 0);
+    var staleLevel = '';
+    var staleMsg = '';
+    if (rtData.stale) {
+      if (cacheAge > 1800) {
+        staleLevel = 'error';
+        staleMsg = '实时数据已超过' + Math.round(cacheAge / 60) + '分钟未更新';
+      } else {
+        staleLevel = 'warn';
+        staleMsg = '数据稍有延迟(' + Math.round(cacheAge / 60) + '分钟前)';
+      }
+    }
+    this.setData({ hotBreaking: hotBreaking, rtUpdatedAt: rtUpdatedAt, dataStaleLevel: staleLevel, dataStaleMsg: staleMsg });
     this._buildBreakingGroups(hotBreaking);
   },
 
@@ -691,6 +886,7 @@ Page({
     const commodities = rawComm.map(c => ({
       ...c, pctStr: formatPct(c.pct), pctClass: pctClass(c.pct),
       anomaly: Math.abs(c.pct) >= 2,
+      closed: !!c.closed,
     }));
     const indices = rawIndices.map(idx => ({
       ...idx, pctStr: formatPct(idx.pct), pctClass: pctClass(idx.pct),
@@ -725,14 +921,16 @@ Page({
   },
 
   _buildBreakingGroups(items) {
-    var CAT_ORDER = ['geopolitics', 'monetary', 'policy', 'market', 'technology', 'commodity', 'commodity_anomaly'];
+    var CAT_ORDER = ['geopolitics', 'monetary', 'policy', 'market', 'technology', 'commodity', 'commodity_anomaly', 'cls_flash'];
     var CAT_LABELS = {
       geopolitics: '地缘', monetary: '央行', policy: '政策',
       market: '市场', technology: '科技', commodity: '商品', commodity_anomaly: '商品异动',
+      cls_flash: '财联社快讯',
     };
     var CAT_ICONS = {
       geopolitics: '🌍', monetary: '🏦', policy: '📜',
       market: '📊', technology: '🤖', commodity: '📦', commodity_anomaly: '📦',
+      cls_flash: '⚡',
     };
     var grouped = {};
     (items || []).forEach(function(item) {
@@ -786,6 +984,8 @@ Page({
 
   goHoldings() { wx.switchTab({ url: '/pages/holdings/index' }); },
   goSentiment() { wx.switchTab({ url: '/pages/sentiment/index' }); },
+  goSimulate() { wx.switchTab({ url: '/pages/simulate/index' }); },
+  goStockScreen() { wx.navigateTo({ url: '/pages/stock-screen/index' }); },
   goSettings() { wx.switchTab({ url: '/pages/settings/index' }); },
 
   // ====== 单基金 AI 分析 ======

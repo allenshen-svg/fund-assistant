@@ -93,6 +93,11 @@
   word-break: break-all;
 }
 
+.sim-hint {
+  display: block;
+  margin-top: 6rpx;
+}
+
 /* ====== 关于 ====== */
 .about-info {
   display: flex;

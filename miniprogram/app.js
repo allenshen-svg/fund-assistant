@@ -52,16 +52,16 @@ App({
     ],
     // 大宗商品 (期货/ETF 实时行情)
     COMMODITIES: [
-      { code:'113.AU0',   name:'沪金主力', short:'金', icon:'🥇', group:'metal' },
-      { code:'113.AG0',   name:'沪银主力', short:'银', icon:'🥈', group:'metal' },
-      { code:'113.CU0',   name:'沪铜主力', short:'铜', icon:'🔩', group:'metal' },
-      { code:'113.AL0',   name:'沪铝主力', short:'铝', icon:'⚙️', group:'metal' },
-      { code:'113.SC0',   name:'原油主力', short:'油', icon:'🛢️', group:'energy' },
-      { code:'113.FU0',   name:'燃油主力', short:'燃', icon:'⛽', group:'energy' },
-      { code:'113.ZN0',   name:'沪锌主力', short:'锌', icon:'🔧', group:'metal' },
-      { code:'113.NI0',   name:'沪镍主力', short:'镍', icon:'🧲', group:'metal' },
-      { code:'113.RB0',   name:'螺纹钢主力', short:'钢', icon:'🏗️', group:'industry' },
-      { code:'113.I0',    name:'铁矿石主力', short:'铁', icon:'⛏️', group:'industry' },
+      { code:'113.aum',   name:'沪金主连', short:'金', icon:'🥇', group:'metal' },
+      { code:'113.agm',   name:'沪银主连', short:'银', icon:'🥈', group:'metal' },
+      { code:'113.cum',   name:'沪铜主连', short:'铜', icon:'🔩', group:'metal' },
+      { code:'113.alm',   name:'沪铝主连', short:'铝', icon:'⚙️', group:'metal' },
+      { code:'142.scm',   name:'原油主连', short:'油', icon:'🛢️', group:'energy' },
+      { code:'113.fum',   name:'燃油主连', short:'燃', icon:'⛽', group:'energy' },
+      { code:'113.znm',   name:'沪锌主连', short:'锌', icon:'🔧', group:'metal' },
+      { code:'113.nim',   name:'沪镍主连', short:'镍', icon:'🧲', group:'metal' },
+      { code:'113.rbm',   name:'螺纹钢主连', short:'钢', icon:'🏗️', group:'industry' },
+      { code:'114.im',    name:'铁矿石主连', short:'铁', icon:'⛏️', group:'industry' },
     ]
   },
 

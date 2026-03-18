@@ -312,21 +312,16 @@ async function callAI(apiBase, apiKey, model, systemPrompt, userPrompt, temperat
   const TIMEOUT_MS = 180000; // 3分钟超时
   const MAX_RETRIES = 1;     // 超时自动重试1次
 
-  // 判断是否通过服务器代理
+  // 始终走服务器代理（绕开域名白名单 / 地区限制 / 公司网络限制）
   const settings = getSettings();
   const serverBase = getServerBase(settings);
-  const useProxy = !!serverBase;
+  if (!serverBase) throw new Error('未配置服务器地址，无法调用AI分析');
   const config = getAIConfig();
 
   for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
     try {
-      console.log(`[AI] 第${attempt + 1}次请求, ${useProxy ? '代理模式' : '直连模式'}, timeout=${TIMEOUT_MS / 1000}s`);
-      let content;
-      if (useProxy) {
-        content = await _doProxyRequest(serverBase, config.providerId, apiKey, apiBase, reqData, TIMEOUT_MS);
-      } else {
-        content = await _doDirectRequest(apiBase, apiKey, reqData, TIMEOUT_MS);
-      }
+      console.log(`[AI] 第${attempt + 1}次请求, 代理模式(${serverBase}), timeout=${TIMEOUT_MS / 1000}s`);
+      const content = await _doProxyRequest(serverBase, config.providerId, apiKey, apiBase, reqData, TIMEOUT_MS);
       return content;
     } catch (e) {
       if (e.message === 'timeout' && attempt < MAX_RETRIES) {
