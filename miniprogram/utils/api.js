@@ -941,6 +941,15 @@ function fetchAnalysisData(settings) {
       timeout: 12000,
       success(res) {
         if (res.statusCode >= 200 && res.statusCode < 300 && res.data && res.data.raw_text) {
+          // 过期保护：如果 analysis_ts 超过48小时，视为过期数据（可能来自旧缓存）
+          if (res.data.analysis_ts) {
+            const age = Math.floor(Date.now() / 1000) - res.data.analysis_ts;
+            if (age > 48 * 3600) {
+              console.warn('[fetchAnalysisData] 数据过期(' + Math.round(age/3600) + 'h)，丢弃');
+              resolve(null);
+              return;
+            }
+          }
           resolve(res.data);
         } else {
           resolve(null);

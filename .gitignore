@@ -6,3 +6,18 @@
 .venv/
 __pycache__/
 miniprogram/project.private.config.json
+
+# 运行时缓存数据 (不应推到 GitHub Pages)
+data/analysis_cache.json
+data/sentiment_cache.json
+data/us_market_cache.json
+data/breaking_dedup_cache.json
+data/realtime_breaking.json
+data/hot_events.json
+data/kline_cache/
+data/stock_screen.json
+data/stock_sector_map.csv
+data/sector_strength.csv
+data/top5_candidates_v3.csv
+data/event_first_seen.json
+.scheduler.lock
