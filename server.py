@@ -1049,18 +1049,35 @@ def fund_pick_scheduler_loop():
                 _last_screen_date != today and
                 not _stock_screen_running):
 
-                print(f'\n[fund_pick_scheduler] ⏰ {now.strftime("%H:%M")} 触发A股形态选股...')
-                with _stock_screen_lock:
-                    _stock_screen_running = True
-                    try:
-                        _run_stock_screen_with_notify('daily')
-                    except Exception as e:
-                        print(f'[fund_pick_scheduler] ❌ 形态选股失败: {e}')
-                        import traceback
-                        traceback.print_exc()
-                    finally:
-                        _stock_screen_running = False
-                _last_screen_date = today
+                # 双重保护：检查 stock_screen.json 是否已有今日结果
+                # （防止 gunicorn 多 worker / 进程重启导致重复执行）
+                _screen_already_done = False
+                _screen_json_path = os.path.join(ROOT_DIR, 'data', 'stock_screen.json')
+                try:
+                    if os.path.exists(_screen_json_path):
+                        with open(_screen_json_path, 'r', encoding='utf-8') as _sf:
+                            _screen_data = json.load(_sf)
+                        if _screen_data.get('date') == today:
+                            _screen_already_done = True
+                            print(f'[fund_pick_scheduler] ⏭️ stock_screen.json 已有今日({today})结果，跳过重复选股')
+                except Exception:
+                    pass
+
+                if _screen_already_done:
+                    _last_screen_date = today
+                else:
+                    print(f'\n[fund_pick_scheduler] ⏰ {now.strftime("%H:%M")} 触发A股形态选股...')
+                    with _stock_screen_lock:
+                        _stock_screen_running = True
+                        try:
+                            _run_stock_screen_with_notify('daily')
+                        except Exception as e:
+                            print(f'[fund_pick_scheduler] ❌ 形态选股失败: {e}')
+                            import traceback
+                            traceback.print_exc()
+                        finally:
+                            _stock_screen_running = False
+                    _last_screen_date = today
 
             # ---- 交易日 14:50 触发选基推荐 + 行动指南（每日仅一次）----
             if (is_trading_day() and
