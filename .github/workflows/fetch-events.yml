@@ -1,9 +1,19 @@
-name: 📡 宏观事件自动追踪
+name: 📡 宏观事件自动追踪 (已迁移至生产服务器)
 
+# 已迁移至生产服务器后台线程 (scheduler_loop + realtime_breaking_loop)
+# 数据文件已从 git 追踪中移除，不再需要 GitHub Actions 推送
+# 如需重新启用，取消下方注释并将 data 文件重新加入 git 追踪
+
+# on:
+#   schedule:
+#     - cron: '*/30 * * * *'
+#   workflow_dispatch:
 on:
-  schedule:
-    - cron: '*/30 * * * *'
   workflow_dispatch:
+    inputs:
+      note:
+        description: '此工作流已停用，舆情采集由生产服务器自动执行'
+        required: false
 
 permissions:
   contents: write

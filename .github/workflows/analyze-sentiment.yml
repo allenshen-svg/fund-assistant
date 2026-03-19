@@ -1,10 +1,18 @@
-name: 📊 舆情采集 & AI分析
+name: 📊 舆情采集 & AI分析 (已迁移至生产服务器)
 
+# 已迁移至生产服务器后台线程 (scheduler_loop 每30分钟采集 + 定时AI分析)
+# 数据文件已从 git 追踪中移除，不再需要 GitHub Actions 推送
+
+# on:
+#   schedule:
+#     - cron: '0 * * * *'
+#   workflow_dispatch:
 on:
-  schedule:
-    # 每小时整点运行 (UTC)，脚本内部判断交易日/非交易日频率
-    - cron: '0 * * * *'
   workflow_dispatch:
+    inputs:
+      note:
+        description: '此工作流已停用，舆情分析由生产服务器自动执行'
+        required: false
 
 permissions:
   contents: write
