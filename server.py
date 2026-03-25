@@ -1036,7 +1036,7 @@ def fund_pick_scheduler_loop():
     _last_sim_trade_date = None
     _last_sim_review_week = None
     time.sleep(15)  # 启动后等待15秒
-    print('[fund_pick_scheduler] 定时任务已启动 (选股 14:00 / 推荐 14:50 / 调仓 14:55)')
+    print('[fund_pick_scheduler] 定时任务已启动 (选股 14:00 / 推荐 14:50 / 调仓 14:55~15:30)')
 
     while True:
         try:
@@ -1111,8 +1111,12 @@ def fund_pick_scheduler_loop():
 
                 _last_pick_date = today
 
+            # 刷新时间：fund_pick/portfolio 可能耗时较长，需重新取当前时间
+            now = datetime.now()
+            today = now.strftime('%Y-%m-%d')
+
             if (is_trading_day() and
-                now.hour == 14 and now.minute >= 55 and
+                ((now.hour == 14 and now.minute >= 55) or (now.hour == 15 and now.minute <= 30)) and
                 _last_sim_trade_date != today and
                 not _sim_auto_running):
 
@@ -1130,6 +1134,10 @@ def fund_pick_scheduler_loop():
                         finally:
                             _sim_auto_running = False
                 _last_sim_trade_date = today
+
+            # 刷新时间：调仓可能耗时较长，需重新取当前时间
+            now = datetime.now()
+            today = now.strftime('%Y-%m-%d')
 
             week_key = f'{now.isocalendar()[0]}-W{now.isocalendar()[1]:02d}'
             if (is_trading_day() and now.weekday() == 4 and

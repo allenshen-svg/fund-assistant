@@ -1219,8 +1219,8 @@ def run_auto_trade(now: Optional[datetime] = None, force: bool = False) -> Dict[
     if not force:
         if not is_trading_day(current.date()):
             return {'status': 'skipped', 'reason': 'non_trading_day'}
-        if current.hour < 14 or (current.hour == 14 and current.minute < 55):
-            return {'status': 'skipped', 'reason': 'before_1455'}
+        if current.hour < 14 or (current.hour == 14 and current.minute < 55) or current.hour >= 16:
+            return {'status': 'skipped', 'reason': 'outside_trade_window'}
     _ensure_source_caches()
     portfolio = load_portfolio()
     trade_day = today_str(current)
