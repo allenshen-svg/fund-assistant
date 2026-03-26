@@ -340,10 +340,10 @@ _fund_pick_running = False
 
 @app.route('/api/fund-pick')
 def api_fund_pick():
-    """返回最新的 AI 选基金/股票结果（由每日 14:50 自动生成）"""
+    """返回最新的 AI 选基金/股票结果（由每日 14:30 自动生成）"""
     data = load_fund_pick_cache()
     if data is None:
-        return jsonify({'status': 'no_data', 'message': '暂无推荐，请等待每日 14:50 自动生成'}), 200
+        return jsonify({'status': 'no_data', 'message': '暂无推荐，请等待每日 14:30 自动生成'}), 200
     return jsonify(data)
 
 @app.route('/api/fund-pick/trigger', methods=['POST'])
@@ -648,10 +648,10 @@ def _run_stock_screen_with_notify(trigger_time):
 
 @app.route('/api/portfolio-advice')
 def api_portfolio_advice():
-    """返回最新的实盘行动指南（由每日 14:50 自动生成）"""
+    """返回最新的实盘行动指南（由每日 14:30 自动生成）"""
     data = load_portfolio_advice_cache()
     if data is None:
-        return jsonify({'status': 'no_data', 'message': '暂无行动指南，请等待每日 14:50 自动生成'}), 200
+        return jsonify({'status': 'no_data', 'message': '暂无行动指南，请等待每日 14:30 自动生成'}), 200
     return jsonify(data)
 
 @app.route('/api/portfolio-advice/trigger', methods=['POST'])
@@ -1024,7 +1024,7 @@ def fund_pick_scheduler_loop():
     工作逻辑：
     - 每分钟检查一次时间
     - 交易日 14:00：自动触发A股形态选股（每日仅一次）
-    - 交易日 14:50：自动执行选基推荐 + 行动指南（每日仅一次）
+    - 交易日 14:30：自动执行选基推荐 + 行动指南（每日仅一次）
     - 交易日 14:55：自动执行模拟仓调仓（每日仅一次）
     - 交易日 周五 15:10+：自动执行模拟仓周复盘（每周仅一次）
     - 非交易日（周末/节假日）不执行任何任务
@@ -1036,7 +1036,7 @@ def fund_pick_scheduler_loop():
     _last_sim_trade_date = None
     _last_sim_review_week = None
     time.sleep(15)  # 启动后等待15秒
-    print('[fund_pick_scheduler] 定时任务已启动 (选股 14:00 / 推荐 14:50 / 调仓 14:55~15:30)')
+    print('[fund_pick_scheduler] 定时任务已启动 (选股 14:00 / 推荐 14:30 / 调仓 14:55~15:30)')
 
     while True:
         try:
@@ -1079,9 +1079,9 @@ def fund_pick_scheduler_loop():
                             _stock_screen_running = False
                     _last_screen_date = today
 
-            # ---- 交易日 14:50 触发选基推荐 + 行动指南（每日仅一次）----
+            # ---- 交易日 14:30 触发选基推荐 + 行动指南（每日仅一次）----
             if (is_trading_day() and
-                now.hour == 14 and now.minute >= 50 and
+                now.hour == 14 and now.minute >= 30 and
                 _last_pick_date != today and
                 not _fund_pick_running):
 
@@ -1196,7 +1196,7 @@ def _ensure_scheduler():
         t2 = threading.Thread(target=fund_pick_scheduler_loop, daemon=True, name='fund_pick')
         t2.start()
         _bg_threads['fund_pick'] = t2
-        print('[scheduler] 推荐/模拟仓定时线程已启动 (推荐14:50 / 调仓14:55)')
+        print('[scheduler] 推荐/模拟仓定时线程已启动 (推荐14:30 / 调仓14:55)')
         t3 = threading.Thread(target=realtime_breaking_loop, daemon=True, name='realtime_breaking')
         t3.start()
         _bg_threads['realtime_breaking'] = t3
@@ -1221,7 +1221,7 @@ if __name__ == '__main__':
 ║  采集间隔: {COLLECT_INTERVAL}秒 ({COLLECT_INTERVAL//60}分钟)                       ║
 ║  实时突发: 交易{REALTIME_INTERVAL_TRADING}秒/非交易{REALTIME_INTERVAL_OFF}秒       ║
 ║  形态选股: 交易日 14:00 自动执行                 ║
-║  推荐生成: 交易日 14:50 自动执行                 ║
+║  推荐生成: 交易日 14:30 自动执行                 ║
 ║  模拟仓调仓: 交易日 14:55 自动执行               ║
 ║  API:                                            ║
 ║    GET  /api/sentiment        → 舆情数据         ║
