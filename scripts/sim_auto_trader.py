@@ -1487,9 +1487,17 @@ def get_status_payload() -> Dict[str, Any]:
         latest_reviews.append(review_payload)
 
     latest_review_raw = raw_latest_reviews[0] if raw_latest_reviews else None
-    raw_weekly_trades = [_normalize_trade_entry(item, total_cash) for item in list((latest_review_raw or {}).get('trades', []) if isinstance(latest_review_raw, dict) else [])[:20]]
+    latest_review_week = str((latest_review_raw or {}).get('week', '') if isinstance(latest_review_raw, dict) else '')
+    if latest_review_week == week_key_now:
+        # 本周已有周复盘，使用复盘中的交易记录
+        raw_weekly_trades = [_normalize_trade_entry(item, total_cash) for item in list((latest_review_raw or {}).get('trades', []) if isinstance(latest_review_raw, dict) else [])[:20]]
+    else:
+        # 本周尚无周复盘，从 trade log 中筛选本周所有交易
+        now = datetime.now()
+        week_monday = (now - timedelta(days=now.weekday())).strftime('%Y-%m-%d')
+        raw_weekly_trades = [_normalize_trade_entry(item, total_cash) for item in load_trade_log()[:200] if str(item.get('date', '') or '') >= week_monday]
     weekly_trades = _compact_trade_entries(raw_weekly_trades)
-    weekly_attribution = _build_weekly_attribution(latest_review_raw, latest_settle[0] if latest_settle else None, raw_weekly_trades)
+    weekly_attribution = _build_weekly_attribution(latest_review_raw if latest_review_week == week_key_now else None, latest_settle[0] if latest_settle else None, raw_weekly_trades)
     return {
         'status': 'ok',
         'mode': 'server_auto',
