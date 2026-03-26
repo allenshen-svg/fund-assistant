@@ -394,7 +394,7 @@
         </view>
         <view class="cal-detail-pos-row" wx:for="{{calSelectedDetail.positions}}" wx:key="code">
           <text class="cal-pos-name">{{item.name}}</text>
-          <text class="cal-pos-nav">{{item.nav}}</text>
+          <text class="cal-pos-nav">{{item.price || item.nav}}</text>
           <text class="cal-pos-shares">{{fmt.fmtNum(item.shares)}}</text>
           <text class="cal-pos-val">{{fmt.fmtNum(item.value)}}</text>
         </view>

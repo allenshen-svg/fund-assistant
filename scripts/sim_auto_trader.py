@@ -1272,6 +1272,33 @@ def run_auto_trade(now: Optional[datetime] = None, force: bool = False) -> Dict[
         'riskAlert': sell_result.get('riskAlert', ''),
     }
     save_portfolio(portfolio)
+
+    # ---- 每日结算快照（供收益日历展示） ----
+    live_positions, total_value = _build_live_positions(portfolio)
+    position_value = round(total_value - float(portfolio.get('cash', 0) or 0), 2)
+    settle_log = load_settle_log()
+    prev_settle = next((s for s in settle_log if str(s.get('date', '')) < trade_day), None)
+    prev_value = float(prev_settle.get('totalValue', portfolio.get('totalCash', INITIAL_CAPITAL)) if prev_settle else portfolio.get('totalCash', INITIAL_CAPITAL))
+    daily_pnl = total_value - prev_value
+    daily_pct = (daily_pnl / prev_value * 100) if prev_value else 0
+    append_settlement({
+        'date': trade_day,
+        'kind': 'daily',
+        'cash': round(float(portfolio.get('cash', 0) or 0), 2),
+        'positionValue': position_value,
+        'totalValue': round(total_value, 2),
+        'dailyPnl': round(daily_pnl, 2),
+        'dailyPct': round(daily_pct, 2),
+        'positions': [{
+            'code': p.get('code', ''),
+            'name': p.get('name', ''),
+            'type': p.get('type', ''),
+            'shares': round(float(p.get('shares', 0) or 0), 4),
+            'value': round(float(p.get('currentValue', 0) or 0), 2),
+            'price': round(float(p.get('currentPrice', 0) or 0), 4),
+        } for p in live_positions],
+    })
+
     status = 'executed' if (executed_buys or executed_sells) else 'no_action'
     return {
         'status': status,
