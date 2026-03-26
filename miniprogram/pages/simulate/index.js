@@ -192,9 +192,11 @@ Page({
     const m = month || this.data.calMonth || (now.getMonth() + 1);
 
     const settleLog = this.data.settleLog || [];
-    // 建 date -> record 映射
+    // 建 date -> record 映射（daily 优先于 weekly）
     const settleMap = {};
-    settleLog.forEach(r => { settleMap[r.date] = r; });
+    settleLog.forEach(r => {
+      if (!settleMap[r.date] || r.kind === 'daily') settleMap[r.date] = r;
+    });
 
     // 本月第一天和最后一天
     const firstDay = new Date(y, m - 1, 1);
