@@ -88,9 +88,8 @@ Page({
   },
 
   _processData: function (raw) {
-    var probs = raw.probabilities || {};
+    var probs = raw.predictions || {};
     var stmts = raw.statements || [];
-    var meta = raw.meta || {};
     var calibration = raw.calibration || {};
 
     // Build prob list
@@ -153,7 +152,7 @@ Page({
       });
     }
 
-    var updated = meta.updated_at || meta.timestamp || '';
+    var updated = raw.updated_at || '';
     this.setData({
       probList: probList,
       alerts: alerts,
