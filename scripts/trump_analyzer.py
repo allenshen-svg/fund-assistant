@@ -433,12 +433,18 @@ def fetch_trump_statements():
 SENTIMENT_PROMPT = """你是一位专业的金融市场情绪分析师。请分析以下特朗普相关新闻/言论，返回JSON。
 
 要求:
-1. sentiment: "hawkish"(鹰派/激进/威胁) 或 "dovish"(鸽派/缓和/谈判) 或 "neutral"
-2. score: 情绪强度 0.0~1.0 (1.0=极端强烈)
-3. entities: 涉及的关键实体列表 (如 ["china","tariff","oil"])
+1. sentiment: "hawkish"(鹰派/激进/威胁/军事行动/贸易战升级) 或 "dovish"(鸽派/缓和/谈判/和解) 或 "neutral"
+2. score: 情绪强度 0.0~1.0，务必根据实际影响程度打分，不要保守:
+   - 0.1~0.2: 轻微/例行表态 (如: "我们会持续关注")
+   - 0.3~0.4: 中等 (如: 暗示可能加关税、口头警告)
+   - 0.5~0.6: 较强 (如: 宣布具体关税/制裁措施、威胁军事行动)
+   - 0.7~0.8: 强烈 (如: 实际发动军事打击、全面贸易战、战争言论)
+   - 0.9~1.0: 极端 (如: 核威胁、全面战争、史无前例的制裁)
+   当前伊朗战争、油价飙涨、军事打击等新闻应该在0.6~0.8范围
+3. entities: 涉及的关键实体列表 (如 ["iran","oil","military","nasdaq"])
 4. summary_zh: 一句话中文摘要 (≤50字)
 5. category: "trade_war"|"geopolitics"|"monetary"|"domestic"|"diplomatic"|"other"
-6. is_policy: true(实际政策/行政令) 或 false(竞选口号/个人攻击)
+6. is_policy: true(实际政策/行政令/军事行动) 或 false(竞选口号/个人攻击/媒体评论)
 
 仅返回JSON，不要其他文字:
 {"sentiment":"...","score":0.0,"entities":[],"summary_zh":"...","category":"...","is_policy":false}"""
