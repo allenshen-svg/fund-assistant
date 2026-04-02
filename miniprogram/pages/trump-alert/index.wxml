@@ -1,0 +1,81 @@
+<view class="container">
+
+  <!-- 加载中 -->
+  <view wx:if="{{loading}}" class="loading-wrap">
+    <view class="spinner"></view>
+    <text class="loading-text">正在加载预警数据...</text>
+  </view>
+
+  <!-- 主内容 -->
+  <view wx:if="{{!loading}}">
+
+    <!-- 头部 -->
+    <view class="card header-card">
+      <view class="header-top">
+        <text class="header-title">🏛️ 特朗普言论预警</text>
+        <view class="header-btn" bindtap="onTrigger">
+          <text class="btn-text">{{triggering ? '分析中...' : '🔄 手动触发'}}</text>
+        </view>
+      </view>
+      <text class="header-sub">Event-Driven Alert · NLP情绪分析 · 概率预测</text>
+      <view class="meta-row">
+        <text class="meta-pill">📡 {{statementCount}}条言论</text>
+        <text class="meta-pill">🚨 {{alertCount}}条警报</text>
+        <text class="meta-pill">🕐 {{updatedAt}}</text>
+      </view>
+    </view>
+
+    <!-- 警报横幅 -->
+    <view wx:if="{{alerts.length > 0}}" class="card alert-card">
+      <text class="alert-title">🚨 {{alerts.length}} 条预警信号</text>
+      <view class="alert-item" wx:for="{{alerts}}" wx:key="asset">
+        <text class="alert-name">{{item.asset}}</text>
+        <text class="alert-signal {{item.probability >= 0.7 ? 'up' : 'down'}}">{{item.signal}} ({{item.pctStr}})</text>
+      </view>
+    </view>
+    <view wx:if="{{alerts.length === 0 && !loading}}" class="card calm-card">
+      <text>🟢 当前无重大预警信号，市场相对平静</text>
+    </view>
+
+    <!-- 资产涨跌概率预测 -->
+    <view class="card">
+      <text class="section-title">📊 资产涨跌概率预测</text>
+      <view class="prob-grid">
+        <view class="prob-item" wx:for="{{probList}}" wx:key="id">
+          <view class="prob-top">
+            <text class="prob-name">{{item.name}}</text>
+            <text class="prob-signal {{item.sigClass}}">{{item.signal_zh}}</text>
+          </view>
+          <view class="prob-bar-bg">
+            <view class="prob-bar {{item.barClass}}" style="width:{{item.pct}}%;">
+              <text class="prob-pct">{{item.pct}}%</text>
+            </view>
+          </view>
+          <text class="prob-logic">{{item.logic}}</text>
+          <text wx:if="{{item.hit_rate != null}}" class="prob-hit">历史命中 {{item.hitStr}}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 最新言论 -->
+    <view class="card">
+      <text class="section-title">📰 最新抓取的特朗普言论</text>
+      <view class="stmt-list">
+        <view class="stmt-item" wx:for="{{statements}}" wx:key="title">
+          <text class="stmt-title">{{item.title}}</text>
+          <view class="stmt-meta">
+            <text class="stmt-source">{{item.source}}</text>
+            <text class="stmt-time">{{item.timeStr}}</text>
+            <text class="sentiment-tag {{item.sentiment}}">{{item.sentimentLabel}} {{item.scoreStr}}</text>
+            <text wx:if="{{item.is_policy}}" class="policy-tag">实际政策</text>
+          </view>
+          <text class="stmt-summary" wx:if="{{item.summary_zh}}">{{item.summary_zh}}</text>
+        </view>
+        <view wx:if="{{statements.length === 0}}" class="empty-text">
+          <text>暂无数据</text>
+        </view>
+      </view>
+    </view>
+
+  </view>
+</view>

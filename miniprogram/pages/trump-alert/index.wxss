@@ -1,0 +1,274 @@
+/* pages/trump-alert/index.wxss */
+
+.container {
+  padding: 20rpx;
+  min-height: 100vh;
+  background: var(--bg, #0f0f1a);
+}
+
+/* 加载 */
+.loading-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+}
+.spinner {
+  width: 60rpx;
+  height: 60rpx;
+  border: 4rpx solid rgba(108,138,255,0.3);
+  border-top-color: var(--accent, #6c8aff);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-text {
+  color: var(--text-secondary, #9999b3);
+  font-size: 28rpx;
+  margin-top: 16rpx;
+}
+
+/* 卡片 */
+.card {
+  background: var(--surface, #1e1e38);
+  border-radius: 16rpx;
+  padding: 24rpx;
+  margin-bottom: 20rpx;
+}
+
+/* 头部 */
+.header-card { }
+.header-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.header-title {
+  font-size: 36rpx;
+  color: var(--text, #e0e0f0);
+  font-weight: bold;
+}
+.header-btn {
+  background: var(--accent, #6c8aff);
+  border-radius: 24rpx;
+  padding: 8rpx 24rpx;
+}
+.btn-text {
+  color: #fff;
+  font-size: 24rpx;
+}
+.header-sub {
+  color: var(--text-secondary, #9999b3);
+  font-size: 24rpx;
+  margin-top: 8rpx;
+  display: block;
+}
+.meta-row {
+  display: flex;
+  gap: 12rpx;
+  margin-top: 16rpx;
+  flex-wrap: wrap;
+}
+.meta-pill {
+  background: rgba(108,138,255,0.12);
+  color: var(--accent, #6c8aff);
+  font-size: 22rpx;
+  padding: 4rpx 16rpx;
+  border-radius: 20rpx;
+}
+
+/* 警报 */
+.alert-card {
+  background: rgba(232, 65, 65, 0.1);
+  border: 1rpx solid rgba(232, 65, 65, 0.3);
+}
+.alert-title {
+  color: #e84141;
+  font-size: 30rpx;
+  font-weight: bold;
+  display: block;
+  margin-bottom: 12rpx;
+}
+.alert-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8rpx 0;
+}
+.alert-name {
+  color: var(--text, #e0e0f0);
+  font-size: 28rpx;
+}
+.alert-signal {
+  font-size: 26rpx;
+  font-weight: bold;
+}
+.alert-signal.up { color: #e84141; }
+.alert-signal.down { color: #2ecc71; }
+
+.calm-card {
+  text-align: center;
+  color: #2ecc71;
+  font-size: 28rpx;
+}
+
+/* 板块标题 */
+.section-title {
+  color: var(--text, #e0e0f0);
+  font-size: 32rpx;
+  font-weight: bold;
+  display: block;
+  margin-bottom: 16rpx;
+}
+
+/* 概率网格 */
+.prob-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16rpx;
+}
+.prob-item {
+  width: calc(50% - 8rpx);
+  background: rgba(255,255,255,0.04);
+  border-radius: 12rpx;
+  padding: 16rpx;
+  box-sizing: border-box;
+}
+.prob-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8rpx;
+}
+.prob-name {
+  color: var(--text, #e0e0f0);
+  font-size: 26rpx;
+  font-weight: bold;
+}
+.prob-signal {
+  font-size: 22rpx;
+  padding: 2rpx 10rpx;
+  border-radius: 8rpx;
+}
+.prob-signal.bull {
+  color: #e84141;
+  background: rgba(232,65,65,0.15);
+}
+.prob-signal.bear {
+  color: #2ecc71;
+  background: rgba(46,204,113,0.15);
+}
+.prob-signal.neutral {
+  color: var(--text-secondary, #9999b3);
+  background: rgba(153,153,179,0.15);
+}
+
+.prob-bar-bg {
+  background: rgba(255,255,255,0.08);
+  border-radius: 8rpx;
+  height: 32rpx;
+  overflow: hidden;
+  margin-bottom: 6rpx;
+}
+.prob-bar {
+  height: 100%;
+  border-radius: 8rpx;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-right: 8rpx;
+  min-width: 60rpx;
+}
+.prob-bar.bull-bar {
+  background: linear-gradient(90deg, rgba(232,65,65,0.6), #e84141);
+}
+.prob-bar.bear-bar {
+  background: linear-gradient(90deg, rgba(46,204,113,0.6), #2ecc71);
+}
+.prob-bar.neutral-bar {
+  background: linear-gradient(90deg, rgba(153,153,179,0.4), #9999b3);
+}
+.prob-pct {
+  color: #fff;
+  font-size: 20rpx;
+  font-weight: bold;
+}
+.prob-logic {
+  color: var(--text-secondary, #9999b3);
+  font-size: 20rpx;
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.prob-hit {
+  color: #d4a017;
+  font-size: 20rpx;
+  display: block;
+  margin-top: 4rpx;
+}
+
+/* 言论列表 */
+.stmt-list { }
+.stmt-item {
+  padding: 16rpx 0;
+  border-bottom: 1rpx solid rgba(255,255,255,0.06);
+}
+.stmt-item:last-child { border-bottom: none; }
+.stmt-title {
+  color: var(--text, #e0e0f0);
+  font-size: 28rpx;
+  display: block;
+  margin-bottom: 8rpx;
+}
+.stmt-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8rpx;
+  align-items: center;
+}
+.stmt-source {
+  color: var(--accent, #6c8aff);
+  font-size: 22rpx;
+}
+.stmt-time {
+  color: var(--text-secondary, #9999b3);
+  font-size: 22rpx;
+}
+.sentiment-tag {
+  font-size: 20rpx;
+  padding: 2rpx 10rpx;
+  border-radius: 8rpx;
+}
+.sentiment-tag.hawkish {
+  color: #e84141;
+  background: rgba(232,65,65,0.15);
+}
+.sentiment-tag.dovish {
+  color: #2ecc71;
+  background: rgba(46,204,113,0.15);
+}
+.sentiment-tag.neutral {
+  color: var(--text-secondary, #9999b3);
+  background: rgba(153,153,179,0.15);
+}
+.policy-tag {
+  color: #d4a017;
+  font-size: 20rpx;
+  padding: 2rpx 10rpx;
+  border-radius: 8rpx;
+  background: rgba(212,160,23,0.15);
+}
+.stmt-summary {
+  color: var(--text-secondary, #9999b3);
+  font-size: 24rpx;
+  margin-top: 6rpx;
+  display: block;
+}
+.empty-text {
+  text-align: center;
+  padding: 40rpx;
+  color: var(--text-secondary, #9999b3);
+  font-size: 28rpx;
+}

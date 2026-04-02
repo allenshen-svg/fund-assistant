@@ -33,6 +33,10 @@ from scripts.sim_auto_trader import (
     update_auto_trade_config,
 )
 from scripts.stock_screener import run_stock_screen, load_stock_screen_cache
+from scripts.trump_analyzer import (
+    main as run_trump_analysis, load_cache as load_trump_cache,
+    daily_review as run_trump_daily_review, load_calibration as load_trump_calibration,
+)
 
 app = Flask(__name__, static_folder=None)
 
@@ -367,6 +371,71 @@ def api_fund_pick_trigger():
     t = threading.Thread(target=do_pick, daemon=True)
     t.start()
     return jsonify({'status': 'started', 'message': '选基金/股票已启动'})
+
+# ==================== 特朗普言论预警 ====================
+
+_trump_lock = threading.Lock()
+_trump_running = False
+
+@app.route('/api/trump-alert')
+def api_trump_alert():
+    """返回特朗普言论预警分析结果"""
+    data = load_trump_cache()
+    if data is None:
+        return jsonify({'status': 'no_data', 'message': '暂无数据，请等待自动采集或手动触发', 'predictions': {}, 'alerts': [], 'statements': []}), 200
+    # 标记缓存年龄
+    updated = data.get('updated_at', '')
+    if updated:
+        try:
+            from datetime import timezone as _tz
+            ut = datetime.fromisoformat(updated)
+            age = (datetime.now(ut.tzinfo or _tz.utc) - ut).total_seconds()
+            data['cache_age_seconds'] = int(age)
+        except Exception:
+            pass
+    return jsonify(data)
+
+@app.route('/api/trump-alert/trigger', methods=['POST'])
+def api_trump_alert_trigger():
+    """手动触发特朗普言论分析"""
+    global _trump_running
+    if _trump_running:
+        return jsonify({'status': 'busy', 'message': '分析正在进行中'}), 429
+
+    def do_trump():
+        global _trump_running
+        with _trump_lock:
+            _trump_running = True
+            try:
+                run_trump_analysis()
+            except Exception as e:
+                print(f'[trump] 手动触发失败: {e}')
+            finally:
+                _trump_running = False
+
+    t = threading.Thread(target=do_trump, daemon=True)
+    t.start()
+    return jsonify({'status': 'started', 'message': '特朗普言论分析已启动'})
+
+@app.route('/api/trump-alert/calibration')
+def api_trump_calibration():
+    """返回预测校准数据 (命中率/偏差/调整因子)"""
+    cal = load_trump_calibration()
+    if not cal:
+        return jsonify({'status': 'no_data', 'message': '暂无校准数据，需积累至少3次预测记录'}), 200
+    return jsonify(cal)
+
+@app.route('/api/trump-alert/review', methods=['POST'])
+def api_trump_review():
+    """手动触发每日复盘 (回填实际行情+计算校准)"""
+    def do_review():
+        try:
+            run_trump_daily_review()
+        except Exception as e:
+            print(f'[trump] 复盘失败: {e}')
+    t = threading.Thread(target=do_review, daemon=True)
+    t.start()
+    return jsonify({'status': 'started', 'message': '预测复盘已启动'})
 
 # ==================== 实盘行动指南 ====================
 
@@ -1018,6 +1087,54 @@ def realtime_breaking_loop():
         time.sleep(interval)
 
 
+# ==================== 特朗普言论监控线程 ====================
+TRUMP_INTERVAL = int(os.environ.get('TRUMP_INTERVAL', 600))  # 默认10分钟
+
+def trump_alert_loop():
+    """特朗普言论预警分析循环 (全天候, 10分钟间隔)
+    每6小时自动执行一次复盘校准 (回填实际行情+更新校准因子)"""
+    global _trump_running
+    time.sleep(20)  # 启动后等20秒 (排在其他线程后面)
+    print('[trump_alert] 🏛️ 特朗普言论预警监控线程已启动')
+
+    _last_review_hour = None
+    _cycle = 0
+
+    while True:
+        if _trump_running:
+            time.sleep(5)
+            continue
+
+        with _trump_lock:
+            _trump_running = True
+            try:
+                print(f'\n[trump_alert] {datetime.now().strftime("%H:%M:%S")} 采集分析特朗普言论...')
+                run_trump_analysis()
+                print(f'[trump_alert] ✅ 完成，下次: {TRUMP_INTERVAL}秒后')
+
+                # 每6小时执行一次复盘校准 (09:00, 15:00, 21:00, 03:00)
+                now_h = datetime.now().hour
+                review_slot = now_h // 6
+                if review_slot != _last_review_hour:
+                    _last_review_hour = review_slot
+                    print(f'[trump_alert] 📋 触发预测复盘校准...')
+                    try:
+                        run_trump_daily_review()
+                    except Exception as e:
+                        print(f'[trump_alert] ⚠️ 复盘失败: {e}')
+
+            except SystemExit:
+                print('[trump_alert] ⚠️ sys.exit 已拦截')
+            except Exception as e:
+                print(f'[trump_alert] ❌ 异常: {e}')
+                import traceback
+                traceback.print_exc()
+            finally:
+                _trump_running = False
+
+        time.sleep(TRUMP_INTERVAL)
+
+
 def fund_pick_scheduler_loop():
     """每日定时任务调度
 
@@ -1201,6 +1318,10 @@ def _ensure_scheduler():
         t3.start()
         _bg_threads['realtime_breaking'] = t3
         print('[scheduler] ⚡ 实时突发新闻线程已启动 (交易时段每5分钟)')
+        t4 = threading.Thread(target=trump_alert_loop, daemon=True, name='trump_alert')
+        t4.start()
+        _bg_threads['trump_alert'] = t4
+        print('[scheduler] 🏛️ 特朗普言论预警线程已启动 (每10分钟)')
 
 # gunicorn 兼容：通过 before_request 在第一次请求时启动采集线程
 @app.before_request

@@ -1,0 +1,143 @@
+/* trump-alert.css — 特朗普言论金融预警系统 */
+:root {
+  --bg: #0f1117;
+  --card: #1a1d2e;
+  --border: #2a2d3e;
+  --text: #e4e6f0;
+  --muted: #8b8fa3;
+  --accent: #4F6EF7;
+  --red: #ef4444;
+  --green: #22c55e;
+  --orange: #f59e0b;
+  --gold: #fbbf24;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: var(--bg); color: var(--text);
+  min-height: 100vh;
+}
+.trump-container { max-width: 960px; margin: 0 auto; padding: 16px; }
+
+/* Header */
+.trump-header {
+  background: linear-gradient(135deg, #1e2a4a 0%, #0f1729 100%);
+  border-radius: 16px; padding: 24px; margin-bottom: 20px;
+  border: 1px solid var(--border);
+}
+.trump-header h1 { font-size: 22px; margin-bottom: 6px; }
+.trump-header h1 span { color: var(--gold); }
+.trump-header .subtitle { color: var(--muted); font-size: 13px; }
+.trump-header .meta-row {
+  display: flex; gap: 16px; margin-top: 12px; flex-wrap: wrap;
+}
+.meta-pill {
+  background: rgba(79,110,247,0.15); color: var(--accent);
+  padding: 4px 12px; border-radius: 20px; font-size: 12px;
+}
+
+/* Alert banner */
+.alert-banner {
+  background: linear-gradient(135deg, rgba(239,68,68,0.15), rgba(239,68,68,0.05));
+  border: 1px solid rgba(239,68,68,0.3); border-radius: 12px;
+  padding: 16px; margin-bottom: 16px;
+}
+.alert-banner.calm {
+  background: linear-gradient(135deg, rgba(34,197,94,0.1), rgba(34,197,94,0.03));
+  border-color: rgba(34,197,94,0.3);
+}
+.alert-banner h3 { font-size: 15px; margin-bottom: 8px; }
+.alert-item {
+  background: rgba(0,0,0,0.2); border-radius: 8px;
+  padding: 10px 14px; margin-top: 8px;
+  display: flex; justify-content: space-between; align-items: center;
+}
+.alert-item .asset-name { font-weight: 600; font-size: 14px; }
+.alert-item .signal {
+  font-size: 13px; font-weight: 700; padding: 3px 10px;
+  border-radius: 6px;
+}
+.signal.bullish { background: rgba(239,68,68,0.2); color: var(--red); }
+.signal.bearish { background: rgba(34,197,94,0.2); color: var(--green); }
+.signal.neutral { background: rgba(139,143,163,0.2); color: var(--muted); }
+
+/* Probability cards grid */
+.prob-grid {
+  display: grid; grid-template-columns: repeat(4, 1fr);
+  gap: 10px; margin-bottom: 20px;
+}
+@media (max-width: 900px) { .prob-grid { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 600px) { .prob-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 400px) { .prob-grid { grid-template-columns: 1fr; } }
+.prob-card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 12px; padding: 14px; position: relative; overflow: hidden;
+}
+.prob-card .asset-label { font-size: 11px; color: var(--muted); margin-bottom: 2px; }
+.prob-card .asset-title { font-size: 15px; font-weight: 700; margin-bottom: 10px; }
+.prob-bar-wrap {
+  background: rgba(255,255,255,0.05); border-radius: 8px;
+  height: 28px; position: relative; overflow: hidden; margin-bottom: 8px;
+}
+.prob-bar {
+  height: 100%; border-radius: 8px; transition: width 0.8s ease;
+  display: flex; align-items: center; justify-content: flex-end; padding-right: 8px;
+  font-size: 12px; font-weight: 700; color: #fff; min-width: 40px;
+}
+.prob-bar.bull { background: linear-gradient(90deg, #991b1b, #ef4444); }
+.prob-bar.bear { background: linear-gradient(90deg, #166534, #22c55e); }
+.prob-bar.neut { background: linear-gradient(90deg, #44475a, #6b7280); }
+.prob-card .logic { font-size: 11px; color: var(--muted); line-height: 1.5; }
+.prob-card .hit-rate {
+  font-size: 10px; color: var(--gold); margin-top: 6px;
+  opacity: 0.8;
+}
+.prob-card .signal-badge {
+  position: absolute; top: 12px; right: 14px;
+  font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 20px;
+}
+
+/* Statement list */
+.stmt-section { margin-bottom: 20px; }
+.stmt-section h2 { font-size: 17px; margin-bottom: 12px; }
+.stmt-card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 12px; padding: 14px; margin-bottom: 10px;
+}
+.stmt-card .stmt-title { font-size: 14px; font-weight: 600; margin-bottom: 6px; line-height: 1.4; }
+.stmt-card .stmt-meta {
+  display: flex; gap: 10px; flex-wrap: wrap;
+  font-size: 11px; color: var(--muted); margin-bottom: 6px;
+}
+.stmt-card .stmt-summary { font-size: 12px; color: var(--muted); line-height: 1.5; }
+.sentiment-tag {
+  display: inline-block; padding: 2px 8px; border-radius: 4px;
+  font-size: 11px; font-weight: 600;
+}
+.sentiment-tag.hawkish { background: rgba(239,68,68,0.2); color: var(--red); }
+.sentiment-tag.dovish { background: rgba(34,197,94,0.2); color: var(--green); }
+.sentiment-tag.neutral { background: rgba(139,143,163,0.2); color: var(--muted); }
+
+/* Loading */
+.loading-overlay {
+  text-align: center; padding: 60px 20px; color: var(--muted);
+}
+.loading-overlay .spinner {
+  width: 40px; height: 40px; border: 3px solid var(--border);
+  border-top-color: var(--accent); border-radius: 50%;
+  animation: spin 1s linear infinite; margin: 0 auto 16px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Action bar */
+.action-bar {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 16px;
+}
+.btn-refresh {
+  background: var(--accent); color: #fff; border: none;
+  padding: 8px 20px; border-radius: 8px; font-size: 13px;
+  cursor: pointer; font-weight: 600;
+}
+.btn-refresh:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-refresh:hover:not(:disabled) { filter: brightness(1.15); }

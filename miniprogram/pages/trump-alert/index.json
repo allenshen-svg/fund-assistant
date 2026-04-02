@@ -1,0 +1,6 @@
+{
+  "navigationBarTitleText": "特朗普言论预警",
+  "enablePullDownRefresh": true,
+  "navigationBarBackgroundColor": "@navBgColor",
+  "backgroundColor": "@pageBgColor"
+}

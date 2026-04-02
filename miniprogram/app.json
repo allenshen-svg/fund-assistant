@@ -5,6 +5,7 @@
     "pages/holdings/index",
     "pages/simulate/index",
     "pages/stock-screen/index",
+    "pages/trump-alert/index",
     "pages/settings/index"
   ],
   "darkmode": true,

@@ -986,6 +986,7 @@ Page({
   goSentiment() { wx.switchTab({ url: '/pages/sentiment/index' }); },
   goSimulate() { wx.switchTab({ url: '/pages/simulate/index' }); },
   goStockScreen() { wx.navigateTo({ url: '/pages/stock-screen/index' }); },
+  goTrumpAlert() { wx.navigateTo({ url: '/pages/trump-alert/index' }); },
   goSettings() { wx.switchTab({ url: '/pages/settings/index' }); },
 
   // ====== 单基金 AI 分析 ======

@@ -61,6 +61,11 @@
       <text class="feature-title">自动选股</text>
       <text class="feature-desc">进入即后台运行，完成后展示结果</text>
     </view>
+    <view class="feature-card" bindtap="goTrumpAlert">
+      <text class="feature-icon">🏛️</text>
+      <text class="feature-title">特朗普预警</text>
+      <text class="feature-desc">言论追踪与市场概率预测</text>
+    </view>
   </view>
 
   <!-- ====== 大宗商品实时行情 ====== -->

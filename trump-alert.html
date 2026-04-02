@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>特朗普言论金融预警 | Trump Alert</title>
+<link rel="stylesheet" href="css/trump-alert.css">
+</head>
+<body>
+<div class="trump-container">
+  <!-- Header -->
+  <div class="trump-header">
+    <h1>🏛️ 特朗普言论 <span>金融市场预警</span></h1>
+    <p class="subtitle">Event-Driven Algorithmic Alert System — 实时抓取 · NLP情绪分析 · 概率预测</p>
+    <div class="meta-row" id="metaRow">
+      <span class="meta-pill">等待加载...</span>
+    </div>
+  </div>
+
+  <!-- Action bar -->
+  <div class="action-bar">
+    <div style="font-size:13px;color:var(--muted)">自动每10分钟更新 | 数据源: Google News, Reuters, CNBC</div>
+    <button class="btn-refresh" id="btnRefresh" onclick="handleRefresh()">🔄 手动触发分析</button>
+  </div>
+
+  <!-- Loading -->
+  <div id="loading" class="loading-overlay">
+    <div class="spinner"></div>
+    <p>正在加载预警数据...</p>
+  </div>
+
+  <!-- Main content (hidden until data loads) -->
+  <div id="mainContent" style="display:none">
+    <!-- Alert banner -->
+    <div id="alertBanner" class="alert-banner calm">
+      <h3>🟢 当前无重大预警信号</h3>
+    </div>
+
+    <!-- Probability grid -->
+    <h2 style="font-size:17px;margin-bottom:12px">📊 资产涨跌概率预测</h2>
+    <div class="prob-grid" id="probGrid"></div>
+
+    <!-- Statements -->
+    <div class="stmt-section">
+      <h2>📰 最新抓取的特朗普言论</h2>
+      <div id="stmtList"></div>
+    </div>
+  </div>
+</div>
+<script src="js/trump-alert.js"></script>
+</body>
+</html>
